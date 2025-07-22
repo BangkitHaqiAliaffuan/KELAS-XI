@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    tools:context=".MainActivity">
+
+<ScrollView 
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="400dp"
+    android:layout_margin="16dp"
+    android:background="#F5F5F5"
+    android:elevation="4dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="FORM DATA DIRI"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"
+            android:textColor="@android:color/black" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Nama Lengkap"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Tempat dan Tanggal Lahir"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Alamat Lengkap"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="👇 Scroll ke bawah untuk melanjutkan 👇"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginVertical="30dp"
+            android:textColor="#666666"
+            android:textStyle="bold" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Nomor Telepon"
+            android:inputType="phone"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Nama Orang Tua"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Pekerjaan Orang Tua"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:hint="Nomor Telepon Orang Tua"
+            android:inputType="phone"
+            android:layout_marginBottom="20dp"
+            android:padding="16dp"
+            android:textSize="16sp"
+            android:background="@android:drawable/edit_text" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="SIMPAN DATA"
+            android:layout_marginTop="30dp"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="#4CAF50" />
+
+    </LinearLayout>
+
+</ScrollView>
+
+</LinearLayout>

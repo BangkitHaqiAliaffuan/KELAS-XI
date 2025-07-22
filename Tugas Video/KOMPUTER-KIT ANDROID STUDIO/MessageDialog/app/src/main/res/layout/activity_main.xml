@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="#f5f5f5"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Demonstrasi Siklus Hidup Aktivitas"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="24dp"
+        android:textColor="#333333" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Status Lifecycle Saat Ini:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"
+        android:textColor="#666666" />
+
+    <TextView
+        android:id="@+id/statusTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#ffffff"
+        android:padding="16dp"
+        android:textSize="14sp"
+        android:textColor="#333333"
+        android:fontFamily="monospace"
+        android:text="Memulai aplikasi..."
+        android:layout_marginBottom="24dp"
+        android:elevation="2dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Instruksi:"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"
+        android:textColor="#666666" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="1. Amati Logcat untuk melihat detail lifecycle\n2. Tekan Home untuk meminimalkan app\n3. Buka kembali dari recent apps\n4. Swipe untuk menutup aplikasi\n5. Perhatikan urutan pemanggilan metode"
+        android:textSize="14sp"
+        android:lineSpacingExtra="4dp"
+        android:textColor="#666666"
+        android:background="#ffffff"
+        android:padding="16dp"
+        android:elevation="2dp" />
+
+</LinearLayout>

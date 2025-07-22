@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <Button
+        android:id="@+id/btnTambah"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TAMBAH"
+        android:textStyle="bold"
+        android:onClick="btnTambah"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="@android:color/holo_blue_dark"
+        android:textColor="@android:color/white" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rcvSiswa"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:padding="4dp" />
+
+</LinearLayout>

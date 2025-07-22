@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".MainActivity">
+
+    <!-- Scrollable content area for input form -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Title -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SQLite Database App"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:layout_marginBottom="16dp"
+                android:gravity="center" />
+
+            <!-- Search/Filter Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="16dp"
+                android:background="#F0F0F0"
+                android:padding="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Search &amp; Filter"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Search by Name -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                    <EditText
+                        android:id="@+id/etSearch"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:hint="Search by item name..."
+                        android:inputType="text"
+                        android:padding="8dp"
+                        android:textSize="14sp"
+                        android:background="@android:drawable/edit_text" />
+
+                    <Button
+                        android:id="@+id/btnSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Search"
+                        android:textSize="12sp"
+                        android:layout_marginStart="8dp"
+                        android:onClick="searchItems" />
+
+                </LinearLayout>
+
+                <!-- Filter Buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnFilterLowStock"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:text="Low Stock"
+                        android:textSize="11sp"
+                        android:layout_marginEnd="4dp"
+                        android:onClick="filterLowStock" />
+
+                    <Button
+                        android:id="@+id/btnFilterExpensive"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:text="Expensive"
+                        android:textSize="11sp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:onClick="filterExpensive" />
+
+                    <Button
+                        android:id="@+id/btnShowAll"
+                        android:layout_width="0dp"
+                        android:layout_height="36dp"
+                        android:layout_weight="1"
+                        android:text="Show All"
+                        android:textSize="11sp"
+                        android:layout_marginStart="4dp"
+                        android:onClick="showAllItems" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Input Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="20dp">
+
+                <!-- Pilihan TextView -->
+                <TextView
+                    android:id="@+id/tvPilihan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Insert"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/black"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@android:drawable/edit_text" />
+
+                <!-- Barang EditText -->
+                <EditText
+                    android:id="@+id/etBarang"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Masukkan Nama Barang"
+                    android:inputType="text"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@android:drawable/edit_text"
+                    android:textSize="16sp" />
+
+                <!-- Stok EditText -->
+                <EditText
+                    android:id="@+id/etStok"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Masukkan Stok"
+                    android:inputType="number"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:background="@android:drawable/edit_text"
+                    android:textSize="16sp" />
+
+                <!-- Harga EditText -->
+                <EditText
+                    android:id="@+id/etHarga"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="Masukkan Harga"
+                    android:inputType="numberDecimal"
+                    android:padding="12dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="@android:drawable/edit_text"
+                    android:textSize="16sp" />
+
+            </LinearLayout>
+
+            <!-- Button Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="20dp">
+
+                <!-- Row 1: Simpan and Baca buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <Button
+                        android:id="@+id/buttonSimpan"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="SIMPAN"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_green_dark"
+                        android:layout_marginEnd="8dp"
+                        android:textSize="16sp"
+                        android:onClick="simpan" />
+
+                    <Button
+                        android:id="@+id/buttonBaca"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Baca"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_blue_dark"
+                        android:layout_marginStart="8dp"
+                        android:textSize="16sp"
+                        android:onClick="bacaData" />
+
+                </LinearLayout>
+
+                <!-- Row 2: BATAL button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+
+                    <Button
+                        android:id="@+id/buttonBatal"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="BATAL"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_orange_dark"
+                        android:layout_marginEnd="8dp"
+                        android:textSize="16sp"
+                        android:onClick="batalData" />
+
+                </LinearLayout>
+
+                <!-- Row 3: SharedPreferences buttons -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <Button
+                        android:id="@+id/buttonSimpanPref"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Simpan Pref"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_purple"
+                        android:layout_marginEnd="4dp"
+                        android:textSize="14sp"
+                        android:onClick="simpanPreferences" />
+
+                    <Button
+                        android:id="@+id/buttonTampilPref"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Tampil Pref"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_blue_bright"
+                        android:layout_marginStart="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:textSize="14sp"
+                        android:onClick="tampilPreferences" />
+
+                    <Button
+                        android:id="@+id/buttonClearPref"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="Clear Pref"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_red_light"
+                        android:layout_marginStart="4dp"
+                        android:textSize="14sp"
+                        android:onClick="clearPreferences" />
+
+                </LinearLayout>
+
+                <!-- Row 4: Debug Demo button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center">
+
+                    <Button
+                        android:id="@+id/buttonDebugDemo"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:text="DEBUG PREFERENCES DEMO"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="@android:color/holo_orange_light"
+                        android:textSize="14sp"
+                        android:onClick="openDebugPreferences" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Data Display Area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Data dari Database:"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="16dp" />
+
+        <!-- RecyclerView for displaying data -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#F5F5F5"
+            android:padding="8dp"
+            android:scrollbars="vertical" />
+
+        <!-- Empty state message -->
+        <TextView
+            android:id="@+id/tvEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Belum ada data. Klik tombol SIMPAN untuk menambah data."
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="center"
+            android:padding="20dp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</LinearLayout>

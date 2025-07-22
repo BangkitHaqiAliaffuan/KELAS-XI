@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- Item 1: UBAH (Quick Edit in Dialog) -->
+    <item
+        android:id="@+id/ubah"
+        android:title="Quick Edit" />
+    
+    <!-- Item 2: EDIT (Edit in Main Form) -->
+    <item
+        android:id="@+id/edit_form"
+        android:title="Edit in Form" />
+    
+    <!-- Item 3: HAPUS -->
+    <item
+        android:id="@+id/hapus"
+        android:title="HAPUS" />
+    
+</menu>
