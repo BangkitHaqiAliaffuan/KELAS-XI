@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing Scale -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">12dp</dimen>
+    <dimen name="space_lg">16dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+    <dimen name="space_xxl">24dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="space_40">40dp</dimen>
+    <dimen name="space_48">48dp</dimen>
+    <dimen name="space_64">64dp</dimen>
+    
+    <!-- Text Sizes -->
+    <dimen name="text_xs">12sp</dimen>
+    <dimen name="text_sm">14sp</dimen>
+    <dimen name="text_base">16sp</dimen>
+    <dimen name="text_lg">18sp</dimen>
+    <dimen name="text_xl">20sp</dimen>
+    <dimen name="text_2xl">24sp</dimen>
+    <dimen name="text_3xl">30sp</dimen>
+    <dimen name="text_4xl">36sp</dimen>
+    
+    <!-- Border Radius -->
+    <dimen name="radius_sm">6dp</dimen>
+    <dimen name="radius_md">8dp</dimen>
+    <dimen name="radius_lg">12dp</dimen>
+    <dimen name="radius_xl">16dp</dimen>
+    
+    <!-- Elevation -->
+    <dimen name="elevation_sm">2dp</dimen>
+    <dimen name="elevation_md">4dp</dimen>
+    <dimen name="elevation_lg">8dp</dimen>
+    <dimen name="elevation_xl">12dp</dimen>
+    
+    <!-- Card dimensions -->
+    <dimen name="card_margin">8dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    
+    <!-- Image sizes -->
+    <dimen name="food_image_small">80dp</dimen>
+    <dimen name="food_image_medium">120dp</dimen>
+    <dimen name="food_image_large">200dp</dimen>
+    
+    <!-- Button sizes -->
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_min_width">64dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+    
+    <!-- App bar -->
+    <dimen name="app_bar_height">56dp</dimen>
+</resources>

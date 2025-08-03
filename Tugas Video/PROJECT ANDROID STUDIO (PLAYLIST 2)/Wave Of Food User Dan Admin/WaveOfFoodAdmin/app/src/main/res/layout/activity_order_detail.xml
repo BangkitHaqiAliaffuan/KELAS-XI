@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color"
+    tools:context=".OrderDetailActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Order Info -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_edit_text"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tv_order_id"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order ID: #12345"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_color" />
+
+            <TextView
+                android:id="@+id/tv_customer_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Customer: John Doe"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tv_customer_phone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Phone: +1234567890"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_delivery_address"
+                android:layout_width="wrap_content" 
+                android:layout_height="wrap_content"
+                android:text="Address: Delivery address"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_order_date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Date: 01/08/2025"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_order_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status: Pending"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/warning_color"
+                android:layout_marginTop="8dp" />
+
+        </LinearLayout>
+
+        <!-- Order Items -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Order Items"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_view_items"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Order Summary -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_edit_text"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order Summary"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tv_subtotal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Subtotal: Rp 0"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/tv_delivery_fee"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delivery Fee: Rp 0"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary"
+                android:layout_marginTop="4dp" />
+
+            <TextView
+                android:id="@+id/tv_total_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total: Rp 0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/primary_color"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                android:id="@+id/tv_payment_method"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Payment: Cash"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"
+                android:layout_marginTop="4dp" />
+
+        </LinearLayout>
+
+        <!-- Update Status Button -->
+        <Button
+            android:id="@+id/btn_update_status"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Update Status"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:background="@drawable/bg_button_primary" />
+
+    </LinearLayout>
+
+</ScrollView>

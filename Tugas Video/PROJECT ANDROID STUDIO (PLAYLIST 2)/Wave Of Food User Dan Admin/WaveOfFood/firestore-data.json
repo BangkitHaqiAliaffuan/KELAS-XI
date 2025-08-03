@@ -1,0 +1,94 @@
+{
+  "menu": {
+    "nasi-gudeg": {
+      "foodName": "Nasi Gudeg",
+      "foodPrice": "25000",
+      "foodDescription": "Nasi gudeg khas Yogyakarta dengan ayam kampung, telur, dan sambal krecek yang pedas manis",
+      "foodImage": "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": true,
+      "rating": 4.5
+    },
+    "rendang-daging": {
+      "foodName": "Rendang Daging",
+      "foodPrice": "35000",
+      "foodDescription": "Rendang daging sapi autentik Padang dengan bumbu rempah yang kaya dan santan yang gurih",
+      "foodImage": "https://images.unsplash.com/photo-1604521037225-0448dc7c9e31?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": true,
+      "rating": 4.8
+    },
+    "gado-gado": {
+      "foodName": "Gado-Gado",
+      "foodPrice": "20000",
+      "foodDescription": "Salad Indonesia dengan sayuran rebus, tahu, tempe, dan saus kacang yang lezat",
+      "foodImage": "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": false,
+      "rating": 4.2
+    },
+    "sate-ayam": {
+      "foodName": "Sate Ayam",
+      "foodPrice": "30000",
+      "foodDescription": "Sate ayam bakar dengan bumbu kacang yang gurih dan lontong sebagai pelengkap",
+      "foodImage": "https://images.unsplash.com/photo-1529042410759-befb1204b468?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": true,
+      "rating": 4.6
+    },
+    "bakso-malang": {
+      "foodName": "Bakso Malang",
+      "foodPrice": "18000",
+      "foodDescription": "Bakso daging sapi dengan kuah kaldu yang gurih, mie, dan aneka pelengkap khas Malang",
+      "foodImage": "https://images.unsplash.com/photo-1575669090474-5d35b4b96ba1?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": false,
+      "rating": 4.3
+    },
+    "ayam-geprek": {
+      "foodName": "Ayam Geprek",
+      "foodPrice": "22000",
+      "foodDescription": "Ayam goreng crispy yang digeprek dengan sambal pedas dan nasi putih hangat",
+      "foodImage": "https://images.unsplash.com/photo-1562967916-eb82221dfb38?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": true,
+      "rating": 4.4
+    },
+    "nasi-padang": {
+      "foodName": "Nasi Padang",
+      "foodPrice": "28000",
+      "foodDescription": "Nasi putih dengan berbagai lauk khas Padang seperti rendang, gulai, dan sayur",
+      "foodImage": "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": true,
+      "rating": 4.7
+    },
+    "mie-ayam": {
+      "foodName": "Mie Ayam",
+      "foodPrice": "15000",
+      "foodDescription": "Mie kuning dengan topping ayam, bakso, dan sayuran dalam kuah kaldu yang gurih",
+      "foodImage": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400",
+      "foodCategory": "Indonesian Food",
+      "isPopular": false,
+      "rating": 4.1
+    },
+    "es-teh-manis": {
+      "foodName": "Es Teh Manis",
+      "foodPrice": "5000",
+      "foodDescription": "Teh manis dingin yang menyegarkan, cocok untuk cuaca panas",
+      "foodImage": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400",
+      "foodCategory": "Drinks",
+      "isPopular": true,
+      "rating": 4.0
+    },
+    "jus-alpukat": {
+      "foodName": "Jus Alpukat",
+      "foodPrice": "12000",
+      "foodDescription": "Jus alpukat segar dengan susu kental manis dan es batu",
+      "foodImage": "https://images.unsplash.com/photo-1623065422902-4076cb6d4bd0?w=400",
+      "foodCategory": "Drinks",
+      "isPopular": false,
+      "rating": 4.3
+    }
+  }
+}

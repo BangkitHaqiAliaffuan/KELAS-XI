@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing Scale -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_md">12dp</dimen>
+    <dimen name="space_lg">16dp</dimen>
+    <dimen name="space_xl">20dp</dimen>
+    <dimen name="space_xxl">24dp</dimen>
+    <dimen name="space_32">32dp</dimen>
+    <dimen name="space_40">40dp</dimen>
+    <dimen name="space_48">48dp</dimen>
+    <dimen name="space_64">64dp</dimen>
+    
+    <!-- Text Sizes -->
+    <dimen name="text_xs">12sp</dimen>
+    <dimen name="text_sm">14sp</dimen>
+    <dimen name="text_base">16sp</dimen>
+    <dimen name="text_lg">18sp</dimen>
+    <dimen name="text_xl">20sp</dimen>
+    <dimen name="text_2xl">24sp</dimen>
+    <dimen name="text_3xl">30sp</dimen>
+    <dimen name="text_4xl">36sp</dimen>
+    
+    <!-- Border Radius -->
+    <dimen name="radius_sm">6dp</dimen>
+    <dimen name="radius_md">8dp</dimen>
+    <dimen name="radius_lg">12dp</dimen>
+    <dimen name="radius_xl">16dp</dimen>
+    <dimen name="radius_xxl">20dp</dimen>
+    
+    <!-- Elevation -->
+    <dimen name="elevation_sm">2dp</dimen>
+    <dimen name="elevation_md">4dp</dimen>
+    <dimen name="elevation_lg">8dp</dimen>
+    <dimen name="elevation_xl">12dp</dimen>
+    
+    <!-- Card dimensions -->
+    <dimen name="card_margin">8dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    
+    <!-- Image sizes -->
+    <dimen name="food_image_small">80dp</dimen>
+    <dimen name="food_image_medium">120dp</dimen>
+    <dimen name="food_image_large">200dp</dimen>
+    <dimen name="food_image_hero">300dp</dimen>
+    <dimen name="image_small">48dp</dimen>
+    <dimen name="image_medium">80dp</dimen>
+    <dimen name="image_large">120dp</dimen>
+    <dimen name="image_xl">200dp</dimen>
+    
+    <!-- Button sizes -->
+    <dimen name="button_height">48dp</dimen>
+    <dimen name="button_min_width">64dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="button_height_small">36dp</dimen>
+    <dimen name="button_height_medium">48dp</dimen>
+    <dimen name="button_height_large">56dp</dimen>
+    
+    <!-- App bar -->
+    <dimen name="app_bar_height">56dp</dimen>
+    <dimen name="bottom_nav_height">56dp</dimen>
+    
+    <!-- User app specific dimensions -->
+    <dimen name="search_bar_height">56dp</dimen>
+    <dimen name="category_item_width">80dp</dimen>
+    <dimen name="category_item_height">100dp</dimen>
+    <dimen name="product_card_width">160dp</dimen>
+    <dimen name="product_card_height">200dp</dimen>
+    <dimen name="cart_item_height">80dp</dimen>
+    
+    <!-- Legacy support -->
+    <dimen name="text_size_small">@dimen/text_xs</dimen>
+    <dimen name="text_size_medium">@dimen/text_sm</dimen>
+    <dimen name="text_size_large">@dimen/text_base</dimen>
+    <dimen name="text_size_xl">@dimen/text_lg</dimen>
+    <dimen name="text_size_xxl">@dimen/text_xl</dimen>
+    <dimen name="text_size_extra_large">22sp</dimen>
+    <dimen name="text_size_title">@dimen/text_2xl</dimen>
+    <dimen name="text_size_header">28sp</dimen>
+    <dimen name="margin_small">@dimen/space_sm</dimen>
+    <dimen name="margin_medium">@dimen/space_lg</dimen>
+    <dimen name="margin_large">@dimen/space_xxl</dimen>
+    <dimen name="margin_xl">@dimen/space_32</dimen>
+    <dimen name="padding_small">@dimen/space_sm</dimen>
+    <dimen name="padding_medium">@dimen/space_lg</dimen>
+    <dimen name="padding_large">@dimen/space_xxl</dimen>
+    <dimen name="padding_xl">@dimen/space_32</dimen>
+    <dimen name="card_corner_radius">@dimen/radius_lg</dimen>
+    <dimen name="button_corner_radius">@dimen/radius_md</dimen>
+    <dimen name="card_elevation">@dimen/elevation_md</dimen>
+    <dimen name="card_elevation_high">@dimen/elevation_lg</dimen>
+    
+    <!-- List Item Heights -->
+    <dimen name="list_item_height">72dp</dimen>
+    <dimen name="menu_item_height">120dp</dimen>
+    
+    <!-- Status Bar & Toolbar -->
+    <dimen name="toolbar_height">56dp</dimen>
+    
+    <!-- Missing dimensions from layouts -->
+    <dimen name="text_size_body">@dimen/text_base</dimen>
+    <dimen name="food_card_width">@dimen/product_card_width</dimen>
+    <dimen name="food_card_height_horizontal">160dp</dimen>
+
+</resources>

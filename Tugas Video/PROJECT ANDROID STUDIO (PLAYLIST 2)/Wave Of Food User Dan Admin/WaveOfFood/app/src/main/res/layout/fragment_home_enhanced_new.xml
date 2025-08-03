@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/primary"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_xl"
+            android:paddingBottom="@dimen/space_lg">
+
+            <!-- Welcome Message -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/space_lg">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Selamat Datang"
+                        style="@style/TextBody"
+                        android:textColor="@color/white"
+                        android:alpha="0.8" />
+
+                    <TextView
+                        android:id="@+id/tv_user_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Pengguna"
+                        style="@style/TextSubheading"
+                        android:textColor="@color/white"
+                        tools:text="John Doe" />
+
+                </LinearLayout>
+
+                <!-- Notification Bell -->
+                <ImageButton
+                    android:id="@+id/btn_notifications"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_notifications"
+                    android:background="@drawable/bg_circle_white_transparent"
+                    android:contentDescription="Notifications" />
+
+            </LinearLayout>
+
+            <!-- Search Bar -->
+            <com.google.android.material.textfield.TextInputLayout
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Cari makanan..."
+                app:boxBackgroundColor="@color/white"
+                app:boxCornerRadiusBottomEnd="@dimen/radius_lg"
+                app:boxCornerRadiusBottomStart="@dimen/radius_lg"
+                app:boxCornerRadiusTopEnd="@dimen/radius_lg"
+                app:boxCornerRadiusTopStart="@dimen/radius_lg"
+                app:boxStrokeColor="@color/outline"
+                app:startIconDrawable="@drawable/ic_search"
+                app:startIconTint="@color/primary">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_search"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:imeOptions="actionSearch"
+                    android:textSize="@dimen/text_size_body" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+        </LinearLayout>
+
+        <!-- Categories Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_lg">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Kategori"
+                style="@style/TextSubheading"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="@dimen/space_md" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <!-- Categories will be added dynamically -->
+                    <include layout="@layout/item_category" />
+                    <include layout="@layout/item_category" />
+                    <include layout="@layout/item_category" />
+                    <include layout="@layout/item_category" />
+
+                </LinearLayout>
+
+            </HorizontalScrollView>
+
+        </LinearLayout>
+
+        <!-- Popular Foods Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_lg">
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/space_md">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Makanan Popular"
+                    style="@style/TextSubheading"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/tv_view_all_popular"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lihat Semua"
+                    style="@style/TextCaption"
+                    android:textColor="@color/primary"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:padding="@dimen/space_xs" />
+
+            </LinearLayout>
+
+            <!-- Popular Foods RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_popular_foods"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_food_horizontal" />
+
+        </LinearLayout>
+
+        <!-- Featured Foods Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="@dimen/space_lg"
+            android:paddingTop="@dimen/space_lg"
+            android:paddingBottom="@dimen/space_xl">
+
+            <!-- Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="@dimen/space_md">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Rekomendasi Untuk Anda"
+                    style="@style/TextSubheading"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:id="@+id/tv_view_all_featured"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Lihat Semua"
+                    style="@style/TextCaption"
+                    android:textColor="@color/primary"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:padding="@dimen/space_xs" />
+
+            </LinearLayout>
+
+            <!-- Featured Foods RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_featured_foods"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/item_food_vertical" />
+
+        </LinearLayout>
+
+        <!-- Bottom Spacer -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/bottom_nav_height" />
+
+    </LinearLayout>
+
+</androidx.core.widget.NestedScrollView>

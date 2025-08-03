@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Figma Color Palette -->
+    <!-- Add Figma colors here when needed -->
+    
+    <!-- Primary Colors from Figma Design -->
+    <color name="figma_primary">#4CAF50</color>
+    <color name="figma_primary_variant">#388E3C</color>
+    <color name="figma_secondary">#FF9800</color>
+    
+    <!-- Background Colors -->
+    <color name="figma_background">#FAFAFA</color>
+    <color name="figma_surface">#FFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="figma_text_primary">#212121</color>
+    <color name="figma_text_secondary">#757575</color>
+    
+    <!-- Accent Colors -->
+    <color name="figma_accent">#FFC107</color>
+    <color name="figma_error">#F44336</color>
+    
+</resources>

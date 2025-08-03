@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_admin"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    style="@style/CardStyle"
+    android:layout_marginVertical="@dimen/space_sm"
+    app:cardCornerRadius="@dimen/radius_lg"
+    app:cardElevation="@dimen/elevation_sm"
+    app:rippleColor="@color/primary_green_light"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
+
+        <!-- Top Row: Profile, Info, Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Admin Profile -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="2dp">
+
+                <ImageView
+                    android:id="@+id/iv_admin_profile"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Admin Profile"
+                    android:background="@color/primary_green_light"
+                    tools:src="@drawable/ic_admin_placeholder" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Admin Info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_md"
+                android:layout_marginEnd="@dimen/space_sm"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tv_admin_name"
+                        style="@style/TextSubheading"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/text_primary"
+                        tools:text="John Admin" />
+
+                    <TextView
+                        android:id="@+id/tv_admin_role"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_xs"
+                        android:background="@drawable/bg_status_regular"
+                        android:text="ADMIN"
+                        android:textColor="@color/primary_green"
+                        android:textSize="10sp"
+                        android:paddingHorizontal="6dp"
+                        android:paddingVertical="2dp"
+                        tools:text="ADMIN" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_admin_email"
+                    style="@style/TextBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
+                    tools:text="john.admin@waveoffood.com" />
+
+            </LinearLayout>
+
+            <!-- Status Badge -->
+            <TextView
+                android:id="@+id/tv_admin_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_available"
+                android:text="ACTIVE"
+                android:textColor="@color/success"
+                android:textSize="10sp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                tools:text="ACTIVE" />
+
+        </LinearLayout>
+
+        <!-- Middle Row: Permissions and Dates -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:orientation="horizontal">
+
+            <!-- Permissions -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Permissions"
+                    style="@style/TextCaption"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tv_permissions"
+                    style="@style/TextBody"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp"
+                    tools:text="Orders, Menu, Analytics" />
+
+            </LinearLayout>
+
+            <!-- Dates -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/tv_created_date"
+                    style="@style/TextCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    tools:text="Created: 15 Jan 2024" />
+
+                <TextView
+                    android:id="@+id/tv_last_login"
+                    style="@style/TextCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp"
+                    tools:text="Last login: 2 hours ago" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

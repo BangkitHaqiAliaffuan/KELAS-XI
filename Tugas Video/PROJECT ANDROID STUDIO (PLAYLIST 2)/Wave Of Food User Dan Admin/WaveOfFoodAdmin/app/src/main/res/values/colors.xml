@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Colors -->
+    <color name="primary_green">#2E7D32</color>
+    <color name="primary_green_light">#4CAF50</color>
+    <color name="primary_green_dark">#1B5E20</color>
+    <color name="accent_orange">#FF6B35</color>
+    <color name="accent_orange_light">#FF8A65</color>
+    
+    <!-- Neutral Colors -->
+    <color name="gray_50">#FAFAFA</color>
+    <color name="gray_100">#F5F5F5</color>
+    <color name="gray_200">#EEEEEE</color>
+    <color name="gray_300">#E0E0E0</color>
+    <color name="gray_600">#757575</color>
+    <color name="gray_800">#424242</color>
+    <color name="gray_900">#212121</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="success_light">#E8F5E8</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- Material Design Colors -->
+    <color name="colorPrimary">@color/primary_green</color>
+    <color name="colorPrimaryDark">@color/primary_green_dark</color>
+    <color name="colorAccent">@color/accent_orange</color>
+    <color name="colorSurface">@color/white</color>
+    <color name="colorOnSurface">@color/gray_800</color>
+    
+    <!-- Legacy Colors for backward compatibility -->
+    <color name="primary_color">@color/primary_green_light</color>
+    <color name="primary_dark">@color/primary_green_dark</color>
+    <color name="primary_light">#C8E6C9</color>
+    <color name="accent_color">@color/accent_orange</color>
+    <color name="accent_light">@color/accent_orange_light</color>
+    <color name="success_color">@color/success</color>
+    <color name="warning_color">@color/warning</color>
+    <color name="error_color">@color/error</color>
+    <color name="error_light">#FFCDD2</color>
+    <color name="background_color">@color/gray_100</color>
+    <color name="card_background">@color/white</color>
+    <color name="surface_color">@color/gray_50</color>
+    <color name="text_primary">@color/gray_900</color>
+    <color name="text_secondary">@color/gray_600</color>
+    <color name="text_hint">#BDBDBD</color>
+    <color name="border_color">@color/gray_200</color>
+    <color name="divider">@color/gray_300</color>
+    
+    <!-- Material Design Standard Colors -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Status Bar -->
+    <color name="status_bar_color">@color/primary_green_dark</color>
+</resources>

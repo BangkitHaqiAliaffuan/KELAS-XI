@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    style="@style/CardStyle"
+    android:layout_marginHorizontal="@dimen/space_lg"
+    android:layout_marginVertical="@dimen/space_sm"
+    app:cardCornerRadius="@dimen/radius_lg"
+    app:cardElevation="@dimen/elevation_sm"
+    app:rippleColor="@color/primary_green_light"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
+
+        <!-- Top Row: Image, Info, Actions -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Food Image -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_food_image"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cardCornerRadius="@dimen/radius_lg"
+                app:cardElevation="2dp">
+
+                <ImageView
+                    android:id="@+id/iv_food_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Food Image"
+                    tools:src="@drawable/placeholder_food" />
+
+                <!-- Popular Badge -->
+                <TextView
+                    android:id="@+id/tv_popular_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="4dp"
+                    android:background="@drawable/bg_status_popular"
+                    android:text="POPULAR"
+                    android:textColor="@color/white"
+                    android:textSize="10sp"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="2dp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Food Info -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_md"
+                android:layout_marginEnd="@dimen/space_sm"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_food_name"
+                    style="@style/TextSubheading"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    tools:text="Chicken Burger" />
+
+                <TextView
+                    android:id="@+id/tv_food_description"
+                    style="@style/TextCaption"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="@color/text_secondary"
+                    tools:text="Delicious chicken burger with fresh lettuce" />
+
+                <TextView
+                    android:id="@+id/tv_food_price"
+                    style="@style/TextPrice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_xs"
+                    android:textColor="@color/primary_green"
+                    tools:text="Rp 25.000" />
+
+            </LinearLayout>
+
+            <!-- Action Buttons -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Edit"
+                    android:textSize="12sp"
+                    android:minWidth="72dp"
+                    android:layout_marginBottom="@dimen/space_xs"
+                    app:icon="@drawable/ic_edit"
+                    app:iconSize="14dp"
+                    app:strokeColor="@color/primary_green"
+                    android:textColor="@color/primary_green" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_delete"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="Delete"
+                    android:textSize="12sp"
+                    android:minWidth="72dp"
+                    app:icon="@drawable/ic_delete"
+                    app:iconSize="14dp"
+                    app:strokeColor="@color/error"
+                    android:textColor="@color/error" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Bottom Row: Availability -->
+        <LinearLayout
+            android:id="@+id/layout_availability"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="@dimen/space_sm"
+            android:paddingHorizontal="@dimen/space_md"
+            android:background="@drawable/bg_rounded_light"
+            android:backgroundTint="@color/gray_50">
+
+            <TextView
+                android:id="@+id/tv_availability_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status_available"
+                android:text="AVAILABLE"
+                android:textColor="@color/success"
+                android:textSize="10sp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="4dp"
+                android:layout_marginEnd="@dimen/space_md"
+                tools:text="AVAILABLE" />
+
+            <TextView
+                style="@style/TextBody"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Available for order"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switch_available"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                app:thumbTint="@color/white"
+                app:trackTint="@color/primary_green"
+                tools:checked="true" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginEnd="@dimen/margin_medium"
+    android:background="?android:attr/selectableItemBackground"
+    android:padding="@dimen/padding_small"
+    android:gravity="center">
+
+    <!-- Category Icon Container -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:cardCornerRadius="30dp"
+        app:cardElevation="@dimen/card_elevation"
+        app:cardBackgroundColor="@color/background_card"
+        android:layout_marginBottom="@dimen/margin_small">
+
+        <ImageView
+            android:id="@+id/ivCategoryIcon"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_category_food"
+            app:tint="@color/primary_green"
+            android:contentDescription="Category Icon" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Category Name -->
+    <TextView
+        android:id="@+id/tvCategoryName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Indonesian"
+        android:textSize="@dimen/text_size_small"
+        android:textColor="@color/black"
+        android:fontFamily="sans-serif-medium"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:gravity="center" />
+
+</LinearLayout>

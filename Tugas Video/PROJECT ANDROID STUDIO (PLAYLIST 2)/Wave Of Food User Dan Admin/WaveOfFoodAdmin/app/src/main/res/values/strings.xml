@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">WaveOfFood Admin</string>
+    
+    <!-- Login Strings -->
+    <string name="admin_login">Admin Login</string>
+    <string name="email_hint">Email Admin</string>
+    <string name="password_hint">Password</string>
+    <string name="login_button">LOGIN</string>
+    <string name="admin_access_only">Only authorized admin can access this dashboard</string>
+    
+    <!-- Dashboard Strings -->
+    <string name="welcome_admin">Welcome Admin!</string>
+    <string name="manage_restaurant">Manage your WaveOfFood restaurant</string>
+    <string name="dashboard_statistics">Dashboard Statistics</string>
+    <string name="management_tools">Management Tools</string>
+    
+    <!-- Statistics -->
+    <string name="total_orders">Total Orders</string>
+    <string name="total_users">Total Users</string>
+    <string name="menu_items">Menu Items</string>
+    <string name="total_revenue">Total Revenue</string>
+    
+    <!-- Management Sections -->
+    <string name="order_management">Order Management</string>
+    <string name="order_management_desc">View and manage customer orders</string>
+    
+    <string name="menu_management">Menu Management</string>
+    <string name="menu_management_desc">Add, edit, and manage food items</string>
+    
+    <string name="user_management">User Management</string>
+    <string name="user_management_desc">View and manage customer accounts</string>
+    
+    <string name="analytics_reports">Analytics &amp; Reports</string>
+    <string name="analytics_reports_desc">View sales reports and analytics</string>
+    
+    <!-- Order Status -->
+    <string name="order_pending">Pending</string>
+    <string name="order_confirmed">Confirmed</string>
+    <string name="order_preparing">Preparing</string>
+    <string name="order_delivering">Delivering</string>
+    <string name="order_completed">Completed</string>
+    <string name="order_cancelled">Cancelled</string>
+    
+    <!-- Common -->
+    <string name="loading">Loading…</string>
+    <string name="no_data">No data available</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="refresh">Refresh</string>
+    <string name="logout">Logout</string>
+    <string name="update_status">Update Status</string>
+    <string name="view_details">View Details</string>
+    
+    <!-- Order Management -->
+    <string name="no_orders">No orders found</string>
+    <string name="order_id">Order ID</string>
+    <string name="customer_name">Customer Name</string>
+    <string name="order_date">Order Date</string>
+    <string name="order_status">Status</string>
+    <string name="order_total">Total</string>
+    <string name="items_count">items</string>
+    
+    <!-- Messages -->
+    <string name="login_success">Login successful</string>
+    <string name="login_failed">Login failed</string>
+    <string name="access_denied">Access denied. Only admin can access.</string>
+    <string name="status_updated">Status updated successfully</string>
+    <string name="status_update_failed">Failed to update status</string>
+    <string name="data_refreshed">Data refreshed</string>
+</resources>

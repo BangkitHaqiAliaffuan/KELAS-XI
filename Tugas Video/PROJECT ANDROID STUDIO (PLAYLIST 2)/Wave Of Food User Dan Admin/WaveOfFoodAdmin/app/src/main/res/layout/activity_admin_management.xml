@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_color">
+
+    <!-- Statistics Header -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/space_lg"
+        app:cardCornerRadius="@dimen/radius_lg"
+        app:cardElevation="@dimen/elevation_sm"
+        style="@style/CardStyle">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/space_lg">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Admin Statistics"
+                style="@style/TextHeading"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="@dimen/space_md" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="3">
+
+                <!-- Total Admins -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="@dimen/space_sm">
+
+                    <TextView
+                        android:id="@+id/tv_total_admins"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        style="@style/TextStatistic"
+                        android:textColor="@color/primary_green" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Admins"
+                        style="@style/TextCaption"
+                        android:textColor="@color/text_secondary" />
+
+                </LinearLayout>
+
+                <!-- Active Admins -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="@dimen/space_sm">
+
+                    <TextView
+                        android:id="@+id/tv_active_admins"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        style="@style/TextStatistic"
+                        android:textColor="@color/success" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active"
+                        style="@style/TextCaption"
+                        android:textColor="@color/text_secondary" />
+
+                </LinearLayout>
+
+                <!-- New Today -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:padding="@dimen/space_sm">
+
+                    <TextView
+                        android:id="@+id/tv_new_today"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0"
+                        style="@style/TextStatistic"
+                        android:textColor="@color/accent_orange" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="New Today"
+                        style="@style/TextCaption"
+                        android:textColor="@color/text_secondary" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Search Bar -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="@dimen/space_lg"
+        android:layout_marginBottom="@dimen/space_lg"
+        app:cardCornerRadius="@dimen/radius_lg"
+        app:cardElevation="@dimen/elevation_sm"
+        style="@style/CardStyle">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/space_md"
+            app:startIconDrawable="@drawable/ic_search"
+            app:boxBackgroundMode="none"
+            app:hintTextColor="@color/text_secondary">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Search admins by name, email, or role..."
+                android:inputType="text"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Admin List Container -->
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- Admins RecyclerView -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_view_admins"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingHorizontal="@dimen/space_lg"
+                android:paddingBottom="80dp"
+                tools:listitem="@layout/item_admin_management" />
+
+            <!-- Empty State -->
+            <TextView
+                android:id="@+id/tv_empty_state"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="No admins found\n\nAdd admin users to manage the system"
+                android:textAlignment="center"
+                android:textSize="16sp"
+                android:textColor="@color/text_secondary"
+                android:visibility="gone"
+                android:drawableTop="@drawable/ic_admin_placeholder"
+                android:drawablePadding="@dimen/space_md"
+                tools:visibility="visible" />
+
+            <!-- Loading Progress -->
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- Add Admin FAB -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_admin"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="@dimen/space_lg"
+        android:src="@drawable/ic_add"
+        android:contentDescription="Add New Admin"
+        app:tint="@color/white"
+        app:backgroundTint="@color/primary_green"
+        app:elevation="@dimen/elevation_md"
+        app:pressedTranslationZ="@dimen/elevation_lg" />
+
+</LinearLayout>

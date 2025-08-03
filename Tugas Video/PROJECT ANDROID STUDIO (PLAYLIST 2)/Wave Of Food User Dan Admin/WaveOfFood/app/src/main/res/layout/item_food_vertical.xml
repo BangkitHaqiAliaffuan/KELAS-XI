@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    style="@style/CardFood"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/space_sm">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface"
+        android:padding="@dimen/space_sm">
+
+        <!-- Food Image Container -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_food_image"
+            style="@style/CardImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/ivFoodImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    tools:src="@mipmap/ic_launcher" />
+
+                <!-- Status Badge Container -->
+                <LinearLayout
+                    android:id="@+id/layout_badges"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end|top"
+                    android:layout_margin="@dimen/space_xs"
+                    android:orientation="vertical">
+
+                    <!-- Popular Badge -->
+                    <TextView
+                        android:id="@+id/badge_popular"
+                        style="@style/BadgePopular"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Popular"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+                    <!-- New Badge -->
+                    <TextView
+                        android:id="@+id/badge_new"
+                        style="@style/BadgeNew"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/space_xs"
+                        android:text="New"
+                        android:visibility="gone" />
+
+                </LinearLayout>
+
+                <!-- Favorite Button -->
+                <ImageButton
+                    android:id="@+id/btn_favorite"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="start|top"
+                    android:layout_margin="@dimen/space_xs"
+                    android:background="@drawable/bg_favorite_button"
+                    android:contentDescription="Add to favorite"
+                    android:src="@drawable/ic_favorite_border"
+                    android:tint="@color/error" />
+
+            </FrameLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Food Name -->
+        <TextView
+            android:id="@+id/tvFoodName"
+            style="@style/TextSubheading"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_xs"
+            android:layout_marginEnd="@dimen/space_sm"
+            android:ellipsize="end"
+            android:maxLines="2"
+            app:layout_constraintEnd_toStartOf="@id/btn_add_to_cart"
+            app:layout_constraintStart_toEndOf="@id/card_food_image"
+            app:layout_constraintTop_toTopOf="@id/card_food_image"
+            tools:text="Nasi Goreng Special dengan Ayam" />
+
+        <!-- Food Description -->
+        <TextView
+            android:id="@+id/tvFoodDescription"
+            style="@style/TextCaption"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_xs"
+            android:layout_marginEnd="@dimen/space_sm"
+            android:ellipsize="end"
+            android:maxLines="2"
+            app:layout_constraintEnd_toStartOf="@id/btn_add_to_cart"
+            app:layout_constraintStart_toEndOf="@id/card_food_image"
+            app:layout_constraintTop_toBottomOf="@id/tvFoodName"
+            tools:text="Delicious fried rice with chicken and fresh vegetables" />
+
+        <!-- Price and Rating Container -->
+        <LinearLayout
+            android:id="@+id/layout_price_rating"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_lg"
+            android:layout_marginTop="@dimen/space_sm"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:layout_constraintStart_toEndOf="@id/card_food_image"
+            app:layout_constraintTop_toBottomOf="@id/tvFoodDescription"
+            app:layout_constraintBottom_toBottomOf="@id/card_food_image"
+            app:layout_constraintEnd_toStartOf="@id/btn_add_to_cart">
+
+            <!-- Food Price -->
+            <TextView
+                android:id="@+id/tvFoodPrice"
+                style="@style/TextPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                tools:text="Rp 25.000" />
+
+            <!-- Rating Section -->
+            <LinearLayout
+                android:id="@+id/layout_rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/space_md"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_star"
+                    android:tint="@color/warning"
+                    android:layout_marginEnd="@dimen/space_xs" />
+
+                <TextView
+                    android:id="@+id/tvRating"
+                    style="@style/TextCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/warning"
+                    android:textStyle="bold"
+                    tools:text="4.5" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Add to Cart Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_add_to_cart"
+            style="@style/ButtonAccent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="0dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:icon="@drawable/ic_add"
+            app:iconGravity="textStart"
+            app:iconPadding="0dp"
+            app:iconSize="24dp"
+            app:iconTint="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/card_food_image" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

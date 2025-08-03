@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_color">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_lg">
+
+        <!-- Basic Information Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_lg"
+            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardElevation="@dimen/elevation_sm"
+            style="@style/CardStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Basic Information"
+                    style="@style/TextHeading"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_md" />
+
+                <!-- Admin Name -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_md"
+                    app:startIconDrawable="@drawable/ic_person"
+                    app:boxStrokeColor="@color/primary_green"
+                    app:hintTextColor="@color/primary_green">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_admin_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Admin Name"
+                        android:inputType="textPersonName"
+                        android:textColor="@color/text_primary" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Admin Email -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_md"
+                    app:startIconDrawable="@drawable/ic_email"
+                    app:boxStrokeColor="@color/primary_green"
+                    app:hintTextColor="@color/primary_green">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_admin_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Email Address"
+                        android:inputType="textEmailAddress"
+                        android:textColor="@color/text_primary" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Admin Password (only for new admin) -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="@dimen/space_md"
+                    app:startIconDrawable="@drawable/ic_lock"
+                    app:endIconMode="password_toggle"
+                    app:boxStrokeColor="@color/primary_green"
+                    app:hintTextColor="@color/primary_green">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_admin_password"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="Password (minimum 6 characters)"
+                        android:inputType="textPassword"
+                        android:textColor="@color/text_primary" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Role and Status Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_lg"
+            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardElevation="@dimen/elevation_sm"
+            style="@style/CardStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Role &amp; Status"
+                    style="@style/TextHeading"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_md" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <!-- Role Spinner -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="@dimen/space_sm"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Role"
+                            style="@style/TextSubheading"
+                            android:textColor="@color/text_primary"
+                            android:layout_marginBottom="@dimen/space_xs" />
+
+                        <Spinner
+                            android:id="@+id/spinner_role"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_spinner"
+                            android:padding="@dimen/space_sm" />
+
+                    </LinearLayout>
+
+                    <!-- Status Spinner -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="@dimen/space_sm"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Status"
+                            style="@style/TextSubheading"
+                            android:textColor="@color/text_primary"
+                            android:layout_marginBottom="@dimen/space_xs" />
+
+                        <Spinner
+                            android:id="@+id/spinner_status"
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:background="@drawable/bg_spinner"
+                            android:padding="@dimen/space_sm" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Permissions Section -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_lg"
+            app:cardCornerRadius="@dimen/radius_lg"
+            app:cardElevation="@dimen/elevation_sm"
+            style="@style/CardStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/space_lg">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Permissions"
+                    style="@style/TextHeading"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_md" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Select what this admin can access and manage"
+                    style="@style/TextCaption"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="@dimen/space_md" />
+
+                <!-- Can Manage Orders -->
+                <CheckBox
+                    android:id="@+id/cb_can_manage_orders"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Orders"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:buttonTint="@color/primary_green"
+                    android:checked="true" />
+
+                <!-- Can Manage Menu -->
+                <CheckBox
+                    android:id="@+id/cb_can_manage_menu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Menu Items"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:buttonTint="@color/primary_green"
+                    android:checked="true" />
+
+                <!-- Can Manage Users -->
+                <CheckBox
+                    android:id="@+id/cb_can_manage_users"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Users"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:buttonTint="@color/primary_green"
+                    android:checked="false" />
+
+                <!-- Can View Analytics -->
+                <CheckBox
+                    android:id="@+id/cb_can_view_analytics"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="View Analytics &amp; Reports"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="@dimen/space_sm"
+                    android:buttonTint="@color/primary_green"
+                    android:checked="true" />
+
+                <!-- Can Manage Admins -->
+                <CheckBox
+                    android:id="@+id/cb_can_manage_admins"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Manage Other Admins"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_primary"
+                    android:buttonTint="@color/primary_green"
+                    android:checked="false" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="⚠️ Admin management permission should only be given to super admins"
+                    style="@style/TextCaption"
+                    android:textColor="@color/warning"
+                    android:layout_marginTop="@dimen/space_sm" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="@dimen/space_lg">
+
+            <!-- Delete Button (only in edit mode) -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_delete"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="@dimen/space_sm"
+                android:text="Delete Admin"
+                android:textSize="16sp"
+                android:textColor="@color/error"
+                app:icon="@drawable/ic_delete"
+                app:iconSize="20dp"
+                app:strokeColor="@color/error"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <!-- Save Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_save"
+                style="@style/Widget.Material3.Button"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="2"
+                android:text="Save Admin"
+                android:textSize="16sp"
+                android:textColor="@color/white"
+                app:backgroundTint="@color/primary_green"
+                app:icon="@drawable/ic_save"
+                app:iconSize="20dp" />
+
+        </LinearLayout>
+
+        <!-- Loading Progress -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+</ScrollView>
