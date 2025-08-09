@@ -86,8 +86,8 @@ class LoginActivity : AppCompatActivity() {
                     // Login berhasil
                     Toast.makeText(this, "Login Berhasil", Toast.LENGTH_SHORT).show()
                     
-                    // Arahkan ke MainActivity
-                    startActivity(Intent(this, MainActivity::class.java))
+                    // Arahkan ke MainActivityCompose
+                    startActivity(Intent(this, MainActivityCompose::class.java))
                     finish() // Tutup LoginActivity
                 } else {
                     // Login gagal

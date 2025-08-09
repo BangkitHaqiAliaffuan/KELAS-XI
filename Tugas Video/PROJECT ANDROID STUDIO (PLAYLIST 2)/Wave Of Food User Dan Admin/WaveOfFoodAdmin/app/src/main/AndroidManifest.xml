@@ -58,11 +58,6 @@
             android:name=".UserDetailActivity"
             android:exported="false" />
             
-        <!-- Analytics -->
-        <activity
-            android:name=".AnalyticsActivity"
-            android:exported="false" />
-            
         <!-- Admin Management -->
         <activity
             android:name=".AdminManagementActivity"

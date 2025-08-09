@@ -38,7 +38,7 @@
         
         <!-- Main Activity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivityCompose"
             android:exported="false" />
         
         <!-- Detail Activity -->
@@ -46,19 +46,9 @@
             android:name=".DetailActivity"
             android:exported="false" />
         
-        <!-- Checkout Activity -->
+        <!-- New Enhanced Checkout Activity -->
         <activity
-            android:name=".CheckoutActivity"
-            android:exported="false" />
-            
-        <!-- Safe Checkout Activity -->
-        <activity
-            android:name=".CheckoutActivitySafe"
-            android:exported="false" />
-            
-        <!-- Simple Checkout Activity -->
-        <activity
-            android:name=".CheckoutActivitySimple"
+            android:name=".CheckoutActivityNew"
             android:exported="false" />
             
         <!-- Order Confirmation Activity -->

@@ -171,17 +171,14 @@ class DetailActivity : AppCompatActivity() {
             
             try {
                 // Buat CartItemModel dengan struktur yang sama seperti HomeFragment
-                val cartItem = com.kelasxi.waveoffood.model.CartItemModel(
+                val cartItem = com.kelasxi.waveoffood.models.CartItemModel(
                     id = UUID.randomUUID().toString(),
-                    foodId = foodItem.id,
-                    name = foodItem.name,
-                    price = foodItem.price,
-                    imageUrl = foodItem.imageUrl,
-                    quantity = quantity,
-                    selectedSize = "Regular",
-                    selectedExtras = emptyList(),
-                    subtotal = foodItem.price * quantity,
-                    addedAt = null
+                    foodName = foodItem.name,
+                    foodPrice = foodItem.price.toString(),
+                    foodDescription = foodItem.description,
+                    foodImage = foodItem.imageUrl,
+                    foodCategory = foodItem.categoryId,
+                    quantity = quantity
                 )
                 
                 // Disable tombol saat proses

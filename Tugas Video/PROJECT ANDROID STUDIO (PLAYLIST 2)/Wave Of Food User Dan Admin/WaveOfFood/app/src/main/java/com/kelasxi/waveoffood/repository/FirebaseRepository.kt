@@ -3,7 +3,7 @@ package com.kelasxi.waveoffood.repository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.kelasxi.waveoffood.model.*
+import com.kelasxi.waveoffood.models.*
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -34,11 +34,9 @@ class FirebaseRepository {
                     name = name,
                     email = email,
                     address = "",
-                    phone = "",
+                    profileImage = "",
                     profileImageUrl = "",
-                    favoriteCategories = emptyList(),
-                    totalOrders = 0,
-                    loyaltyPoints = 0
+                    phone = ""
                 )
                 
                 // Save user to Firestore
@@ -176,7 +174,7 @@ class FirebaseRepository {
             usersCollection
                 .document(userId)
                 .collection("cart")
-                .document(cartItem.id)
+                .document(cartItem.id ?: "unknown")
                 .set(cartItem)
                 .await()
             Result.success(Unit)
@@ -208,7 +206,7 @@ class FirebaseRepository {
             usersCollection
                 .document(userId)
                 .collection("cart")
-                .document(cartItem.id)
+                .document(cartItem.id ?: "unknown")
                 .set(cartItem)
                 .await()
             Result.success(Unit)

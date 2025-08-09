@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.FoodModel
+import com.kelasxi.waveoffood.models.FoodModel
 
 class FoodAdapter(
     private val foods: MutableList<FoodModel>,

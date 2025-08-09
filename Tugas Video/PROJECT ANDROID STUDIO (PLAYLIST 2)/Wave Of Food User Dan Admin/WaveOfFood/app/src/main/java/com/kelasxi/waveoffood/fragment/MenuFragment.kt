@@ -188,24 +188,65 @@ class MenuFragment : Fragment() {
             .addOnSuccessListener { documents ->
                 Log.d(TAG, "Firestore query successful. Document count: ${documents.size()}")
                 allProducts.clear()
+                
+                if (documents.isEmpty()) {
+                    Log.w(TAG, "No documents found in foods collection")
+                    Toast.makeText(context, "Tidak ada menu tersedia", Toast.LENGTH_SHORT).show()
+                    filterProducts()
+                    return@addOnSuccessListener
+                }
+                
+                var successCount = 0
+                var errorCount = 0
+                
                 for (document in documents) {
                     Log.d(TAG, "Processing document: ${document.id}")
                     try {
-                        val foodItem = document.toObject(FoodItemModel::class.java)
+                        // Log raw document data for debugging
+                        Log.d(TAG, "Document data: ${document.data}")
+                        
+                        // Try automatic parsing first
+                        val foodItem = try {
+                            document.toObject(FoodItemModel::class.java)
+                        } catch (e: Exception) {
+                            Log.w(TAG, "Automatic parsing failed for ${document.id}, trying manual parsing: ${e.message}")
+                            // Manual parsing as fallback
+                            createFoodItemManually(document)
+                        }
+                        
                         // Pastikan ID ter-set dengan benar
                         foodItem.id = document.id
-                        Log.d(TAG, "Food item created: ${foodItem.name} - ID: ${foodItem.id} - Price: ${foodItem.price} - Category: ${foodItem.categoryId}")
-                        allProducts.add(foodItem)
+                        
+                        // Log detail item untuk debugging
+                        Log.d(TAG, "Successfully parsed: ${foodItem.name} - ID: ${foodItem.id} - Price: ${foodItem.price} - Category: ${foodItem.categoryId} - Available: ${foodItem.isAvailable}")
+                        
+                        // Hanya tambahkan item yang tersedia dan memiliki nama
+                        if (foodItem.name.isNotEmpty() && foodItem.isAvailable) {
+                            allProducts.add(foodItem)
+                            successCount++
+                        } else {
+                            Log.d(TAG, "Skipping item: name='${foodItem.name}', available=${foodItem.isAvailable}")
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error parsing document ${document.id}: ${e.message}")
+                        errorCount++
+                        Log.e(TAG, "Error parsing document ${document.id}: ${e.message}", e)
+                        Log.e(TAG, "Document data that failed: ${document.data}")
                     }
                 }
-                Log.d(TAG, "All products loaded: ${allProducts.size}")
+                
+                Log.d(TAG, "Loading completed - Success: $successCount, Errors: $errorCount, Total loaded: ${allProducts.size}")
+                
+                if (allProducts.isEmpty()) {
+                    Toast.makeText(context, "Tidak ada menu tersedia saat ini", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Berhasil memuat ${allProducts.size} menu", Toast.LENGTH_SHORT).show()
+                }
+                
                 filterProducts() // Apply current filters
             }
             .addOnFailureListener { exception ->
                 Log.e(TAG, "Error loading products from foods collection", exception)
-                Toast.makeText(context, "Gagal memuat produk: ${exception.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Gagal memuat produk: ${exception.message}", Toast.LENGTH_LONG).show()
             }
     }
 
@@ -241,5 +282,31 @@ class MenuFragment : Fragment() {
         val intent = Intent(requireContext(), DetailActivity::class.java)
         intent.putExtra("FOOD_ID", foodItem.id)
         startActivity(intent)
+    }
+    
+    /**
+     * Manual parsing untuk mengatasi masalah tipe data yang tidak kompatibel
+     */
+    private fun createFoodItemManually(document: com.google.firebase.firestore.DocumentSnapshot): FoodItemModel {
+        return FoodItemModel(
+            id = document.id,
+            name = document.getString("name") ?: document.getString("foodName") ?: "",
+            description = document.getString("description") ?: document.getString("foodDescription") ?: "",
+            imageUrl = document.getString("imageUrl") ?: document.getString("foodImage") ?: "",
+            categoryId = document.getString("categoryId") ?: document.getString("foodCategory") ?: "",
+            price = when (val priceValue = document.get("price")) {
+                is Long -> priceValue
+                is String -> priceValue.toLongOrNull() ?: 0L
+                is Double -> priceValue.toLong()
+                else -> document.getString("foodPrice")?.toLongOrNull() ?: 0L
+            },
+            rating = document.getDouble("rating") ?: 0.0,
+            isPopular = document.getBoolean("isPopular") ?: false,
+            isAvailable = document.getBoolean("isAvailable") ?: true,
+            preparationTime = document.getLong("preparationTime") ?: 0L,
+            ingredients = document.get("ingredients") as? List<String> ?: emptyList(),
+            createdAt = document.getString("createdAt"),
+            updatedAt = document.getString("updatedAt")
+        )
     }
 }

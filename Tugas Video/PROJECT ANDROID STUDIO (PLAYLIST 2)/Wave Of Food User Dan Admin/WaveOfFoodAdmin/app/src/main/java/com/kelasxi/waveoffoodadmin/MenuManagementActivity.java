@@ -174,20 +174,22 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
             Toast.makeText(this, "Loading menu items...", Toast.LENGTH_SHORT).show();
         }
         
-        // Try 'foods' collection first (enhanced structure)
+        // Use 'foods' collection (primary collection for menu data)
+        Log.d(TAG, "Loading from 'foods' collection...");
         firestore.collection("foods")
                 .orderBy("name", Query.Direction.ASCENDING)
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "Successfully loaded from 'foods' collection");
+                    Log.d(TAG, "Query completed. Found " + queryDocumentSnapshots.size() + " documents in 'foods' collection");
                     foodsList.clear();
                     
                     if (queryDocumentSnapshots.isEmpty()) {
-                        Log.d(TAG, "'foods' collection is empty, trying 'menu' collection...");
+                        Log.w(TAG, "'foods' collection is empty, trying 'menu' collection as fallback...");
                         loadFromMenuCollection();
                         return;
                     }
                     
+                    int loadedCount = 0;
                     for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
                         try {
                             FoodModel food = new FoodModel();
@@ -216,16 +218,19 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
                             food.setAvailable(document.getBoolean("isAvailable") != null ? document.getBoolean("isAvailable") : true);
                             
                             foodsList.add(food);
-                            Log.d(TAG, "Added food: " + food.getName() + " - Price: " + food.getPrice());
+                            loadedCount++;
+                            Log.d(TAG, "Added food " + loadedCount + ": " + food.getName() + " - Price: " + food.getPrice() + " - Available: " + food.isAvailable());
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing food document: " + document.getId(), e);
                         }
                     }
                     
+                    Log.d(TAG, "Successfully loaded " + loadedCount + " items from 'foods' collection");
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error loading from 'foods' collection", e);
+                    Log.w(TAG, "Trying 'menu' collection as fallback...");
                     loadFromMenuCollection();
                 });
     }
@@ -236,9 +241,16 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
         firestore.collection("menu")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "Successfully loaded from 'menu' collection");
+                    Log.d(TAG, "Query completed. Found " + queryDocumentSnapshots.size() + " documents in 'menu' collection");
                     foodsList.clear();
                     
+                    if (queryDocumentSnapshots.isEmpty()) {
+                        Log.w(TAG, "Both 'foods' and 'menu' collections are empty");
+                        updateUI();
+                        return;
+                    }
+                    
+                    int loadedCount = 0;
                     for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
                         try {
                             FoodModel food = new FoodModel();
@@ -263,18 +275,20 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
                             food.setAvailable(true); // Default to available for menu collection
                             
                             foodsList.add(food);
-                            Log.d(TAG, "Added food from menu: " + food.getName());
+                            loadedCount++;
+                            Log.d(TAG, "Added food from menu " + loadedCount + ": " + food.getName() + " - Price: " + food.getPrice());
                         } catch (Exception e) {
                             Log.e(TAG, "Error parsing menu document: " + document.getId(), e);
                         }
                     }
                     
+                    Log.d(TAG, "Successfully loaded " + loadedCount + " items from 'menu' collection");
                     updateUI();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error loading from 'menu' collection", e);
                     showLoading(false);
-                    Toast.makeText(this, "Failed to load menu items", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Failed to load menu items: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
     
@@ -432,6 +446,12 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
             Intent intent = new Intent(this, AddEditFoodActivity.class);
             startActivity(intent);
             return true;
+        } else if (id == R.id.action_debug_foods) {
+            debugFoodsCollection();
+            return true;
+        } else if (id == R.id.action_debug_menu) {
+            debugMenuCollection();
+            return true;
         }
         
         return super.onOptionsItemSelected(item);
@@ -448,5 +468,84 @@ public class MenuManagementActivity extends AppCompatActivity implements AdminFo
         super.onResume();
         // Refresh data when returning from add/edit
         loadFoodItems();
+    }
+    
+    // Debug methods to help troubleshoot data loading issues
+    private void debugFoodsCollection() {
+        Log.d(TAG, "DEBUG: Checking 'foods' collection...");
+        Toast.makeText(this, "Checking foods collection...", Toast.LENGTH_SHORT).show();
+        
+        firestore.collection("foods")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int count = queryDocumentSnapshots.size();
+                    StringBuilder debug = new StringBuilder();
+                    debug.append("Foods Collection Debug:\n");
+                    debug.append("Total documents: ").append(count).append("\n\n");
+                    
+                    int index = 1;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
+                        debug.append(index++).append(". ID: ").append(doc.getId()).append("\n");
+                        debug.append("   Name: ").append(doc.getString("name")).append("\n");
+                        debug.append("   Price: ").append(doc.get("price")).append("\n");
+                        debug.append("   Available: ").append(doc.getBoolean("isAvailable")).append("\n\n");
+                        
+                        if (index > 10) { // Limit to first 10 items
+                            debug.append("... and ").append(count - 10).append(" more items\n");
+                            break;
+                        }
+                    }
+                    
+                    Log.d(TAG, debug.toString());
+                    
+                    new androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Foods Collection Debug")
+                            .setMessage(debug.toString())
+                            .setPositiveButton("OK", null)
+                            .show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "DEBUG: Error accessing foods collection", e);
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+    
+    private void debugMenuCollection() {
+        Log.d(TAG, "DEBUG: Checking 'menu' collection...");
+        Toast.makeText(this, "Checking menu collection...", Toast.LENGTH_SHORT).show();
+        
+        firestore.collection("menu")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    int count = queryDocumentSnapshots.size();
+                    StringBuilder debug = new StringBuilder();
+                    debug.append("Menu Collection Debug:\n");
+                    debug.append("Total documents: ").append(count).append("\n\n");
+                    
+                    int index = 1;
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots) {
+                        debug.append(index++).append(". ID: ").append(doc.getId()).append("\n");
+                        debug.append("   Name: ").append(doc.getString("foodName")).append("\n");
+                        debug.append("   Price: ").append(doc.getString("foodPrice")).append("\n");
+                        debug.append("   Category: ").append(doc.getString("foodCategory")).append("\n\n");
+                        
+                        if (index > 10) { // Limit to first 10 items
+                            debug.append("... and ").append(count - 10).append(" more items\n");
+                            break;
+                        }
+                    }
+                    
+                    Log.d(TAG, debug.toString());
+                    
+                    new androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Menu Collection Debug")
+                            .setMessage(debug.toString())
+                            .setPositiveButton("OK", null)
+                            .show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "DEBUG: Error accessing menu collection", e);
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
     }
 }

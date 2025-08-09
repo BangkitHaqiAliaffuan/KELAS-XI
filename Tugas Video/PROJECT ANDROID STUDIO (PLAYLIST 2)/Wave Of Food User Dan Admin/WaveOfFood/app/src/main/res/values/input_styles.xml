@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Input Field Styles for Wave Of Food -->
+    
+    <!-- Base Input Layout Style -->
+    <style name="InputLayout.Base" parent="Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+        <item name="boxStrokeColor">@color/brand_primary</item>
+        <item name="boxStrokeWidth">2dp</item>
+        <item name="boxStrokeWidthFocused">2dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_sm</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_sm</item>
+        <item name="hintTextColor">@color/brand_primary</item>
+        <item name="android:textColorHint">@color/text_secondary</item>
+        <item name="errorTextColor">@color/accent_error</item>
+        <item name="helperTextTextColor">@color/text_tertiary</item>
+        <item name="startIconTint">@color/brand_primary</item>
+        <item name="endIconTint">@color/brand_primary</item>
+    </style>
+    
+    <!-- Base Edit Text Style -->
+    <style name="EditText.Base" parent="Widget.MaterialComponents.TextInputEditText.OutlinedBox">
+        <item name="android:textSize">@dimen/text_size_body</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:paddingVertical">@dimen/spacing_md</item>
+        <item name="android:paddingHorizontal">@dimen/spacing_md</item>
+        <item name="android:minHeight">@dimen/input_height</item>
+    </style>
+    
+    <!-- Search Input -->
+    <style name="InputLayout.Search" parent="InputLayout.Base">
+        <item name="boxBackgroundMode">filled</item>
+        <item name="boxBackgroundColor">@color/background_secondary</item>
+        <item name="boxStrokeWidth">0dp</item>
+        <item name="boxStrokeWidthFocused">0dp</item>
+        <item name="boxCornerRadiusTopStart">@dimen/radius_lg</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_lg</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_lg</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_lg</item>
+        <item name="startIconDrawable">@drawable/ic_search</item>
+        <item name="startIconTint">@color/text_secondary</item>
+    </style>
+    
+    <!-- Email Input -->
+    <style name="InputLayout.Email" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_email</item>
+        <item name="android:inputType">textEmailAddress</item>
+        <item name="android:hint">Email Address</item>
+    </style>
+    
+    <!-- Password Input -->
+    <style name="InputLayout.Password" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_lock</item>
+        <item name="endIconMode">password_toggle</item>
+        <item name="android:inputType">textPassword</item>
+        <item name="android:hint">Password</item>
+    </style>
+    
+    <!-- Phone Input -->
+    <style name="InputLayout.Phone" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_phone</item>
+        <item name="android:inputType">phone</item>
+        <item name="android:hint">Phone Number</item>
+    </style>
+    
+    <!-- Address Input -->
+    <style name="InputLayout.Address" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_location</item>
+        <item name="android:inputType">textPostalAddress|textMultiLine</item>
+        <item name="android:hint">Delivery Address</item>
+    </style>
+    
+    <!-- Name Input -->
+    <style name="InputLayout.Name" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_person</item>
+        <item name="android:inputType">textPersonName|textCapWords</item>
+        <item name="android:hint">Full Name</item>
+    </style>
+    
+    <!-- Quantity Input -->
+    <style name="InputLayout.Quantity" parent="InputLayout.Base">
+        <item name="boxCornerRadiusTopStart">@dimen/radius_xs</item>
+        <item name="boxCornerRadiusTopEnd">@dimen/radius_xs</item>
+        <item name="boxCornerRadiusBottomStart">@dimen/radius_xs</item>
+        <item name="boxCornerRadiusBottomEnd">@dimen/radius_xs</item>
+        <item name="android:inputType">number</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLength">2</item>
+    </style>
+    
+    <!-- Coupon Input -->
+    <style name="InputLayout.Coupon" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_discount</item>
+        <item name="endIconMode">custom</item>
+        <item name="endIconDrawable">@drawable/ic_check</item>
+        <item name="android:inputType">textCapCharacters</item>
+        <item name="android:hint">Coupon Code</item>
+    </style>
+    
+    <!-- Notes Input -->
+    <style name="InputLayout.Notes" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_note</item>
+        <item name="android:inputType">textMultiLine|textCapSentences</item>
+        <item name="android:hint">Special Instructions</item>
+        <item name="android:minLines">3</item>
+        <item name="android:maxLines">5</item>
+    </style>
+    
+    <!-- Credit Card Input -->
+    <style name="InputLayout.CreditCard" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_credit_card</item>
+        <item name="android:inputType">number</item>
+        <item name="android:hint">Card Number</item>
+        <item name="android:maxLength">19</item>
+    </style>
+    
+    <!-- CVV Input -->
+    <style name="InputLayout.CVV" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_security</item>
+        <item name="endIconMode">password_toggle</item>
+        <item name="android:inputType">numberPassword</item>
+        <item name="android:hint">CVV</item>
+        <item name="android:maxLength">4</item>
+    </style>
+    
+    <!-- Expiry Date Input -->
+    <style name="InputLayout.ExpiryDate" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_calendar</item>
+        <item name="android:inputType">date</item>
+        <item name="android:hint">MM/YY</item>
+        <item name="android:maxLength">5</item>
+    </style>
+    
+    <!-- Rating Input -->
+    <style name="InputLayout.Rating" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_star</item>
+        <item name="android:inputType">numberDecimal</item>
+        <item name="android:hint">Rate (1-5)</item>
+        <item name="android:maxLength">3</item>
+    </style>
+    
+    <!-- Review Input -->
+    <style name="InputLayout.Review" parent="InputLayout.Base">
+        <item name="startIconDrawable">@drawable/ic_comment</item>
+        <item name="android:inputType">textMultiLine|textCapSentences</item>
+        <item name="android:hint">Write your review</item>
+        <item name="android:minLines">4</item>
+        <item name="android:maxLines">8</item>
+    </style>
+</resources>

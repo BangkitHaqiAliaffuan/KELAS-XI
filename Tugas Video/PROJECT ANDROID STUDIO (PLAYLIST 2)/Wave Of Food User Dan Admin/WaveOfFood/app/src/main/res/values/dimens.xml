@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Spacing Scale -->
-    <dimen name="space_xs">4dp</dimen>
-    <dimen name="space_sm">8dp</dimen>
-    <dimen name="space_md">12dp</dimen>
-    <dimen name="space_lg">16dp</dimen>
-    <dimen name="space_xl">20dp</dimen>
     <dimen name="space_xxl">24dp</dimen>
     <dimen name="space_32">32dp</dimen>
     <dimen name="space_40">40dp</dimen>
@@ -21,19 +16,6 @@
     <dimen name="text_2xl">24sp</dimen>
     <dimen name="text_3xl">30sp</dimen>
     <dimen name="text_4xl">36sp</dimen>
-    
-    <!-- Border Radius -->
-    <dimen name="radius_sm">6dp</dimen>
-    <dimen name="radius_md">8dp</dimen>
-    <dimen name="radius_lg">12dp</dimen>
-    <dimen name="radius_xl">16dp</dimen>
-    <dimen name="radius_xxl">20dp</dimen>
-    
-    <!-- Elevation -->
-    <dimen name="elevation_sm">2dp</dimen>
-    <dimen name="elevation_md">4dp</dimen>
-    <dimen name="elevation_lg">8dp</dimen>
-    <dimen name="elevation_xl">12dp</dimen>
     
     <!-- Card dimensions -->
     <dimen name="card_margin">8dp</dimen>
@@ -53,9 +35,6 @@
     <dimen name="button_height">48dp</dimen>
     <dimen name="button_min_width">64dp</dimen>
     <dimen name="fab_size">56dp</dimen>
-    <dimen name="button_height_small">36dp</dimen>
-    <dimen name="button_height_medium">48dp</dimen>
-    <dimen name="button_height_large">56dp</dimen>
     
     <!-- App bar -->
     <dimen name="app_bar_height">56dp</dimen>
@@ -78,18 +57,18 @@
     <dimen name="text_size_extra_large">22sp</dimen>
     <dimen name="text_size_title">@dimen/text_2xl</dimen>
     <dimen name="text_size_header">28sp</dimen>
-    <dimen name="margin_small">@dimen/space_sm</dimen>
-    <dimen name="margin_medium">@dimen/space_lg</dimen>
-    <dimen name="margin_large">@dimen/space_xxl</dimen>
-    <dimen name="margin_xl">@dimen/space_32</dimen>
-    <dimen name="padding_small">@dimen/space_sm</dimen>
-    <dimen name="padding_medium">@dimen/space_lg</dimen>
-    <dimen name="padding_large">@dimen/space_xxl</dimen>
-    <dimen name="padding_xl">@dimen/space_32</dimen>
-    <dimen name="card_corner_radius">@dimen/radius_lg</dimen>
-    <dimen name="button_corner_radius">@dimen/radius_md</dimen>
-    <dimen name="card_elevation">@dimen/elevation_md</dimen>
-    <dimen name="card_elevation_high">@dimen/elevation_lg</dimen>
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_large">24dp</dimen>
+    <dimen name="margin_xl">32dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_large">24dp</dimen>
+    <dimen name="padding_xl">32dp</dimen>
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="button_corner_radius">8dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
+    <dimen name="card_elevation_high">8dp</dimen>
     
     <!-- List Item Heights -->
     <dimen name="list_item_height">72dp</dimen>
@@ -99,7 +78,6 @@
     <dimen name="toolbar_height">56dp</dimen>
     
     <!-- Missing dimensions from layouts -->
-    <dimen name="text_size_body">@dimen/text_base</dimen>
     <dimen name="food_card_width">@dimen/product_card_width</dimen>
     <dimen name="food_card_height_horizontal">160dp</dimen>
 

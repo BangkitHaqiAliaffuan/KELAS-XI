@@ -19,17 +19,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Enhanced Bottom Navigation -->
+    <!-- Enhanced Material 3 Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigation"
-        style="@style/BottomNavigationStyle"
+        style="@style/EnhancedBottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_nav_height"
-        android:background="@color/white"
-        android:elevation="@dimen/elevation_lg"
-        app:itemIconTint="@color/bottom_nav_color"
-        app:itemTextColor="@color/bottom_nav_color"
-        app:itemRippleColor="@color/primary_green_light"
+        android:layout_height="80dp"
+        app:itemIconSize="28dp"
+        app:itemPaddingTop="8dp"
+        app:itemPaddingBottom="8dp"
         app:labelVisibilityMode="labeled"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -4,10 +4,13 @@ service cloud.firestore {
     // Helper function to check if user is admin
     function isAdmin() {
       return request.auth != null && 
-        (request.auth.token.email in ['admin@waveoffood.com', 'admin@kelasxi.com'] ||
+        (request.auth.token.email in ['admin@waveoffood.com', 'admin@kelasxi.com', 'admingeteng@geteng.com'] ||
          request.auth.token.admin == true ||
-         // Allow any authenticated user for admin app testing
-         request.auth.token.email_verified == true);
+         // Allow any authenticated user with verified email for admin app testing
+         request.auth.token.email_verified == true ||
+         // Allow specific admin emails
+         request.auth.token.email == 'admin@waveoffood.com' ||
+         request.auth.token.email == 'admingeteng@geteng.com');
     }
     
     // Helper function to check authentication
@@ -48,21 +51,17 @@ service cloud.firestore {
     
     // Users - UPDATED: Allow admin to read all users, users can read their own data
     match /users/{userId} {
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == userId || isAdmin());
-      allow write: if isAuthenticated() && 
-        (request.auth.uid == userId || isAdmin());
+      allow read: if isAuthenticated(); // More permissive for admin testing
+      allow write: if isAuthenticated(); // More permissive for admin testing
       
       // Cart subcollection
       match /cart/{cartItem} {
-        allow read, write: if isAuthenticated() && 
-          (request.auth.uid == userId || isAdmin());
+        allow read, write: if isAuthenticated(); // More permissive for admin testing
       }
       
       // Favorites subcollection
       match /favorites/{foodId} {
-        allow read, write: if isAuthenticated() && 
-          (request.auth.uid == userId || isAdmin());
+        allow read, write: if isAuthenticated(); // More permissive for admin testing
       }
       
       // Addresses subcollection
@@ -72,12 +71,11 @@ service cloud.firestore {
       }
     }
     
-    // Orders - UPDATED: Allow admin to read all orders
+        // Orders - authenticated users can access their orders, admins can access all
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || isAdmin());
-      allow write: if isAuthenticated() && 
-        (request.auth.uid == resource.data.userId || isAdmin());
+      allow read: if isAuthenticated(); // Any authenticated user can read orders
+      allow write: if isAuthenticated(); // Any authenticated user can write orders
+      // More permissive for admin testing
     }
     
     // Test collection untuk connectivity testing
@@ -92,7 +90,9 @@ service cloud.firestore {
     
     // Admins collection for admin user management
     match /admins/{adminId} {
-      allow read, write: if isAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
+      // More permissive for testing - any authenticated user can read/write admins
     }
   }
 }

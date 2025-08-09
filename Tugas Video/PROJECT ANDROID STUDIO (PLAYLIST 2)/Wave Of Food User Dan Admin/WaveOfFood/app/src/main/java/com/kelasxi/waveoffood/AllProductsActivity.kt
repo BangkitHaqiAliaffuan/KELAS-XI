@@ -113,7 +113,7 @@ class AllProductsActivity : AppCompatActivity() {
     private fun loadProducts() {
         showLoading(true)
         
-        db.collection("menu")
+        db.collection("foods")
             .get()
             .addOnSuccessListener { documents ->
                 showLoading(false)
@@ -126,9 +126,9 @@ class AllProductsActivity : AppCompatActivity() {
                         val foodItem = document.toObject(FoodItemModel::class.java)
                         allProducts.add(foodItem)
                         
-                        // Collect unique categories
-                        if (foodItem.foodCategory?.isNotEmpty() == true) {
-                            categorySet.add(foodItem.foodCategory)
+                        // Collect unique categories (using categoryId field)
+                        if (foodItem.categoryId.isNotEmpty()) {
+                            categorySet.add(foodItem.categoryId)
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Error parsing menu item: ${document.id}", e)
@@ -162,13 +162,15 @@ class AllProductsActivity : AppCompatActivity() {
         filteredProducts.clear()
         
         for (product in allProducts) {
-            val matchesCategory = category == ALL_CATEGORIES || product.foodCategory == category
+            // Fix: Use categoryId instead of foodCategory for filtering
+            val matchesCategory = category == ALL_CATEGORIES || product.categoryId == category
             val matchesSearch = searchQuery.isEmpty() || 
                                product.foodName.contains(searchQuery, ignoreCase = true) ||
                                product.foodDescription.contains(searchQuery, ignoreCase = true)
             
             if (matchesCategory && matchesSearch) {
                 filteredProducts.add(product)
+                Log.d(TAG, "Added product: ${product.foodName}, imageUrl: ${product.imageUrl}")
             }
         }
         
@@ -188,13 +190,9 @@ class AllProductsActivity : AppCompatActivity() {
     
     private fun addToCart(foodItem: FoodItemModel) {
         try {
-            // Convert FoodItemModel to CartItemModel
-            val cartItem = com.kelasxi.waveoffood.model.CartItemModel(
-                id = "",
-                foodId = foodItem.id ?: "",
-                name = foodItem.foodName,
-                price = foodItem.foodPrice.toLongOrNull() ?: 0L,
-                imageUrl = foodItem.foodImage,
+            // Convert FoodItemModel to CartItemModel using convenience constructor
+            val cartItem = com.kelasxi.waveoffood.models.CartItemModel(
+                foodItem = foodItem,
                 quantity = 1
             )
             CartManager.addToCart(cartItem)

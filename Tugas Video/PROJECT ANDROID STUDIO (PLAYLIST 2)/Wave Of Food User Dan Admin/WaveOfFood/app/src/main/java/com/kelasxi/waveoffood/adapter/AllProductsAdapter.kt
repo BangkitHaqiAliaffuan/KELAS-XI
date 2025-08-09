@@ -1,5 +1,6 @@
 package com.kelasxi.waveoffood.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,7 +45,11 @@ class AllProductsAdapter(
             } catch (e: Exception) {
                 product.foodPrice
             }
-            tvProductCategory.text = product.foodCategory ?: "No Category"
+            tvProductCategory.text = if (product.foodCategory.isNotEmpty()) {
+                product.foodCategory
+            } else {
+                "No Category"
+            }
             tvProductDescription.text = if (product.foodDescription.length > 60) {
                 "${product.foodDescription.take(60)}..."
             } else {
@@ -52,6 +57,7 @@ class AllProductsAdapter(
             }
             
             // Load product image
+            Log.d("AllProductsAdapter", "Loading image for ${product.foodName}: ${product.foodImage}")
             Glide.with(holder.itemView.context)
                 .load(product.foodImage)
                 .placeholder(R.drawable.ic_category_food)

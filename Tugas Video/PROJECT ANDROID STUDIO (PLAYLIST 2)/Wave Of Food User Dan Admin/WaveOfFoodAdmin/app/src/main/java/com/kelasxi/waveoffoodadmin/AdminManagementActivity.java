@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -12,6 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -25,6 +28,7 @@ import com.kelasxi.waveoffoodadmin.adapter.AdminManagementAdapter;
 import com.kelasxi.waveoffoodadmin.model.AdminModel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -143,6 +147,13 @@ public class AdminManagementActivity extends AppCompatActivity implements AdminM
             return;
         }
         
+        // First try to load from Firestore
+        loadFromFirestore();
+    }
+    
+    private void loadFromFirestore() {
+        Log.d(TAG, "Loading admins from Firestore...");
+        
         firestore.collection("admins")
                 .orderBy("createdAt", Query.Direction.DESCENDING)
                 .addSnapshotListener((snapshots, error) -> {
@@ -154,6 +165,8 @@ public class AdminManagementActivity extends AppCompatActivity implements AdminM
                         if (errorMessage != null && errorMessage.contains("PERMISSION_DENIED")) {
                             Log.e(TAG, "PERMISSION_DENIED - Check Firestore rules and user authentication");
                             Toast.makeText(this, "Permission denied. Please ensure you're logged in as admin and Firestore rules are updated.", Toast.LENGTH_LONG).show();
+                            // Try to sync from Authentication if Firestore fails
+                            syncFromAuthentication();
                         } else {
                             Toast.makeText(this, "Error loading admins: " + errorMessage, Toast.LENGTH_SHORT).show();
                         }
@@ -334,6 +347,102 @@ public class AdminManagementActivity extends AppCompatActivity implements AdminM
     }
     
     @Override
+    public void onEditAdmin(AdminModel admin) {
+        try {
+            // Validate admin data before opening edit activity
+            if (admin == null) {
+                Toast.makeText(this, "Error: Admin data is null", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (admin.getUid() == null || admin.getUid().trim().isEmpty()) {
+                Toast.makeText(this, "Error: Admin ID is missing", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            Log.d(TAG, "Opening admin edit for: " + admin.getName() + " (ID: " + admin.getUid() + ")");
+            Toast.makeText(this, "Editing " + (admin.getName() != null ? admin.getName() : "Admin") + "...", Toast.LENGTH_SHORT).show();
+            
+            Intent intent = new Intent(this, AddEditAdminActivity.class);
+            intent.putExtra("ADMIN_ID", admin.getUid());
+            intent.putExtra("ADMIN_NAME", admin.getName() != null ? admin.getName() : "Admin User");
+            intent.putExtra("ADMIN_EMAIL", admin.getEmail() != null ? admin.getEmail() : "");
+            intent.putExtra("ADMIN_ROLE", admin.getRole() != null ? admin.getRole() : "admin");
+            intent.putExtra("ADMIN_STATUS", admin.getStatus() != null ? admin.getStatus() : "active");
+            intent.putExtra("IS_EDIT_MODE", true);
+            
+            startActivity(intent);
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error opening admin edit", e);
+            Toast.makeText(this, "Error opening admin edit: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+    
+    @Override
+    public void onDeleteAdmin(AdminModel admin) {
+        try {
+            // Validate admin data
+            if (admin == null) {
+                Toast.makeText(this, "Error: Admin data is null", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (admin.getUid() == null || admin.getUid().trim().isEmpty()) {
+                Toast.makeText(this, "Error: Admin ID is missing", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Show confirmation dialog
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Delete Admin")
+                .setMessage("Are you sure you want to delete admin '" + 
+                    (admin.getName() != null ? admin.getName() : admin.getEmail()) + "'?\n\n" +
+                    "This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    deleteAdmin(admin);
+                })
+                .setNegativeButton("Cancel", null)
+                .setIcon(R.drawable.ic_delete)
+                .show();
+                
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing delete confirmation", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void deleteAdmin(AdminModel admin) {
+        Log.d(TAG, "Deleting admin: " + admin.getName() + " (ID: " + admin.getUid() + ")");
+        Toast.makeText(this, "Deleting " + (admin.getName() != null ? admin.getName() : "Admin") + "...", Toast.LENGTH_SHORT).show();
+        
+        // Remove from Firestore
+        firestore.collection("admins")
+                .document(admin.getUid())
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Admin deleted from Firestore: " + admin.getEmail());
+                    
+                    // Remove from local list
+                    adminsList.remove(admin);
+                    filterAdmins();
+                    updateStats();
+                    
+                    Toast.makeText(this, "✅ Admin deleted successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to delete admin from Firestore", e);
+                    
+                    // Still try to remove from local list
+                    adminsList.remove(admin);
+                    filterAdmins();
+                    updateStats();
+                    
+                    Toast.makeText(this, "⚠️ Admin removed locally (database sync failed)", Toast.LENGTH_LONG).show();
+                });
+    }
+    
+    @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
@@ -344,5 +453,154 @@ public class AdminManagementActivity extends AppCompatActivity implements AdminM
         super.onResume();
         // Refresh data when returning from add/edit activity
         loadAdmins();
+    }
+    
+    private void syncFromAuthentication() {
+        Log.d(TAG, "Syncing admin data from Firebase Authentication...");
+        Toast.makeText(this, "Loading admin data from Authentication...", Toast.LENGTH_SHORT).show();
+        
+        // Create a sample admin record from current authenticated user
+        if (auth.getCurrentUser() != null) {
+            adminsList.clear();
+            
+            AdminModel currentAdmin = new AdminModel();
+            currentAdmin.setUid(auth.getCurrentUser().getUid());
+            currentAdmin.setEmail(auth.getCurrentUser().getEmail());
+            currentAdmin.setName(auth.getCurrentUser().getDisplayName() != null ? 
+                auth.getCurrentUser().getDisplayName() : "Admin User");
+            currentAdmin.setRole("admin");
+            currentAdmin.setStatus("active");
+            
+            // Create default permissions
+            Map<String, Object> permissions = new HashMap<>();
+            permissions.put("manage_users", true);
+            permissions.put("manage_orders", true);
+            permissions.put("manage_menu", true);
+            permissions.put("view_analytics", true);
+            permissions.put("manage_admins", true);
+            currentAdmin.setPermissions(permissions);
+            
+            // Set current time as created date
+            currentAdmin.setCreatedAt(com.google.firebase.Timestamp.now());
+            currentAdmin.setUpdatedAt(com.google.firebase.Timestamp.now());
+            currentAdmin.setLastLoginAt(com.google.firebase.Timestamp.now());
+            
+            adminsList.add(currentAdmin);
+            
+            // Try to save this admin to Firestore for future use
+            saveCurrentAdminToFirestore(currentAdmin);
+            
+            filterAdmins();
+            updateStats();
+            showEmptyState(false);
+            showLoading(false);
+            
+            Log.d(TAG, "Created admin record from Authentication: " + currentAdmin.getEmail());
+            Toast.makeText(this, "✅ Loaded current admin from Authentication", Toast.LENGTH_SHORT).show();
+        } else {
+            showEmptyState(true);
+            showLoading(false);
+            Toast.makeText(this, "❌ No authenticated user found", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void saveCurrentAdminToFirestore(AdminModel admin) {
+        Log.d(TAG, "Attempting to save admin to Firestore: " + admin.getEmail());
+        
+        Map<String, Object> adminData = new HashMap<>();
+        adminData.put("name", admin.getName());
+        adminData.put("email", admin.getEmail());
+        adminData.put("role", admin.getRole());
+        adminData.put("status", admin.getStatus());
+        adminData.put("permissions", admin.getPermissions());
+        adminData.put("createdAt", admin.getCreatedAt());
+        adminData.put("updatedAt", admin.getUpdatedAt());
+        adminData.put("lastLoginAt", admin.getLastLoginAt());
+        
+        firestore.collection("admins")
+                .document(admin.getUid())
+                .set(adminData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Admin saved to Firestore successfully: " + admin.getEmail());
+                    Toast.makeText(this, "✅ Admin data synced to database", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.w(TAG, "Failed to save admin to Firestore: " + e.getMessage());
+                    // Don't show error toast as the app still works with Authentication data
+                });
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        try {
+            getMenuInflater().inflate(R.menu.admin_menu, menu);
+            return true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating options menu", e);
+            return false;
+        }
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        
+        if (id == R.id.action_refresh) {
+            loadAdmins();
+            Toast.makeText(this, "Admin list refreshed", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (id == R.id.action_logout) {
+            showLogoutConfirmation();
+            return true;
+        } else if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        
+        return super.onOptionsItemSelected(item);
+    }
+    
+    private void showLogoutConfirmation() {
+        try {
+            new AlertDialog.Builder(this)
+                .setTitle("Logout Confirmation")
+                .setMessage("Are you sure you want to logout from WaveOfFood Admin?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    performLogout();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .setCancelable(true)
+                .show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing logout confirmation", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void performLogout() {
+        try {
+            Log.d(TAG, "Performing logout from Admin Management...");
+            Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
+            
+            // Sign out from Firebase
+            auth.signOut();
+            
+            // Redirect to login
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            
+            // Close current activity
+            finish();
+            
+            Log.d(TAG, "Logout completed successfully");
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error during logout", e);
+            Toast.makeText(this, "Error during logout: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 }

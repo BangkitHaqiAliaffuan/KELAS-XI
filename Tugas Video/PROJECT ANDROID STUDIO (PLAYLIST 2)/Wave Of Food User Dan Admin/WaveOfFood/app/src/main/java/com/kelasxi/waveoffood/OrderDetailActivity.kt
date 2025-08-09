@@ -12,8 +12,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kelasxi.waveoffood.adapter.OrderDetailAdapter
-import com.kelasxi.waveoffood.model.OrderModel
-import com.kelasxi.waveoffood.model.OrderItemModel
+import com.kelasxi.waveoffood.models.OrderModel
+import com.kelasxi.waveoffood.models.OrderItemModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -138,35 +138,23 @@ class OrderDetailActivity : AppCompatActivity() {
     private fun displayOrderDetail(order: OrderModel) {
         // Order basic info
         tvOrderIdDetail.text = "#${order.orderId.takeLast(8).uppercase()}"
-        val orderDate = order.createdAt?.toDate() ?: Date()
+        val orderDate = order.createdAt.toDate()
         tvOrderDate.text = "Ordered on ${dateFormat.format(orderDate)}"
         tvOrderStatus.text = order.getOrderStatusDisplay()
         
         // Customer info
         tvCustomerName.text = order.userName.ifEmpty { "Customer" }
-        tvDeliveryAddress.text = order.deliveryAddress.address.ifEmpty { "No address provided" }
+        tvDeliveryAddress.text = order.deliveryAddress.ifEmpty { "No address provided" }
         tvPaymentMethod.text = order.paymentMethod
-        tvEstimatedDelivery.text = order.estimatedDelivery?.toDate()?.let { 
-            SimpleDateFormat("HH:mm", Locale.getDefault()).format(it) 
-        } ?: "TBD"
+        tvEstimatedDelivery.text = order.estimatedDelivery.ifEmpty { "TBD" }
         
-        // Order items - use CartItemModel adapter since items are CartItemModel
-        orderDetailAdapter.updateItems(order.items.map { cartItem ->
-            // Convert CartItemModel to OrderItemModel for display
-            OrderItemModel(
-                foodId = cartItem.foodId,
-                foodName = cartItem.name,
-                foodImage = cartItem.imageUrl,
-                price = cartItem.price,
-                quantity = cartItem.quantity,
-                specialInstructions = ""
-            )
-        })
+        // Order items - directly use order.items since they are OrderItemModel
+        orderDetailAdapter.updateItems(order.items)
         
         // Price breakdown
-        tvSubtotal.text = "Rp ${String.format("%,d", order.subtotal)}"
-        tvDeliveryFee.text = "Rp ${String.format("%,d", order.deliveryFee)}"
-        tvTotalAmount.text = "Rp ${String.format("%,d", order.totalAmount)}"
+        tvSubtotal.text = "Rp ${String.format("%,.0f", order.subtotal)}"
+        tvDeliveryFee.text = "Rp ${String.format("%,.0f", order.deliveryFee)}"
+        tvTotalAmount.text = "Rp ${String.format("%,.0f", order.totalAmount)}"
         
         // Status color
         val statusColor = when (order.orderStatus.lowercase()) {

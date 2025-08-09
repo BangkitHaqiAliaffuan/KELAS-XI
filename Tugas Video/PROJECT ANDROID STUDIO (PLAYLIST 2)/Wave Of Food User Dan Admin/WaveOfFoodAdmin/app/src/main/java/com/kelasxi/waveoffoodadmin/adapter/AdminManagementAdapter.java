@@ -4,6 +4,7 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.chip.Chip;
 import com.kelasxi.waveoffoodadmin.R;
 import com.kelasxi.waveoffoodadmin.model.AdminModel;
 
@@ -28,6 +30,8 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
     public interface OnAdminClickListener {
         void onAdminClick(AdminModel admin);
         void onAdminLongClick(AdminModel admin);
+        void onEditAdmin(AdminModel admin);
+        void onDeleteAdmin(AdminModel admin);
     }
     
     public AdminManagementAdapter(List<AdminModel> admins, OnAdminClickListener listener) {
@@ -58,8 +62,10 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
     class AdminViewHolder extends RecyclerView.ViewHolder {
         private CardView cardAdmin;
         private ImageView ivAdminProfile;
-        private TextView tvAdminName, tvAdminEmail, tvAdminRole, tvAdminStatus,
+        private TextView tvAdminName, tvAdminEmail, tvAdminStatus,
                 tvCreatedDate, tvLastLogin, tvPermissions;
+        private Chip chipAdminRole;
+        private Button btnEditAdmin, btnDeleteAdmin;
         
         public AdminViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -68,11 +74,13 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
             ivAdminProfile = itemView.findViewById(R.id.iv_admin_profile);
             tvAdminName = itemView.findViewById(R.id.tv_admin_name);
             tvAdminEmail = itemView.findViewById(R.id.tv_admin_email);
-            tvAdminRole = itemView.findViewById(R.id.tv_admin_role);
+            chipAdminRole = itemView.findViewById(R.id.chip_admin_role);
             tvAdminStatus = itemView.findViewById(R.id.tv_admin_status);
             tvCreatedDate = itemView.findViewById(R.id.tv_created_date);
             tvLastLogin = itemView.findViewById(R.id.tv_last_login);
             tvPermissions = itemView.findViewById(R.id.tv_permissions);
+            btnEditAdmin = itemView.findViewById(R.id.btnEditAdmin);
+            btnDeleteAdmin = itemView.findViewById(R.id.btnDeleteAdmin);
         }
         
         public void bind(AdminModel admin) {
@@ -94,7 +102,7 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
                 
                 // Admin role with styling
                 String role = admin.getRole() != null ? admin.getRoleDisplayName() : "Admin";
-                tvAdminRole.setText(role);
+                chipAdminRole.setText(role);
                 setRoleStyle(admin.getRole());
                 
                 // Admin status with styling
@@ -146,6 +154,19 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
                     return true;
                 });
                 
+                // Button click listeners
+                btnEditAdmin.setOnClickListener(v -> {
+                    if (listener != null && admin != null) {
+                        listener.onEditAdmin(admin);
+                    }
+                });
+                
+                btnDeleteAdmin.setOnClickListener(v -> {
+                    if (listener != null && admin != null) {
+                        listener.onDeleteAdmin(admin);
+                    }
+                });
+                
             } catch (Exception e) {
                 // Log error and show fallback UI
                 android.util.Log.e("AdminManagementAdapter", "Error binding admin data", e);
@@ -157,27 +178,27 @@ public class AdminManagementAdapter extends RecyclerView.Adapter<AdminManagement
         
         private void setRoleStyle(String role) {
             if (role == null) {
-                tvAdminRole.setTextColor(Color.parseColor("#666666"));
-                tvAdminRole.setBackgroundResource(R.drawable.bg_status_regular);
+                chipAdminRole.setTextColor(Color.parseColor("#FFFFFF"));
+                chipAdminRole.setChipBackgroundColorResource(R.color.gray_600);
                 return;
             }
             
             switch (role) {
                 case "super_admin":
-                    tvAdminRole.setTextColor(Color.parseColor("#E91E63"));
-                    tvAdminRole.setBackgroundResource(R.drawable.bg_status_vip);
+                    chipAdminRole.setTextColor(Color.parseColor("#FFFFFF"));
+                    chipAdminRole.setChipBackgroundColorResource(R.color.error);
                     break;
                 case "admin":
-                    tvAdminRole.setTextColor(Color.parseColor("#2196F3"));
-                    tvAdminRole.setBackgroundResource(R.drawable.bg_status_regular);
+                    chipAdminRole.setTextColor(Color.parseColor("#FFFFFF"));
+                    chipAdminRole.setChipBackgroundColorResource(R.color.primary_green);
                     break;
                 case "moderator":
-                    tvAdminRole.setTextColor(Color.parseColor("#FF9800"));
-                    tvAdminRole.setBackgroundResource(R.drawable.bg_status_loyal);
+                    chipAdminRole.setTextColor(Color.parseColor("#FFFFFF"));
+                    chipAdminRole.setChipBackgroundColorResource(R.color.warning);
                     break;
                 default:
-                    tvAdminRole.setTextColor(Color.parseColor("#666666"));
-                    tvAdminRole.setBackgroundResource(R.drawable.bg_status_regular);
+                    chipAdminRole.setTextColor(Color.parseColor("#FFFFFF"));
+                    chipAdminRole.setChipBackgroundColorResource(R.color.gray_600);
                     break;
             }
         }

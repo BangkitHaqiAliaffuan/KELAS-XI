@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.CategoryModel
+import com.kelasxi.waveoffood.models.CategoryModel
 
 class CategoryAdapter(
     private val categories: List<CategoryModel>,

@@ -16,7 +16,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kelasxi.waveoffood.MyOrdersActivity
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.UserModel
+import com.kelasxi.waveoffood.models.UserModel
 
 class ProfileFragmentEnhanced : Fragment() {
     

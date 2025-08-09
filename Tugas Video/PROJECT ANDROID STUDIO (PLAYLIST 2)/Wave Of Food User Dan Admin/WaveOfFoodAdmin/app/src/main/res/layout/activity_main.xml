@@ -16,25 +16,49 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
+            android:orientation="horizontal"
             android:background="@drawable/bg_button_primary"
             android:padding="24dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="24dp"
+            android:gravity="center_vertical">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="Welcome Admin!"
-                android:textSize="24sp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome Admin!"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/tv_admin_email"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage your WaveOfFood restaurant"
+                    android:textSize="16sp"
+                    android:textColor="@android:color/white" />
+
+            </LinearLayout>
+
+            <!-- Logout Button -->
+            <Button
+                android:id="@+id/btn_logout"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Logout"
+                android:textColor="@color/primary_green"
+                android:backgroundTint="@android:color/white"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="@android:color/white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Manage your WaveOfFood restaurant"
-                android:textSize="16sp"
-                android:textColor="@android:color/white" />
+                android:minWidth="80dp"
+                android:paddingHorizontal="16dp"
+                style="@style/Widget.Material3.Button" />
 
         </LinearLayout>
 
@@ -203,7 +227,8 @@
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:elevation="2dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -211,22 +236,42 @@
                 android:layout_marginEnd="16dp"
                 android:src="@android:drawable/ic_menu_agenda"
                 android:tint="@color/primary_color"
-                android:contentDescription="Orders Icon" />
+                android:contentDescription="Orders Icon"
+                android:layout_gravity="center_vertical" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Order Management\nView and manage customer orders"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Order Management"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View and manage customer orders"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:alpha="0.8" />
+
+            </LinearLayout>
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@android:drawable/ic_media_next"
                 android:tint="@color/text_secondary"
-                android:contentDescription="Navigate" />
+                android:contentDescription="Navigate"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 
@@ -241,7 +286,8 @@
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:elevation="2dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -249,22 +295,42 @@
                 android:layout_marginEnd="16dp"
                 android:src="@android:drawable/ic_menu_edit"
                 android:tint="@color/primary_color"
-                android:contentDescription="Menu Icon" />
+                android:contentDescription="Menu Icon"
+                android:layout_gravity="center_vertical" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Menu Management\nAdd, edit, and manage food items"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Menu Management"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Add, edit, and manage food items"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:alpha="0.8" />
+
+            </LinearLayout>
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@android:drawable/ic_media_next"
                 android:tint="@color/text_secondary"
-                android:contentDescription="Navigate" />
+                android:contentDescription="Navigate"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 
@@ -279,7 +345,8 @@
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:elevation="2dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -287,60 +354,42 @@
                 android:layout_marginEnd="16dp"
                 android:src="@android:drawable/ic_menu_myplaces"
                 android:tint="@color/primary_color"
-                android:contentDescription="Users Icon" />
+                android:contentDescription="Users Icon"
+                android:layout_gravity="center_vertical" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="User Management\nView and manage customer accounts"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="User Management"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View and manage customer accounts"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:alpha="0.8" />
+
+            </LinearLayout>
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@android:drawable/ic_media_next"
                 android:tint="@color/text_secondary"
-                android:contentDescription="Navigate" />
-
-        </LinearLayout>
-
-        <!-- Analytics -->
-        <LinearLayout
-            android:id="@+id/card_analytics"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_card_clickable"
-            android:padding="20dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="16dp"
-                android:src="@android:drawable/ic_menu_info_details"
-                android:tint="@color/primary_color"
-                android:contentDescription="Analytics Icon" />
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Analytics &amp; Reports\nView sales reports and analytics"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@android:drawable/ic_media_next"
-                android:tint="@color/text_secondary"
-                android:contentDescription="Navigate" />
+                android:contentDescription="Navigate"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 
@@ -355,7 +404,8 @@
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
             android:clickable="true"
-            android:focusable="true">
+            android:focusable="true"
+            android:elevation="2dp">
 
             <ImageView
                 android:layout_width="24dp"
@@ -363,22 +413,42 @@
                 android:layout_marginEnd="16dp"
                 android:src="@drawable/ic_admin_placeholder"
                 android:tint="@color/primary_color"
-                android:contentDescription="Admin Management Icon" />
+                android:contentDescription="Admin Management Icon"
+                android:layout_gravity="center_vertical" />
 
-            <TextView
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Admin Management\nManage admin users and permissions"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:orientation="vertical"
+                android:layout_gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Admin Management"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage admin users and permissions"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:alpha="0.8" />
+
+            </LinearLayout>
 
             <ImageView
                 android:layout_width="16dp"
                 android:layout_height="16dp"
                 android:src="@android:drawable/ic_media_next"
                 android:tint="@color/text_secondary"
-                android:contentDescription="Navigate" />
+                android:contentDescription="Navigate"
+                android:layout_gravity="center_vertical" />
 
         </LinearLayout>
 

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Card Styles -->
+    <style name="Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bg_card_white</item>
+        <item name="android:elevation">@dimen/elevation_sm</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <style name="Card.Default" parent="Card">
+        <item name="android:layout_margin">@dimen/spacing_sm</item>
+        <item name="android:padding">@dimen/spacing_md</item>
+    </style>
+
+    <style name="Card.Elevated" parent="Card">
+        <item name="android:elevation">@dimen/elevation_md</item>
+    </style>
+
+    <style name="Card.Interactive" parent="Card">
+        <item name="android:foreground">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <!-- Input Styles -->
+    <style name="Input">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/input_height</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textColorHint">@color/text_secondary</item>
+        <item name="android:textSize">@dimen/text_size_body</item>
+    </style>
+
+    <style name="Input.Default" parent="Input">
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:padding">@dimen/spacing_md</item>
+    </style>
+
+    <!-- Chip Styles -->
+    <style name="Chip">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:textSize">@dimen/text_size_body_small</item>
+    </style>
+
+    <style name="Chip.Default" parent="Chip">
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:paddingHorizontal">@dimen/spacing_md</item>
+        <item name="android:paddingVertical">@dimen/spacing_sm</item>
+    </style>
+</resources>

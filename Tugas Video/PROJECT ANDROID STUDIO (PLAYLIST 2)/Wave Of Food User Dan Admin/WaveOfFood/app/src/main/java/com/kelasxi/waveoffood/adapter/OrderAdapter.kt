@@ -10,7 +10,7 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.OrderModel
+import com.kelasxi.waveoffood.models.OrderModel
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -50,11 +50,11 @@ class OrderAdapter(
             tvOrderId.text = "#${order.orderId.takeLast(8).uppercase()}"
             
             // Order Date
-            val orderDate = order.createdAt?.toDate() ?: Date()
+            val orderDate = order.createdAt.toDate()
             tvOrderDate.text = dateFormat.format(orderDate)
             
             // Total Amount
-            tvTotalAmount.text = "Rp ${String.format("%,d", order.totalAmount)}"
+            tvTotalAmount.text = "Rp ${String.format("%,.0f", order.totalAmount)}"
             
             // Item Count
             val itemCount = order.items.sumOf { it.quantity }

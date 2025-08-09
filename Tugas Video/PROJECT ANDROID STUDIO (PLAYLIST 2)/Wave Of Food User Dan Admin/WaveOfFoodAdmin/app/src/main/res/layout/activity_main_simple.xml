@@ -255,27 +255,6 @@
 
         </LinearLayout>
 
-        <!-- Analytics -->
-        <LinearLayout
-            android:id="@+id/card_analytics"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:background="@drawable/bg_edit_text"
-            android:padding="20dp"
-            android:layout_marginBottom="16dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Analytics &amp; Reports\nView sales reports and analytics"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary" />
-
-        </LinearLayout>
-
     </LinearLayout>
 
 </ScrollView>

@@ -69,7 +69,7 @@ class OrderConfirmationActivity : AppCompatActivity() {
     }
     
     private fun navigateToHome() {
-        val intent = Intent(this, MainActivity::class.java).apply {
+        val intent = Intent(this, MainActivityCompose::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         startActivity(intent)

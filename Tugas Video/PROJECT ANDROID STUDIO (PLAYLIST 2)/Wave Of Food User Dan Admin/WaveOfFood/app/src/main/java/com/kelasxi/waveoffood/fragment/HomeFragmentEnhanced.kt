@@ -13,9 +13,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.kelasxi.waveoffood.R
 import com.kelasxi.waveoffood.adapter.CategoryAdapter
 import com.kelasxi.waveoffood.adapter.FoodAdapter
-import com.kelasxi.waveoffood.model.CategoryModel
-import com.kelasxi.waveoffood.model.FoodModel
-import com.kelasxi.waveoffood.model.CartItemModel
+import com.kelasxi.waveoffood.models.CategoryModel
+import com.kelasxi.waveoffood.models.FoodModel
+import com.kelasxi.waveoffood.models.CartItemModel
 import com.kelasxi.waveoffood.repository.FirebaseRepository
 import com.kelasxi.waveoffood.utils.CartManager
 import kotlinx.coroutines.CoroutineScope
@@ -181,15 +181,15 @@ class HomeFragmentEnhanced : Fragment() {
     
     private fun loadSamplePopularFoods() {
         val sampleFoods = listOf(
-            FoodModel("nasi-gudeg", "Nasi Gudeg", 25000, "Nasi gudeg khas Yogyakarta dengan ayam kampung, telur, dan sambal krecek yang pedas manis", 
+            FoodModel("nasi-gudeg", "Nasi Gudeg", "Nasi gudeg khas Yogyakarta dengan ayam kampung, telur, dan sambal krecek yang pedas manis", 
                 "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400", 
-                "indonesian", true, 4.5, 15, true),
-            FoodModel("margherita-pizza", "Margherita Pizza", 45000, "Pizza klasik dengan saus tomat, mozzarella segar, dan daun basil yang harum", 
+                25000L, "indonesian", true, 4.5, true, 15),
+            FoodModel("margherita-pizza", "Margherita Pizza", "Pizza klasik dengan saus tomat, mozzarella segar, dan daun basil yang harum", 
                 "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400", 
-                "pizza", true, 4.6, 25, true),
-            FoodModel("cheeseburger", "Classic Cheeseburger", 38000, "Burger daging sapi juicy dengan keju cheddar, lettuce, tomat, dan saus spesial", 
+                45000L, "pizza", true, 4.6, true, 25),
+            FoodModel("cheeseburger", "Classic Cheeseburger", "Burger daging sapi juicy dengan keju cheddar, lettuce, tomat, dan saus spesial", 
                 "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400", 
-                "burger", true, 4.4, 18, true)
+                38000L, "burger", true, 4.4, true, 18)
         )
         
         popularFoods.clear()
@@ -221,15 +221,15 @@ class HomeFragmentEnhanced : Fragment() {
     
     private fun loadSampleRecommendedFoods() {
         val sampleFoods = listOf(
-            FoodModel("rendang-daging", "Rendang Daging", 35000, "Rendang daging sapi autentik Padang dengan bumbu rempah yang kaya dan santan yang gurih", 
+            FoodModel("rendang-daging", "Rendang Daging", "Rendang daging sapi autentik Padang dengan bumbu rempah yang kaya dan santan yang gurih", 
                 "https://images.unsplash.com/photo-1604521037225-0448dc7c9e31?w=400", 
-                "indonesian", true, 4.8, 20, true),
-            FoodModel("chocolate-cake", "Chocolate Fudge Cake", 22000, "Kue cokelat lembut dengan lapisan fudge yang kaya dan topping whipped cream", 
+                35000L, "indonesian", true, 4.8, true, 20),
+            FoodModel("chocolate-cake", "Chocolate Fudge Cake", "Kue cokelat lembut dengan lapisan fudge yang kaya dan topping whipped cream", 
                 "https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400", 
-                "dessert", false, 4.7, 10, true),
-            FoodModel("iced-coffee", "Iced Coffee Latte", 15000, "Kopi susu dingin dengan espresso premium dan susu segar yang creamy", 
+                22000L, "dessert", false, 4.7, true, 10),
+            FoodModel("iced-coffee", "Iced Coffee Latte", "Kopi susu dingin dengan espresso premium dan susu segar yang creamy", 
                 "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=400", 
-                "drinks", false, 4.3, 5, true)
+                15000L, "drinks", false, 4.3, true, 5)
         )
         
         recommendedFoods.clear()
@@ -254,16 +254,13 @@ class HomeFragmentEnhanced : Fragment() {
         try {
             // Create CartItemModel from FoodModel
             val cartItem = CartItemModel(
-                id = UUID.randomUUID().toString(),
-                foodId = food.id,
-                name = food.name,
-                price = food.price,
-                imageUrl = food.imageUrl,
-                quantity = 1,
-                selectedSize = "Regular",
-                selectedExtras = emptyList(),
-                subtotal = food.price,
-                addedAt = null
+                id = food.id,
+                foodName = food.name,
+                foodPrice = food.price.toString(),
+                foodDescription = food.description,
+                foodImage = food.imageUrl,
+                foodCategory = food.categoryId,
+                quantity = 1
             )
             
             // Add to cart using CartManager

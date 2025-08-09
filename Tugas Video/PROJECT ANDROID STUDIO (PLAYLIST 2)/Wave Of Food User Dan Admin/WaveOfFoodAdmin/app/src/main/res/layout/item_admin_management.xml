@@ -24,14 +24,16 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:baselineAligned="false">
 
             <!-- Admin Profile -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 app:cardCornerRadius="28dp"
-                app:cardElevation="2dp">
+                app:cardElevation="2dp"
+                android:layout_gravity="center_vertical">
 
                 <ImageView
                     android:id="@+id/iv_admin_profile"
@@ -40,7 +42,9 @@
                     android:scaleType="centerCrop"
                     android:contentDescription="Admin Profile"
                     android:background="@color/primary_green_light"
-                    tools:src="@drawable/ic_admin_placeholder" />
+                    android:src="@drawable/ic_admin_placeholder"
+                    android:tint="@color/white"
+                    android:padding="12dp" />
 
             </com.google.android.material.card.MaterialCardView>
 
@@ -49,68 +53,104 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:orientation="vertical"
                 android:layout_marginStart="@dimen/space_md"
                 android:layout_marginEnd="@dimen/space_sm"
-                android:orientation="vertical">
+                android:layout_gravity="center_vertical">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <!-- Admin Name -->
+                <TextView
+                    android:id="@+id/tv_admin_name"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:text="Admin Name"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:layout_marginBottom="2dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="John Admin Doe" />
 
-                    <TextView
-                        android:id="@+id/tv_admin_name"
-                        style="@style/TextSubheading"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/text_primary"
-                        tools:text="John Admin" />
-
-                    <TextView
-                        android:id="@+id/tv_admin_role"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/space_xs"
-                        android:background="@drawable/bg_status_regular"
-                        android:text="ADMIN"
-                        android:textColor="@color/primary_green"
-                        android:textSize="10sp"
-                        android:paddingHorizontal="6dp"
-                        android:paddingVertical="2dp"
-                        tools:text="ADMIN" />
-
-                </LinearLayout>
-
+                <!-- Admin Email -->
                 <TextView
                     android:id="@+id/tv_admin_email"
-                    style="@style/TextBody"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:textColor="@color/text_secondary"
+                    android:text="admin@email.com"
                     android:textSize="14sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginBottom="4dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     tools:text="john.admin@waveoffood.com" />
+
+                <!-- Admin Role Badge -->
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_admin_role"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Admin"
+                    android:textSize="12sp"
+                    android:textColor="@color/white"
+                    app:chipBackgroundColor="@color/primary_green"
+                    app:chipCornerRadius="12dp"
+                    app:chipMinHeight="24dp"
+                    app:chipStartPadding="8dp"
+                    app:chipEndPadding="8dp"
+                    app:ensureMinTouchTargetSize="false"
+                    style="@style/Widget.MaterialComponents.Chip.Action"
+                    tools:text="Super Admin" />
 
             </LinearLayout>
 
-            <!-- Status Badge -->
-            <TextView
-                android:id="@+id/tv_admin_status"
+            <!-- Status & Actions -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_status_available"
-                android:text="ACTIVE"
-                android:textColor="@color/success"
-                android:textSize="10sp"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
-                tools:text="ACTIVE" />
+                android:orientation="vertical"
+                android:gravity="center_horizontal|center_vertical"
+                android:layout_gravity="center_vertical">
+
+                <!-- Status Indicator -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+
+                    <View
+                        android:id="@+id/view_status_indicator"
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/bg_circle_green"
+                        android:layout_marginEnd="4dp" />
+
+                    <TextView
+                        android:id="@+id/tv_admin_status"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Active"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/success"
+                        tools:text="Active" />
+
+                </LinearLayout>
+
+                <!-- More Options Button -->
+                <ImageView
+                    android:id="@+id/iv_more_options"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@android:drawable/ic_menu_more"
+                    android:tint="@color/text_secondary"
+                    android:contentDescription="More Options"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="4dp" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
@@ -175,6 +215,41 @@
                     tools:text="Last login: 2 hours ago" />
 
             </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Bottom Row: Action Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_md"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/btnEditAdmin"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/primary_green"
+                android:text="Edit"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:minWidth="72dp"
+                android:paddingHorizontal="16dp"
+                style="@style/Widget.Material3.Button" />
+
+            <Button
+                android:id="@+id/btnDeleteAdmin"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:backgroundTint="@color/error"
+                android:text="Delete"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:minWidth="72dp"
+                android:paddingHorizontal="16dp"
+                style="@style/Widget.Material3.Button" />
 
         </LinearLayout>
 

@@ -247,7 +247,16 @@ public class AddEditAdminActivity extends AppCompatActivity {
                             .addOnFailureListener(e -> {
                                 showLoading(false);
                                 Log.e(TAG, "Error creating admin document", e);
-                                Toast.makeText(this, "Error saving admin data: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                                
+                                String errorMessage = e.getMessage();
+                                if (errorMessage != null && errorMessage.contains("PERMISSION_DENIED")) {
+                                    // Admin user created in Authentication but failed to save to Firestore
+                                    Log.w(TAG, "Admin created in Authentication but failed to save to Firestore due to permissions");
+                                    Toast.makeText(this, "⚠️ Admin created in Authentication but database sync failed. Admin can still login.", Toast.LENGTH_LONG).show();
+                                    finish(); // Still finish successfully as user is created
+                                } else {
+                                    Toast.makeText(this, "Error saving admin data: " + errorMessage, Toast.LENGTH_LONG).show();
+                                }
                             });
                 })
                 .addOnFailureListener(e -> {

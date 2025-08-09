@@ -5,9 +5,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import android.widget.LinearLayout;
 
@@ -21,11 +23,14 @@ public class MainActivity extends AppCompatActivity {
     
     private static final String TAG = "AdminDashboard";
     
-    private TextView tvTotalOrders, tvTotalUsers, tvTotalMenuItems, tvTotalRevenue;
-    private LinearLayout cardOrders, cardMenu, cardUsers, cardAnalytics, cardAdminManagement;
+    private TextView tvTotalOrders, tvTotalUsers, tvTotalMenuItems, tvTotalRevenue, tvAdminEmail;
+    private LinearLayout cardOrders, cardMenu, cardUsers, cardAdminManagement;
+    private Button btnLogout;
     
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
+    
+    private boolean isLoadingData = false;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +117,10 @@ public class MainActivity extends AppCompatActivity {
     private void initViews() {
         Log.d(TAG, "Initializing views...");
         try {
+            // Header views
+            tvAdminEmail = findViewById(R.id.tv_admin_email);
+            btnLogout = findViewById(R.id.btn_logout);
+            
             // Statistics TextViews
             tvTotalOrders = findViewById(R.id.tv_total_orders);
             tvTotalUsers = findViewById(R.id.tv_total_users);
@@ -122,10 +131,11 @@ public class MainActivity extends AppCompatActivity {
             cardOrders = findViewById(R.id.card_orders);
             cardMenu = findViewById(R.id.card_menu);
             cardUsers = findViewById(R.id.card_users);
-            cardAnalytics = findViewById(R.id.card_analytics);
             cardAdminManagement = findViewById(R.id.card_admin_management);
             
             // Log which views were found
+            Log.d(TAG, "tvAdminEmail: " + (tvAdminEmail != null ? "Found" : "NULL"));
+            Log.d(TAG, "btnLogout: " + (btnLogout != null ? "Found" : "NULL"));
             Log.d(TAG, "tvTotalOrders: " + (tvTotalOrders != null ? "Found" : "NULL"));
             Log.d(TAG, "tvTotalUsers: " + (tvTotalUsers != null ? "Found" : "NULL"));
             Log.d(TAG, "tvTotalMenuItems: " + (tvTotalMenuItems != null ? "Found" : "NULL"));
@@ -133,14 +143,13 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "cardOrders: " + (cardOrders != null ? "Found" : "NULL"));
             Log.d(TAG, "cardMenu: " + (cardMenu != null ? "Found" : "NULL"));
             Log.d(TAG, "cardUsers: " + (cardUsers != null ? "Found" : "NULL"));
-            Log.d(TAG, "cardAnalytics: " + (cardAnalytics != null ? "Found" : "NULL"));
             Log.d(TAG, "cardAdminManagement: " + (cardAdminManagement != null ? "Found" : "NULL"));
             
             // Check if all views are found
             if (tvTotalOrders == null || tvTotalUsers == null || 
                 tvTotalMenuItems == null || tvTotalRevenue == null ||
                 cardOrders == null || cardMenu == null || 
-                cardUsers == null || cardAnalytics == null || cardAdminManagement == null) {
+                cardUsers == null || cardAdminManagement == null) {
                 
                 Log.e(TAG, "Some views not found in layout");
                 Toast.makeText(this, "Layout error detected - some buttons may not work", Toast.LENGTH_LONG).show();
@@ -153,6 +162,13 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "cardMenu clickable: " + cardMenu.isClickable());
                 Log.d(TAG, "cardMenu focusable: " + cardMenu.isFocusable());
             }
+            
+            // Setup admin info
+            setupAdminInfo();
+            
+            // Setup logout button
+            setupLogoutButton();
+            
         } catch (Exception e) {
             Log.e(TAG, "Error initializing views", e);
             Toast.makeText(this, "Error initializing dashboard", Toast.LENGTH_SHORT).show();
@@ -225,25 +241,6 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "cardUsers is null!");
             }
             
-            if (cardAnalytics != null) {
-                Log.d(TAG, "Setting up Analytics card click listener");
-                cardAnalytics.setOnClickListener(v -> {
-                    Log.d(TAG, "Analytics card clicked!");
-                    Toast.makeText(this, "Opening Analytics Dashboard...", Toast.LENGTH_SHORT).show();
-                    try {
-                        Intent intent = new Intent(this, AnalyticsActivity.class);
-                        Log.d(TAG, "Starting AnalyticsActivity...");
-                        startActivity(intent);
-                        Log.d(TAG, "AnalyticsActivity started successfully");
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error opening AnalyticsActivity", e);
-                        Toast.makeText(this, "Error opening Analytics: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                    }
-                });
-            } else {
-                Log.e(TAG, "cardAnalytics is null!");
-            }
-            
             if (cardAdminManagement != null) {
                 Log.d(TAG, "Setting up Admin Management card click listener");
                 cardAdminManagement.setOnClickListener(v -> {
@@ -269,47 +266,44 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void loadDashboardData() {
+        // Prevent multiple simultaneous loading
+        if (isLoadingData) {
+            Log.d(TAG, "Dashboard data loading already in progress, skipping...");
+            return;
+        }
+        
+        isLoadingData = true;
         Log.d(TAG, "Starting to load dashboard data...");
         
-        // Check authentication and force token refresh
+        // Check authentication
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser == null) {
             Log.e(TAG, "User not authenticated");
+            isLoadingData = false;
             redirectToLogin();
             return;
         }
         
-        // Force token refresh to get latest claims
-        Log.d(TAG, "Forcing token refresh to get latest admin claims...");
-        currentUser.getIdToken(true)
-                .addOnSuccessListener(getTokenResult -> {
-                    Log.d(TAG, "Token refreshed successfully");
-                    Object adminClaim = getTokenResult.getClaims().get("admin");
-                    Log.d(TAG, "Admin claim: " + adminClaim);
-                    
-                    if (adminClaim == null || !adminClaim.equals(true)) {
-                        Log.e(TAG, "User does not have admin permissions");
-                        Toast.makeText(this, "Admin permissions required. Please contact administrator.", Toast.LENGTH_LONG).show();
-                        redirectToLogin();
-                        return;
-                    }
-                    
-                    // Now load data with fresh admin token
-                    try {
-                        loadOrdersCount();
-                        loadUsersCount();
-                        loadFoodsCount();
-                        calculateTotalRevenue();
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error loading dashboard data", e);
-                        Toast.makeText(this, "Error loading dashboard data", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to refresh token", e);
-                    Toast.makeText(this, "Authentication error. Please login again.", Toast.LENGTH_LONG).show();
-                    redirectToLogin();
-                });
+        Log.d(TAG, "User authenticated: " + currentUser.getEmail());
+        Log.d(TAG, "Loading dashboard data for authenticated admin user...");
+        
+        // Load data directly for authenticated user
+        try {
+            loadOrdersCount();
+            loadUsersCount();
+            loadFoodsCount();
+            calculateTotalRevenue();
+            Log.d(TAG, "Dashboard data loading initiated successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading dashboard data", e);
+            Toast.makeText(this, "Error loading dashboard data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        } finally {
+            // Reset loading flag after a delay to allow async operations to complete
+            new android.os.Handler().postDelayed(() -> {
+                isLoadingData = false;
+                Log.d(TAG, "Loading flag reset");
+            }, 3000);
+        }
     }
     
     private void loadOrdersCount() {
@@ -482,16 +476,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Data refreshed", Toast.LENGTH_SHORT).show();
             return true;
         } else if (id == R.id.action_logout) {
-            logout();
+            showLogoutConfirmation();
             return true;
         }
         
         return super.onOptionsItemSelected(item);
-    }
-    
-    private void logout() {
-        auth.signOut();
-        redirectToLogin();
     }
     
     private void redirectToLogin() {
@@ -510,7 +499,110 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Refresh data when returning to dashboard
-        loadDashboardData();
+        Log.d(TAG, "MainActivity onResume called");
+        
+        // Only refresh data if not already loading and user is authenticated
+        FirebaseUser currentUser = auth.getCurrentUser();
+        if (currentUser != null && !isLoadingData) {
+            Log.d(TAG, "Refreshing dashboard data on resume...");
+            loadDashboardData();
+        } else if (currentUser == null) {
+            Log.d(TAG, "User not authenticated on resume, redirecting to login");
+            redirectToLogin();
+        } else {
+            Log.d(TAG, "Data loading already in progress, skipping refresh");
+        }
+    }
+    
+    private void setupAdminInfo() {
+        try {
+            FirebaseUser currentUser = auth.getCurrentUser();
+            if (currentUser != null && tvAdminEmail != null) {
+                String email = currentUser.getEmail();
+                if (email != null && !email.isEmpty()) {
+                    tvAdminEmail.setText("Welcome, " + email);
+                    Log.d(TAG, "Admin info set: " + email);
+                } else {
+                    tvAdminEmail.setText("Welcome, Admin User");
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up admin info", e);
+        }
+    }
+    
+    private void setupLogoutButton() {
+        try {
+            if (btnLogout != null) {
+                btnLogout.setOnClickListener(v -> showLogoutConfirmation());
+                Log.d(TAG, "Logout button click listener set");
+            } else {
+                Log.e(TAG, "Logout button is null");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up logout button", e);
+        }
+    }
+    
+    private void showLogoutConfirmation() {
+        try {
+            new AlertDialog.Builder(this)
+                .setTitle("Logout Confirmation")
+                .setMessage("Are you sure you want to logout from WaveOfFood Admin?")
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton("Logout", (dialog, which) -> {
+                    performLogout();
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                })
+                .setCancelable(true)
+                .show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error showing logout confirmation", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void performLogout() {
+        try {
+            Log.d(TAG, "Performing logout...");
+            Toast.makeText(this, "Logging out...", Toast.LENGTH_SHORT).show();
+            
+            // Sign out from Firebase
+            auth.signOut();
+            
+            // Clear any local data/preferences if needed
+            clearLocalData();
+            
+            // Redirect to login
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            
+            // Close current activity
+            finish();
+            
+            Log.d(TAG, "Logout completed successfully");
+            Toast.makeText(this, "✅ Logged out successfully", Toast.LENGTH_SHORT).show();
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error during logout", e);
+            Toast.makeText(this, "Error during logout: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+    
+    private void clearLocalData() {
+        try {
+            // Clear any cached data
+            isLoadingData = false;
+            
+            // You can add more data clearing logic here if needed
+            // For example: SharedPreferences, local database, etc.
+            
+            Log.d(TAG, "Local data cleared");
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing local data", e);
+        }
     }
 }

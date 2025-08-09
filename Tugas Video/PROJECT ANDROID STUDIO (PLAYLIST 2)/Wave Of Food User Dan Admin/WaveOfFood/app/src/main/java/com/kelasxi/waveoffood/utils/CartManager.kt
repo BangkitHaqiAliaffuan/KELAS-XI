@@ -1,7 +1,7 @@
 package com.kelasxi.waveoffood.utils
 
-import com.kelasxi.waveoffood.model.CartItemModel
-import com.kelasxi.waveoffood.model.FoodModel
+import com.kelasxi.waveoffood.models.CartItemModel
+import com.kelasxi.waveoffood.models.FoodItemModel
 
 object CartManager {
     private val cartItems = mutableListOf<CartItemModel>()
@@ -12,10 +12,11 @@ object CartManager {
     }
     
     fun addToCart(cartItem: CartItemModel) {
-        val existingItem = cartItems.find { it.foodId == cartItem.foodId }
+        val existingItem = cartItems.find { it.id == cartItem.id }
         
         if (existingItem != null) {
-            existingItem.quantity += cartItem.quantity
+            val index = cartItems.indexOf(existingItem)
+            cartItems[index] = existingItem.copy(quantity = existingItem.quantity + cartItem.quantity)
         } else {
             cartItems.add(cartItem)
         }
@@ -32,7 +33,10 @@ object CartManager {
         if (newQuantity <= 0) {
             removeFromCart(cartItem)
         } else {
-            cartItem.quantity = newQuantity
+            val index = cartItems.indexOf(cartItem)
+            if (index != -1) {
+                cartItems[index] = cartItem.copy(quantity = newQuantity)
+            }
             notifyListeners()
         }
     }
@@ -45,8 +49,11 @@ object CartManager {
         return cartItems.sumOf { it.quantity }
     }
     
-    fun getCartTotal(): Long {
-        return cartItems.sumOf { it.calculateSubtotal() }
+    fun getCartTotal(): Double {
+        return cartItems.sumOf { 
+            val price = it.foodPrice.replace("Rp", "").replace(",", "").replace(".", "").trim().toDoubleOrNull() ?: 0.0
+            price * it.quantity
+        }
     }
     
     fun clearCart() {

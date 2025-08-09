@@ -35,14 +35,22 @@ release.properties
 .env.local
 .env.production
 .env.development
-app-release.apk
+
+# Build Artifacts & APK Files
 *.apk
 *.aab
+app-debug.apk
+app-release.apk
+/app/build/
+/app/build/outputs/
+/app/build/intermediates/
 
 # Log Files
 hs_err_pid*.log
 replay_pid*.log
 *.log
+.kotlin/errors/
+errors-*.log
 
 # Node.js Files
 node_modules/

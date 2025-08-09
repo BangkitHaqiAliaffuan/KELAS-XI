@@ -15,7 +15,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.kelasxi.waveoffood.adapter.OrderAdapter
-import com.kelasxi.waveoffood.model.OrderModel
+import com.kelasxi.waveoffood.models.OrderModel
 import java.util.Date
 
 /**

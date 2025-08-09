@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.OrderItemModel
+import com.kelasxi.waveoffood.models.OrderItemModel
 
 /**
  * Adapter untuk RecyclerView item detail order
@@ -36,12 +36,12 @@ class OrderDetailAdapter(
         val item = orderItems[position]
         
         with(holder) {
-            tvFoodName.text = item.foodName
-            tvFoodPrice.text = "Rp ${String.format("%,d", item.price)}"
+            tvFoodName.text = if (item.foodName.isNotEmpty()) item.foodName else item.name
+            tvFoodPrice.text = "Rp ${String.format("%,.0f", item.price)}"
             tvQuantity.text = "x${item.quantity}"
             
             val totalPrice = item.price * item.quantity
-            tvTotalPrice.text = "Rp ${String.format("%,d", totalPrice)}"
+            tvTotalPrice.text = "Rp ${String.format("%,.0f", totalPrice)}"
             
             // Special instructions
             if (item.specialInstructions.isNotEmpty()) {
@@ -52,10 +52,11 @@ class OrderDetailAdapter(
             }
             
             // Load food image
+            val imageUrl = if (item.foodImage.isNotEmpty()) item.foodImage else item.imageUrl
             Glide.with(holder.itemView.context)
-                .load(item.foodImage)
-                .placeholder(R.drawable.ic_category_food)
-                .error(R.drawable.ic_category_food)
+                .load(imageUrl)
+                .placeholder(R.drawable.ic_food_placeholder)
+                .error(R.drawable.ic_food_placeholder)
                 .centerCrop()
                 .into(ivFoodImage)
         }

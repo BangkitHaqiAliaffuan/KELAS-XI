@@ -1,5 +1,6 @@
 package com.kelasxi.waveoffood.models
 
+import com.google.firebase.firestore.PropertyName
 import java.util.Date
 
 /**
@@ -18,17 +19,19 @@ data class FoodItemModel(
     val preparationTime: Long = 0,
     val ingredients: List<String> = emptyList(),
     val nutritionInfo: NutritionInfo = NutritionInfo(),
-    val createdAt: Date? = null,
-    val updatedAt: Date? = null
+    
+    // Gunakan String untuk menghindari error parsing Date
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 ) {
     // Constructor kosong untuk kompatibilitas dengan Firebase Firestore
     constructor() : this("", "", "", "", "", 0, 0.0, false, true, 0, emptyList(), NutritionInfo(), null, null)
     
     // Untuk backward compatibility dengan kode lama
-    val foodName: String get() = name
-    val foodDescription: String get() = description
-    val foodImage: String get() = imageUrl
-    val foodCategory: String get() = categoryId
+    val foodName: String get() = if (name.isNotEmpty()) name else ""
+    val foodDescription: String get() = if (description.isNotEmpty()) description else ""
+    val foodImage: String get() = if (imageUrl.isNotEmpty()) imageUrl else ""
+    val foodCategory: String get() = if (categoryId.isNotEmpty()) categoryId else ""
     val foodPrice: String get() = price.toString()
 }
 

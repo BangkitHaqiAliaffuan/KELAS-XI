@@ -259,49 +259,21 @@ public class AddEditFoodActivity extends AppCompatActivity {
     }
     
     private void addNewFoodItem(FoodModel food) {
-        // Add to 'foods' collection (enhanced structure)
+        // Add to 'foods' collection only
         Map<String, Object> foodData = createFoodMap(food);
         
         firestore.collection("foods")
                 .add(foodData)
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "Food added to 'foods' collection: " + documentReference.getId());
-                    
-                    // Also add to 'menu' collection for backward compatibility
-                    addToMenuCollection(food, documentReference.getId());
+                    showLoading(false);
+                    Toast.makeText(this, "Food item added successfully", Toast.LENGTH_SHORT).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error adding food to 'foods' collection", e);
                     showLoading(false);
-                    Toast.makeText(this, "Failed to add food item", Toast.LENGTH_SHORT).show();
-                });
-    }
-    
-    private void addToMenuCollection(FoodModel food, String documentId) {
-        // Create backward compatible data for menu collection
-        Map<String, Object> menuData = new HashMap<>();
-        menuData.put("foodName", food.getName());
-        menuData.put("foodPrice", String.valueOf(food.getPrice()));
-        menuData.put("foodDescription", food.getDescription());
-        menuData.put("foodImage", food.getImageUrl());
-        menuData.put("foodCategory", food.getCategoryId());
-        menuData.put("isPopular", food.isPopular());
-        menuData.put("rating", food.getRating());
-        
-        firestore.collection("menu")
-                .document(documentId)
-                .set(menuData)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Food also added to 'menu' collection");
-                    showLoading(false);
-                    Toast.makeText(this, "Food item added successfully", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "Failed to add to 'menu' collection (non-critical)", e);
-                    showLoading(false);
-                    Toast.makeText(this, "Food item added successfully", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(this, "Failed to add food item: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
     
@@ -313,41 +285,14 @@ public class AddEditFoodActivity extends AppCompatActivity {
                 .update(foodData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Food updated successfully in 'foods' collection");
-                    
-                    // Also update in 'menu' collection
-                    updateMenuCollection(food);
+                    showLoading(false);
+                    Toast.makeText(this, "Food item updated successfully", Toast.LENGTH_SHORT).show();
+                    finish();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error updating food in 'foods' collection", e);
                     showLoading(false);
-                    Toast.makeText(this, "Failed to update food item", Toast.LENGTH_SHORT).show();
-                });
-    }
-    
-    private void updateMenuCollection(FoodModel food) {
-        Map<String, Object> menuData = new HashMap<>();
-        menuData.put("foodName", food.getName());
-        menuData.put("foodPrice", String.valueOf(food.getPrice()));
-        menuData.put("foodDescription", food.getDescription());
-        menuData.put("foodImage", food.getImageUrl());
-        menuData.put("foodCategory", food.getCategoryId());
-        menuData.put("isPopular", food.isPopular());
-        menuData.put("rating", food.getRating());
-        
-        firestore.collection("menu")
-                .document(foodId)
-                .update(menuData)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Food also updated in 'menu' collection");
-                    showLoading(false);
-                    Toast.makeText(this, "Food item updated successfully", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Log.w(TAG, "Failed to update in 'menu' collection (non-critical)", e);
-                    showLoading(false);
-                    Toast.makeText(this, "Food item updated successfully", Toast.LENGTH_SHORT).show();
-                    finish();
+                    Toast.makeText(this, "Failed to update food item: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 });
     }
     

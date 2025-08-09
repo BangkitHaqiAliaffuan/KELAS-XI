@@ -8,45 +8,51 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.model.CartItemModel
+import com.kelasxi.waveoffood.models.CartItemModel
 import java.text.NumberFormat
 import java.util.*
 
+/**
+ * Simple adapter for checkout - read-only display only
+ */
 class CheckoutItemAdapter(
-    private val items: List<CartItemModel>
-) : RecyclerView.Adapter<CheckoutItemAdapter.CheckoutItemViewHolder>() {
+    private val cartItems: List<CartItemModel>
+) : RecyclerView.Adapter<CheckoutItemAdapter.ViewHolder>() {
 
-    class CheckoutItemViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val ivItemImage: ImageView = view.findViewById(R.id.ivItemImage)
-        val tvItemName: TextView = view.findViewById(R.id.tvItemName)
-        val tvItemPrice: TextView = view.findViewById(R.id.tvItemPrice)
-        val tvItemQuantity: TextView = view.findViewById(R.id.tvItemQuantity)
-        val tvItemSubtotal: TextView = view.findViewById(R.id.tvItemSubtotal)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CheckoutItemViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_checkout_simple, parent, false)
-        return CheckoutItemViewHolder(view)
+        return ViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: CheckoutItemViewHolder, position: Int) {
-        val item = items[position]
-        val formatter = NumberFormat.getInstance(Locale("id", "ID"))
-        
-        holder.tvItemName.text = item.name
-        holder.tvItemPrice.text = "Rp ${formatter.format(item.price)}"
-        holder.tvItemQuantity.text = "${item.quantity}x"
-        holder.tvItemSubtotal.text = "Rp ${formatter.format(item.calculateSubtotal())}"
-
-        // Load image
-        Glide.with(holder.itemView.context)
-            .load(item.imageUrl)
-            .placeholder(R.drawable.ic_category_food)
-            .error(R.drawable.ic_category_food)
-            .centerCrop()
-            .into(holder.ivItemImage)
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(cartItems[position])
     }
 
-    override fun getItemCount() = items.size
+    override fun getItemCount(): Int = cartItems.size
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val foodImage: ImageView = itemView.findViewById(R.id.iv_food_image)
+        private val foodName: TextView = itemView.findViewById(R.id.tv_food_name)
+        private val foodPrice: TextView = itemView.findViewById(R.id.tv_food_price)
+        private val quantityText: TextView = itemView.findViewById(R.id.tv_quantity)
+
+        fun bind(cartItem: CartItemModel) {
+            foodName.text = cartItem.foodName
+            
+            // Format price
+            val price = cartItem.foodPrice.replace("Rp", "").replace(",", "").replace(".", "").trim().toLongOrNull() ?: 0L
+            val formatter = NumberFormat.getInstance(Locale("id", "ID"))
+            foodPrice.text = "Rp ${formatter.format(price)}"
+            
+            quantityText.text = "x${cartItem.quantity}"
+
+            // Load image with Glide
+            Glide.with(itemView.context)
+                .load(cartItem.foodImage)
+                .placeholder(R.drawable.ic_launcher_background)
+                .error(R.drawable.ic_launcher_background)
+                .into(foodImage)
+        }
+    }
 }

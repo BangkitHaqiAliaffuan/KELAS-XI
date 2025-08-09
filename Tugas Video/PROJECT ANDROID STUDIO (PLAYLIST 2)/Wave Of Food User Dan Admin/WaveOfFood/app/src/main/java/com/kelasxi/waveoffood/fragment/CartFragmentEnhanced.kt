@@ -12,9 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
 import com.kelasxi.waveoffood.R
-import com.kelasxi.waveoffood.adapter.CartAdapter
-import com.kelasxi.waveoffood.model.CartItemModel
-import com.kelasxi.waveoffood.model.FoodModel
+import com.kelasxi.waveoffood.adapter.CartAdapterEnhanced
+import com.kelasxi.waveoffood.models.CartItemModel
+import com.kelasxi.waveoffood.models.FoodModel
 import com.kelasxi.waveoffood.utils.CartManager
 
 class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
@@ -28,7 +28,7 @@ class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
     private lateinit var checkoutButton: MaterialButton
     private lateinit var browseFoodButton: MaterialButton
     
-    private lateinit var cartAdapter: CartAdapter
+    private lateinit var cartAdapter: CartAdapterEnhanced
     
     private val deliveryFee = 2.99
     
@@ -73,12 +73,12 @@ class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
     }
     
     private fun setupRecyclerView() {
-        cartAdapter = CartAdapter(
+        cartAdapter = CartAdapterEnhanced(
             CartManager.getCartItems().toMutableList(),
-            onQuantityChange = { cartItem, newQuantity ->
+            onQuantityChange = { cartItem: com.kelasxi.waveoffood.models.CartItemModel, newQuantity: Int ->
                 CartManager.updateQuantity(cartItem, newQuantity)
             },
-            onRemoveItem = { cartItem ->
+            onRemoveItem = { cartItem: com.kelasxi.waveoffood.models.CartItemModel ->
                 CartManager.removeFromCart(cartItem)
             }
         )
@@ -114,12 +114,12 @@ class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
         }
         
         // Update adapter data
-        cartAdapter = CartAdapter(
+        cartAdapter = CartAdapterEnhanced(
             cartItems.toMutableList(),
-            onQuantityChange = { cartItem, newQuantity ->
+            onQuantityChange = { cartItem: com.kelasxi.waveoffood.models.CartItemModel, newQuantity: Int ->
                 CartManager.updateQuantity(cartItem, newQuantity)
             },
-            onRemoveItem = { cartItem ->
+            onRemoveItem = { cartItem: com.kelasxi.waveoffood.models.CartItemModel ->
                 CartManager.removeFromCart(cartItem)
             }
         )
@@ -140,13 +140,17 @@ class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
     
     private fun updatePriceCalculation() {
         val cartItems = CartManager.getCartItems()
-        val subtotal = cartItems.sumOf { it.calculateSubtotal() }
-        val deliveryFeeInCents = (deliveryFee * 100).toLong()
-        val total = subtotal + deliveryFeeInCents
+        val subtotal = cartItems.sumOf { 
+            val price = it.foodPrice.replace("Rp", "").replace(",", "").replace(".", "").trim().toLongOrNull() ?: 0L
+            price * it.quantity 
+        }
+        val deliveryFeeAmount = 10000L
+        val total = subtotal + deliveryFeeAmount
         
-        subtotalText.text = String.format("$%.2f", subtotal / 100.0)
-        deliveryFeeText.text = String.format("$%.2f", deliveryFee)
-        totalPriceText.text = String.format("$%.2f", total / 100.0)
+        val formatter = java.text.NumberFormat.getInstance(java.util.Locale("id", "ID"))
+        subtotalText.text = "Rp ${formatter.format(subtotal)}"
+        deliveryFeeText.text = "Rp ${formatter.format(deliveryFeeAmount)}"
+        totalPriceText.text = "Rp ${formatter.format(total)}"
     }
     
     private fun proceedToCheckout() {
@@ -156,8 +160,8 @@ class CartFragmentEnhanced : Fragment(), CartManager.CartUpdateListener {
             Log.d("CartFragment", "Proceeding to checkout with total: Rp ${String.format("%,d", total)}")
             
             try {
-                // Use simple checkout activity that won't crash
-                val intent = android.content.Intent(context, com.kelasxi.waveoffood.CheckoutActivitySimple::class.java)
+                // Use enhanced checkout activity with improved design
+                val intent = android.content.Intent(context, com.kelasxi.waveoffood.CheckoutActivityNew::class.java)
                 startActivity(intent)
             } catch (e: Exception) {
                 Log.e("CartFragment", "Error starting checkout", e)

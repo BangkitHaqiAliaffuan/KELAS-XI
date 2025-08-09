@@ -14,4 +14,14 @@
         android:icon="@android:drawable/ic_popup_sync"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/action_debug_foods"
+        android:title="Debug: Check Foods Collection"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_debug_menu"
+        android:title="Debug: Check Menu Collection"
+        app:showAsAction="never" />
+
 </menu>
