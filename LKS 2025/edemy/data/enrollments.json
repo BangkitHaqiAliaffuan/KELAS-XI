@@ -1,0 +1,54 @@
+[
+    {
+        "student": {
+            "clerkId": "user_2qQlvXyr02B4Bq6hT0Gvaa5fT9V",
+            "name": "GreatStack",
+            "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18ycVFsdmFMSkw3ckIxNHZMU2o4ZURWNEtmR2IifQ"
+        },
+        "courseId": "605c72efb3f1c2b1f8e4e1a1",
+        "courseTitle": "Introduction to JavaScript",
+        "purchaseDate": "2024-12-20T08:39:55.509Z",
+        "progress": 25,
+        "completedLectures": 2,
+        "totalLectures": 4
+    },
+    {
+        "student": {
+            "clerkId": "user_2qQlvXyr02B4Bq6hT0Gvaa5fT9V",
+            "name": "GreatStack",
+            "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18ycVFsdmFMSkw3ckIxNHZMU2o4ZURWNEtmR2IifQ"
+        },
+        "courseId": "675ac1512100b91a6d9b8b24",
+        "courseTitle": "Advanced Python Programming",
+        "purchaseDate": "2024-12-20T11:03:42.931Z",
+        "progress": 50,
+        "completedLectures": 2,
+        "totalLectures": 4
+    },
+    {
+        "student": {
+            "clerkId": "user_2qQlvXyr02B4Bq6hT0Gvaa5fT9V",
+            "name": "GreatStack",
+            "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18ycVFsdmFMSkw3ckIxNHZMU2o4ZURWNEtmR2IifQ"
+        },
+        "courseId": "605c72efb3f1c2b1f8e4e1a7",
+        "courseTitle": "Web Development Bootcamp",
+        "purchaseDate": "2024-12-20T11:04:48.798Z",
+        "progress": 10,
+        "completedLectures": 1,
+        "totalLectures": 4
+    },
+    {
+        "student": {
+            "clerkId": "user_2qjlgkAqIMpiR2flWIRzvWKtE0w",
+            "name": "John Doe",
+            "imageUrl": "https://img.clerk.com/default-avatar.png"
+        },
+        "courseId": "605c72efb3f1c2b1f8e4e1ad",
+        "courseTitle": "Data Science with Python",
+        "purchaseDate": "2024-12-22T14:30:00.000Z",
+        "progress": 75,
+        "completedLectures": 3,
+        "totalLectures": 4
+    }
+]

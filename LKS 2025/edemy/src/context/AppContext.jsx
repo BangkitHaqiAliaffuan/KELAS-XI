@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { dummyCourses, dummyTestimonial, dummyEducatorData } from '../assets/assets.js';
 
 // Create context
@@ -9,10 +10,12 @@ export const AppProvider = ({ children }) => {
   const [courses, setCourses] = useState(dummyCourses);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCourses, setFilteredCourses] = useState(dummyCourses);
-  const [currentUser, setCurrentUser] = useState(null);
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [testimonials] = useState(dummyTestimonial);
   const [educator] = useState(dummyEducatorData);
+  
+  // Get user data from Clerk
+  const { user, isSignedIn, isLoaded } = useUser();
 
   // Filter courses based on search query
   const searchCourses = (query) => {
@@ -68,8 +71,9 @@ export const AppProvider = ({ children }) => {
     getCourseById,
     getAverageRating,
     getDiscountedPrice,
-    currentUser,
-    setCurrentUser,
+    currentUser: user, // Use Clerk user
+    isSignedIn,
+    isLoaded,
     enrolledCourses,
     setEnrolledCourses,
     enrollInCourse,

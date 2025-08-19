@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, Navigate, useNavigate } from 'react-router-dom';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { NavLink, Outlet, Navigate } from 'react-router-dom';
+import { useUser } from '@clerk/clerk-react';
 import { useUserRole } from '../../hooks/useUserRole.js';
-import { assets } from '../../assets/assets.js';
+import { assets, dummyEducatorData } from '../../assets/assets.js';
 
 const SidebarLink = ({ to, icon, label }) => {
   return (
@@ -25,53 +25,25 @@ const SidebarLink = ({ to, icon, label }) => {
 
 const EducatorLayout = () => {
   // Extra security check - double protection
-  const { isLoaded, user } = useUser();
-  const { isEducator, organizationLoaded, organizationData } = useUserRole();
-  const { signOut } = useClerk();
-  const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-
-  console.log('🏫 EducatorLayout Security Check:', {
-    isLoaded,
-    organizationLoaded,
-    isEducator,
-    userEmail: user?.emailAddresses[0]?.emailAddress,
-    organizationCount: organizationData?.length || 0
-  });
-
-  // Handle logout
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  const { isLoaded } = useUser();
+  const { isEducator } = useUserRole();
 
   // If not loaded yet, show loading
-  if (!isLoaded || !organizationLoaded) {
-    console.log('⏳ EducatorLayout: Waiting for data to load...');
+  if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        <div className="ml-4 text-gray-600">Loading educator portal...</div>
       </div>
     );
   }
 
-  // If not educator, redirect immediately - CRITICAL SECURITY CHECK
+  // If not educator, redirect immediately
   if (!isEducator) {
-    console.log('🚨 CRITICAL SECURITY BREACH ATTEMPT: Non-educator trying to access EducatorLayout');
-    console.log('User data:', { 
-      userEmail: user?.emailAddresses[0]?.emailAddress,
-      organizationCount: organizationData?.length || 0,
-      organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role }))
-    });
+    console.log('🚨 SECURITY BREACH ATTEMPT: Non-educator trying to access EducatorLayout');
     return <Navigate to="/courses" replace />;
   }
 
-  console.log('✅ EducatorLayout: Access granted to educator');
+  const [open, setOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -98,7 +70,7 @@ const EducatorLayout = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
             <div className="flex items-center gap-2">
               <img src={assets.logo} alt="Edemy" className="h-6" />
-              <span className="font-semibold">Edemy Educator</span>
+              <span className="font-semibold">Edemy</span>
             </div>
             <div className="relative">
               <button
@@ -113,12 +85,7 @@ const EducatorLayout = () => {
               {open && (
                 <div className="absolute right-0 mt-2 w-44 rounded-md border bg-white shadow-lg z-10">
                   <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">My Profile</button>
-                  <button 
-                    onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Logout
-                  </button>
+                  <button className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50">Logout</button>
                 </div>
               )}
             </div>
@@ -133,5 +100,12 @@ const EducatorLayout = () => {
     </div>
   );
 };
+        </div>
+      </div>
+    </div>
+  );
+};
 
-export default EducatorLayout;
+export default Layout;
+
+

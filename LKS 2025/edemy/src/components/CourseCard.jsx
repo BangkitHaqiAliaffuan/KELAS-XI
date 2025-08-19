@@ -1,29 +1,99 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Users, PlayCircle, DollarSign } from 'lucide-react';
+import { Clock, Users, PlayCircle, BookOpen } from 'lucide-react';
 import StarRating from './StarRating.jsx';
-import { useApp } from '../context/AppContext.jsx';
-import { formatPrice, calculateTotalDuration, countTotalLectures } from '../utils/helpers.js';
+import { assets } from '../assets/assets.js';
 
 const CourseCard = ({ course, className = "" }) => {
-  const { getAverageRating, getDiscountedPrice } = useApp();
-  
-  const averageRating = parseFloat(getAverageRating(course.courseRatings));
-  const discountedPrice = getDiscountedPrice(course.coursePrice, course.discount);
-  const totalDuration = calculateTotalDuration(course.courseContent);
-  const totalLectures = countTotalLectures(course.courseContent);
-  const enrolledCount = course.enrolledStudents ? course.enrolledStudents.length : 0;
+  // Format price helper
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
+  // Calculate course statistics
+  const calculateCourseStats = () => {
+    let totalLectures = 0;
+    let totalDurationMinutes = 0;
+    
+    if (course.courseContent && Array.isArray(course.courseContent)) {
+      course.courseContent.forEach(chapter => {
+        if (chapter.chapterContent && Array.isArray(chapter.chapterContent)) {
+          totalLectures += chapter.chapterContent.length;
+          chapter.chapterContent.forEach(lecture => {
+            // Assuming each lecture has a duration in minutes
+            if (lecture.duration) {
+              totalDurationMinutes += lecture.duration;
+            } else {
+              // Default duration if not specified
+              totalDurationMinutes += 10; // 10 minutes default
+            }
+          });
+        }
+      });
+    }
+    
+    // Format duration
+    const hours = Math.floor(totalDurationMinutes / 60);
+    const minutes = totalDurationMinutes % 60;
+    let formattedDuration = '';
+    
+    if (hours > 0) {
+      formattedDuration = `${hours}h`;
+      if (minutes > 0) {
+        formattedDuration += ` ${minutes}m`;
+      }
+    } else {
+      formattedDuration = `${minutes}m`;
+    }
+    
+    return {
+      totalLectures,
+      totalDuration: formattedDuration,
+      enrolledCount: course.enrolledStudents ? course.enrolledStudents.length : 0
+    };
+  };
+
+  const { totalLectures, totalDuration, enrolledCount } = calculateCourseStats();
+
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (!course.courseRatings || course.courseRatings.length === 0) {
+      return 0;
+    }
+    const sum = course.courseRatings.reduce((acc, rating) => acc + rating.rating, 0);
+    return Math.round((sum / course.courseRatings.length) * 10) / 10; // Round to 1 decimal
+  };
+
+  const averageRating = calculateAverageRating();
+
+  // Calculate discount percentage if originalPrice exists
+  const discountPercentage = course.discount 
+    ? course.discount
+    : (course.originalPrice && course.originalPrice > course.coursePrice 
+        ? Math.round(((course.originalPrice - course.coursePrice) / course.originalPrice) * 100)
+        : 0);
+
+  // Calculate discounted price
+  const discountedPrice = course.discount > 0 
+    ? course.coursePrice * (1 - course.discount / 100)
+    : course.coursePrice;
 
   return (
-    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden ${className}`}>
+    <div className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden border border-gray-200 ${className}`}>
       {/* Course Thumbnail */}
       <div className="relative">
         <Link to={`/course/${course._id}`}>
           <div className="aspect-video bg-gray-200 overflow-hidden">
             <img 
-              src={course.courseThumbnail || '/api/placeholder/400/225'} 
+              src={course.courseThumbnail || assets.course_1}
               alt={course.courseTitle}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                e.target.src = assets.course_1; // Fallback image
+              }}
             />
           </div>
           <div className="absolute top-3 right-3 bg-black bg-opacity-50 rounded-full p-2">
@@ -32,27 +102,37 @@ const CourseCard = ({ course, className = "" }) => {
         </Link>
         
         {/* Discount Badge */}
-        {course.discount > 0 && (
+        {discountPercentage > 0 && (
           <div className="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded text-xs font-semibold">
-            {course.discount}% OFF
+            {discountPercentage}% OFF
           </div>
         )}
+
+        {/* Level Badge */}
+        <div className="absolute bottom-3 left-3 bg-blue-500 text-white px-2 py-1 rounded text-xs font-semibold">
+          {course.level || 'Beginner'}
+        </div>
       </div>
 
       {/* Course Content */}
       <div className="p-4">
         {/* Course Title */}
         <Link to={`/course/${course._id}`}>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors min-h-[3.5rem]">
             {course.courseTitle}
           </h3>
         </Link>
+
+        {/* Instructor */}
+        <p className="text-sm text-gray-600 mb-2">
+          by <span className="font-medium">{course.educator || 'Anonymous'}</span>
+        </p>
 
         {/* Course Description */}
         <div 
           className="text-gray-600 text-sm mb-3 line-clamp-2"
           dangerouslySetInnerHTML={{ 
-            __html: course.courseDescription.replace(/<[^>]*>/g, '').slice(0, 100) + '...' 
+            __html: (course.courseDescription || '').replace(/<[^>]*>/g, '').slice(0, 100) + '...' 
           }}
         />
 

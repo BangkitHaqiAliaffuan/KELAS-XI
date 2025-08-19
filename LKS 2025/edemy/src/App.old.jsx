@@ -1,11 +1,10 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet, useLocation, Navigate } from 'react-router-dom';
+import { ClerkProvider, OrganizationProvider } from '@clerk/clerk-react';
 import { AppProvider } from './context/AppContext.jsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
-import EducatorOnlyAccess from './components/EducatorOnlyAccess.jsx';
-import SecurityDebugPanel from './components/SecurityDebugPanel.jsx';
 import Home from './pages/Home.jsx';
 import Courses from './pages/Courses.jsx';
 import CourseDetail from './pages/CourseDetail.jsx';
@@ -20,14 +19,15 @@ import EducatorStudentsEnrolled from './pages/educator/StudentsEnrolled.jsx';
 const Shell = () => {
   const location = useLocation();
   const isEducatorRoute = location.pathname.startsWith('/educator');
-  const isAuthPage = location.pathname === '/educator/auth' || location.pathname === '/educator';
+  const isAuthPage = location.pathname === '/educator/auth';
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {!isEducatorRoute && !isAuthPage && <Header />}
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<Home />} />
+    <OrganizationProvider>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        {!isEducatorRoute && !isAuthPage && <Header />}
+        <main className="flex-1">
+          <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/course/:id" element={<CourseDetail />} />
 
@@ -38,24 +38,17 @@ const Shell = () => {
               </ProtectedRoute>
             } />
 
-            {/* Educator Auth Route - Protected from students */}
-            <Route path="/educator" element={
-              <ProtectedRoute requiredRole="educator">
-                <Navigate to="/educator/dashboard" replace />
-              </ProtectedRoute>
-            } />
-            <Route path="/educator/auth" element={
-              <EducatorOnlyAccess>
-                <EducatorAuth />
-              </EducatorOnlyAccess>
-            } />
+            {/* Educator Auth Route */}
+            <Route path="/educator/auth" element={<EducatorAuth />} />
+            <Route path="/educator" element={<Navigate to="/educator/auth" replace />} />
 
-            {/* Educator Routes - ALL protected with ProtectedRoute */}
+            {/* Educator Routes */}
             <Route path="/educator/*" element={
               <ProtectedRoute requiredRole="educator">
                 <EducatorLayout />
               </ProtectedRoute>
             }>
+              <Route index element={<EducatorDashboard />} />
               <Route path="dashboard" element={<EducatorDashboard />} />
               <Route path="add-course" element={<EducatorAddCourse />} />
               <Route path="my-courses" element={<EducatorMyCourses />} />
@@ -63,20 +56,31 @@ const Shell = () => {
             </Route>
           </Routes>
         </main>
-        {!isEducatorRoute && !isAuthPage && <Footer />}
-        <SecurityDebugPanel />
+        {!isEducatorRoute && <Footer />}
       </div>
+    </OrganizationProvider>
+  );
+};
+            <Route path="add-course" element={<EducatorAddCourse />} />
+            <Route path="my-courses" element={<EducatorMyCourses />} />
+            <Route path="students-enrolled" element={<EducatorStudentsEnrolled />} />
+          </Route>
+        </Routes>
+        <Outlet />
+      </main>
+      {!isEducatorRoute && !isAuthPage && <Footer />}
+    </div>
   );
 };
 
-function App() {
+const App = () => {
   return (
-    <BrowserRouter>
-      <AppProvider>
+    <AppProvider>
+      <BrowserRouter>
         <Shell />
-      </AppProvider>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AppProvider>
   );
-}
+};
 
 export default App;

@@ -2,6 +2,12 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+// Import routes
+const coursesRoutes = require('./routes/courses');
+const usersRoutes = require('./routes/users');
+const testimonialsRoutes = require('./routes/testimonials');
+const enrollmentsRoutes = require('./routes/enrollments');
+
 const app = express();
 const PORT = 5000;
 
@@ -22,6 +28,12 @@ mongoose.connect(process.env.MONGODB_URL)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ MongoDB error:', err.message));
 
+// API Routes
+app.use('/api/courses', coursesRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/testimonials', testimonialsRoutes);
+app.use('/api/enrollments', enrollmentsRoutes);
+
 // Simple routes
 app.get('/', (req, res) => {
   res.json({ 
@@ -29,6 +41,10 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString(),
     endpoints: {
       health: '/health',
+      courses: '/api/courses',
+      users: '/api/users',
+      testimonials: '/api/testimonials',
+      enrollments: '/api/enrollments',
       stripe_webhook: '/api/webhooks/stripe'
     }
   });
@@ -119,24 +135,11 @@ app.post('/api/payments/create-payment-intent', async (req, res) => {
   }
 });
 
-// Courses endpoint (placeholder)
-app.get('/api/courses', (req, res) => {
+// Courses endpoint (placeholder) - DEPRECATED: Use /api/courses instead
+app.get('/api/courses-old', (req, res) => {
   res.json({
-    message: 'Courses endpoint',
-    data: [
-      {
-        id: 1,
-        title: 'Build Text to Image SaaS App in React JS',
-        price: 10.99,
-        thumbnail: '/images/course1.jpg'
-      },
-      {
-        id: 2,
-        title: 'Build AI BG Removal SaaS App in React JS',
-        price: 10.99,
-        thumbnail: '/images/course2.jpg'
-      }
-    ]
+    message: 'This endpoint is deprecated. Use /api/courses instead',
+    redirect: '/api/courses'
   });
 });
 

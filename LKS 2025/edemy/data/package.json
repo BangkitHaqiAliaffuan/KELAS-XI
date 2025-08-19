@@ -1,0 +1,14 @@
+{
+  "name": "edemy-data-import",
+  "version": "1.0.0",
+  "description": "Data import script for Edemy LMS",
+  "main": "import-data.js",
+  "scripts": {
+    "import": "node import-data.js",
+    "test": "echo \"No tests specified\""
+  },
+  "dependencies": {
+    "mongoose": "^7.5.0",
+    "dotenv": "^16.3.1"
+  }
+}

@@ -1,0 +1,29 @@
+[
+    {
+        "clerkId": "675ac1512100b91a6d9b8b24",
+        "name": "GreatStack",
+        "email": "user.greatstack@gmail.com",
+        "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18yclFkaDBOMmFqWnBoTTRBOXZUanZxVlo0aXYifQ",
+        "role": "educator",
+        "createdAt": "2024-12-12T10:56:17.930Z",
+        "updatedAt": "2024-12-12T10:56:17.930Z"
+    },
+    {
+        "clerkId": "user_2qQlvXyr02B4Bq6hT0Gvaa5fT9V",
+        "name": "Great Stack",
+        "email": "user.student@example.com",
+        "imageUrl": "https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18ycVFsdmFMSkw3ckIxNHZMU2o4ZURWNEtmR2IifQ",
+        "role": "student",
+        "createdAt": "2024-12-15T10:56:17.930Z",
+        "updatedAt": "2024-12-15T10:56:17.930Z"
+    },
+    {
+        "clerkId": "user_2qjlgkAqIMpiR2flWIRzvWKtE0w",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "imageUrl": "https://img.clerk.com/default-avatar.png",
+        "role": "student",
+        "createdAt": "2024-12-16T10:56:17.930Z",
+        "updatedAt": "2024-12-16T10:56:17.930Z"
+    }
+]
