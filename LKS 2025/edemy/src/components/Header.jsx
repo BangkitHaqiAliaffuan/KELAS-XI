@@ -1,13 +1,21 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Search, Menu, X, User, BookOpen, LogIn, UserPlus } from 'lucide-react';
-import { assets } from '../assets/assets.js';
+import { Search, Menu, X, User, BookOpen, LogOut } from 'lucide-react';
+import { UserButton, useUser, useClerk, SignInButton, SignUpButton } from '@clerk/clerk-react';
+import { StudentSignInButton, StudentSignUpButton } from './StudentAuth.jsx';
 import { useApp } from '../context/AppContext.jsx';
+import { assets } from '../assets/assets.js';
+import RoleBasedAccess from './RoleBasedAccess.jsx';
+import RoleSelectionModal from './RoleSelectionModal.jsx';
+
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const { searchQuery, searchCourses } = useApp();
+  const { isSignedIn, user, isLoaded } = useUser();
+  const { signOut } = useClerk();
   const location = useLocation();
 
   const handleSearchSubmit = (e) => {
@@ -21,12 +29,36 @@ const Header = () => {
     }
   };
 
-  const navLinks = [
-    { name: 'Home', path: '/', icon: BookOpen },
-    { name: 'Add Courses', path: '/add-course', icon: BookOpen },
-    { name: 'Login', path: '/login', icon: LogIn },
-    { name: 'Create Account', path: '/signup', icon: UserPlus }
-  ];
+  // Navigation links for different user types
+  const getNavigationLinks = () => {
+    const baseLinks = [
+      { name: 'Home', path: '/', icon: BookOpen },
+      { name: 'Courses', path: '/courses', icon: BookOpen },
+    ];
+    
+    return baseLinks;
+  };
+
+  // Authentication nav items based on user state and role
+  const getAuthNavItems = () => {
+    if (!isLoaded || !isSignedIn) {
+      return [];
+    }
+    
+    const userRole = user?.publicMetadata?.role || 'student';
+    
+    if (userRole === 'educator') {
+      return [
+        { name: 'Dashboard', path: '/educator/dashboard', icon: GraduationCap },
+        { name: 'My Courses', path: '/educator/my-courses', icon: BookOpen },
+        { name: 'Add Course', path: '/educator/add-course', icon: BookOpen },
+      ];
+    } else {
+      return [
+        { name: 'My Learning', path: '/my-courses', icon: User },
+      ];
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
@@ -80,24 +112,68 @@ const Header = () => {
 
           {/* Right side buttons - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              to="/add-course"
-              className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              Add Courses
-            </Link>
-            <Link
-              to="/login"
-              className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              Login
-            </Link>
-            <Link
-              to="/signup"
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-            >
-              Create Account
-            </Link>
+            {getNavigationLinks().map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
+            
+            {getAuthNavItems().map((link) => (
+              <Link
+                key={link.name}
+                to={link.path}
+                className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                {link.name}
+              </Link>
+            ))}
+
+            {!isLoaded ? (
+              <div className="flex space-x-2">
+                <div className="w-16 h-8 bg-gray-200 animate-pulse rounded"></div>
+                <div className="w-24 h-8 bg-gray-200 animate-pulse rounded"></div>
+              </div>
+            ) : !isSignedIn ? (
+              <div className="flex space-x-2">
+                <SignInButton mode="modal" afterSignInUrl="/courses">
+                  <button className="text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors">
+                    Student Login
+                  </button>
+                </SignInButton>
+                <SignUpButton mode="modal" afterSignUpUrl="/courses">
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Student Sign Up
+                  </button>
+                </SignUpButton>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-4">
+                <RoleBasedAccess allowedRoles={['educator']}>
+                  <span className="text-sm text-green-600 font-medium">
+                    Educator
+                  </span>
+                </RoleBasedAccess>
+                <RoleBasedAccess allowedRoles={['student']}>
+                  <span className="text-sm text-blue-600 font-medium">
+                    Student
+                  </span>
+                </RoleBasedAccess>
+                <span className="text-sm text-gray-600">
+                  {user?.firstName || user?.username || 'User'}
+                </span>
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8"
+                    }
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -143,7 +219,7 @@ const Header = () => {
         {isMobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 border-t border-gray-100">
-              {navLinks.map((link) => {
+              {getNavigationLinks().map((link) => {
                 const Icon = link.icon;
                 return (
                   <Link
@@ -161,10 +237,78 @@ const Header = () => {
                   </Link>
                 );
               })}
+
+              {getAuthNavItems().map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors ${
+                      location.pathname === link.path
+                        ? 'text-blue-600 bg-blue-50'
+                        : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <Icon className="h-5 w-5" />
+                    <span>{link.name}</span>
+                  </Link>
+                );
+              })}
+
+              {/* Mobile Authentication */}
+              {!isLoaded ? (
+                <div className="px-3 py-2">
+                  <div className="w-full h-8 bg-gray-200 animate-pulse rounded mb-2"></div>
+                  <div className="w-full h-8 bg-gray-200 animate-pulse rounded"></div>
+                </div>
+              ) : !isSignedIn ? (
+                <div className="px-3 py-2 space-y-2">
+                  <SignInButton mode="modal" afterSignInUrl="/courses">
+                    <button className="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
+                      Student Login
+                    </button>
+                  </SignInButton>
+                  <SignUpButton mode="modal" afterSignUpUrl="/courses">
+                    <button className="w-full text-left px-3 py-2 text-base font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                      Student Sign Up
+                    </button>
+                  </SignUpButton>
+                </div>
+              ) : (
+                <div className="px-3 py-2 border-t border-gray-100">
+                  <div className="flex items-center space-x-3 py-2">
+                    <UserButton 
+                      appearance={{
+                        elements: {
+                          avatarBox: "w-8 h-8"
+                        }
+                      }}
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-base font-medium text-gray-700">
+                        {user?.firstName || user?.username || 'User'}
+                      </span>
+                      <RoleBasedAccess allowedRoles={['educator']}>
+                        <span className="text-sm text-green-600">Educator</span>
+                      </RoleBasedAccess>
+                      <RoleBasedAccess allowedRoles={['student']}>
+                        <span className="text-sm text-blue-600">Student</span>
+                      </RoleBasedAccess>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
       </div>
+      
+      <RoleSelectionModal 
+        isOpen={showRoleModal} 
+        onClose={() => setShowRoleModal(false)} 
+      />
     </header>
   );
 };

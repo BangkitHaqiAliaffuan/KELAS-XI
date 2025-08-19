@@ -1,16 +1,49 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { assets } from '../assets/assets.js';
-import { useApp } from '../context/AppContext.jsx';
+import { courseAPI, testimonialAPI } from '../services/api.js';
 import CourseCard from '../components/CourseCard.jsx';
 
 const Home = () => {
-  const { courses, testimonials } = useApp();
-  const featuredCourses = courses.slice(0, 4);
+  const [featuredCourses, setFeaturedCourses] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch featured courses and testimonials in parallel
+        const [coursesResponse, testimonialsResponse] = await Promise.all([
+          courseAPI.getFeaturedCourses(),
+          testimonialAPI.getFeaturedTestimonials()
+        ]);
+
+        setFeaturedCourses(coursesResponse.data || []);
+        setTestimonials(testimonialsResponse.data || []);
+      } catch (err) {
+        console.error('Error fetching homepage data:', err);
+        setError('Failed to load content. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div>
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 mx-4">
+          {error}
+        </div>
+      )}
+
       {/* Hero */}
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -49,6 +82,27 @@ const Home = () => {
                 Join thousands of learners
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Educator CTA */}
+      <section className="bg-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Teach on Edemy
+            </h2>
+            <p className="text-blue-100 text-lg mb-8 max-w-2xl mx-auto">
+              Share your expertise with millions of students worldwide. Create courses, earn money, and build your reputation as an educator.
+            </p>
+            <Link
+              to="/educator/auth"
+              className="inline-flex items-center px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Become an Educator
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Link>
           </div>
         </div>
       </section>
@@ -105,9 +159,27 @@ const Home = () => {
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredCourses.map((course) => (
-              <CourseCard key={course._id} course={course} />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, idx) => (
+                <div key={idx} className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
+                  <div className="bg-gray-300 h-48 w-full"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded w-3/4 mb-3"></div>
+                    <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+                  </div>
+                </div>
+              ))
+            ) : featuredCourses.length > 0 ? (
+              featuredCourses.map((course) => (
+                <CourseCard key={course._id} course={course} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No featured courses available at the moment.
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -117,18 +189,63 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">What learners say</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.slice(0, 3).map((t, idx) => (
-              <div key={idx} className="bg-gray-50 rounded-lg p-6 border border-gray-100">
-                <div className="flex items-center gap-4">
-                  <img src={t.image} alt={t.name} className="h-12 w-12 rounded-full object-cover" />
-                  <div>
-                    <div className="font-semibold text-gray-900">{t.name}</div>
-                    <div className="text-sm text-gray-600">{t.role}</div>
+            {loading ? (
+              // Loading skeleton for testimonials
+              Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="bg-gray-50 rounded-lg p-6 border border-gray-100 animate-pulse">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-12 w-12 rounded-full bg-gray-300"></div>
+                    <div>
+                      <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
+                      <div className="h-3 bg-gray-300 rounded w-16"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-300 rounded"></div>
+                    <div className="h-3 bg-gray-300 rounded w-5/6"></div>
+                    <div className="h-3 bg-gray-300 rounded w-4/6"></div>
                   </div>
                 </div>
-                <p className="mt-4 text-gray-700 text-sm leading-relaxed">{t.feedback}</p>
+              ))
+            ) : testimonials.length > 0 ? (
+              testimonials.slice(0, 3).map((testimonial, idx) => (
+                <div key={testimonial._id || idx} className="bg-gray-50 rounded-lg p-6 border border-gray-100">
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={testimonial.image} 
+                      alt={testimonial.name} 
+                      className="h-12 w-12 rounded-full object-cover"
+                      onError={(e) => {
+                        e.target.src = assets.profile_img; // Fallback image
+                      }}
+                    />
+                    <div>
+                      <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                      <div className="text-sm text-gray-600">Verified Student</div>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-gray-700 text-sm leading-relaxed">{testimonial.text}</p>
+                  <div className="mt-3 flex items-center">
+                    {[...Array(5)].map((_, starIdx) => (
+                      <svg
+                        key={starIdx}
+                        className={`h-4 w-4 ${
+                          starIdx < testimonial.rating ? 'text-yellow-400' : 'text-gray-300'
+                        }`}
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-gray-500">
+                No testimonials available at the moment.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>

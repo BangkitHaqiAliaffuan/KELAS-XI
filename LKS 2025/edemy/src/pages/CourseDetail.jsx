@@ -1,177 +1,712 @@
-import React, { useMemo } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Clock, Users, PlayCircle } from 'lucide-react';
-import StarRating from '../components/StarRating.jsx';
-import { useApp } from '../context/AppContext.jsx';
-import { formatPrice, calculateTotalDuration, countTotalLectures, formatDuration } from '../utils/helpers.js';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import YouTube from 'react-youtube';
+import { 
+  Clock, 
+  Users, 
+  BookOpen, 
+  Star, 
+  Play, 
+  Check, 
+  ArrowLeft,
+  Globe,
+  Award,
+  Target
+} from 'lucide-react';
+import { courseAPI } from '../services/api.js';
+import { assets } from '../assets/assets.js';
 
 const CourseDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const { getCourseById, getAverageRating, getDiscountedPrice, enrollInCourse, isEnrolled } = useApp();
+  const [course, setCourse] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedSection, setSelectedSection] = useState('overview');
+  const [showVideo, setShowVideo] = useState(false);
 
-  const course = getCourseById(id);
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url) => {
+    if (!url) return null;
+    
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
+      /^([a-zA-Z0-9_-]{11})$/ // Direct video ID
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    
+    return null;
+  };
 
-  const stats = useMemo(() => {
-    if (!course) return { duration: '0m', lectures: 0, students: 0, rating: 0 };
+  // Get the first available video URL from course content
+  const getFirstVideoUrl = () => {
+    if (!course?.courseContent || !Array.isArray(course.courseContent)) return null;
+    
+    for (const chapter of course.courseContent) {
+      if (chapter.chapterContent && Array.isArray(chapter.chapterContent)) {
+        for (const lecture of chapter.chapterContent) {
+          if (lecture.lectureUrl) {
+            return lecture.lectureUrl;
+          }
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  const firstVideoUrl = getFirstVideoUrl();
+  const videoId = extractYouTubeId(firstVideoUrl);
+
+  useEffect(() => {
+    fetchCourse();
+  }, [id]);
+
+  const fetchCourse = async () => {
+    try {
+      setLoading(true);
+      const response = await courseAPI.getCourse(id);
+      console.log('Course data loaded:', response.data);
+      console.log('Course thumbnail:', response.data?.courseThumbnail);
+      setCourse(response.data);
+    } catch (err) {
+      console.error('Error fetching course:', err);
+      setError('Failed to load course details. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price);
+  };
+
+  // Calculate course statistics
+  const calculateCourseStats = () => {
+    let totalLectures = 0;
+    let totalDurationMinutes = 0;
+    
+    if (course?.courseContent && Array.isArray(course.courseContent)) {
+      course.courseContent.forEach(chapter => {
+        if (chapter.chapterContent && Array.isArray(chapter.chapterContent)) {
+          totalLectures += chapter.chapterContent.length;
+          chapter.chapterContent.forEach(lecture => {
+            if (lecture.duration) {
+              totalDurationMinutes += lecture.duration;
+            } else {
+              totalDurationMinutes += 10; // Default 10 minutes
+            }
+          });
+        }
+      });
+    }
+    
+    const hours = Math.floor(totalDurationMinutes / 60);
+    const minutes = totalDurationMinutes % 60;
+    let formattedDuration = '';
+    
+    if (hours > 0) {
+      formattedDuration = `${hours}h`;
+      if (minutes > 0) {
+        formattedDuration += ` ${minutes}m`;
+      }
+    } else {
+      formattedDuration = `${minutes}m`;
+    }
+    
     return {
-      duration: calculateTotalDuration(course.courseContent),
-      lectures: countTotalLectures(course.courseContent),
-      students: course.enrolledStudents ? course.enrolledStudents.length : 0,
-      rating: parseFloat(getAverageRating(course.courseRatings))
+      totalLectures,
+      totalDuration: formattedDuration,
+      enrolledCount: course?.enrolledStudents ? course.enrolledStudents.length : 0
     };
-  }, [course, getAverageRating]);
+  };
 
-  if (!course) {
+  const { totalLectures, totalDuration, enrolledCount } = course ? calculateCourseStats() : { totalLectures: 0, totalDuration: '0m', enrolledCount: 0 };
+
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (!course?.courseRatings || course.courseRatings.length === 0) {
+      return 0;
+    }
+    const sum = course.courseRatings.reduce((acc, rating) => acc + rating.rating, 0);
+    return Math.round((sum / course.courseRatings.length) * 10) / 10;
+  };
+
+  const averageRating = course ? calculateAverageRating() : 0;
+
+  const discountPercentage = course?.discount 
+    ? course.discount
+    : (course?.originalPrice && course?.originalPrice > course?.coursePrice 
+        ? Math.round(((course.originalPrice - course.coursePrice) / course.originalPrice) * 100)
+        : 0);
+
+  const discountedPrice = course?.discount > 0 
+    ? course.coursePrice * (1 - course.discount / 100)
+    : course?.coursePrice;
+
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="bg-white rounded-lg p-8 text-center shadow">
-          <h1 className="text-xl font-semibold text-gray-900">Course not found</h1>
-          <p className="text-gray-600 mt-2">The course you are looking for does not exist.</p>
-          <div className="mt-6">
-            <Link to="/courses" className="text-blue-600 font-medium hover:underline">Back to all courses</Link>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-300 rounded w-1/4 mb-6"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2">
+                <div className="bg-gray-300 h-64 rounded-lg mb-6"></div>
+                <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/2 mb-6"></div>
+                <div className="space-y-2">
+                  <div className="h-4 bg-gray-300 rounded"></div>
+                  <div className="h-4 bg-gray-300 rounded w-5/6"></div>
+                  <div className="h-4 bg-gray-300 rounded w-4/6"></div>
+                </div>
+              </div>
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <div className="h-6 bg-gray-300 rounded mb-4"></div>
+                  <div className="h-10 bg-gray-300 rounded mb-4"></div>
+                  <div className="space-y-3">
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  const discountedPrice = getDiscountedPrice(course.coursePrice, course.discount);
-  const enrolled = isEnrolled(course._id);
-
-  const handleEnroll = () => {
-    if (enrolled) return;
-    enrollInCourse(course._id);
-    navigate('/courses');
-  };
+  if (error || !course) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.996-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Course not found</h3>
+          <p className="text-gray-600 mb-4">{error || 'The course you are looking for does not exist.'}</p>
+          <Link
+            to="/courses"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-blue-100 hover:bg-blue-200"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Courses
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Title & meta */}
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight">
-                {course.courseTitle}
-              </h1>
-              <p className="mt-3 text-gray-600">
-                {/* Render a short plain-text summary */}
-                {course.courseDescription.replace(/<[^>]*>/g, '').slice(0, 220)}
-              </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
+          <Link to="/courses" className="hover:text-blue-600">Courses</Link>
+          <span>/</span>
+          <span className="text-gray-900">{course.courseTitle}</span>
+        </nav>
 
-              {/* Meta stats */}
-              <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <StarRating rating={stats.rating} size={16} showRating={true} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Course Video/Image */}
+            <div className="relative mb-6 rounded-lg overflow-hidden">
+              {showVideo && videoId ? (
+                <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+                  <YouTube
+                    videoId={videoId}
+                    opts={{
+                      height: '100%',
+                      width: '100%',
+                      playerVars: {
+                        autoplay: 1,
+                        modestbranding: 1,
+                        rel: 0,
+                        controls: 1,
+                        showinfo: 0,
+                        fs: 1,
+                        cc_load_policy: 0,
+                        iv_load_policy: 3,
+                        autohide: 0
+                      }
+                    }}
+                    onReady={(event) => {
+                      console.log('YouTube player ready');
+                    }}
+                    onError={(error) => {
+                      console.error('YouTube player error:', error);
+                      setShowVideo(false);
+                    }}
+                    style={{
+                      width: '100%',
+                      height: '100%'
+                    }}
+                    iframeClassName="w-full h-full"
+                  />
+                  <button
+                    onClick={() => setShowVideo(false)}
+                    className="absolute top-3 right-3 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm hover:bg-opacity-70 transition-all z-10"
+                  >
+                    Show Thumbnail
+                  </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="tabular-nums">{stats.duration}</span>
+              ) : (
+                <div className="relative aspect-video rounded-lg overflow-hidden">
+                  <img 
+                    src={course.courseThumbnail || course.courseImage || assets.course_1_thumbnail}
+                    alt={course.courseTitle}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.log('Thumbnail loading error, using fallback');
+                      e.target.src = assets.course_1_thumbnail;
+                    }}
+                    onLoad={() => {
+                      console.log('Thumbnail loaded successfully');
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <button 
+                      onClick={() => {
+                        if (videoId) {
+                          setShowVideo(true);
+                        } else {
+                          alert('No video available for this course');
+                        }
+                      }}
+                      className="bg-red-600 hover:bg-red-700 rounded-full p-4 transition-all group shadow-lg"
+                    >
+                      <svg 
+                        className="h-8 w-8 text-white ml-1 group-hover:scale-110 transition-transform" 
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  {videoId && (
+                    <div className="absolute top-3 left-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-semibold flex items-center space-x-1">
+                      <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                      <span>Video Available</span>
+                    </div>
+                  )}
+                  {!videoId && (
+                    <div className="absolute top-3 left-3 bg-gray-600 text-white px-2 py-1 rounded text-xs font-semibold flex items-center space-x-1">
+                      <BookOpen className="h-3 w-3" />
+                      <span>Course Preview</span>
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <PlayCircle className="h-4 w-4 text-gray-400" />
-                  <span className="tabular-nums">{stats.lectures} lectures</span>
+              )}
+            </div>
+
+            {/* Course Title & Instructor */}
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{course.courseTitle}</h1>
+              <div 
+                className="text-lg text-gray-600 mb-4"
+                dangerouslySetInnerHTML={{ 
+                  __html: (course.courseDescription || '').replace(/<[^>]*>/g, '').slice(0, 200) + '...' 
+                }}
+              />
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <span>Created by <span className="font-medium text-gray-900">{course.educator || 'Anonymous'}</span></span>
+                <span>•</span>
+                <div className="flex items-center space-x-1">
+                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                  <span className="font-medium">{averageRating}</span>
+                  <span>rating</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-gray-400" />
-                  <span className="tabular-nums">{stats.students} students</span>
+                <span>•</span>
+                <div className="flex items-center space-x-1">
+                  <Users className="h-4 w-4" />
+                  <span>{enrolledCount} students</span>
                 </div>
               </div>
             </div>
 
-            {/* Course Structure */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Course Structure</h2>
-              <div className="text-xs text-gray-500 mb-3">
-                {course.courseContent.length} sections • {stats.lectures} lectures • {stats.duration} total duration
-              </div>
-              <div className="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
-                {course.courseContent.map((chapter, cIdx) => (
-                  <div key={chapter.chapterId || cIdx} className="">
-                    <div className="bg-gray-50 px-4 py-3 flex items-center justify-between">
-                      <div className="font-medium text-gray-900">
-                        {chapter.chapterTitle}
+            {/* Navigation Tabs */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8">
+                {[
+                  { id: 'overview', label: 'Overview' },
+                  { id: 'curriculum', label: 'Curriculum' },
+                  { id: 'instructor', label: 'Instructor' },
+                  { id: 'reviews', label: 'Reviews' }
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setSelectedSection(tab.id)}
+                    className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                      selectedSection === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              {selectedSection === 'overview' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Description</h2>
+                  <div 
+                    className="prose max-w-none text-gray-700 mb-6"
+                    dangerouslySetInnerHTML={{ 
+                      __html: course.courseDescription || 'No description available.' 
+                    }}
+                  />
+
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">What you'll learn</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                    {course.whatYouWillLearn ? course.whatYouWillLearn.map((item, index) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{item}</span>
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {chapter.chapterContent.length} lectures
+                    )) : [
+                      'Master the fundamentals and advanced concepts',
+                      'Build real-world projects from scratch',
+                      'Learn industry best practices and standards',
+                      'Get hands-on experience with practical exercises',
+                      'Develop problem-solving skills',
+                      'Access to course materials and resources'
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-start space-x-2">
+                        <Check className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700">{item}</span>
                       </div>
-                    </div>
-                    <div className="px-4 py-2 space-y-2">
-                      {chapter.chapterContent.map((lecture, lIdx) => (
-                        <div key={lecture.lectureId || lIdx} className="flex items-center justify-between text-sm text-gray-700">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <PlayCircle className="h-4 w-4 text-gray-400 shrink-0" />
-                            <span className="truncate">{lecture.lectureTitle}</span>
+                    ))}
+                  </div>
+
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Requirements</h3>
+                  <ul className="space-y-2 text-gray-700">
+                    {course.requirements ? course.requirements.map((req, index) => (
+                      <li key={index}>• {req}</li>
+                    )) : (
+                      <>
+                        <li>• Basic computer knowledge</li>
+                        <li>• Internet connection for accessing course materials</li>
+                        <li>• Willingness to learn and practice</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {selectedSection === 'curriculum' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Course Curriculum</h2>
+                  <div className="space-y-4">
+                    {course.courseContent && course.courseContent.length > 0 ? (
+                      course.courseContent.map((chapter, index) => (
+                        <div key={chapter.chapterId || index} className="border border-gray-200 rounded-lg">
+                          <div className="p-4 bg-gray-50 border-b border-gray-200">
+                            <h3 className="font-medium text-gray-900">{chapter.chapterTitle}</h3>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {chapter.chapterContent ? chapter.chapterContent.length : 0} lessons • 
+                              {chapter.chapterContent ? 
+                                chapter.chapterContent.reduce((total, lecture) => total + (lecture.duration || 10), 0) 
+                                : 30} min
+                            </p>
                           </div>
-                          <span className="text-gray-500 tabular-nums ml-4 shrink-0">
-                            {formatDuration(lecture.lectureDuration)}
-                          </span>
+                          <div className="p-4 space-y-3">
+                            {chapter.chapterContent && chapter.chapterContent.length > 0 ? (
+                              chapter.chapterContent.map((lecture, lectureIndex) => {
+                                const lectureVideoId = extractYouTubeId(lecture.lectureUrl);
+                                return (
+                                  <div key={lecture.lectureId || lectureIndex} className="flex items-center justify-between group hover:bg-gray-50 p-2 rounded">
+                                    <div className="flex items-center space-x-3">
+                                      {lectureVideoId ? (
+                                        <svg className="h-4 w-4 text-red-500 fill-current" viewBox="0 0 24 24">
+                                          <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                      ) : (
+                                        <svg className="h-4 w-4 text-gray-400 fill-current" viewBox="0 0 24 24">
+                                          <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                      )}
+                                      <span className="text-gray-700">{lecture.lectureTitle || `Lecture ${lectureIndex + 1}`}</span>
+                                      {lectureVideoId && (
+                                        <button 
+                                          onClick={() => {
+                                            // You can implement individual lecture video playback here
+                                            console.log('Play lecture video:', lectureVideoId);
+                                            // For now, just play the video in the main player
+                                            setShowVideo(true);
+                                          }}
+                                          className="opacity-0 group-hover:opacity-100 text-blue-600 text-xs hover:underline transition-opacity"
+                                        >
+                                          Preview
+                                        </button>
+                                      )}
+                                      {lecture.isPreviewFree && (
+                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                                          Free Preview
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-sm text-gray-500">{lecture.lectureDuration || lecture.duration || 10} min</span>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="text-gray-500 text-sm">No lectures available</div>
+                            )}
+                          </div>
                         </div>
-                      ))}
+                      ))
+                    ) : (
+                      // Fallback content if no courseContent
+                      Array.from({ length: 3 }, (_, index) => (
+                        <div key={index} className="border border-gray-200 rounded-lg">
+                          <div className="p-4 bg-gray-50 border-b border-gray-200">
+                            <h3 className="font-medium text-gray-900">Section {index + 1}: Getting Started</h3>
+                            <p className="text-sm text-gray-600 mt-1">{Math.floor(Math.random() * 5) + 3} lessons • {Math.floor(Math.random() * 60) + 30} min</p>
+                          </div>
+                          <div className="p-4 space-y-3">
+                            {Array.from({ length: 3 }, (_, lessonIndex) => (
+                              <div key={lessonIndex} className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <Play className="h-4 w-4 text-gray-400" />
+                                  <span className="text-gray-700">Lesson {lessonIndex + 1}: Introduction to Concepts</span>
+                                </div>
+                                <span className="text-sm text-gray-500">{Math.floor(Math.random() * 15) + 5} min</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedSection === 'instructor' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">About the Instructor</h2>
+                  <div className="flex items-start space-x-4 mb-6">
+                    <img 
+                      src={assets.profile_img}
+                      alt={course.educator || 'Instructor'}
+                      className="h-20 w-20 rounded-full object-cover"
+                    />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{course.educator || 'Anonymous'}</h3>
+                      <p className="text-gray-600 mb-2">Professional Instructor & Developer</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4" />
+                          <span>{averageRating} rating</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Users className="h-4 w-4" />
+                          <span>{enrolledCount}+ students</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <BookOpen className="h-4 w-4" />
+                          <span>Multiple courses</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                  <p className="text-gray-700">
+                    Expert instructor with experience in the field. 
+                    Passionate about teaching and helping students achieve their goals through practical, hands-on learning.
+                  </p>
+                </div>
+              )}
 
-            {/* Description */}
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">Course Description</h2>
-              <div
-                className="prose prose-sm max-w-none text-gray-700"
-                dangerouslySetInnerHTML={{ __html: course.courseDescription }}
-              />
+              {selectedSection === 'reviews' && (
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Student Reviews</h2>
+                  <div className="mb-6">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, index) => (
+                          <Star 
+                            key={index} 
+                            className={`h-5 w-5 ${
+                              index < Math.floor(averageRating) 
+                                ? 'text-yellow-400 fill-current' 
+                                : 'text-gray-300'
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                      <span className="text-lg font-semibold">{averageRating}</span>
+                      <span className="text-gray-600">course rating</span>
+                      <span className="text-gray-500">({course.courseRatings ? course.courseRatings.length : 0} reviews)</span>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {course.courseRatings && course.courseRatings.length > 0 ? (
+                      course.courseRatings.slice(0, 5).map((review, index) => (
+                        <div key={review._id || index} className="border-b border-gray-200 pb-6">
+                          <div className="flex items-start space-x-4">
+                            <img 
+                              src={assets.profile_img}
+                              alt="Student"
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="font-medium text-gray-900">{review.userId || `Student ${index + 1}`}</span>
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, starIndex) => (
+                                    <Star 
+                                      key={starIndex} 
+                                      className={`h-4 w-4 ${
+                                        starIndex < review.rating 
+                                          ? 'text-yellow-400 fill-current' 
+                                          : 'text-gray-300'
+                                      }`} 
+                                    />
+                                  ))}
+                                </div>
+                                {review.createdAt && (
+                                  <span className="text-sm text-gray-500">
+                                    {new Date(review.createdAt).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-gray-700">
+                                {review.comment || 'Great course! The instructor explains everything clearly and the hands-on projects really help to understand the concepts. Highly recommended for anyone looking to learn this topic.'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      // Fallback reviews if no real reviews
+                      [...Array(3)].map((_, index) => (
+                        <div key={index} className="border-b border-gray-200 pb-6">
+                          <div className="flex items-start space-x-4">
+                            <img 
+                              src={assets.profile_img}
+                              alt="Student"
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <span className="font-medium text-gray-900">Student {index + 1}</span>
+                                <div className="flex items-center">
+                                  {[...Array(5)].map((_, starIndex) => (
+                                    <Star key={starIndex} className="h-4 w-4 text-yellow-400 fill-current" />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-gray-700">
+                                Great course! The instructor explains everything clearly and the hands-on projects 
+                                really help to understand the concepts. Highly recommended for anyone looking to 
+                                learn this topic.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
-              <div className="bg-white rounded-lg shadow border border-gray-100 overflow-hidden">
-                <div className="aspect-video bg-gray-100">
-                  <img src={course.courseThumbnail} alt={course.courseTitle} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-4 space-y-4">
-                  <div className="flex items-center gap-3">
-                    {course.discount > 0 && (
-                      <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded">
-                        {course.discount}% OFF
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
+              {/* Price */}
+              <div className="mb-6">
+                <div className="flex items-center space-x-2 mb-2">
+                  {discountPercentage > 0 ? (
+                    <>
+                      <span className="text-3xl font-bold text-gray-900">
+                        {formatPrice(discountedPrice)}
                       </span>
-                    )}
+                      <span className="text-lg text-gray-500 line-through">
+                        {formatPrice(course.coursePrice)}
+                      </span>
+                      <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
+                        {discountPercentage}% OFF
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-3xl font-bold text-gray-900">
+                      {formatPrice(course.coursePrice)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Enroll Button */}
+              <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4">
+                Enroll Now
+              </button>
+
+              <p className="text-center text-sm text-gray-600 mb-6">30-day money-back guarantee</p>
+
+              {/* Course Includes */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="font-semibold text-gray-900 mb-4">This course includes:</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">{totalDuration} on-demand video</span>
                   </div>
-                  <div className="flex items-end gap-2">
-                    <div className="text-2xl font-bold text-gray-900">{formatPrice(discountedPrice)}</div>
-                    {course.discount > 0 && (
-                      <div className="text-sm text-gray-500 line-through">{formatPrice(course.coursePrice)}</div>
-                    )}
+                  <div className="flex items-center space-x-3">
+                    <BookOpen className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">{totalLectures} lessons</span>
                   </div>
-                  <div className="flex items-center gap-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1"><Clock className="h-3 w-3" />{stats.duration}</div>
-                    <div className="flex items-center gap-1"><PlayCircle className="h-3 w-3" />{stats.lectures} lectures</div>
+                  {videoId && (
+                    <div className="flex items-center space-x-3">
+                      <Play className="h-5 w-5 text-red-500" />
+                      <span className="text-gray-700">HD video content</span>
+                    </div>
+                  )}
+                  <div className="flex items-center space-x-3">
+                    <Award className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">Certificate of completion</span>
                   </div>
-                  <button
-                    onClick={handleEnroll}
-                    disabled={enrolled}
-                    className={`w-full px-4 py-2 rounded-lg font-semibold transition-colors ${enrolled ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
-                  >
-                    {enrolled ? 'Enrolled' : 'Enroll Now'}
-                  </button>
-                  <div className="border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">What's in this course?</h3>
-                    <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                      <li>Lifetime access with free updates.</li>
-                      <li>Hands-on projects and guidance.</li>
-                      <li>Downloadable resources and source code.</li>
-                      <li>Quizzes to test your knowledge.</li>
-                      <li>Certificate of completion.</li>
-                    </ul>
+                  <div className="flex items-center space-x-3">
+                    <Globe className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">Access on mobile and TV</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Target className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-700">Full lifetime access</span>
                   </div>
                 </div>
               </div>
+
+              {/* Course Level */}
+              <div className="border-t border-gray-200 pt-6 mt-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Level:</span>
+                  <span className="font-medium text-gray-900">{course.level || 'Beginner'}</span>
+                </div>
+              </div>
             </div>
-          </aside>
+          </div>
         </div>
       </div>
     </div>

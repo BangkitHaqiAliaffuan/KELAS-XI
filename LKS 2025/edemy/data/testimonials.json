@@ -1,0 +1,23 @@
+[
+    {
+        "name": "Donald Jackman",
+        "role": "SWE 1 @ Amazon",
+        "image": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+        "rating": 5,
+        "feedback": "I've been using Edemy for nearly two years, primarily for learning, and it has been incredibly user-friendly, making my work much easier."
+    },
+    {
+        "name": "Richard Nelson",
+        "role": "SWE 2 @ Samsung",
+        "image": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+        "rating": 4,
+        "feedback": "I've been using Edemy for nearly two years, primarily for learning, and it has been incredibly user-friendly, making my work much easier."
+    },
+    {
+        "name": "James Washington",
+        "role": "SWE 2 @ Google",
+        "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+        "rating": 4.5,
+        "feedback": "I've been using Edemy for nearly two years, primarily for learning, and it has been incredibly user-friendly, making my work much easier."
+    }
+]
