@@ -1,10 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Users, PlayCircle, BookOpen } from 'lucide-react';
 import StarRating from './StarRating.jsx';
 import { assets } from '../assets/assets.js';
+import { userAPI } from '../services/api.js';
 
 const CourseCard = ({ course, className = "" }) => {
+  const [educatorName, setEducatorName] = useState('Loading...');
+
+  // Fetch educator data
+  useEffect(() => {
+    const fetchEducatorData = async () => {
+      if (course.educator) {
+        try {
+          const response = await userAPI.getUser(course.educator);
+          if (response.success && response.data) {
+            const userData = response.data;
+            const displayName = userData.name || userData.firstName || userData.email?.split('@')[0] || 'Anonymous Instructor';
+            setEducatorName(displayName);
+          }
+        } catch (error) {
+          console.error('Error fetching educator data:', error);
+          setEducatorName('Anonymous Instructor');
+        }
+      } else {
+        setEducatorName('Anonymous Instructor');
+      }
+    };
+
+    fetchEducatorData();
+  }, [course.educator]);
   // Format price helper
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
@@ -125,7 +150,7 @@ const CourseCard = ({ course, className = "" }) => {
 
         {/* Instructor */}
         <p className="text-sm text-gray-600 mb-2">
-          by <span className="font-medium">{course.educator || 'Anonymous'}</span>
+          by <span className="font-medium">{educatorName}</span>
         </p>
 
         {/* Course Description */}

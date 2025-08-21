@@ -7,7 +7,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   const { userMemberships } = useOrganizationList({
     userMemberships: { infinite: true },
   });
-  const { isEducator, isStudent, organizationData, organizationLoaded } = useUserRole();
+  const { isEducator, isStudent, organizationData, organizationLoaded, roleCalculationLoaded } = useUserRole();
   const location = useLocation();
 
   console.log('🛡️ ProtectedRoute Debug:', {
@@ -16,15 +16,16 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     isLoaded,
     isSignedIn,
     organizationLoaded,
+    roleCalculationLoaded,
     isEducator,
     isStudent,
     userEmail: user?.emailAddresses[0]?.emailAddress,
     organizationCount: organizationData?.length || 0
   });
 
-  // Show loading while Clerk is initializing OR organization data is loading
-  if (!isLoaded || !organizationLoaded) {
-    console.log('⏳ ProtectedRoute: Still loading data...');
+  // Show loading only while Clerk is initializing
+  if (!isLoaded) {
+    console.log('⏳ ProtectedRoute: Still loading user data...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
@@ -33,13 +34,34 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     );
   }
 
-  // If not signed in, redirect to appropriate auth page
-  if (!isSignedIn) {
-    // Check if it's an educator route
-    if (location.pathname.startsWith('/educator')) {
-      return <Navigate to="/educator" replace />;
+  // Fast path: if role calculation is done, proceed immediately
+  if (roleCalculationLoaded) {
+    console.log('⚡ Role calculation complete, proceeding with access check');
+  } else {
+    // For educator routes, we need to wait longer for organization data
+    if (requiredRole === 'educator') {
+      console.log('⏳ Educator route - waiting for organization data to complete...');
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="ml-2 text-gray-600">Verifying educator access...</div>
+        </div>
+      );
+    } else {
+      // For non-educator routes, proceed faster
+      console.log('⏳ Role calculation in progress...');
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="ml-2 text-gray-600">Checking access...</div>
+        </div>
+      );
     }
-    // For other routes, redirect to home
+  }
+
+  // If not signed in, redirect to home
+  if (!isSignedIn) {
+    console.log('🚨 User not signed in, redirecting to home');
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
@@ -48,13 +70,27 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     console.log('� STRICT ROLE CHECK for:', requiredRole);
     console.log('User organization data:', organizationData);
     
-    if (requiredRole === 'org:educator') {
-      if (!isEducator) {
-        console.log('🚨 SECURITY BLOCK: Non-educator attempting to access educator route');
-        console.log('Redirecting to student portal...');
-        return <Navigate to="/courses" replace />;
+    if (requiredRole === 'educator') {
+      // Triple check for educator access:
+      // 1. Must be identified as educator by useUserRole
+      // 2. Must have organization membership
+      // 3. Must be member of "edemy" organization specifically
+      const hasEdemyMembership = organizationData?.some(
+        membership => membership.organization.name.toLowerCase() === 'edemy'
+      );
+      
+      if (!isEducator || !hasEdemyMembership) {
+        console.log('🚨 SECURITY BLOCK: Non-educator or non-edemy member attempting to access educator route');
+        console.log('Details:', {
+          isEducator,
+          hasEdemyMembership,
+          organizationCount: organizationData?.length || 0,
+          organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role })) || []
+        });
+        console.log('Redirecting to home page...');
+        return <Navigate to="/" replace />;
       }
-      console.log('✅ EDUCATOR ACCESS GRANTED');
+      console.log('✅ EDUCATOR ACCESS GRANTED - User is educator in edemy organization');
     }
     
     if (requiredRole === 'student') {

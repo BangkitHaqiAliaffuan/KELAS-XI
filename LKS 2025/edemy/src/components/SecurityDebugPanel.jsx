@@ -45,8 +45,8 @@ const SecurityDebugPanel = () => {
             
             <div className="border-t border-gray-600 pt-2 mt-2">
               <div>Current Role: <span className="text-yellow-400">{currentRole || 'None'}</span></div>
-              <div>Is Educator: {isEducator ? '✅' : '❌'} {!organizationLoaded ? '(Loading...)' : ''}</div>
-              <div>Is Student: {isStudent ? '✅' : '❌'} {!organizationLoaded ? '(Loading...)' : ''}</div>
+              <div>Is Educator: {isEducator ? '✅' : '❌'} {!roleCalculationLoaded ? '(Calculating...)' : ''}</div>
+              <div>Is Student: {isStudent ? '✅' : '❌'} {!roleCalculationLoaded ? '(Calculating...)' : ''}</div>
               <div>Org Role: <span className="text-cyan-400">{organizationRole || 'None'}</span></div>
               <div className="text-xs text-gray-400">
                 Logic: {organizationData?.length === 0 ? 'No orgs = Student only' : 'Has orgs, checking roles'}

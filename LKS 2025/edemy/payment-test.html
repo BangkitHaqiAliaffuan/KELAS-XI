@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Test - Edemy</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Edemy Payment System Test</h1>
+        <p>Test the complete Stripe payment integration for course enrollment</p>
+
+        <!-- Course Selection Test -->
+        <div class="test-section">
+            <h3>📚 1. Course Selection Test</h3>
+            <div class="form-group">
+                <label for="courseId">Course ID:</label>
+                <input type="text" id="courseId" placeholder="Enter course ID" value="">
+                <button onclick="getFirstCourse()">Get First Course</button>
+            </div>
+            <div class="form-group">
+                <label for="userId">User ID (Clerk ID):</label>
+                <input type="text" id="userId" placeholder="Enter your Clerk user ID" value="user_test123">
+            </div>
+            <button onclick="testCourse()">Get Course Details</button>
+            <button onclick="listAllCourses()">List All Courses</button>
+            <div id="courseResult" class="result"></div>
+        </div>
+
+        <!-- Payment Intent Test -->
+        <div class="test-section">
+            <h3>💳 2. Payment Intent Test</h3>
+            <button onclick="testPaymentIntent()">Create Payment Intent</button>
+            <div id="paymentIntentResult" class="result"></div>
+        </div>
+
+        <!-- Checkout Session Test -->
+        <div class="test-section">
+            <h3>🛒 3. Stripe Test Payment</h3>
+            <button onclick="testCheckoutSession()">Create Checkout Session</button>
+            <button onclick="testStripeRedirect()">Open Stripe Test Payment</button>
+            <button onclick="createTestPaymentWithCard()">Test with Card 4242...</button>
+            <div id="checkoutResult" class="result"></div>
+            
+            <div style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 5px;">
+                <h4 style="margin-top: 0;">💳 Stripe Test Cards:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                    <li><code>4242424242424242</code> - Visa (Success)</li>
+                    <li><code>4000000000000002</code> - Card Declined</li>
+                    <li><code>4000000000009995</code> - Insufficient Funds</li>
+                    <li><code>4000000000000069</code> - Expired Card</li>
+                </ul>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                    Use any future date for expiry, any 3 digits for CVC, any 5 digits for ZIP
+                </p>
+            </div>
+        </div>
+
+        <!-- Enrollment Test -->
+        <div class="test-section">
+            <h3>📝 4. Enrollment Test</h3>
+            <button onclick="testEnrollment()">Check User Enrollments</button>
+            <button onclick="testCreateEnrollment()">Create Test Enrollment</button>
+            <div id="enrollmentResult" class="result"></div>
+        </div>
+
+        <!-- Stripe Webhook Test -->
+        <div class="test-section">
+            <h3>🔔 5. Stripe Webhook Test (CLI Required)</h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                ⚠️ Requires Stripe CLI: <code>stripe listen --forward-to localhost:5000/api/webhooks/stripe</code>
+            </p>
+            <div class="form-group">
+                <label for="testEmail">Test Customer Email:</label>
+                <input type="email" id="testEmail" placeholder="test@example.com" value="test@example.com">
+            </div>
+            <button onclick="triggerPaymentIntentCreated()">Trigger: payment_intent.created</button>
+            <button onclick="triggerPaymentRequiresAction()">Trigger: payment_intent.requires_action</button>
+            <button onclick="triggerPaymentSucceeded()">Trigger: payment_intent.succeeded</button>
+            <button onclick="triggerCheckoutCompleted()">Trigger: checkout.session.completed</button>
+            <button onclick="triggerPaymentFailed()">Trigger: payment_intent.payment_failed</button>
+            <div id="webhookResult" class="result"></div>
+            
+            <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 5px; border: 1px solid #ffeaa7;">
+                <h4 style="margin-top: 0;">📋 Webhook Testing Steps:</h4>
+                <ol style="margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li>Open terminal and run: <code>stripe listen --forward-to localhost:5000/api/webhooks/stripe</code></li>
+                    <li>Copy webhook secret (whsec_...) to your .env file</li>
+                    <li>Restart server with updated webhook secret</li>
+                    <li>Click webhook trigger buttons above</li>
+                    <li>Check server console for webhook processing logs</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Payment Verification Test -->
+        <div class="test-section">
+            <h3>✅ 6. Payment Verification & Monitoring</h3>
+            <div class="form-group">
+                <label for="sessionId">Session ID:</label>
+                <input type="text" id="sessionId" placeholder="cs_test_..." value="">
+            </div>
+            <button onclick="testPaymentVerification()">Verify Payment</button>
+            <button onclick="testGetSessionDetails()">Get Session Details</button>
+            <button onclick="monitorPaymentStatus()">Monitor Payment Status</button>
+            <button onclick="testCompletePaymentFlow()">Test Complete Payment Flow</button>
+            <div id="verificationResult" class="result"></div>
+            
+            <div style="margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+                <h4 style="margin-top: 0;">📋 Real Stripe Test Flow:</h4>
+                <ol style="margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li><strong>Create Session</strong> - Get checkout URL</li>
+                    <li><strong>Open Stripe Page</strong> - Use test card 4242...</li>
+                    <li><strong>Complete Payment</strong> - Stripe processes in test mode</li>
+                    <li><strong>Webhook Triggered</strong> - Server receives payment confirmation</li>
+                    <li><strong>Verify Payment</strong> - Should now return success</li>
+                </ol>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                    💡 After completing test payment, verification should return success!
+                </p>
+            </div>
+        </div>
+
+        <!-- Real Payment Flow Test -->
+        <div class="test-section">
+            <h3>🎯 8. Real Payment Flow Test</h3>
+            <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+                Test the complete payment flow that would happen with real Stripe payments
+            </p>
+            <div class="form-group">
+                <label for="testUserEmail">User Email (must exist in database):</label>
+                <input type="email" id="testUserEmail" placeholder="Select user..." value="">
+                <button onclick="loadAvailableUsers()">Load Users</button>
+            </div>
+            <div id="usersList" style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 5px; display: none;">
+                <!-- Users will be loaded here -->
+            </div>
+            <button onclick="testRealPaymentFlow()">🚀 Test Complete Payment Flow</button>
+            <button onclick="simulateStripeWebhook()">🔔 Simulate Stripe Webhook</button>
+            <button onclick="testActualStripePayment()">💳 Create Real Stripe Test Payment</button>
+            <div id="realPaymentResult" class="result"></div>
+            
+            <div style="margin-top: 15px; padding: 15px; background: #e8f5e8; border-radius: 5px;">
+                <h4 style="margin-top: 0;">🔄 Real vs Simulated Payment:</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 14px;">
+                    <li><strong>Simulated</strong>: Tests webhook processing without Stripe</li>
+                    <li><strong>Real Test</strong>: Creates actual Stripe checkout with test cards</li>
+                    <li><strong>Webhook CLI</strong>: Triggers events but doesn't complete full flow</li>
+                </ul>
+                <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                    💡 For real webhook testing, use "Create Real Stripe Test Payment" then complete payment with card 4242...
+                </p>
+            </div>
+        </div>
+            <button onclick="testServerHealth()">Test Server Connection</button>
+            <button onclick="testAllEndpoints()">Test All Endpoints</button>
+            <button onclick="checkWebhookEndpoint()">Check Webhook Endpoint</button>
+        <!-- Server Health Test -->
+        <div class="test-section">
+            <h3>🏥 9. Server Health Test</h3>
+            <button onclick="testServerHealth()">Test Server Connection</button>
+            <button onclick="testAllEndpoints()">Test All Endpoints</button>
+            <button onclick="checkWebhookEndpoint()">Check Webhook Endpoint</button>
+            <button onclick="testStripeConnection()">Test Stripe Connection</button>
+            <div id="healthResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Utility function to make API requests
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                ...options,
+            };
+
+            try {
+                console.log(`Making request to: ${url}`);
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                console.log(`Response status: ${response.status}`);
+                console.log('Response data:', data);
+                
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                console.error(`API request failed: ${endpoint}`, error);
+                return { success: false, error: error.message };
+            }
+        }
+
+        // Show result in UI
+        function showResult(elementId, result, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+            element.innerHTML = `
+                <strong>${type.toUpperCase()}:</strong><br>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        }
+
+        // Test functions
+        async function listAllCourses() {
+            const result = await apiRequest('/api/courses');
+            if (result.success && result.data.courses && result.data.courses.length > 0) {
+                const firstCourse = result.data.courses[0];
+                document.getElementById('courseId').value = firstCourse._id;
+                showResult('courseResult', { 
+                    message: `Found ${result.data.courses.length} courses. First course set as default.`,
+                    firstCourse: firstCourse,
+                    allCourses: result.data.courses 
+                }, 'success');
+            } else {
+                showResult('courseResult', result, result.success ? 'info' : 'error');
+            }
+        }
+
+        async function getFirstCourse() {
+            const result = await apiRequest('/api/courses?limit=1');
+            if (result.success && result.data.courses && result.data.courses.length > 0) {
+                const course = result.data.courses[0];
+                document.getElementById('courseId').value = course._id;
+                showResult('courseResult', { 
+                    message: 'Course ID updated!',
+                    course: course 
+                }, 'success');
+            } else {
+                showResult('courseResult', { error: 'No courses found in database' }, 'error');
+            }
+        }
+
+        async function testCourse() {
+            const courseId = document.getElementById('courseId').value;
+            if (!courseId) {
+                showResult('courseResult', { error: 'Please enter a course ID or click "Get First Course"' }, 'error');
+                return;
+            }
+
+            const result = await apiRequest(`/api/courses/${courseId}`);
+            showResult('courseResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function testPaymentIntent() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            const paymentData = {
+                courseId,
+                userId,
+                amount: 2999, // $29.99
+                currency: 'usd'
+            };
+
+            const result = await apiRequest('/api/payments/create-payment-intent', {
+                method: 'POST',
+                body: JSON.stringify(paymentData)
+            });
+
+            showResult('paymentIntentResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function testCheckoutSession() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            const sessionData = {
+                courseId,
+                userId,
+                successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`,
+                cancelUrl: `${window.location.origin}/course/${courseId}?payment=cancelled`
+            };
+
+            const result = await apiRequest('/api/payments/create-checkout-session', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+
+            if (result.success && result.data.url) {
+                document.getElementById('sessionId').value = result.data.sessionId || '';
+            }
+
+            showResult('checkoutResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function createTestPaymentWithCard() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!courseId || !userId) {
+                showResult('checkoutResult', { error: 'Please enter Course ID and User ID first' }, 'error');
+                return;
+            }
+
+            const sessionData = {
+                courseId,
+                userId,
+                successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`,
+                cancelUrl: `${window.location.origin}/course/${courseId}?payment=cancelled`
+            };
+
+            const result = await apiRequest('/api/payments/create-checkout-session', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+
+            if (result.success && result.data.url) {
+                // Show instructions for test payment
+                showResult('checkoutResult', {
+                    message: 'Checkout session created! Use the instructions below:',
+                    sessionId: result.data.sessionId,
+                    checkoutUrl: result.data.url,
+                    instructions: {
+                        step1: 'Click the checkout URL below',
+                        step2: 'Use card number: 4242424242424242',
+                        step3: 'Use any future expiry date (e.g., 12/30)',
+                        step4: 'Use any 3-digit CVC (e.g., 123)',
+                        step5: 'Use any 5-digit ZIP (e.g., 12345)',
+                        step6: 'Click Pay to complete test payment'
+                    },
+                    checkoutLink: `<a href="${result.data.url}" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">🔗 Open Stripe Test Payment Page</a>`
+                }, 'success');
+                
+                // Also set session ID for verification later
+                document.getElementById('sessionId').value = result.data.sessionId || '';
+            } else {
+                showResult('checkoutResult', result, 'error');
+            }
+        }
+
+        async function testStripeRedirect() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            const sessionData = {
+                courseId,
+                userId,
+                successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`,
+                cancelUrl: `${window.location.origin}/course/${courseId}?payment=cancelled`
+            };
+
+            const result = await apiRequest('/api/payments/create-checkout-session', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+
+            if (result.success && result.data.url) {
+                // Open Stripe checkout in new window for testing
+                window.open(result.data.url, '_blank');
+                showResult('checkoutResult', { message: 'Stripe checkout opened in new window', ...result }, 'success');
+            } else {
+                showResult('checkoutResult', result, 'error');
+            }
+        }
+
+        async function testEnrollment() {
+            const userId = document.getElementById('userId').value;
+            if (!userId) {
+                showResult('enrollmentResult', { error: 'Please enter a user ID' }, 'error');
+                return;
+            }
+
+            const result = await apiRequest(`/api/enrollments/user/${userId}`);
+            showResult('enrollmentResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function testCreateEnrollment() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!courseId || !userId) {
+                showResult('enrollmentResult', { error: 'Please enter both Course ID and User ID' }, 'error');
+                return;
+            }
+
+            // Validate courseId format (should be valid MongoDB ObjectId)
+            if (!courseId.match(/^[0-9a-fA-F]{24}$/)) {
+                showResult('enrollmentResult', { 
+                    error: 'Invalid courseId format. Please use "Get First Course" button to get a valid course ID',
+                    providedCourseId: courseId,
+                    expectedFormat: '24-character hex string (MongoDB ObjectId)'
+                }, 'error');
+                return;
+            }
+
+            const enrollmentData = {
+                userId: userId,
+                courseId: courseId,
+                amount: 29.99,
+                progress: 0,
+                isCompleted: false,
+                paymentStatus: 'completed',
+                paymentIntentId: 'pi_test_' + Math.random().toString(36).substr(2, 9)
+            };
+
+            console.log('Sending enrollment data:', enrollmentData);
+
+            const result = await apiRequest('/api/enrollments', {
+                method: 'POST',
+                body: JSON.stringify(enrollmentData)
+            });
+
+            showResult('enrollmentResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function monitorPaymentStatus() {
+            const sessionId = document.getElementById('sessionId').value;
+
+            if (!sessionId) {
+                showResult('verificationResult', { error: 'Please enter a session ID' }, 'error');
+                return;
+            }
+
+            showResult('verificationResult', { message: 'Monitoring payment status... (will check every 3 seconds)' }, 'info');
+
+            let attempts = 0;
+            const maxAttempts = 10; // Monitor for 30 seconds
+
+            const checkStatus = async () => {
+                attempts++;
+                
+                try {
+                    const sessionResult = await apiRequest(`/api/payments/session/${sessionId}`);
+                    
+                    if (sessionResult.success) {
+                        const session = sessionResult.data;
+                        const status = session.payment_status;
+                        
+                        showResult('verificationResult', {
+                            attempt: attempts,
+                            sessionId: sessionId,
+                            paymentStatus: status,
+                            sessionStatus: session.status,
+                            amountTotal: session.amount_total / 100,
+                            currency: session.currency,
+                            lastChecked: new Date().toLocaleTimeString()
+                        }, status === 'paid' ? 'success' : 'info');
+
+                        if (status === 'paid') {
+                            // Payment completed, try to verify
+                            setTimeout(() => {
+                                testPaymentVerification();
+                            }, 1000);
+                            return;
+                        }
+                    }
+
+                    if (attempts < maxAttempts) {
+                        setTimeout(checkStatus, 3000); // Check again in 3 seconds
+                    } else {
+                        showResult('verificationResult', {
+                            message: 'Monitoring stopped after 30 seconds',
+                            finalStatus: sessionResult.data?.payment_status || 'unknown',
+                            note: 'Payment may still be processing. Try manual verification.'
+                        }, 'info');
+                    }
+                } catch (error) {
+                    showResult('verificationResult', { 
+                        error: 'Error monitoring payment', 
+                        details: error.message,
+                        attempt: attempts 
+                    }, 'error');
+                }
+            };
+
+            // Start monitoring
+            setTimeout(checkStatus, 1000);
+        }
+
+        async function testCompletePaymentFlow() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!courseId || !userId) {
+                showResult('verificationResult', { error: 'Please enter Course ID and User ID first' }, 'error');
+                return;
+            }
+
+            // Use the test endpoint that simulates complete payment flow
+            const result = await apiRequest('/api/payments/test-success', {
+                method: 'POST',
+                body: JSON.stringify({ courseId, userId })
+            });
+
+            showResult('verificationResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function testGetSessionDetails() {
+            const sessionId = document.getElementById('sessionId').value;
+
+            if (!sessionId) {
+                showResult('verificationResult', { error: 'Please enter a session ID' }, 'error');
+                return;
+            }
+
+            const result = await apiRequest(`/api/payments/session/${sessionId}`);
+            showResult('verificationResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function simulateSuccessfulPayment() {
+            const courseId = document.getElementById('courseId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!courseId || !userId) {
+                showResult('verificationResult', { error: 'Please enter Course ID and User ID first' }, 'error');
+                return;
+            }
+
+            // Simulate successful payment by directly creating enrollment
+            const enrollmentData = {
+                userId: userId,
+                courseId: courseId,
+                amount: 29.99,
+                paymentStatus: 'completed',
+                paymentIntentId: 'pi_test_simulated_' + Date.now()
+            };
+
+            const result = await apiRequest('/api/enrollments', {
+                method: 'POST',
+                body: JSON.stringify(enrollmentData)
+            });
+
+            if (result.success) {
+                showResult('verificationResult', {
+                    message: 'Enrollment created successfully (simulating successful payment)',
+                    enrollment: result.data,
+                    note: 'This simulates what happens after a successful Stripe payment'
+                }, 'success');
+            } else {
+                showResult('verificationResult', result, 'error');
+            }
+        }
+
+        async function testPaymentVerification() {
+            const sessionId = document.getElementById('sessionId').value;
+            const userId = document.getElementById('userId').value;
+
+            if (!sessionId) {
+                showResult('verificationResult', { error: 'Please enter a session ID' }, 'error');
+                return;
+            }
+
+            const verificationData = {
+                sessionId,
+                userId
+            };
+
+            const result = await apiRequest('/api/payments/verify-payment', {
+                method: 'POST',
+                body: JSON.stringify(verificationData)
+            });
+
+            // Add explanation if payment verification fails
+            if (!result.success && result.error && result.error.includes('payment not completed')) {
+                result.explanation = 'This is expected for test sessions. Real payments would have payment_status: "paid"';
+            }
+
+            showResult('verificationResult', result, result.success ? 'success' : 'info');
+        }
+
+        // Webhook testing functions (requires Stripe CLI)
+        async function triggerPaymentIntentCreated() {
+            const courseId = document.getElementById('courseId').value || 'course1';
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            
+            showResult('webhookResult', {
+                message: 'Triggering payment_intent.created event...',
+                note: 'This requires Stripe CLI running: stripe listen --forward-to localhost:5000/api/webhooks/stripe',
+                command: `stripe trigger payment_intent.created --add payment_intent:metadata[courseId]=${courseId} --add payment_intent:metadata[userEmail]=${email} --add payment_intent:amount=50000 --add payment_intent:status=requires_payment_method`,
+                expectedStatus: 'requires_payment_method',
+                expectedEvent: 'payment_intent.created'
+            }, 'info');
+            
+            // Simulate the webhook data that would be sent
+            const simulatedWebhookData = {
+                type: 'payment_intent.created',
+                data: {
+                    object: {
+                        id: 'pi_test_' + Date.now(),
+                        status: 'requires_payment_method',
+                        amount: 50000,
+                        currency: 'usd',
+                        metadata: {
+                            courseId: courseId,
+                            userEmail: email
+                        }
+                    }
+                }
+            };
+            
+            setTimeout(() => {
+                showResult('webhookResult', {
+                    message: 'Expected webhook data:',
+                    simulatedData: simulatedWebhookData,
+                    instruction: 'Run the Stripe CLI command shown above to trigger this webhook'
+                }, 'info');
+            }, 1000);
+        }
+
+        async function triggerPaymentRequiresAction() {
+            const courseId = document.getElementById('courseId').value || 'course1';
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            
+            showResult('webhookResult', {
+                message: 'Triggering payment_intent.requires_action event...',
+                note: 'This simulates 3D Secure or other authentication requirements',
+                command: `stripe trigger payment_intent.requires_action --add payment_intent:metadata[courseId]=${courseId} --add payment_intent:metadata[userEmail]=${email} --add payment_intent:amount=50000`,
+                expectedStatus: 'requires_action',
+                expectedEvent: 'payment_intent.requires_action'
+            }, 'info');
+        }
+
+        async function triggerPaymentSucceeded() {
+            const courseId = document.getElementById('courseId').value || 'course1';
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            
+            showResult('webhookResult', {
+                message: 'Triggering payment_intent.succeeded event...',
+                note: 'This should create automatic enrollment if user exists',
+                command: `stripe trigger payment_intent.succeeded --add payment_intent:metadata[courseId]=${courseId} --add payment_intent:metadata[userEmail]=${email} --add payment_intent:amount=50000`,
+                expectedStatus: 'succeeded',
+                expectedEvent: 'payment_intent.succeeded',
+                expectedResult: 'Automatic enrollment creation'
+            }, 'info');
+        }
+
+        async function triggerCheckoutCompleted() {
+            const courseId = document.getElementById('courseId').value || 'course1';
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            
+            showResult('webhookResult', {
+                message: 'Triggering checkout.session.completed event...',
+                note: 'This should also create automatic enrollment',
+                command: `stripe trigger checkout.session.completed --add checkout_session:metadata[courseId]=${courseId} --add checkout_session:customer_email=${email} --add checkout_session:amount_total=50000`,
+                expectedEvent: 'checkout.session.completed',
+                expectedResult: 'Automatic enrollment creation via checkout'
+            }, 'info');
+        }
+
+        async function triggerPaymentFailed() {
+            const courseId = document.getElementById('courseId').value || 'course1';
+            const email = document.getElementById('testEmail').value || 'test@example.com';
+            
+            showResult('webhookResult', {
+                message: 'Triggering payment_intent.payment_failed event...',
+                note: 'This tests error handling for failed payments',
+                command: `stripe trigger payment_intent.payment_failed --add payment_intent:metadata[courseId]=${courseId} --add payment_intent:metadata[userEmail]=${email} --add payment_intent:amount=50000`,
+                expectedEvent: 'payment_intent.payment_failed',
+                expectedResult: 'Error logged, no enrollment created'
+            }, 'info');
+        }
+
+        async function checkWebhookEndpoint() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/webhooks/stripe`, {
+                    method: 'GET'
+                });
+                
+                showResult('healthResult', {
+                    message: 'Webhook endpoint check',
+                    status: response.status,
+                    statusText: response.statusText,
+                    available: response.status !== 404,
+                    note: response.status === 405 ? 'Endpoint exists (Method Not Allowed is expected for GET)' : 'Check if endpoint is configured'
+                }, response.status === 405 ? 'success' : 'error');
+            } catch (error) {
+                showResult('healthResult', {
+                    error: 'Webhook endpoint not reachable',
+                    details: error.message
+                }, 'error');
+            }
+        }
+
+        async function testStripeConnection() {
+            try {
+                // Test if server can connect to Stripe
+                const result = await apiRequest('/api/payments/test-stripe-connection');
+                showResult('healthResult', result, result.success ? 'success' : 'error');
+            } catch (error) {
+                showResult('healthResult', {
+                    error: 'Could not test Stripe connection',
+                    details: error.message,
+                    suggestion: 'Check if STRIPE_SECRET_KEY is set in .env'
+                }, 'error');
+            }
+        }
+
+        // Real Payment Flow Testing Functions
+        async function loadAvailableUsers() {
+            try {
+                const result = await apiRequest('/api/users');
+                
+                if (result.success && result.data) {
+                    const users = result.data;
+                    const usersList = document.getElementById('usersList');
+                    
+                    if (users.length > 0) {
+                        usersList.innerHTML = `
+                            <h5 style="margin-top: 0;">Available Users:</h5>
+                            ${users.map(user => `
+                                <div style="margin: 5px 0; padding: 8px; background: white; border-radius: 4px; cursor: pointer; border: 1px solid #ddd;" 
+                                     onclick="selectUser('${user.email}', '${user.name}')">
+                                    <strong>${user.name}</strong> - ${user.email}
+                                    <br><small>Role: ${user.role} | ID: ${user.clerkId}</small>
+                                </div>
+                            `).join('')}
+                        `;
+                        usersList.style.display = 'block';
+                        
+                        // Auto-select first user
+                        if (users[0]) {
+                            document.getElementById('testUserEmail').value = users[0].email;
+                        }
+                    } else {
+                        usersList.innerHTML = '<p style="color: #666;">No users found in database</p>';
+                        usersList.style.display = 'block';
+                    }
+                    
+                    showResult('realPaymentResult', {
+                        message: `Found ${users.length} users`,
+                        users: users
+                    }, 'success');
+                } else {
+                    showResult('realPaymentResult', result, 'error');
+                }
+            } catch (error) {
+                showResult('realPaymentResult', {
+                    error: 'Failed to load users',
+                    details: error.message
+                }, 'error');
+            }
+        }
+
+        function selectUser(email, name) {
+            document.getElementById('testUserEmail').value = email;
+            showResult('realPaymentResult', {
+                message: `Selected user: ${name} (${email})`
+            }, 'info');
+        }
+
+        async function testRealPaymentFlow() {
+            const courseId = document.getElementById('courseId').value;
+            const userEmail = document.getElementById('testUserEmail').value;
+
+            if (!courseId || !userEmail) {
+                showResult('realPaymentResult', {
+                    error: 'Please select Course ID and User Email first',
+                    suggestion: 'Use "Get First Course" and "Load Users" buttons'
+                }, 'error');
+                return;
+            }
+
+            showResult('realPaymentResult', {
+                message: 'Testing complete payment flow...',
+                courseId: courseId,
+                userEmail: userEmail
+            }, 'info');
+
+            const result = await apiRequest('/api/payments/simulate-real-payment', {
+                method: 'POST',
+                body: JSON.stringify({
+                    courseId: courseId,
+                    userEmail: userEmail,
+                    amount: 50000 // $500.00
+                })
+            });
+
+            showResult('realPaymentResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function simulateStripeWebhook() {
+            const courseId = document.getElementById('courseId').value;
+            const userEmail = document.getElementById('testUserEmail').value;
+
+            if (!courseId || !userEmail) {
+                showResult('realPaymentResult', {
+                    error: 'Please select Course ID and User Email first'
+                }, 'error');
+                return;
+            }
+
+            // Simulate sending webhook data directly to our endpoint
+            const webhookData = {
+                type: 'payment_intent.succeeded',
+                data: {
+                    object: {
+                        id: 'pi_simulated_webhook_' + Date.now(),
+                        amount: 50000,
+                        currency: 'usd',
+                        status: 'succeeded',
+                        metadata: {
+                            courseId: courseId,
+                            userEmail: userEmail
+                        }
+                    }
+                }
+            };
+
+            showResult('realPaymentResult', {
+                message: 'Simulating Stripe webhook...',
+                note: 'This simulates what Stripe sends to our webhook endpoint',
+                webhookData: webhookData
+            }, 'info');
+
+            // Note: We can't actually call the webhook endpoint directly due to signature verification
+            // Instead, use the simulate-real-payment endpoint
+            setTimeout(() => {
+                testRealPaymentFlow();
+            }, 1000);
+        }
+
+        async function testActualStripePayment() {
+            const courseId = document.getElementById('courseId').value;
+            const userEmail = document.getElementById('testUserEmail').value;
+
+            if (!courseId || !userEmail) {
+                showResult('realPaymentResult', {
+                    error: 'Please select Course ID and User Email first'
+                }, 'error');
+                return;
+            }
+
+            // Get user ID from email
+            const userResult = await apiRequest('/api/users');
+            let userId = null;
+            
+            if (userResult.success && userResult.data) {
+                const user = userResult.data.find(u => u.email === userEmail);
+                if (user) {
+                    userId = user.clerkId;
+                }
+            }
+
+            if (!userId) {
+                showResult('realPaymentResult', {
+                    error: 'Could not find user ID for email: ' + userEmail
+                }, 'error');
+                return;
+            }
+
+            // Create real checkout session
+            const sessionData = {
+                courseId,
+                userId,
+                userEmail, // Add email for webhook processing
+                successUrl: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}&course_id=${courseId}`,
+                cancelUrl: `${window.location.origin}/course/${courseId}?payment=cancelled`
+            };
+
+            const result = await apiRequest('/api/payments/create-checkout-session', {
+                method: 'POST',
+                body: JSON.stringify(sessionData)
+            });
+
+            if (result.success && result.data.url) {
+                showResult('realPaymentResult', {
+                    message: 'Real Stripe checkout session created!',
+                    sessionId: result.data.sessionId,
+                    checkoutUrl: result.data.url,
+                    instructions: {
+                        step1: 'Click the link below to open Stripe checkout',
+                        step2: 'Use test card: 4242 4242 4242 4242',
+                        step3: 'Enter any future expiry date and CVC',
+                        step4: 'Complete the payment',
+                        step5: 'Watch server console for real webhook events!'
+                    },
+                    checkoutLink: `<a href="${result.data.url}" target="_blank" style="color: #007bff; font-weight: bold; text-decoration: none;">🔗 Open Real Stripe Test Payment</a>`,
+                    note: 'This will trigger REAL webhook events when payment completes!'
+                }, 'success');
+
+                // Set session ID for verification
+                document.getElementById('sessionId').value = result.data.sessionId || '';
+            } else {
+                showResult('realPaymentResult', result, 'error');
+            }
+        }
+
+        async function testServerHealth() {
+            const result = await apiRequest('/health');
+            showResult('healthResult', result, result.success ? 'success' : 'error');
+        }
+
+        async function testAllEndpoints() {
+            const endpoints = [
+                '/health',
+                '/api/courses',
+                '/api/users',
+                '/api/enrollments',
+                '/api/testimonials'
+            ];
+
+            const results = {};
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const result = await apiRequest(endpoint);
+                    results[endpoint] = {
+                        status: result.status,
+                        success: result.success,
+                        message: result.success ? 'OK' : result.error || 'Failed'
+                    };
+                } catch (error) {
+                    results[endpoint] = {
+                        status: 'error',
+                        success: false,
+                        message: error.message
+                    };
+                }
+            }
+
+            const allHealthy = Object.values(results).every(r => r.success);
+            showResult('healthResult', results, allHealthy ? 'success' : 'error');
+        }
+
+        // Auto-populate test data on page load
+        window.onload = function() {
+            console.log('Payment test page loaded');
+            console.log('API Base URL:', API_BASE_URL);
+            
+            // Try to get course ID from URL if coming from course page
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('courseId');
+            if (courseId) {
+                document.getElementById('courseId').value = courseId;
+            }
+        };
+    </script>
+</body>
+</html>
