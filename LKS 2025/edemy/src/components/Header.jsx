@@ -32,7 +32,7 @@ const Header = () => {
   // Navigation links for different user types
   const getNavigationLinks = () => {
     const baseLinks = [
-      { name: 'Home', path: '/', icon: BookOpen },
+      
       { name: 'Courses', path: '/courses', icon: BookOpen },
     ];
     
@@ -47,7 +47,7 @@ const Header = () => {
     
     const userRole = user?.publicMetadata?.role || 'student';
     
-    if (userRole === 'educator') {
+    if (userRole === 'org:educator') {
       return [
         { name: 'Dashboard', path: '/educator/dashboard', icon: GraduationCap },
         { name: 'My Courses', path: '/educator/my-courses', icon: BookOpen },
@@ -67,32 +67,9 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <img src={assets.logo} alt="Edemy" className="h-8 w-auto" />
-            <span className="text-xl font-bold text-gray-900 hidden sm:block">Edemy</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className={`text-sm font-medium transition-colors ${
-                location.pathname === '/' 
-                  ? 'text-blue-600' 
-                  : 'text-gray-700 hover:text-blue-600'
-              }`}
-            >
-              Home
-            </Link>
-            <Link 
-              to="/courses" 
-              className={`text-sm font-medium transition-colors ${
-                location.pathname === '/courses' 
-                  ? 'text-blue-600' 
-                  : 'text-gray-700 hover:text-blue-600'
-              }`}
-            >
-              Courses
-            </Link>
-          </nav>
 
           {/* Search Bar - Desktop */}
           <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
@@ -267,12 +244,12 @@ const Header = () => {
                 <div className="px-3 py-2 space-y-2">
                   <SignInButton mode="modal" afterSignInUrl="/courses">
                     <button className="w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-md transition-colors">
-                      Student Login
+                       Login
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal" afterSignUpUrl="/courses">
                     <button className="w-full text-left px-3 py-2 text-base font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                      Student Sign Up
+                       Sign Up
                     </button>
                   </SignUpButton>
                 </div>

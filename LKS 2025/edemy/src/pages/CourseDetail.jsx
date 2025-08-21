@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import YouTube from 'react-youtube';
 import { 
   Clock, 
@@ -11,18 +11,30 @@ import {
   ArrowLeft,
   Globe,
   Award,
-  Target
+  Target,
+  AlertCircle
 } from 'lucide-react';
-import { courseAPI } from '../services/api.js';
+import { courseAPI, userAPI } from '../services/api.js';
 import { assets } from '../assets/assets.js';
+import PaymentButton from '../components/PaymentButton.jsx';
+import EnrollmentStatus from '../components/EnrollmentStatus.jsx';
 
 const CourseDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showVideo, setShowVideo] = useState(false);
+  const [usersData, setUsersData] = useState({}); // Cache untuk data user
+  const [educatorData, setEducatorData] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+
+  // Check if debug mode is enabled (development mode or via URL parameter)
+  const isDebugMode = process.env.NODE_ENV === 'development' || 
+                     searchParams.get('debug') === 'true' ||
+                     localStorage.getItem('paymentDebugMode') === 'true';
 
   // Extract YouTube video ID from URL
   const extractYouTubeId = (url) => {
@@ -63,7 +75,15 @@ const CourseDetail = () => {
 
   useEffect(() => {
     fetchCourse();
-  }, [id]);
+    
+    // Check for payment status in URL
+    const paymentParam = searchParams.get('payment');
+    if (paymentParam === 'success') {
+      setPaymentStatus('success');
+    } else if (paymentParam === 'cancelled') {
+      setPaymentStatus('cancelled');
+    }
+  }, [id, searchParams]);
 
   const fetchCourse = async () => {
     try {
@@ -72,12 +92,71 @@ const CourseDetail = () => {
       console.log('Course data loaded:', response.data);
       console.log('Course thumbnail:', response.data?.courseThumbnail);
       setCourse(response.data);
+      
+      // Fetch user data for educator and reviewers
+      await fetchUsersData(response.data);
     } catch (err) {
       console.error('Error fetching course:', err);
       setError('Failed to load course details. Please try again later.');
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to fetch user data for educator and reviewers
+  const fetchUsersData = async (courseData) => {
+    const userIds = new Set();
+    
+    // Add educator ID
+    if (courseData.educator) {
+      userIds.add(courseData.educator);
+    }
+    
+    // Add reviewer IDs
+    if (courseData.courseRatings && Array.isArray(courseData.courseRatings)) {
+      courseData.courseRatings.forEach(review => {
+        if (review.userId) {
+          userIds.add(review.userId);
+        }
+      });
+    }
+    
+    // Fetch all user data
+    const userData = {};
+    for (const userId of userIds) {
+      try {
+        const userResponse = await userAPI.getUser(userId);
+        if (userResponse.success && userResponse.data) {
+          userData[userId] = userResponse.data;
+        }
+      } catch (error) {
+        console.error(`Error fetching user data for ${userId}:`, error);
+        // Set fallback data
+        userData[userId] = {
+          name: `User ${userId.slice(0, 8)}`,
+          email: null
+        };
+      }
+    }
+    
+    setUsersData(userData);
+    
+    // Set educator data specifically
+    if (courseData.educator && userData[courseData.educator]) {
+      setEducatorData(userData[courseData.educator]);
+    }
+  };
+
+  // Helper function to get user display name
+  const getUserDisplayName = (userId) => {
+    if (!userId) return 'Anonymous User';
+    
+    const userData = usersData[userId];
+    if (userData) {
+      return userData.name || userData.firstName || userData.email?.split('@')[0] || `User ${userId.slice(0, 8)}`;
+    }
+    
+    return `User ${userId.slice(0, 8)}`;
   };
 
   const formatPrice = (price) => {
@@ -149,6 +228,27 @@ const CourseDetail = () => {
   const discountedPrice = course?.discount > 0 
     ? course.coursePrice * (1 - course.discount / 100)
     : course?.coursePrice;
+
+  // Payment handlers
+  const handlePaymentSuccess = (data) => {
+    console.log('Payment successful:', data);
+    setPaymentStatus('success');
+    // Refresh course data to update enrollment status
+    fetchCourse();
+  };
+
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    setPaymentStatus('error');
+    alert(error || 'Payment failed. Please try again.');
+  };
+
+  const handleScrollToEnroll = () => {
+    const enrollSection = document.getElementById('enroll-section');
+    if (enrollSection) {
+      enrollSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   if (loading) {
     return (
@@ -325,7 +425,7 @@ const CourseDetail = () => {
                 }}
               />
               <div className="flex items-center space-x-4 text-sm text-gray-600">
-                <span>Created by <span className="font-medium text-gray-900">{course.educator || 'Anonymous'}</span></span>
+                <span>Created by <span className="font-medium text-gray-900">{getUserDisplayName(course.educator)}</span></span>
                 <span>•</span>
                 <div className="flex items-center space-x-1">
                   <Star className="h-4 w-4 text-yellow-400 fill-current" />
@@ -571,7 +671,7 @@ const CourseDetail = () => {
                             />
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-1">
-                                <span className="font-medium text-gray-900">{review.userId || `Student ${index + 1}`}</span>
+                                <span className="font-medium text-gray-900">{getUserDisplayName(review.userId)}</span>
                                 <div className="flex items-center">
                                   {[...Array(5)].map((_, starIndex) => (
                                     <Star 
@@ -591,7 +691,7 @@ const CourseDetail = () => {
                                 )}
                               </div>
                               <p className="text-gray-700">
-                                {review.comment || 'Great course! The instructor explains everything clearly and the hands-on projects really help to understand the concepts. Highly recommended for anyone looking to learn this topic.'}
+                                {review.comment || review.review || 'Great course! The instructor explains everything clearly and the hands-on projects really help to understand the concepts. Highly recommended for anyone looking to learn this topic.'}
                               </p>
                             </div>
                           </div>
@@ -634,36 +734,47 @@ const CourseDetail = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-              {/* Price */}
-              <div className="mb-6">
-                <div className="flex items-center space-x-2 mb-2">
-                  {discountPercentage > 0 ? (
-                    <>
-                      <span className="text-3xl font-bold text-gray-900">
-                        {formatPrice(discountedPrice)}
-                      </span>
-                      <span className="text-lg text-gray-500 line-through">
-                        {formatPrice(course.coursePrice)}
-                      </span>
-                      <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                        {discountPercentage}% OFF
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-3xl font-bold text-gray-900">
-                      {formatPrice(course.coursePrice)}
-                    </span>
-                  )}
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-4" id="enroll-section">
+              {/* Payment Status Messages */}
+              {paymentStatus === 'success' && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Check className="h-5 w-5 text-green-600" />
+                    <span className="text-green-800 font-medium">Payment Successful!</span>
+                  </div>
+                  <p className="text-green-700 text-sm mt-1">
+                    You are now enrolled in this course.
+                  </p>
                 </div>
-              </div>
+              )}
+              
+              {paymentStatus === 'cancelled' && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                    <span className="text-yellow-800 font-medium">Payment Cancelled</span>
+                  </div>
+                  <p className="text-yellow-700 text-sm mt-1">
+                    Your payment was cancelled. You can try again anytime.
+                  </p>
+                </div>
+              )}
 
-              {/* Enroll Button */}
-              <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4">
-                Enroll Now
-              </button>
+              {/* Enrollment Status */}
+              <EnrollmentStatus 
+                courseId={id} 
+                onEnroll={handleScrollToEnroll}
+                className="mb-6"
+              />
 
-              <p className="text-center text-sm text-gray-600 mb-6">30-day money-back guarantee</p>
+              {/* Payment Button */}
+              <PaymentButton
+                course={course}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+                className="mb-6"
+                showDebugMode={isDebugMode}
+              />
 
               {/* Course Includes */}
               <div className="border-t border-gray-200 pt-6">

@@ -1,7 +1,92 @@
 const express = require('express');
 const Enrollment = require('../models/Enrollment');
 const Course = require('../models/Course');
+const User = require('../models/User');
 const router = express.Router();
+
+// POST /api/enrollments/create-after-payment - Create enrollment after successful payment
+router.post('/create-after-payment', async (req, res) => {
+  try {
+    const { 
+      clerkId, 
+      courseId, 
+      paymentIntentId, 
+      sessionId,
+      amount 
+    } = req.body;
+
+    console.log('Creating enrollment after payment:', { clerkId, courseId, paymentIntentId });
+
+    // Find user by clerkId
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found. Please sync user first.',
+        error: 'USER_NOT_FOUND'
+      });
+    }
+
+    // Find course
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    // Check if enrollment already exists
+    const existingEnrollment = await Enrollment.findOne({
+      'student.clerkId': clerkId,
+      courseId: courseId
+    });
+
+    if (existingEnrollment) {
+      return res.json({
+        success: true,
+        message: 'User already enrolled in this course',
+        data: existingEnrollment
+      });
+    }
+
+    // Create new enrollment
+    const enrollment = new Enrollment({
+      student: {
+        clerkId: user.clerkId,
+        name: user.name,
+        imageUrl: user.imageUrl || 'https://img.clerk.com/eyJ0eXBlIjoicHJveHkiLCJzcmMiOiJodHRwczovL2ltYWdlcy5jbGVyay5kZXYvb2F1dGhfZ29vZ2xlL2ltZ18ycVFsdmFMSkw3ckIxNHZMU2o4ZURWNEtmR2IifQ'
+      },
+      courseId: course._id,
+      courseTitle: course.title,
+      purchaseDate: new Date(),
+      progress: 0,
+      completedLectures: 0,
+      totalLectures: course.lessons ? course.lessons.length : 4,
+      paymentIntentId,
+      sessionId,
+      amount
+    });
+
+    await enrollment.save();
+
+    console.log('Enrollment created successfully:', enrollment._id);
+
+    res.json({
+      success: true,
+      message: 'Enrollment created successfully',
+      data: enrollment
+    });
+
+  } catch (error) {
+    console.error('Error creating enrollment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating enrollment',
+      error: error.message
+    });
+  }
+});
 
 // GET /api/enrollments - Get all enrollments (admin) or user's enrollments
 router.get('/', async (req, res) => {
@@ -48,10 +133,10 @@ router.get('/user/:userId', async (req, res) => {
     const { userId } = req.params;
     
     const enrollments = await Enrollment.find({ 
-      user: userId,
+      userId: userId,
       paymentStatus: 'completed'
     })
-    .populate('course', 'title thumbnail price instructor duration lessons rating')
+    .populate('courseId', 'courseTitle courseThumbnail coursePrice educator duration lessons rating')
     .sort({ enrollmentDate: -1 });
 
     res.json({
@@ -72,12 +157,23 @@ router.get('/user/:userId', async (req, res) => {
 // POST /api/enrollments - Create new enrollment
 router.post('/', async (req, res) => {
   try {
-    const { user, courseId, paymentIntentId, amount } = req.body;
+    console.log('Received enrollment request body:', req.body);
+    const { userId, courseId, paymentIntentId, amount } = req.body;
+    console.log('Extracted values:', { userId, courseId, paymentIntentId, amount });
+
+    // Validate required fields
+    if (!userId || !courseId || !amount) {
+      console.log('Validation failed - missing fields:', { userId: !!userId, courseId: !!courseId, amount: !!amount });
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: userId, courseId, and amount are required'
+      });
+    }
 
     // Check if user is already enrolled
     const existingEnrollment = await Enrollment.findOne({
-      user,
-      course: courseId
+      userId,
+      courseId
     });
 
     if (existingEnrollment) {
@@ -97,15 +193,15 @@ router.post('/', async (req, res) => {
     }
 
     const enrollment = new Enrollment({
-      user,
-      course: courseId,
+      userId,
+      courseId,
       paymentIntentId,
       amount,
       paymentStatus: 'pending'
     });
 
     await enrollment.save();
-    await enrollment.populate('course', 'title thumbnail price instructor');
+    await enrollment.populate('courseId', 'courseTitle courseThumbnail coursePrice educator');
 
     res.status(201).json({
       success: true,

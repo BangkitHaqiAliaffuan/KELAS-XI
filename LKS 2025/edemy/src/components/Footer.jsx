@@ -12,7 +12,6 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <img src={assets.logo} alt="Edemy" className="h-8 w-auto filter brightness-0 invert" />
-              <span className="text-xl font-bold">Edemy</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
               Empower your future with the courses designed to fit your choice. 

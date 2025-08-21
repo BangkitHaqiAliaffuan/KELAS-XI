@@ -26,14 +26,14 @@ const SidebarLink = ({ to, icon, label }) => {
 const EducatorLayout = () => {
   // Extra security check - double protection
   const { isLoaded, user } = useUser();
-  const { isEducator, organizationLoaded, organizationData } = useUserRole();
+  const { isEducator, roleCalculationLoaded, organizationData } = useUserRole();
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   console.log('🏫 EducatorLayout Security Check:', {
     isLoaded,
-    organizationLoaded,
+    roleCalculationLoaded,
     isEducator,
     userEmail: user?.emailAddresses[0]?.emailAddress,
     organizationCount: organizationData?.length || 0
@@ -50,7 +50,7 @@ const EducatorLayout = () => {
   };
 
   // If not loaded yet, show loading
-  if (!isLoaded || !organizationLoaded) {
+  if (!isLoaded || !roleCalculationLoaded) {
     console.log('⏳ EducatorLayout: Waiting for data to load...');
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -68,10 +68,26 @@ const EducatorLayout = () => {
       organizationCount: organizationData?.length || 0,
       organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role }))
     });
-    return <Navigate to="/courses" replace />;
+    return <Navigate to="/" replace />;
   }
 
-  console.log('✅ EducatorLayout: Access granted to educator');
+  // Additional check: Must be member of edemy organization
+  const hasEdemyMembership = organizationData?.some(
+    membership => membership.organization.name.toLowerCase() === 'edemy'
+  );
+
+  if (!hasEdemyMembership) {
+    console.log('🚨 CRITICAL SECURITY BREACH: User is educator but not in edemy organization');
+    console.log('User data:', {
+      userEmail: user?.emailAddresses[0]?.emailAddress,
+      isEducator,
+      organizationCount: organizationData?.length || 0,
+      organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role })) || []
+    });
+    return <Navigate to="/" replace />;
+  }
+
+  console.log('✅ EducatorLayout: Access granted to educator in edemy organization');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -81,7 +97,6 @@ const EducatorLayout = () => {
           <div className="px-4 pb-4">
             <div className="flex items-center gap-2">
               <img src={assets.logo} alt="Edemy" className="h-7" />
-              <span className="text-lg font-semibold">Edemy</span>
             </div>
           </div>
           <nav className="space-y-1 px-2">
@@ -98,7 +113,6 @@ const EducatorLayout = () => {
           <div className="flex items-center justify-between px-6 py-4 border-b bg-white">
             <div className="flex items-center gap-2">
               <img src={assets.logo} alt="Edemy" className="h-6" />
-              <span className="font-semibold">Edemy Educator</span>
             </div>
             <div className="relative">
               <button

@@ -158,12 +158,33 @@ export const enrollmentAPI = {
 
 // Payment API functions
 export const paymentAPI = {
-  // Create payment intent
+  // Create Stripe checkout session
+  createCheckoutSession: async (paymentData) => {
+    return apiRequest('/api/payments/create-checkout-session', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  },
+
+  // Create payment intent for custom checkout
   createPaymentIntent: async (paymentData) => {
     return apiRequest('/api/payments/create-payment-intent', {
       method: 'POST',
       body: JSON.stringify(paymentData),
     });
+  },
+
+  // Verify payment and create enrollment
+  verifyPayment: async (paymentData) => {
+    return apiRequest('/api/payments/verify-payment', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  },
+
+  // Get checkout session details
+  getSession: async (sessionId) => {
+    return apiRequest(`/api/payments/session/${sessionId}`);
   },
 };
 
