@@ -24,70 +24,22 @@ const SidebarLink = ({ to, icon, label }) => {
 };
 
 const EducatorLayout = () => {
-  // Extra security check - double protection
   const { isLoaded, user } = useUser();
-  const { isEducator, roleCalculationLoaded, organizationData } = useUserRole();
   const { signOut } = useClerk();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
-  console.log('🏫 EducatorLayout Security Check:', {
-    isLoaded,
-    roleCalculationLoaded,
-    isEducator,
-    userEmail: user?.emailAddresses[0]?.emailAddress,
-    organizationCount: organizationData?.length || 0
-  });
-
   // Handle logout
   const handleLogout = async () => {
     try {
-      await signOut();
+      if (user) {
+        await signOut();
+      }
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
-
-  // If not loaded yet, show loading
-  if (!isLoaded || !roleCalculationLoaded) {
-    console.log('⏳ EducatorLayout: Waiting for data to load...');
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-        <div className="ml-4 text-gray-600">Loading educator portal...</div>
-      </div>
-    );
-  }
-
-  // If not educator, redirect immediately - CRITICAL SECURITY CHECK
-  if (!isEducator) {
-    console.log('🚨 CRITICAL SECURITY BREACH ATTEMPT: Non-educator trying to access EducatorLayout');
-    console.log('User data:', { 
-      userEmail: user?.emailAddresses[0]?.emailAddress,
-      organizationCount: organizationData?.length || 0,
-      organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role }))
-    });
-    return <Navigate to="/" replace />;
-  }
-
-  // Additional check: Must be member of edemy organization
-  const hasEdemyMembership = organizationData?.some(
-    membership => membership.organization.name.toLowerCase() === 'edemy'
-  );
-
-  if (!hasEdemyMembership) {
-    console.log('🚨 CRITICAL SECURITY BREACH: User is educator but not in edemy organization');
-    console.log('User data:', {
-      userEmail: user?.emailAddresses[0]?.emailAddress,
-      isEducator,
-      organizationCount: organizationData?.length || 0,
-      organizations: organizationData?.map(m => ({ name: m.organization.name, role: m.role })) || []
-    });
-    return <Navigate to="/" replace />;
-  }
-
-  console.log('✅ EducatorLayout: Access granted to educator in edemy organization');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -100,10 +52,10 @@ const EducatorLayout = () => {
             </div>
           </div>
           <nav className="space-y-1 px-2">
-            <SidebarLink to="/educator/dashboard" icon={assets.home_icon} label="Dashboard" />
-            <SidebarLink to="/educator/add-course" icon={assets.add_icon} label="Add Course" />
-            <SidebarLink to="/educator/my-courses" icon={assets.my_course_icon} label="My Courses" />
-            <SidebarLink to="/educator/students" icon={assets.person_tick_icon} label="Student Enrolled" />
+            <SidebarLink to="/dashboard/home" icon={assets.home_icon} label="Dashboard" />
+            <SidebarLink to="/dashboard/add-course" icon={assets.add_icon} label="Add Course" />
+            <SidebarLink to="/dashboard/my-courses" icon={assets.my_course_icon} label="My Courses" />
+            <SidebarLink to="/dashboard/students" icon={assets.person_tick_icon} label="Student Enrolled" />
           </nav>
         </aside>
 

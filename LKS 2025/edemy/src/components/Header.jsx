@@ -32,8 +32,9 @@ const Header = () => {
   // Navigation links for different user types
   const getNavigationLinks = () => {
     const baseLinks = [
-      
+      { name: 'Home', path: '/', icon: null },
       { name: 'Courses', path: '/courses', icon: BookOpen },
+      { name: 'Dashboard', path: '/dashboard', icon: User },
     ];
     
     return baseLinks;

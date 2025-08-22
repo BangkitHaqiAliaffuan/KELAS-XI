@@ -22,13 +22,13 @@ import PaymentTestPage from './pages/PaymentTestPage.jsx';
 
 const Shell = () => {
   const location = useLocation();
-  const isEducatorRoute = location.pathname.startsWith('/educator');
-  const isAuthPage = location.pathname === '/educator/auth' || location.pathname === '/educator';
+  const isDashboardRoute = location.pathname.startsWith('/dashboard');
+  const isAuthPage = location.pathname === '/dashboard/auth';
 
   return (
     <ClerkSyncWrapper>
       <div className="min-h-screen flex flex-col bg-gray-50">
-        {!isEducatorRoute && !isAuthPage && <Header />}
+        {!isDashboardRoute && !isAuthPage && <Header />}
         <main className="flex-1">
           <Routes>
           <Route path="/" element={<Home />} />
@@ -44,32 +44,19 @@ const Shell = () => {
               </ProtectedRoute>
             } />
 
-            {/* Educator Auth Route - Protected from students */}
-            <Route path="/educator" element={
-              <ProtectedRoute requiredRole="educator">
-                <Navigate to="/educator/dashboard" replace />
-              </ProtectedRoute>
-            } />
-            <Route path="/educator/auth" element={
-              <EducatorOnlyAccess>
-                <EducatorAuth />
-              </EducatorOnlyAccess>
-            } />
-
-            {/* Educator Routes - ALL protected with ProtectedRoute */}
-            <Route path="/educator/*" element={
-              <ProtectedRoute requiredRole="educator">
-                <EducatorLayout />
-              </ProtectedRoute>
-            }>
-              <Route path="dashboard" element={<EducatorDashboard />} />
+            {/* Dashboard Routes - Open to everyone */}
+            <Route path="/dashboard" element={<Navigate to="/dashboard/home" replace />} />
+            
+            {/* Dashboard Routes - No protection needed */}
+            <Route path="/dashboard/*" element={<EducatorLayout />}>
+              <Route path="home" element={<EducatorDashboard />} />
               <Route path="add-course" element={<EducatorAddCourse />} />
               <Route path="my-courses" element={<EducatorMyCourses />} />
               <Route path="students" element={<EducatorStudentsEnrolled />} />
             </Route>
           </Routes>
         </main>
-        {!isEducatorRoute && !isAuthPage && <Footer />}
+        {!isDashboardRoute && !isAuthPage && <Footer />}
         <SecurityDebugPanel />
       </div>
     </ClerkSyncWrapper>

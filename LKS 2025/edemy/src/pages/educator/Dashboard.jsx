@@ -1,5 +1,4 @@
 import React from 'react';
-import EducatorPageGuard from '../../components/EducatorPageGuard.jsx';
 import { assets, dummyDashboardData, dummyStudentEnrolled } from '../../assets/assets.js';
 
 const StatCard = ({ icon, label, value }) => (
@@ -16,8 +15,7 @@ const StatCard = ({ icon, label, value }) => (
 
 const Dashboard = () => {
   return (
-    <EducatorPageGuard pageName="EducatorDashboard">
-      <div>
+    <div>
       <h2 className="text-xl font-semibold text-gray-800 mb-4">Dashboard</h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <StatCard icon={assets.person_tick_icon} label="Total Enrolments" value={14} />
@@ -56,7 +54,6 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
-    </EducatorPageGuard>
   );
 };
 
