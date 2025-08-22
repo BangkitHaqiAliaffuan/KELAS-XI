@@ -35,6 +35,7 @@ app.use('/api/testimonials', testimonialsRoutes);
 app.use('/api/enrollments', enrollmentsRoutes);
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/clerk', require('./routes/clerk-integration'));
+app.use('/api/student-dashboard', require('./routes/student-dashboard'));
 
 // Simple routes
 app.get('/', (req, res) => {

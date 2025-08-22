@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/clerk-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const API_BASE_URL = 'http://localhost:5000';
 
@@ -11,6 +11,10 @@ export const useClerkUserSync = () => {
     synced: false,
     error: null
   });
+  
+  // Track if sync has been attempted for this user session
+  const syncAttempted = useRef(false);
+  const prevUserRef = useRef(null);
 
   const syncUserToMongoDB = async (userData) => {
     try {
@@ -59,10 +63,14 @@ export const useClerkUserSync = () => {
     }
   };
 
-  // Auto-sync when user loads
+  // Auto-sync when user loads - only once per session
   useEffect(() => {
-    const performSync = async () => {
-      if (isLoaded && isSignedIn && user) {
+    // Sync hanya saat user berubah dari null ke ada (login/register) dan belum pernah dicoba
+    if (isLoaded && isSignedIn && user && !prevUserRef.current && !syncAttempted.current) {
+      console.log('🔄 New user session detected, attempting sync...');
+      syncAttempted.current = true;
+      
+      const performSync = async () => {
         try {
           // Check if user already exists in MongoDB
           const userExists = await checkUserExists(user.id);
@@ -76,11 +84,21 @@ export const useClerkUserSync = () => {
           }
         } catch (error) {
           console.error('❌ Auto-sync failed:', error);
+          setSyncStatus({ loading: false, synced: false, error: error.message });
         }
-      }
-    };
+      };
 
-    performSync();
+      performSync();
+    }
+    
+    // Update previous user reference
+    prevUserRef.current = user;
+    
+    // Reset sync attempted when user logs out
+    if (!user && prevUserRef.current) {
+      syncAttempted.current = false;
+    }
+    // eslint-disable-next-line
   }, [isLoaded, isSignedIn, user]);
 
   return {
