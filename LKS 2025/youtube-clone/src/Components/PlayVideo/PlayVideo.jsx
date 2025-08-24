@@ -43,6 +43,84 @@ const Playvideo = () => {
                      </div>
                 </div>
             </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
+            <div className='comment'>
+                <img src={assets.user_profile}/>
+                <div>
+                     <h3>Maria Adamatatrore<span>1 day ago</span></h3>
+                     <p>lreomet etoo etojkoet oetojeot</p>
+                     <div className='comment-action'>
+                        <img src={assets.like}/>
+                        <span>244</span>
+                        <img src={assets.dislike}/>
+                        <span>2000</span>
+                     </div>
+                </div>
+            </div>
 
         </div>
     </div>
