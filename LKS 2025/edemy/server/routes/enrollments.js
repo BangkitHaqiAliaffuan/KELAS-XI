@@ -91,19 +91,39 @@ router.post('/create-after-payment', async (req, res) => {
 // GET /api/enrollments - Get all enrollments (admin) or user's enrollments
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10, userId, status } = req.query;
+    const { 
+      page = 1, 
+      limit = 10, 
+      userId, 
+      instructorId, 
+      status,
+      sortBy = 'enrollmentDate',
+      sortOrder = 'desc'
+    } = req.query;
     
     const filter = {};
     if (userId) filter.user = userId;
     if (status) filter.paymentStatus = status;
 
+    // If instructorId is provided, find enrollments for courses taught by this instructor
+    if (instructorId) {
+      const instructorCourses = await Course.find({ instructorId }).select('_id');
+      const courseIds = instructorCourses.map(course => course._id);
+      filter.courseId = { $in: courseIds };
+    }
+
     const skip = (Number(page) - 1) * Number(limit);
     
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    
     const enrollments = await Enrollment.find(filter)
-      .populate('course', 'title thumbnail price instructor duration lessons')
+      .populate('course', 'courseTitle courseThumbnail coursePrice instructor')
+      .populate('student', 'name email profileImage')
       .skip(skip)
       .limit(Number(limit))
-      .sort({ enrollmentDate: -1 });
+      .sort(sort);
 
     const total = await Enrollment.countDocuments(filter);
 

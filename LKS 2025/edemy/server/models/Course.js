@@ -17,7 +17,7 @@ const courseSchema = new mongoose.Schema({
   },
   courseThumbnail: {
     type: String,
-    required: true
+    required: false // Base64 string atau URL path
   },
   discount: {
     type: Number,
@@ -27,11 +27,23 @@ const courseSchema = new mongoose.Schema({
   },
   isPublished: {
     type: Boolean,
-    default: true
+    default: false
   },
-  educator: {
+  instructor: {
     type: String,
-    required: true
+    required: false // Name of instructor for display
+  },
+  instructorId: {
+    type: String,
+    required: true // Clerk user ID of the instructor
+  },
+  instructorEmail: {
+    type: String,
+    required: false
+  },
+  courseHeadings: {
+    type: String,
+    required: false // Short description/subtitle
   },
   courseContent: [{
     chapterId: String,
