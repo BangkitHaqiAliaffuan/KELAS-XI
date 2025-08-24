@@ -4,9 +4,13 @@ import { Clock, Users, PlayCircle, BookOpen } from 'lucide-react';
 import StarRating from './StarRating.jsx';
 import { assets } from '../assets/assets.js';
 import { userAPI } from '../services/api.js';
+import { getImageProps } from '../utils/imageUtils.js';
 
-const CourseCard = ({ course, className = "" }) => {
+const CourseCard = ({ course, className = "", index = 0 }) => {
   const [educatorName, setEducatorName] = useState('Loading...');
+
+  // Get proper image props with fallback handling
+  const imageProps = getImageProps(course.courseThumbnail, course.courseTitle, index);
 
   // Fetch educator data
   useEffect(() => {
@@ -113,12 +117,8 @@ const CourseCard = ({ course, className = "" }) => {
         <Link to={`/course/${course._id}`}>
           <div className="aspect-video bg-gray-200 overflow-hidden">
             <img 
-              src={course.courseThumbnail || assets.course_1}
-              alt={course.courseTitle}
+              {...imageProps}
               className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                e.target.src = assets.course_1; // Fallback image
-              }}
             />
           </div>
           <div className="absolute top-3 right-3 bg-black bg-opacity-50 rounded-full p-2">

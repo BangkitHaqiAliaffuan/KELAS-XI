@@ -1,5 +1,6 @@
 const express = require('express');
 const Course = require('../models/Course');
+const { saveBase64Image, deleteImage } = require('../utils/fileHandler');
 const router = express.Router();
 
 // DEBUG route - untuk melihat data raw di database
@@ -47,6 +48,7 @@ router.get('/', async (req, res) => {
       minPrice, 
       maxPrice, 
       search,
+      instructorId,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query;
@@ -63,6 +65,10 @@ router.get('/', async (req, res) => {
     
     if (level) {
       filter.level = level;
+    }
+
+    if (instructorId) {
+      filter.instructorId = instructorId;
     }
     
     if (search) {
@@ -197,7 +203,22 @@ router.get('/:id', async (req, res) => {
 // POST /api/courses - Create new course (for educators)
 router.post('/', async (req, res) => {
   try {
-    const course = new Course(req.body);
+    let courseData = { ...req.body };
+
+    // Jika ada base64 thumbnail, convert ke file
+    if (courseData.courseThumbnail && courseData.courseThumbnail.startsWith('data:image/')) {
+      try {
+        const fileName = `course-${courseData.instructorId}`;
+        const imagePath = saveBase64Image(courseData.courseThumbnail, fileName);
+        courseData.courseThumbnail = imagePath;
+      } catch (imageError) {
+        console.error('Error processing image:', imageError);
+        // Tetap lanjutkan tanpa thumbnail atau gunakan default
+        courseData.courseThumbnail = null;
+      }
+    }
+
+    const course = new Course(courseData);
     await course.save();
 
     res.status(201).json({
@@ -211,6 +232,42 @@ router.post('/', async (req, res) => {
     res.status(400).json({
       success: false,
       message: 'Error creating course',
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/courses/:id - Update course (for educators)
+router.put('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Find and update the course
+    const course = await Course.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+
+    if (!course) {
+      return res.status(404).json({
+        success: false,
+        message: 'Course not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: course,
+      message: 'Course updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Error updating course:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Error updating course',
       error: error.message
     });
   }

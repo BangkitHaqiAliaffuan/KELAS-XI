@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const path = require('path');
 require('dotenv').config();
 
 // Import routes
@@ -14,8 +15,13 @@ const PORT = 5000;
 // Middleware untuk raw body (diperlukan untuk Stripe webhook)
 app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
 
-// Simple middleware untuk routes lainnya
-app.use(express.json());
+// Simple middleware untuk routes lainnya dengan increased limit
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static files untuk uploaded images
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', '*');

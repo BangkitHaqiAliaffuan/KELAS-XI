@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { courseAPI, userAPI } from '../services/api.js';
 import { assets } from '../assets/assets.js';
+import { getImageProps } from '../utils/imageUtils.js';
 import PaymentButton from '../components/PaymentButton.jsx';
 import EnrollmentStatus from '../components/EnrollmentStatus.jsx';
 
@@ -28,6 +29,9 @@ const CourseDetail = () => {
   const [selectedSection, setSelectedSection] = useState('overview');
   const [showVideo, setShowVideo] = useState(false);
   const [usersData, setUsersData] = useState({}); // Cache untuk data user
+
+  // Get proper image props for course thumbnail
+  const imageProps = course ? getImageProps(course.courseThumbnail, course.courseTitle, 0) : null;
   const [educatorData, setEducatorData] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
 
@@ -364,18 +368,18 @@ const CourseDetail = () => {
                 </div>
               ) : (
                 <div className="relative aspect-video rounded-lg overflow-hidden">
-                  <img 
-                    src={course.courseThumbnail || course.courseImage || assets.course_1_thumbnail}
-                    alt={course.courseTitle}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      console.log('Thumbnail loading error, using fallback');
-                      e.target.src = assets.course_1_thumbnail;
-                    }}
-                    onLoad={() => {
-                      console.log('Thumbnail loaded successfully');
-                    }}
-                  />
+                  {imageProps ? (
+                    <img 
+                      {...imageProps}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img 
+                      src={assets.course_1_thumbnail}
+                      alt="Course thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black bg-opacity-20"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <button 
