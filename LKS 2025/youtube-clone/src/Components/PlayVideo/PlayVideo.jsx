@@ -1,12 +1,33 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './PlayVideo.css'
 import assets from '../../assets'
+import { API_KEY } from '../../data'
 
-const Playvideo = () => {
+const Playvideo = ({videoId}) => {
+
+    const [apiData, setApiData] = useState(null)
+
+    const fetchVideoData = async ()=>{
+        // fetching video data
+        const videoDetails_url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&id=${videoId}&key=${API_KEY}`
+
+        await fetch(videoDetails_url).then(response=>response.json()).then(data=>setApiData(data.items[0]))
+
+        
+    }
+
+
+    useEffect(()=>{
+        fetchVideoData()
+    },[])
+    console.log(apiData)
+
   return (
     <div className='play-video'>
-        <video src={assets.video} controls autoPlay muted></video>
-        <h3>Best Youtube Channel To Learn React JS</h3>
+        {/* {<video src={assets.video} controls autoPlay muted></video>} */}
+
+        <iframe width="676" height="380" src={`https://www.youtube.com/embed/${videoId}?autoplay=1`} frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <h3>{apiData?apiData.snippet.title:"Title Here"}</h3>
         <div className='play-video-info'>
             <p>1225 Views &bull; 2 days ago</p>
             <div>

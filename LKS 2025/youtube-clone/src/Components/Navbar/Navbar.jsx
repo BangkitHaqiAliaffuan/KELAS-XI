@@ -1,6 +1,7 @@
 import React from "react";
 import "./Navbar.css";
 import assets from "../../assets";
+import { Link } from "react-router-dom";
 const Navbar = ({ setSidebar }) => {
   return (
     <nav className="flex-div">
@@ -10,7 +11,9 @@ const Navbar = ({ setSidebar }) => {
           onClick={() => setSidebar((prev) => (prev === false ? true : false))}
           src={assets.menu}
         />
-        <img className="logo" src={assets.logo} />
+        <Link to="/">
+        <  img className="logo" src={assets.logo} />
+        </Link>
       </div>
 
       <div className="nav-middle flex-div">
