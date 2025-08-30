@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import './Recommended.css'
 import assets from '../../assets'
+import { API_KEY, value_converter } from '../../data';
+import { Link } from 'react-router-dom';
 const titles = [
     'Belajar React',
     'Tutorial Vite',
@@ -48,22 +50,32 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const Recommended = () => {
+const Recommended = ({categoryId}) => {
+    const[apiData,setApiData] = useState([])
+    const fetchData = async ()=>{
+        const relatedVideo_url = `https://youtube.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails%2Cstatistics&chart=mostPopular&maxResults=45&regionCode=US&videoCategoryId=${categoryId}&key=${API_KEY}`
+
+        await fetch(relatedVideo_url).then(res=>res.json()).then(data=>setApiData(data.items))
+    }
+
+    useEffect(()=>{
+        fetchData()
+    },[])
+
+    console.log(apiData)
+
     return (
         <div className='recommended'>
-            {thumbnails.map((thumb, idx) => {
-                const title = titles[idx % titles.length];
-                const creator = creators[getRandomInt(0, creators.length - 1)];
-                const views = getRandomInt(1, 999) + 'k Views';
+            {apiData.map((item, idx) => {
                 return (
-                    <div className='side-video-list' key={idx}>
-                        <img src={thumb} />
+                    <Link to={`/video/${item.snippet.categoryId}/${item.id}`} key={idx} className='side-video-list'>
+                        <img src={item?item.snippet.thumbnails.medium.url:''} />
                         <div className='vid-info'>
-                            <h4>{title}</h4>
-                            <p>{creator}</p>
-                            <p>{views}</p>
+                            <h4>{item?item.snippet.title:''}</h4>
+                            <p>{item?item.snippet.channelTitle:''}</p>
+                            <p>{item?value_converter(item.statistics.viewCount):''}</p>
                         </div>
-                    </div>
+                    </Link>
                 );
             })}
         </div>
