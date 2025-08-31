@@ -1,0 +1,56 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+## Project-specific ignores
+# Firebase / Google service files
+google-services.json
+serviceAccountKey.json
+GoogleService-Info.plist
+
+# Keystore and signing files
+*.keystore
+*.jks
+keystore.properties
+signing.properties
+
+# Environment files
+*.env
+.env
+.env.*
+
+# Build artifacts
+/app/build/
+/build/
+*.apk
+*.aab
+
+# Log and crash reports
+hs_err_pid*.log
+replay_pid*.log
+*.log
+
+# Node modules (if project uses node/npm)
+node_modules/
+package-lock.json
+yarn.lock
+
+# IDE folders
+.vscode/
+.kotlin/
+
+# OS generated files
+.DS_Store
+Thumbs.db
