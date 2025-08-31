@@ -1,0 +1,38 @@
+[
+  {
+    "id": "post1",
+    "title": "Welcome to BlogApp",
+    "content": "This is the first sample post imported into Firestore. Welcome readers!",
+    "authorName": "Admin",
+    "authorId": "admin",
+    "authorProfileUrl": "",
+    "timestamp": 1693478400000,
+    "likeCount": 10,
+    "isSaved": false,
+    "tags": ["welcome", "intro"]
+  },
+  {
+    "id": "post2",
+    "title": "Getting Started with Android",
+    "content": "Android development with Kotlin is fun. Here are some tips to get you started...",
+    "authorName": "Jane Developer",
+    "authorId": "jane_dev",
+    "authorProfileUrl": "",
+    "timestamp": 1693392000000,
+    "likeCount": 25,
+    "isSaved": false,
+    "tags": ["android", "kotlin", "tutorial"]
+  },
+  {
+    "id": "post3",
+    "title": "Best Practices for Firebase",
+    "content": "Using Firebase Auth and Firestore properly helps you build secure apps. Follow these best practices...",
+    "authorName": "Firebase Guru",
+    "authorId": "guru",
+    "authorProfileUrl": "",
+    "timestamp": 1693305600000,
+    "likeCount": 7,
+    "isSaved": true,
+    "tags": ["firebase", "security"]
+  }
+]

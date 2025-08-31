@@ -1,0 +1,28 @@
+/build
+
+# Firebase / Google
+google-services.json
+serviceAccountKey.json
+
+# Keystore & signing
+*.keystore
+*.jks
+keystore.properties
+signing.properties
+
+# Environment
+*.env
+.env
+.env.*
+
+# Build artifacts
+*.apk
+*.aab
+
+# Logs
+hs_err_pid*.log
+replay_pid*.log
+*.log
+
+# Node modules (if present)
+node_modules/
