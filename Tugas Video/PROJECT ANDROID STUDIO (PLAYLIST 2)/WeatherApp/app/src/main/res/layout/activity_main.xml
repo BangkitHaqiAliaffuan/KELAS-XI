@@ -18,67 +18,487 @@
             android:background="@drawable/sunny_background"
             tools:context=".MainActivity">
 
-            <!-- Header Section -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/headerLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="20dp"
-                android:paddingTop="40dp"
-                android:paddingBottom="20dp"
+            <!-- Top Search Bar -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/searchCard"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="40dp"
+                app:cardBackgroundColor="@color/white_overlay"
+                app:cardCornerRadius="28dp"
+                app:cardElevation="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent">
 
-                <ImageView
-                    android:id="@+id/ivLocationIcon"
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/loctaion"
-                    android:tint="@color/white"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
-                <TextView
-                    android:id="@+id/tvCityName"
-                    android:layout_width="0dp"
+                    <ImageView
+                        android:id="@+id/ivSearchIcon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:layout_marginStart="16dp"
+                        android:src="@drawable/search"
+                        android:tint="@color/text_secondary"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvCityName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="16dp"
+                        android:fontFamily="@font/merriweathersans_medium"
+                        android:text="Delhi"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/btnSearch"
+                        app:layout_constraintStart_toEndOf="@+id/ivSearchIcon"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/btnSearch"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:padding="8dp"
+                        android:src="@drawable/loctaion"
+                        android:tint="@color/text_secondary"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Main Weather Card -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/mainWeatherCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="@color/white_overlay"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="12dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/searchCard">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:fontFamily="@font/merriweathersans_semibold"
-                    android:text="Jakarta"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    app:layout_constraintBottom_toBottomOf="@+id/ivLocationIcon"
-                    app:layout_constraintEnd_toStartOf="@+id/btnSearch"
-                    app:layout_constraintStart_toEndOf="@+id/ivLocationIcon"
-                    app:layout_constraintTop_toTopOf="@+id/ivLocationIcon" />
+                    android:padding="24dp">
 
-                <ImageView
-                    android:id="@+id/btnSearch"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:padding="4dp"
-                    android:src="@drawable/search"
-                    android:tint="@color/white"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    <LinearLayout
+                        android:id="@+id/locationLayout"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
 
-                <TextView
-                    android:id="@+id/tvCurrentDate"
-                    android:layout_width="0dp"
+                        <ImageView
+                            android:layout_width="16dp"
+                            android:layout_height="16dp"
+                            android:src="@drawable/loctaion"
+                            android:tint="@color/text_secondary" />
+
+                        <TextView
+                            android:id="@+id/tvCityNameMain"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:fontFamily="@font/merriweathersans_medium"
+                            android:text="Delhi"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/tvToday"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:fontFamily="@font/merriweathersans_bold"
+                        android:text="Today"
+                        android:textColor="@color/text_primary"
+                        android:textSize="24sp"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/locationLayout" />
+
+                    <!-- Weather Animation and Temperature -->
+                    <LinearLayout
+                        android:id="@+id/weatherMainLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/tvToday">
+
+                        <com.airbnb.lottie.LottieAnimationView
+                            android:id="@+id/weatherAnimation"
+                            android:layout_width="120dp"
+                            android:layout_height="120dp"
+                            app:lottie_autoPlay="true"
+                            app:lottie_loop="true"
+                            app:lottie_rawRes="@raw/sun" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/tvTemperature"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/merriweathersans_bold"
+                                android:text="31°C"
+                                android:textColor="@color/text_primary"
+                                android:textSize="48sp" />
+
+                            <TextView
+                                android:id="@+id/tvWeatherDescription"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:fontFamily="@font/merriweathersans_medium"
+                                android:text="SUNNY"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                        </LinearLayout>
+
+                    </LinearLayout>
+
+                    <!-- Temperature Range -->
+                    <LinearLayout
+                        android:id="@+id/tempRangeLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/weatherMainLayout">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/merriweathersans_medium"
+                            android:text="Min"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvTempMin"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:fontFamily="@font/merriweathersans_semibold"
+                            android:text="23°"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:fontFamily="@font/merriweathersans_medium"
+                            android:text="Max"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvTempMax"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:fontFamily="@font/merriweathersans_semibold"
+                            android:text="42°"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="1dp"
+                            android:layout_weight="1" />
+
+                        <TextView
+                            android:id="@+id/tvCurrentDate"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Tuesday\n30 January 2021"
+                            android:textAlignment="textEnd"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.cardview.widget.CardView>
+
+            <!-- Weather Details Grid -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/detailsCard"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="20dp"
+                app:cardBackgroundColor="@color/white_overlay"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/mainWeatherCard">
+
+                <GridLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:fontFamily="@font/merriweathersans_regular"
-                    android:text="Senin, 01 September 2025"
-                    android:textColor="@color/white"
-                    android:textSize="12sp"
-                    android:alpha="0.8"
-                    app:layout_constraintEnd_toEndOf="@+id/tvCityName"
-                    app:layout_constraintStart_toStartOf="@+id/tvCityName"
-                    app:layout_constraintTop_toBottomOf="@+id/tvCityName" />
+                    android:columnCount="3"
+                    android:padding="20dp"
+                    android:rowCount="2"
+                    android:useDefaultMargins="true">
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
+                    <!-- Wind Speed -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/wind"
+                            android:tint="@color/blue_primary" />
+
+                        <TextView
+                            android:id="@+id/tvWindSpeed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="70"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Wind"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                    <!-- Humidity -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/humidity"
+                            android:tint="@color/blue_primary" />
+
+                        <TextView
+                            android:id="@+id/tvHumidity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="5.33"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Humidity"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                    <!-- Heat Index -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/centigrade"
+                            android:tint="@color/orange_accent" />
+
+                        <TextView
+                            android:id="@+id/tvFeelsLike"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="Heat Index"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Heat Index"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                    <!-- UV Index -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/sunrise"
+                            android:tint="@color/orange_accent" />
+
+                        <TextView
+                            android:id="@+id/tvUvIndex"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="10054"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="UV Index"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                    <!-- Pressure -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/sea"
+                            android:tint="@color/blue_primary" />
+
+                        <TextView
+                            android:id="@+id/tvPressure"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="1054.0"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Pressure"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                    <!-- Visibility -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="80dp"
+                        android:layout_columnWeight="1"
+                        android:gravity="center"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:src="@drawable/conditions"
+                            android:tint="@color/blue_primary" />
+
+                        <TextView
+                            android:id="@+id/tvVisibility"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:fontFamily="@font/merriweathersans_bold"
+                            android:text="100"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:fontFamily="@font/merriweathersans_regular"
+                            android:text="Visibility"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="10sp" />
+
+                    </LinearLayout>
+
+                </GridLayout>
+
+            </androidx.cardview.widget.CardView>
 
             <!-- Loading Progress Bar -->
             <ProgressBar
@@ -91,312 +511,6 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
-
-            <!-- Weather Content -->
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/weatherContent"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:paddingHorizontal="20dp"
-                android:visibility="visible"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/headerLayout">
-
-                <!-- Main Weather Display -->
-                <com.airbnb.lottie.LottieAnimationView
-                    android:id="@+id/weatherAnimation"
-                    android:layout_width="200dp"
-                    android:layout_height="200dp"
-                    android:layout_marginTop="20dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    app:lottie_autoPlay="true"
-                    app:lottie_loop="true"
-                    app:lottie_rawRes="@raw/sun" />
-
-                <TextView
-                    android:id="@+id/tvTemperature"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:fontFamily="@font/merriweathersans_bold"
-                    android:text="25°C"
-                    android:textColor="@color/white"
-                    android:textSize="64sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/weatherAnimation" />
-
-                <TextView
-                    android:id="@+id/tvWeatherDescription"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:fontFamily="@font/merriweathersans_medium"
-                    android:text="Cerah Berawan"
-                    android:textColor="@color/white"
-                    android:textSize="18sp"
-                    android:alpha="0.9"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvTemperature" />
-
-                <TextView
-                    android:id="@+id/tvFeelsLike"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:fontFamily="@font/merriweathersans_regular"
-                    android:text="Terasa seperti 28°C"
-                    android:textColor="@color/white"
-                    android:textSize="14sp"
-                    android:alpha="0.7"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvWeatherDescription" />
-
-                <!-- Weather Details Card -->
-                <androidx.cardview.widget.CardView
-                    android:id="@+id/weatherDetailsCard"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="32dp"
-                    android:layout_marginBottom="20dp"
-                    app:cardBackgroundColor="@color/white_overlay"
-                    app:cardCornerRadius="16dp"
-                    app:cardElevation="8dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/tvFeelsLike">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="20dp">
-
-                        <!-- Temperature Range -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/centigrade"
-                                android:tint="@color/blue_primary" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="12dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/merriweathersans_medium"
-                                android:text="Rentang Suhu"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/tvTempRange"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/merriweathersans_semibold"
-                                android:text="20°C - 30°C"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="16dp"
-                            android:background="@color/blue_light"
-                            android:alpha="0.3" />
-
-                        <!-- Humidity -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/humidity"
-                                android:tint="@color/blue_primary" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="12dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/merriweathersans_medium"
-                                android:text="Kelembaban"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/tvHumidity"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/merriweathersans_semibold"
-                                android:text="65%"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="16dp"
-                            android:background="@color/blue_light"
-                            android:alpha="0.3" />
-
-                        <!-- Wind Speed -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <ImageView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:src="@drawable/wind"
-                                android:tint="@color/blue_primary" />
-
-                            <TextView
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="12dp"
-                                android:layout_weight="1"
-                                android:fontFamily="@font/merriweathersans_medium"
-                                android:text="Kecepatan Angin"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/tvWindSpeed"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/merriweathersans_semibold"
-                                android:text="15 km/h"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:layout_marginVertical="16dp"
-                            android:background="@color/blue_light"
-                            android:alpha="0.3" />
-
-                        <!-- Sunrise & Sunset -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <!-- Sunrise -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:src="@drawable/sunrise"
-                                    android:tint="@color/orange_accent" />
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/merriweathersans_medium"
-                                        android:text="Matahari Terbit"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="12sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvSunrise"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/merriweathersans_semibold"
-                                        android:text="06:15"
-                                        android:textColor="@color/text_primary"
-                                        android:textSize="14sp" />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                            <!-- Sunset -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <ImageView
-                                    android:layout_width="24dp"
-                                    android:layout_height="24dp"
-                                    android:src="@drawable/sunset"
-                                    android:tint="@color/orange_accent" />
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginStart="8dp"
-                                    android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/merriweathersans_medium"
-                                        android:text="Matahari Terbenam"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="12sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvSunset"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:fontFamily="@font/merriweathersans_semibold"
-                                        android:text="18:45"
-                                        android:textColor="@color/text_primary"
-                                        android:textSize="14sp" />
-
-                                </LinearLayout>
-
-                            </LinearLayout>
-
-                        </LinearLayout>
-
-                    </LinearLayout>
-
-                </androidx.cardview.widget.CardView>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <!-- Error Message -->
             <TextView
