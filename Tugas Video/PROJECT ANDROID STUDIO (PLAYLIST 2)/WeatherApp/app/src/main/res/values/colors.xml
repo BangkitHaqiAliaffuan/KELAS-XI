@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Primary Colors -->
+    <color name="blue_primary">#2196F3</color>
+    <color name="blue_dark">#1976D2</color>
+    <color name="blue_light">#BBDEFB</color>
+    
+    <!-- Accent Colors -->
+    <color name="orange_accent">#FF9800</color>
+    <color name="orange_light">#FFE0B2</color>
+    
+    <!-- Background Colors -->
+    <color name="background_light">#FAFAFA</color>
+    <color name="background_dark">#121212</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_white">#FFFFFF</color>
+    
+    <!-- Card Colors -->
+    <color name="card_background">#FFFFFF</color>
+    <color name="card_background_dark">#1E1E1E</color>
+    
+    <!-- Weather Condition Colors -->
+    <color name="sunny_yellow">#FFC107</color>
+    <color name="cloudy_gray">#9E9E9E</color>
+    <color name="rainy_blue">#2196F3</color>
+    <color name="snowy_white">#ECEFF1</color>
+    
+    <!-- Status Colors -->
+    <color name="success_green">#4CAF50</color>
+    <color name="error_red">#F44336</color>
+    <color name="warning_orange">#FF9800</color>
+    
+    <!-- Transparent Colors -->
+    <color name="black_overlay">#80000000</color>
+    <color name="white_overlay">#80FFFFFF</color>
+</resources>
