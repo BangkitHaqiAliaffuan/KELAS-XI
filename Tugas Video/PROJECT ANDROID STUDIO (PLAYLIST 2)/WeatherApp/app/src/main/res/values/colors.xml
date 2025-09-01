@@ -38,5 +38,11 @@
     
     <!-- Transparent Colors -->
     <color name="black_overlay">#80000000</color>
-    <color name="white_overlay">#80FFFFFF</color>
+    <color name="white_overlay">#E0FFFFFF</color>
+    
+    <!-- Modern Design Colors -->
+    <color name="gradient_start">#4FC3F7</color>
+    <color name="gradient_end">#29B6F6</color>
+    <color name="shadow_color">#1A000000</color>
+    <color name="accent_blue">#1976D2</color>
 </resources>

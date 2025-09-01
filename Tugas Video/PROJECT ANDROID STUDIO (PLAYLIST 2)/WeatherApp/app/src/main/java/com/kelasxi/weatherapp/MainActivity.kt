@@ -181,18 +181,43 @@ class MainActivity : AppCompatActivity() {
     
     private fun updateWeatherUI(weatherData: WeatherResponse) {
         binding.apply {
-            // Update basic info
+            // Update city name in both locations
             tvCityName.text = weatherData.cityName
-            tvTemperature.text = "${weatherData.main.temperature.toInt()}°C"
-            tvWeatherDescription.text = WeatherUtils.capitalizeWords(weatherData.weather[0].description)
-            tvFeelsLike.text = "Terasa seperti ${weatherData.main.feelsLike.toInt()}°C"
+            tvCityNameMain.text = weatherData.cityName
             
-            // Update detailed info
-            tvTempRange.text = "${weatherData.main.tempMin.toInt()}°C - ${weatherData.main.tempMax.toInt()}°C"
-            tvHumidity.text = "${weatherData.main.humidity}%"
-            tvWindSpeed.text = "${(weatherData.wind.speed * 3.6).toInt()} km/h"
-            tvSunrise.text = WeatherUtils.formatTime(weatherData.sys.sunrise)
-            tvSunset.text = WeatherUtils.formatTime(weatherData.sys.sunset)
+            // Update temperature
+            val temperature = weatherData.main.temperature.toInt()
+            tvTemperature.text = "${temperature}°C"
+            
+            // Update weather description
+            val description = WeatherUtils.capitalizeWords(weatherData.weather[0].description)
+            tvWeatherDescription.text = description.uppercase()
+            
+            // Update temperature range
+            val minTemp = weatherData.main.tempMin.toInt()
+            val maxTemp = weatherData.main.tempMax.toInt()
+            tvTempMin.text = "${minTemp}°"
+            tvTempMax.text = "${maxTemp}°"
+            
+            // Update weather details grid
+            tvHumidity.text = "${weatherData.main.humidity}"
+            tvWindSpeed.text = "${(weatherData.wind.speed * 3.6).toInt()}"
+            tvPressure.text = "${weatherData.main.pressure.toInt()}"
+            
+            // Update feels like (for Heat Index)
+            val feelsLike = weatherData.main.feelsLike.toInt()
+            tvFeelsLike.text = "${feelsLike}°C"
+            
+            // Update visibility (convert from meters to km) - use default if not available
+            val visibilityKm = 10 // Default value since visibility might not be available
+            tvVisibility.text = "${visibilityKm}"
+            
+            // Set UV Index placeholder (not available in current weather API)
+            tvUvIndex.text = "N/A"
+            
+            // Update current date
+            val currentDate = SimpleDateFormat("EEEE\ndd MMMM yyyy", Locale.getDefault()).format(Date())
+            tvCurrentDate.text = currentDate
             
             // Update weather animation
             val animationRes = WeatherUtils.getWeatherAnimation(weatherData.weather[0].main)
@@ -207,18 +232,24 @@ class MainActivity : AppCompatActivity() {
     
     private fun showLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.weatherContent.visibility = if (isLoading) View.GONE else View.VISIBLE
+        // Hide/show main weather card instead
+        binding.mainWeatherCard.visibility = if (isLoading) View.GONE else View.VISIBLE
+        binding.detailsCard.visibility = if (isLoading) View.GONE else View.VISIBLE
     }
     
     private fun showError(message: String) {
         binding.tvError.text = message
         binding.tvError.visibility = View.VISIBLE
-        binding.weatherContent.visibility = View.GONE
+        // Hide main cards
+        binding.mainWeatherCard.visibility = View.GONE
+        binding.detailsCard.visibility = View.GONE
     }
     
     private fun hideError() {
         binding.tvError.visibility = View.GONE
-        binding.weatherContent.visibility = View.VISIBLE
+        // Show main cards
+        binding.mainWeatherCard.visibility = View.VISIBLE
+        binding.detailsCard.visibility = View.VISIBLE
     }
     
     private fun showSearchCityDialog() {

@@ -6,11 +6,11 @@
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
+.env
 /.idea/assetWizardSettings.xml
 .DS_Store
 /build
 /captures
-.env
 .externalNativeBuild
 .cxx
 local.properties
