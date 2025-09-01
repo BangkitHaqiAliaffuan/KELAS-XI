@@ -6,6 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.resource.bitmap.CircleCrop
+import com.google.android.material.button.MaterialButton
 import de.hdodenhof.circleimageview.CircleImageView
 
 /**
@@ -42,6 +45,18 @@ class BlogPostAdapter(
         notifyDataSetChanged()
     }
 
+    /**
+     * Update single item di posisi tertentu
+     */
+    fun updateSingleItem(position: Int, updatedBlogPost: BlogPost) {
+        if (position >= 0 && position < blogPosts.size) {
+            val mutableList = blogPosts.toMutableList()
+            mutableList[position] = updatedBlogPost
+            this.blogPosts = mutableList
+            notifyItemChanged(position)
+        }
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BlogPostViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_blog_post, parent, false)
@@ -64,12 +79,12 @@ class BlogPostAdapter(
         private val ivAuthorProfile: CircleImageView = itemView.findViewById(R.id.ivAuthorProfile)
         private val tvAuthorName: TextView = itemView.findViewById(R.id.tvAuthorName)
         private val tvPostTime: TextView = itemView.findViewById(R.id.tvPostTime)
-        private val btnMore: ImageButton = itemView.findViewById(R.id.btnMore)
+        private val btnMore: MaterialButton = itemView.findViewById(R.id.btnMore)
         private val tvBlogTitle: TextView = itemView.findViewById(R.id.tvBlogTitle)
         private val tvBlogContent: TextView = itemView.findViewById(R.id.tvBlogContent)
-        private val btnLike: ImageButton = itemView.findViewById(R.id.btnLike)
+        private val btnLike: MaterialButton = itemView.findViewById(R.id.btnLike)
         private val tvLikeCount: TextView = itemView.findViewById(R.id.tvLikeCount)
-        private val btnSave: ImageButton = itemView.findViewById(R.id.btnSave)
+        private val btnSave: MaterialButton = itemView.findViewById(R.id.btnSave)
         private val tvReadMore: TextView = itemView.findViewById(R.id.tvReadMore)
 
         /**
@@ -85,22 +100,25 @@ class BlogPostAdapter(
 
             // Set like button state
             if (blogPost.isLiked) {
-                btnLike.setImageResource(android.R.drawable.btn_star_big_on)
+                btnLike.setIconResource(android.R.drawable.btn_star_big_on)
             } else {
-                btnLike.setImageResource(android.R.drawable.btn_star_big_off)
+                btnLike.setIconResource(android.R.drawable.btn_star_big_off)
             }
 
             // Set save button state
             if (blogPost.isSaved) {
-                btnSave.setImageResource(android.R.drawable.ic_menu_save)
+                btnSave.setIconResource(android.R.drawable.ic_menu_save)
                 // TODO: Change to filled save icon
             } else {
-                btnSave.setImageResource(android.R.drawable.ic_menu_save)
+                btnSave.setIconResource(android.R.drawable.ic_menu_save)
             }
 
-            // TODO: Load author profile image with Glide
-            // For now, use default image
-            ivAuthorProfile.setImageResource(R.drawable.ic_launcher_foreground)
+            // Load author profile image with ProfileImageHelper
+            ProfileImageHelper.loadProfileImage(
+                ivAuthorProfile,
+                blogPost.authorProfileUrl,
+                R.drawable.ic_launcher_foreground
+            )
 
             // Set click listeners
             setupClickListeners(blogPost, position)

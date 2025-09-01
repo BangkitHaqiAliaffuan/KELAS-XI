@@ -1,5 +1,7 @@
 package com.kelasxi.blogapp
 
+import java.io.Serializable
+
 /**
  * Data class untuk menyimpan informasi blog post
  * Digunakan untuk transfer data dan display di UI
@@ -16,7 +18,7 @@ data class BlogPost(
     val isLiked: Boolean = false,
     val isSaved: Boolean = false,
     val tags: List<String> = emptyList()
-) {
+) : Serializable {
     /**
      * Convert timestamp to readable time format
      */

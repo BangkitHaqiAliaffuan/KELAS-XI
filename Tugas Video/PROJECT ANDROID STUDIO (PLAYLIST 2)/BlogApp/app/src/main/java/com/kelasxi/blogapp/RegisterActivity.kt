@@ -79,13 +79,19 @@ class RegisterActivity : AppCompatActivity() {
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        // Save user profile to Firestore
+                        // Save user profile to Firestore with profile image
                         val user = auth.currentUser
                         val db = Firebase.firestore
+                        
+                        // Generate profile image untuk user baru
+                        val profileImageUrl = ProfileImageHelper.getProfileImageForUser(name)
+                        
                         val userData = mapOf(
                             "uid" to (user?.uid ?: ""),
                             "name" to name,
-                            "email" to email
+                            "email" to email,
+                            "profileUrl" to profileImageUrl,
+                            "createdAt" to System.currentTimeMillis()
                         )
                         user?.let {
                             db.collection("users").document(it.uid).set(userData)

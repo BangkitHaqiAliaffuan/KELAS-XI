@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
 /**
@@ -24,6 +25,15 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Check if user is already logged in
+        val currentUser = Firebase.auth.currentUser
+        if (currentUser != null) {
+            // User is already logged in, navigate to main activity
+            navigateToMain()
+            return
+        }
+        
         setContentView(R.layout.activity_login)
 
         // Initialize UI components
@@ -77,8 +87,8 @@ class LoginActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    // Sign in success
-                    navigateToMain()
+                    // Sign in success, load user profile data
+                    loadUserProfileAndNavigate()
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w("LoginActivity", "signInWithEmail:failure", task.exception)
@@ -102,5 +112,61 @@ class LoginActivity : AppCompatActivity() {
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish() // Close login activity
+    }
+
+    /**
+     * Load user profile data dari Firestore setelah login
+     */
+    private fun loadUserProfileAndNavigate() {
+        val currentUser = Firebase.auth.currentUser
+        if (currentUser == null) {
+            navigateToMain()
+            return
+        }
+
+        val firestore = Firebase.firestore
+        firestore.collection("users").document(currentUser.uid).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    // User profile exists, navigate to main
+                    Log.d("LoginActivity", "User profile loaded successfully")
+                    navigateToMain()
+                } else {
+                    // User profile doesn't exist, create default profile
+                    Log.d("LoginActivity", "Creating default user profile")
+                    createDefaultUserProfile(currentUser.uid, currentUser.email ?: "")
+                }
+            }
+            .addOnFailureListener { e ->
+                Log.e("LoginActivity", "Error loading user profile", e)
+                // Even if profile loading fails, navigate to main
+                navigateToMain()
+            }
+    }
+
+    /**
+     * Create default user profile jika belum ada
+     */
+    private fun createDefaultUserProfile(userId: String, email: String) {
+        val firestore = Firebase.firestore
+        val profileImageUrl = ProfileImageHelper.getProfileImageForUser(email)
+        
+        val userData = mapOf(
+            "uid" to userId,
+            "name" to email.substringBefore("@"), // Use email prefix as default name
+            "email" to email,
+            "profileUrl" to profileImageUrl,
+            "createdAt" to System.currentTimeMillis()
+        )
+
+        firestore.collection("users").document(userId).set(userData)
+            .addOnSuccessListener {
+                Log.d("LoginActivity", "Default user profile created")
+                navigateToMain()
+            }
+            .addOnFailureListener { e ->
+                Log.e("LoginActivity", "Error creating default user profile", e)
+                navigateToMain() // Navigate anyway
+            }
     }
 }
