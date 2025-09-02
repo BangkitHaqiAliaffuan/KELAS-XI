@@ -1,15 +1,20 @@
-import write from './write.png'
-import light_bulb from './light_bulb.png'
-import pin from './pin.png'
-import voice from './voice.png'
-import globe from './globe.png'
-import question from './question.png'
+import add from './add-30.png'
+import bookmark from './bookmark.svg'
+import logo from './chatgptLogo.svg'
+import chatgpt from './chatgpt.svg'
+import home from './home.svg'
+import message from './message.svg'
+import rocket from './rocket.svg'
+import user_icon from './user-icon.png'
 
-export const assets = {
-    write,
-    globe,
-    light_bulb,
-    question,
-    pin,
-    voice
+
+export const assets={
+    add,
+    bookmark,
+    logo,
+    chatgpt,
+    home,
+    message,
+    rocket,
+    user_icon
 }

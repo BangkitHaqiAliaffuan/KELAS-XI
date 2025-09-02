@@ -1,13 +1,24 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
-import Home from './Home'
-
+// import Home from './Home'
+import Sidebar from './Sidebar/Sidebar'
+import Chat from './Chat/Chat'
+import './App.css'
 const App = () => {
   return (
    <>
-   <Routes>
-    <Route path='/' element={<Home/>}/>
-   </Routes>
+   <div className='container'>
+   
+   <div className='left'>
+   <Sidebar/>
+   </div>
+
+   <div className='right'>
+   <Chat/>
+   </div>
+    
+
+   </div>
    </>
   )
 }
