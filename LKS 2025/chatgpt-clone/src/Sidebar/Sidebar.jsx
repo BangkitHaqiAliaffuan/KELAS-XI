@@ -27,7 +27,7 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
-
+    <hr/>
       <div className="sidebar-menu">
         <div className="menu-container">
           <div className="menu">
