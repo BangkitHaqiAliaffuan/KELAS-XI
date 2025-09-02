@@ -2,14 +2,16 @@
   height: 100vh;
   width: 100%;
   display: flex; 
+  background-color:  #03031f;
 }
 
 .left{
-  background-color: red;
+
   width: 20%;
+    border-right: 1px solid #1d1d35;
 }
 
 .right{
   width: 80%;
-  background-color: blue;
+
 }

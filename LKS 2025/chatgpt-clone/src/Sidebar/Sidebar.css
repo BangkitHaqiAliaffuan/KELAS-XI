@@ -6,10 +6,10 @@
 }
 
 .sidebar {
-  height: 80%;
+    height: 80%;
 }
 .sidebar-menu {
-  height: 20%;
+    height: 20%;
 }
 
 .logo {
@@ -19,6 +19,17 @@
   font-size: 30px;
   color: white;
   font-weight: 599;
+}
+
+hr{
+    position: relative;
+    bottom: 30px;
+    width: 121%;
+    left: -30px;
+    height: 1px;
+
+    border: none;
+    background-color: #2d2d47;
 }
 
 .logo img {
@@ -58,4 +69,21 @@
 
 .chat img {
   width: 30px;
+}
+
+
+.menu-container{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu{
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.menu img{
+    width: 20px;
 }
