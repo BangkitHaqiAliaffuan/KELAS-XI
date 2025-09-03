@@ -6,30 +6,59 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginEnd="@dimen/margin_medium"
-    android:background="?android:attr/selectableItemBackground"
-    android:padding="@dimen/padding_small"
-    android:gravity="center">
+    android:layout_marginEnd="@dimen/space_md"
+    android:padding="@dimen/space_sm"
+    android:gravity="center"
+    android:background="@drawable/bg_category_selector">
 
     <!-- Category Icon Container -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        app:cardCornerRadius="30dp"
-        app:cardElevation="@dimen/card_elevation"
-        app:cardBackgroundColor="@color/background_card"
-        android:layout_marginBottom="@dimen/margin_small">
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardCategory"
+        android:layout_width="@dimen/category_item_width"
+        android:layout_height="@dimen/category_item_width"
+        style="@style/FoodCardStyle"
+        app:cardCornerRadius="@dimen/radius_xxl"
+        app:cardBackgroundColor="@color/white"
+        app:strokeColor="@color/primary_green"
+        app:strokeWidth="0dp"
+        android:layout_marginBottom="@dimen/space_sm"
+        android:stateListAnimator="@animator/category_elevation">
 
-        <ImageView
-            android:id="@+id/ivCategoryIcon"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_gravity="center"
-            android:src="@drawable/ic_category_food"
-            app:tint="@color/primary_green"
-            android:contentDescription="Category Icon" />
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    </androidx.cardview.widget.CardView>
+            <!-- Gradient Background -->
+            <View
+                android:id="@+id/gradientBackground"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/gradient_category_bg"
+                android:alpha="0.1" />
+
+            <!-- Category Icon -->
+            <ImageView
+                android:id="@+id/ivCategoryIcon"
+                android:layout_width="@dimen/image_medium"
+                android:layout_height="@dimen/image_medium"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_category_food"
+                android:scaleType="centerCrop"
+                android:contentDescription="Category Icon"
+                app:tint="@color/primary_green" />
+
+            <!-- Selection Indicator -->
+            <View
+                android:id="@+id/selectionIndicator"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/primary_green"
+                android:alpha="0"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
 
     <!-- Category Name -->
     <TextView
@@ -37,11 +66,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Indonesian"
-        android:textSize="@dimen/text_size_small"
-        android:textColor="@color/black"
-        android:fontFamily="sans-serif-medium"
+        style="@style/TextCaption"
+        android:textColor="@color/gray_800"
         android:maxLines="1"
         android:ellipsize="end"
-        android:gravity="center" />
+        android:gravity="center"
+        android:layout_marginHorizontal="@dimen/space_xs"
+        tools:text="Pizza" />
+
+    <!-- Category Count Badge -->
+    <TextView
+        android:id="@+id/tvCategoryCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="15+ items"
+        style="@style/TextMicro"
+        android:textColor="@color/gray_600"
+        android:gravity="center"
+        android:layout_marginTop="@dimen/space_xs"
+        android:visibility="gone"
+        tools:visibility="visible"
+        tools:text="20+ items" />
 
 </LinearLayout>

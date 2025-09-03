@@ -59,7 +59,7 @@ class SplashActivity : ComponentActivity() {
         val currentUser = auth.currentUser
         
         val intent = if (currentUser != null) {
-            Intent(this, MainActivity::class.java)
+            Intent(this, MainActivityCompose::class.java)
         } else {
             Intent(this, LoginActivity::class.java)
         }

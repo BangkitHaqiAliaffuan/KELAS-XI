@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +36,7 @@ fun EnhancedFoodCard(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(240.dp),
+            .height(260.dp),
         elevation = CardDefaults.elevatedCardElevation(
             defaultElevation = 4.dp,
             hoveredElevation = 8.dp
@@ -53,7 +54,7 @@ fun EnhancedFoodCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(140.dp)
+                    .height(150.dp)
             ) {
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -157,23 +158,30 @@ fun EnhancedFoodCard(
                     
                     FilledTonalButton(
                         onClick = onAddToCart,
-                        modifier = Modifier.height(32.dp),
+                        modifier = Modifier
+                            .height(36.dp)
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                spotColor = MaterialTheme.colorScheme.primary
+                            ),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                        shape = RoundedCornerShape(18.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add to cart",
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "Add",
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }

@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.chip.Chip
 import com.kelasxi.waveoffood.R
 import com.kelasxi.waveoffood.models.OrderModel
 import java.text.SimpleDateFormat
@@ -26,10 +27,10 @@ class OrderAdapter(
     
     class OrderViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val cardOrder: CardView = view.findViewById(R.id.card_order)
-        val tvOrderId: TextView = view.findViewById(R.id.tv_order_id)
-        val tvOrderDate: TextView = view.findViewById(R.id.tv_order_date)
-        val tvOrderStatus: TextView = view.findViewById(R.id.tv_order_status)
-        val tvTotalAmount: TextView = view.findViewById(R.id.tv_total_amount)
+        val tvOrderId: TextView = view.findViewById(R.id.tvOrderId)
+        val tvOrderDate: TextView = view.findViewById(R.id.tvOrderDate)
+        val chipOrderStatus: Chip = view.findViewById(R.id.chipOrderStatus)
+        val tvTotalAmount: TextView = view.findViewById(R.id.tvTotalAmount)
         val tvItemCount: TextView = view.findViewById(R.id.tv_item_count)
         val ivFirstItem: ImageView = view.findViewById(R.id.iv_first_item)
         val tvFirstItemName: TextView = view.findViewById(R.id.tv_first_item_name)
@@ -61,7 +62,7 @@ class OrderAdapter(
             tvItemCount.text = "$itemCount item${if (itemCount > 1) "s" else ""}"
             
             // Order Status with color coding
-            tvOrderStatus.text = order.getOrderStatusDisplay()
+            chipOrderStatus.text = order.getOrderStatusDisplay()
             val statusColor = when (order.orderStatus.lowercase()) {
                 "pending" -> Color.parseColor("#FF9800") // Orange
                 "confirmed" -> Color.parseColor("#2196F3") // Blue
@@ -71,7 +72,8 @@ class OrderAdapter(
                 "cancelled" -> Color.parseColor("#F44336") // Red
                 else -> Color.parseColor("#757575") // Gray
             }
-            tvOrderStatus.setTextColor(statusColor)
+            chipOrderStatus.setTextColor(Color.WHITE)
+            chipOrderStatus.chipBackgroundColor = android.content.res.ColorStateList.valueOf(statusColor)
             
             // First item details
             if (order.items.isNotEmpty()) {

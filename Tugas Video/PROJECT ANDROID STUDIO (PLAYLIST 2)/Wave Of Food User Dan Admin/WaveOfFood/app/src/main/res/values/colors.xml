@@ -28,6 +28,7 @@
     <color name="success">#4CAF50</color>
     <color name="warning">#FF9800</color>
     <color name="error">#F44336</color>
+    <color name="error_light">#FFEBEE</color>
     <color name="info">#2196F3</color>
     
     <!-- Material Design Colors -->

@@ -38,31 +38,8 @@ class MainActivityCompose : FragmentActivity() {
 
             // Set Compose content with error handling
             setContent {
-                try {
-                    WaveOfFoodTheme {
-                        MainScreen()
-                    }
-                } catch (e: Exception) {
-                    Log.e("MainActivityCompose", "❌ Error in Compose content: ${e.message}", e)
-                    // Fallback UI
-                    MaterialTheme {
-                        Surface(modifier = Modifier.fillMaxSize()) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.Center
-                            ) {
-                                Text(
-                                    text = "Loading...",
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                                Text(
-                                    text = "Setting up your app",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
-                        }
-                    }
+                WaveOfFoodTheme {
+                    MainScreen()
                 }
             }
 
@@ -154,24 +131,15 @@ class MainActivityCompose : FragmentActivity() {
                 }
             }
 
-            // Enhanced Bottom Navigation - dengan fallback
+            // Enhanced Bottom Navigation
             if (navigationItems.isNotEmpty()) {
-                try {
-                    EnhancedBottomNavigation(
-                        items = navigationItems,
-                        selectedItem = selectedRoute,
-                        onItemSelected = { route ->
-                            selectedRoute = route
-                        }
-                    )
-                } catch (e: Exception) {
-                    Log.e("MainActivityCompose", "❌ Error rendering navigation: ${e.message}", e)
-                    // Fallback: Simple text navigation (atau bisa diganti dengan komponen lain)
-                    Text(
-                        text = "Navigation Error - Current: $selectedRoute",
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
+                EnhancedBottomNavigation(
+                    items = navigationItems,
+                    selectedItem = selectedRoute,
+                    onItemSelected = { route ->
+                        selectedRoute = route
+                    }
+                )
             } else {
                 // Fallback navigation jika gagal load items
                 Text(
