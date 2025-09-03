@@ -1,103 +1,265 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:background="@color/gray_50">
 
-    <LinearLayout
+    <!-- Background Gradient -->
+    <View
         android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/gradient_register_bg"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/guideline_center"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline_center"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center">
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.35" />
 
-        <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@mipmap/ic_launcher"
-            android:layout_marginBottom="24dp" />
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Buat Akun Baru"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="@color/design_default_color_primary"
-            android:layout_marginBottom="32dp" />
-
-        <com.google.android.material.textfield.TextInputLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            android:paddingHorizontal="@dimen/space_xxl"
+            android:paddingTop="@dimen/space_48"
+            android:paddingBottom="@dimen/space_32">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etName"
-                android:layout_width="match_parent"
+            <!-- App Logo with Welcome -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardLogo"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:hint="Nama Lengkap"
-                android:inputType="textPersonName"
-                android:drawableStart="@android:drawable/ic_menu_myplaces"
-                android:drawablePadding="12dp" />
+                app:cardCornerRadius="@dimen/radius_xxl"
+                app:cardElevation="@dimen/elevation_lg"
+                app:cardBackgroundColor="@color/white"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
-        </com.google.android.material.textfield.TextInputLayout>
+                <ImageView
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_person_add"
+                    android:scaleType="centerCrop"
+                    android:padding="@dimen/space_md"
+                    android:contentDescription="Wave of Food Logo" />
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            </com.google.android.material.card.MaterialCardView>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etEmail"
-                android:layout_width="match_parent"
+            <!-- Welcome Text -->
+            <TextView
+                android:id="@+id/tvWelcome"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Email"
-                android:inputType="textEmailAddress"
-                android:drawableStart="@android:drawable/ic_dialog_email"
-                android:drawablePadding="12dp" />
+                android:text="Bergabung Dengan Kami"
+                style="@style/TextHeading1"
+                android:textColor="@color/gray_900"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/space_xl"
+                app:layout_constraintTop_toBottomOf="@id/cardLogo"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            app:passwordToggleEnabled="true"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            xmlns:app="http://schemas.android.com/apk/res-auto">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvSubtitle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="Password"
-                android:inputType="textPassword"
-                android:drawableStart="@android:drawable/ic_lock_lock"
-                android:drawablePadding="12dp" />
+                android:text="Buat akun untuk menikmati makanan terbaik di kota"
+                style="@style/TextBody"
+                android:textColor="@color/gray_600"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/space_sm"
+                app:layout_constraintTop_toBottomOf="@id/tvWelcome"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-        </com.google.android.material.textfield.TextInputLayout>
+            <!-- Registration Form Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardForm"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                style="@style/CardStyle"
+                android:layout_marginTop="@dimen/space_xxl"
+                app:layout_constraintTop_toBottomOf="@id/tvSubtitle"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
 
-        <Button
-            android:id="@+id/btnRegister"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Daftar"
-            android:textSize="16sp"
-            android:layout_marginBottom="16dp"
-            style="@style/Widget.MaterialComponents.Button" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="@dimen/space_xl">
 
-        <TextView
-            android:id="@+id/tvLogin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Sudah punya akun? Login"
-            android:textColor="@color/design_default_color_primary"
-            android:textSize="14sp"
-            android:padding="8dp" />
+                    <!-- Name Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilName"
+                        style="@style/TextInputStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/space_lg"
+                        android:hint="Nama Lengkap"
+                        app:startIconDrawable="@drawable/ic_person"
+                        app:startIconTint="@color/primary_green">
 
-    </LinearLayout>
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPersonName"
+                            android:textSize="@dimen/text_base" />
 
-</ScrollView>
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Email Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilEmail"
+                        style="@style/TextInputStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/space_lg"
+                        android:hint="Email Address"
+                        app:startIconDrawable="@drawable/ic_email"
+                        app:startIconTint="@color/primary_green">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etEmail"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textEmailAddress"
+                            android:textSize="@dimen/text_base" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Phone Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPhone"
+                        style="@style/TextInputStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/space_lg"
+                        android:hint="Nomor Telepon"
+                        app:startIconDrawable="@drawable/ic_phone"
+                        app:startIconTint="@color/primary_green">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPhone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="phone"
+                            android:textSize="@dimen/text_base" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Password Input -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/tilPassword"
+                        style="@style/TextInputStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="@dimen/space_xl"
+                        android:hint="Password"
+                        app:passwordToggleEnabled="true"
+                        app:startIconDrawable="@drawable/ic_lock"
+                        app:startIconTint="@color/primary_green">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etPassword"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="textPassword"
+                            android:textSize="@dimen/text_base" />
+
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <!-- Terms and Conditions -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="@dimen/space_xl">
+
+                        <CheckBox
+                            android:id="@+id/cbTerms"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:buttonTint="@color/primary_green" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Saya setuju dengan syarat dan ketentuan"
+                            style="@style/TextCaption"
+                            android:textColor="@color/gray_600"
+                            android:layout_marginStart="@dimen/space_sm" />
+
+                    </LinearLayout>
+
+                    <!-- Register Button -->
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRegister"
+                        style="@style/ButtonPrimary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Buat Akun"
+                        app:icon="@drawable/ic_person_add"
+                        app:iconGravity="textStart"
+                        app:iconPadding="@dimen/space_sm" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Login Link -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="@dimen/space_xl"
+                app:layout_constraintTop_toBottomOf="@id/cardForm"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Sudah punya akun? "
+                    style="@style/TextBody"
+                    android:textColor="@color/gray_600" />
+
+                <TextView
+                    android:id="@+id/tvLogin"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Login Sekarang"
+                    style="@style/TextBodyBold"
+                    android:textColor="@color/primary_green"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:padding="@dimen/space_sm"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 

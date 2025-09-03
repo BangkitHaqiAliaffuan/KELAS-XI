@@ -131,6 +131,13 @@
         <item name="android:lineSpacingExtra">2dp</item>
     </style>
     
+    <style name="TextBodyBold">
+        <item name="android:textSize">@dimen/text_base</item>
+        <item name="android:textColor">@color/gray_800</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+    
     <style name="TextBodySecondary">
         <item name="android:textSize">@dimen/text_base</item>
         <item name="android:textColor">@color/gray_600</item>
@@ -139,6 +146,11 @@
     
     <style name="TextCaption">
         <item name="android:textSize">@dimen/text_sm</item>
+        <item name="android:textColor">@color/gray_600</item>
+    </style>
+    
+    <style name="TextMicro">
+        <item name="android:textSize">@dimen/text_xs</item>
         <item name="android:textColor">@color/gray_600</item>
     </style>
     

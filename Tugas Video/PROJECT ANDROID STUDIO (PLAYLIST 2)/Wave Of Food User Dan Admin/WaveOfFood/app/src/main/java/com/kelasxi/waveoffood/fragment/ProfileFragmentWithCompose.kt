@@ -1,5 +1,6 @@
 package com.kelasxi.waveoffood.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -25,6 +26,7 @@ import androidx.fragment.app.Fragment
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.google.firebase.auth.FirebaseAuth
+import com.kelasxi.waveoffood.MyOrdersActivity
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
 
 /**
@@ -63,6 +65,7 @@ data class ProfileMenuItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen() {
+    val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val user = auth.currentUser
     
@@ -90,7 +93,11 @@ fun ProfileScreen() {
             subtitle = "View your past orders",
             showBadge = true,
             badgeText = "5",
-            onClick = { /* Handle order history */ }
+            onClick = { 
+                // Navigate to MyOrdersActivity
+                val intent = Intent(context, MyOrdersActivity::class.java)
+                context.startActivity(intent)
+            }
         ),
         ProfileMenuItem(
             icon = Icons.Default.FavoriteBorder,
