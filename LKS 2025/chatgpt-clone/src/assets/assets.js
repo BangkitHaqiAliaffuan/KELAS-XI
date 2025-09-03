@@ -6,7 +6,7 @@ import home from './home.svg'
 import message from './message.svg'
 import rocket from './rocket.svg'
 import user_icon from './user-icon.png'
-
+import send from './send.svg'
 
 export const assets={
     add,
@@ -16,5 +16,6 @@ export const assets={
     home,
     message,
     rocket,
-    user_icon
+    user_icon,
+    send
 }

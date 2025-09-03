@@ -16,12 +16,12 @@ const Sidebar = () => {
           New Chat
         </div>
 
-        <div className="chat-container">
-          <div className="chat">
+        <div className="chat-histories">
+          <div className="chat-history">
             <img src={assets.message} />
             <div className="title">What Is Programming?</div>
           </div>
-          <div className="chat">
+          <div className="chat-history">
             <img src={assets.message} />
             <div className="title">What Is Programming?</div>
           </div>

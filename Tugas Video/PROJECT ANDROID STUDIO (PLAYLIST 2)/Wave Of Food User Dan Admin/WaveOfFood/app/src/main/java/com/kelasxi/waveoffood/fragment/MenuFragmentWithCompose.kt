@@ -26,7 +26,11 @@ import androidx.fragment.app.Fragment
 import com.kelasxi.waveoffood.ui.components.*
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
 import com.kelasxi.waveoffood.models.FoodModel
+import com.kelasxi.waveoffood.models.CartItemModel
+import com.kelasxi.waveoffood.utils.CartManager
+import android.widget.Toast
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * Enhanced Menu Fragment with Material 3 Compose UI
@@ -42,8 +46,38 @@ class MenuFragmentWithCompose : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 WaveOfFoodTheme {
-                    MenuScreen()
+                    MenuScreen(
+                        onAddToCart = { food -> addToCart(food) }
+                    )
                 }
+            }
+        }
+    }
+
+    private fun addToCart(food: FoodModel) {
+        try {
+            // Convert FoodModel to CartItemModel using food ID as identifier
+            val cartItem = CartItemModel(
+                id = food.id,  // Use food ID instead of random UUID
+                foodName = food.name,
+                foodPrice = food.getFormattedPrice(),
+                foodDescription = food.description,
+                foodImage = food.imageUrl,
+                foodCategory = food.categoryId,
+                quantity = 1
+            )
+            
+            // Add to cart using CartManager
+            CartManager.addToCart(cartItem)
+            
+            // Show success toast
+            context?.let { ctx ->
+                Toast.makeText(ctx, "✅ ${food.name} berhasil ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MenuFragmentWithCompose", "Error adding to cart", e)
+            context?.let { ctx ->
+                Toast.makeText(ctx, "Error menambahkan ke keranjang", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -51,7 +85,9 @@ class MenuFragmentWithCompose : Fragment() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MenuScreen() {
+private fun MenuScreen(
+    onAddToCart: (FoodModel) -> Unit = {}
+) {
     var searchText by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf("All") }
     var sortOption by remember { mutableStateOf("Popular") }
@@ -156,7 +192,7 @@ private fun MenuScreen() {
                     EnhancedFoodCard(
                         food = food,
                         onClick = { /* Navigate to detail */ },
-                        onAddToCart = { /* Add to cart */ }
+                        onAddToCart = { onAddToCart(food) }
                     )
                 }
             }

@@ -21,13 +21,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import com.kelasxi.waveoffood.ui.components.*
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
 import com.kelasxi.waveoffood.models.FoodModel
+import com.kelasxi.waveoffood.models.CartItemModel
 import com.kelasxi.waveoffood.repository.FirebaseRepository
+import com.kelasxi.waveoffood.utils.CartManager
+import android.widget.Toast
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * Enhanced Home Fragment with Material 3 Compose UI
@@ -45,8 +50,38 @@ class HomeFragmentWithCompose : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 WaveOfFoodTheme {
-                    HomeScreen()
+                    HomeScreen(
+                        onAddToCart = { food -> addToCart(food) }
+                    )
                 }
+            }
+        }
+    }
+
+    private fun addToCart(food: FoodModel) {
+        try {
+            // Convert FoodModel to CartItemModel using food ID as identifier
+            val cartItem = CartItemModel(
+                id = food.id,  // Use food ID instead of random UUID
+                foodName = food.name,
+                foodPrice = food.getFormattedPrice(),
+                foodDescription = food.description,
+                foodImage = food.imageUrl,
+                foodCategory = food.categoryId,
+                quantity = 1
+            )
+            
+            // Add to cart using CartManager
+            CartManager.addToCart(cartItem)
+            
+            // Show success toast
+            context?.let { ctx ->
+                Toast.makeText(ctx, "✅ ${food.name} berhasil ditambahkan ke keranjang!", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("HomeFragmentWithCompose", "Error adding to cart", e)
+            context?.let { ctx ->
+                Toast.makeText(ctx, "Error menambahkan ke keranjang", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -54,7 +89,9 @@ class HomeFragmentWithCompose : Fragment() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onAddToCart: (FoodModel) -> Unit = {}
+) {
     // Simple state management
     var searchText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -148,7 +185,7 @@ fun HomeScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp) // Consistency with navbar padding
     ) {
         // Location Header
         LocationHeader(
@@ -156,7 +193,7 @@ fun HomeScreen() {
             onLocationClick = { /* Handle location selection */ }
         )
         
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing for consistency
         
         // Search Bar
         CompactSearchBar(
@@ -165,32 +202,43 @@ fun HomeScreen() {
             onSearch = { /* Handle search */ }
         )
         
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(20.dp))
         
         if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                Surface(
+                    modifier = Modifier.padding(24.dp),
+                    shape = RoundedCornerShape(20.dp), // Consistency with navbar rounded corners
+                    color = MaterialTheme.colorScheme.surface,
+                    shadowElevation = 8.dp, // Reduced elevation for subtle effect
+                    tonalElevation = 0.dp
                 ) {
-                    CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
-                        strokeWidth = 3.dp
-                    )
-                    Text(
-                        text = "Loading delicious food...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.padding(32.dp) // More generous padding for loading state
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color(0xFFFF6B35), // Use exact navbar orange color
+                            strokeWidth = 3.dp
+                        )
+                        Text(
+                            text = "Loading delicious food...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Medium // Consistency with navbar font weight
+                        )
+                    }
                 }
             }
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(32.dp),
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.spacedBy(24.dp), // Consistent spacing
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 88.dp) // Proper padding for navbar (80dp + 8dp)
             ) {
                 // Categories Section
                 if (categories.isNotEmpty()) {
@@ -213,15 +261,10 @@ fun HomeScreen() {
                                 // Handle food selection
                             },
                             onAddToCart = { food ->
-                                // Handle add to cart
+                                onAddToCart(food)
                             }
                         )
                     }
-                }
-                
-                // Add some bottom padding for navigation
-                item {
-                    Spacer(modifier = Modifier.height(100.dp))
                 }
             }
         }
@@ -254,7 +297,7 @@ private fun LocationHeader(
             Icon(
                 imageVector = Icons.Default.LocationOn,
                 contentDescription = "Location",
-                tint = MaterialTheme.colorScheme.primary,
+                tint = Color(0xFFFF6B35), // Use navbar orange color
                 modifier = Modifier.size(18.dp)
             )
             
@@ -267,7 +310,7 @@ private fun LocationHeader(
             Text(
                 text = location,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold, // Consistency with navbar bold text
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -293,21 +336,23 @@ private fun CategoriesSection(
             )
             
             TextButton(
-                onClick = { /* Navigate to all categories */ }
+                onClick = { /* Navigate to all categories */ },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFFFF6B35) // Use navbar orange color
+                )
             ) {
                 Text(
                     text = "See All",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold // Consistency with navbar bold text
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Consistent spacing
         
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp), // Consistency with navbar padding
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             items(categories) { category ->
@@ -340,23 +385,25 @@ private fun PopularFoodsSection(
             )
             
             TextButton(
-                onClick = { /* Navigate to all popular foods */ }
+                onClick = { /* Navigate to all popular foods */ },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFFFF6B35) // Use navbar orange color
+                )
             ) {
                 Text(
                     text = "See All",
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold // Consistency with navbar bold text
                 )
             }
         }
         
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp)) // Consistent spacing
         
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp), // Consistency with navbar
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.height(520.dp), // Adjusted for better card display
             contentPadding = PaddingValues(4.dp)
         ) {
