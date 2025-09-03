@@ -128,16 +128,16 @@ fun CompactSearchBar(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.primary
+                tint = androidx.compose.ui.graphics.Color(0xFFFF6B35) // Use navbar orange color
             )
         },
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp), // Consistency with navbar
         colors = OutlinedTextFieldDefaults.colors(
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = MaterialTheme.colorScheme.primary
+            focusedBorderColor = androidx.compose.ui.graphics.Color(0xFFFF6B35) // Use navbar orange color
         ),
         singleLine = true
     )

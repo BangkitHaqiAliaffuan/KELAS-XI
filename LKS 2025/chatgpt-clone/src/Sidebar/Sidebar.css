@@ -55,7 +55,7 @@ hr{
   width: 35px;
 }
 
-.chat {
+.chat-history {
   border-radius: 10px;
   border: 1px solid #2d2d47;
   display: flex;
