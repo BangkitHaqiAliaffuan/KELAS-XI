@@ -2,34 +2,29 @@ package com.kelasxi.waveoffood.utils
 
 import com.kelasxi.waveoffood.models.CartItemModel
 import com.kelasxi.waveoffood.models.FoodItemModel
-import android.util.Log
 
 object CartManager {
     private val cartItems = mutableListOf<CartItemModel>()
     private val listeners = mutableListOf<CartUpdateListener>()
-
+    
     interface CartUpdateListener {
         fun onCartUpdated()
     }
-
+    
     fun addToCart(cartItem: CartItemModel) {
-        Log.d("CartManager", "Adding to cart: ${cartItem.foodName}")
-        
-        // Use foodName as identifier instead of random ID to prevent duplicates
-        val existingItem = cartItems.find { it.foodName == cartItem.foodName }
+        val existingItem = cartItems.find { it.id == cartItem.id }
         
         if (existingItem != null) {
             val index = cartItems.indexOf(existingItem)
             cartItems[index] = existingItem.copy(quantity = existingItem.quantity + cartItem.quantity)
-            Log.d("CartManager", "Updated existing item: ${cartItem.foodName}, new quantity: ${cartItems[index].quantity}")
         } else {
             cartItems.add(cartItem)
-            Log.d("CartManager", "Added new item: ${cartItem.foodName}")
         }
         
-        Log.d("CartManager", "Total items in cart: ${cartItems.size}")
         notifyListeners()
-    }    fun removeFromCart(cartItem: CartItemModel) {
+    }
+    
+    fun removeFromCart(cartItem: CartItemModel) {
         cartItems.remove(cartItem)
         notifyListeners()
     }
@@ -47,10 +42,6 @@ object CartManager {
     }
     
     fun getCartItems(): List<CartItemModel> {
-        Log.d("CartManager", "Getting cart items: ${cartItems.size} items")
-        cartItems.forEachIndexed { index, item ->
-            Log.d("CartManager", "Item $index: ${item.foodName} x ${item.quantity}")
-        }
         return cartItems.toList()
     }
     
