@@ -16,7 +16,7 @@ import com.kelasxi.waveoffood.fragment.*
 import com.kelasxi.waveoffood.ui.components.EnhancedBottomNavigation
 import com.kelasxi.waveoffood.ui.components.getDefaultNavigationItems
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
-import com.kelasxi.waveoffood.utils.FirestoreSampleData
+
 
 /**
  * Main Activity with Enhanced Material 3 Compose Support
@@ -70,14 +70,6 @@ class MainActivityCompose : FragmentActivity() {
                 .set(mapOf("status" to "connected", "timestamp" to System.currentTimeMillis()))
                 .addOnSuccessListener {
                     Log.d("Firebase", "✅ Firestore connection successful!")
-                    
-                    // Import sample data in background after Firebase is ready
-                    try {
-                        Log.d("MainActivityCompose", "🔥 Starting sample data import...")
-                        FirestoreSampleData.importSampleMenuData(this@MainActivityCompose)
-                    } catch (e: Exception) {
-                        Log.e("MainActivityCompose", "❌ Error importing sample data: ${e.message}")
-                    }
                 }
                 .addOnFailureListener { error ->
                     Log.e("Firebase", "❌ Firestore connection failed: ${error.message}")

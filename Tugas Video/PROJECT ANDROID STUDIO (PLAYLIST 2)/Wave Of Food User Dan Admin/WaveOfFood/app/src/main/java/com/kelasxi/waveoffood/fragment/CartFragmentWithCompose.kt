@@ -29,16 +29,12 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
 import com.kelasxi.waveoffood.models.FoodModel
-import com.kelasxi.waveoffood.models.CartItemModel
-import com.kelasxi.waveoffood.utils.CartManager
-import java.text.NumberFormat
-import java.util.*
 
 /**
  * Enhanced Cart Fragment with Material 3 Compose UI
  * Features item management, pricing calculations, and checkout flow
  */
-class CartFragmentWithCompose : Fragment(), CartManager.CartUpdateListener {
+class CartFragmentWithCompose : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -53,20 +49,6 @@ class CartFragmentWithCompose : Fragment(), CartManager.CartUpdateListener {
             }
         }
     }
-
-    override fun onStart() {
-        super.onStart()
-        CartManager.addListener(this)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        CartManager.removeListener(this)
-    }
-
-    override fun onCartUpdated() {
-        // Cart updated - the Compose UI will automatically recompose
-    }
 }
 
 data class CartItem(
@@ -79,33 +61,12 @@ data class CartItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CartScreen() {
-    // Use real CartManager data instead of dummy data
-    var cartItems by remember { mutableStateOf(CartManager.getCartItems()) }
+    var cartItems by remember { mutableStateOf(createSampleCartData()) }
     var promoCode by remember { mutableStateOf("") }
     var isPromoApplied by remember { mutableStateOf(false) }
     var deliveryMethod by remember { mutableStateOf("Standard") }
 
-    // Listen for cart updates
-    DisposableEffect(Unit) {
-        val listener = object : CartManager.CartUpdateListener {
-            override fun onCartUpdated() {
-                cartItems = CartManager.getCartItems()
-            }
-        }
-        CartManager.addListener(listener)
-        // Get current cart items when first loaded
-        cartItems = CartManager.getCartItems()
-        
-        onDispose {
-            CartManager.removeListener(listener)
-        }
-    }
-
-    // Calculate totals from real cart data
-    val subtotal = cartItems.sumOf { 
-        val price = it.foodPrice.replace("Rp", "").replace(",", "").replace(".", "").trim().toDoubleOrNull() ?: 0.0
-        (price * it.quantity).toLong()
-    }
+    val subtotal = cartItems.sumOf { it.totalPrice }
     val deliveryFee = when (deliveryMethod) {
         "Express" -> 500L
         "Standard" -> 200L
@@ -133,17 +94,21 @@ private fun CartScreen() {
             ) {
                 // Cart Items
                 items(cartItems) { cartItem ->
-                    CartItemCardReal(
+                    CartItemCard(
                         cartItem = cartItem,
                         onQuantityChanged = { newQuantity ->
                             if (newQuantity <= 0) {
-                                CartManager.removeFromCart(cartItem)
+                                cartItems = cartItems.filter { it.food.id != cartItem.food.id }
                             } else {
-                                CartManager.updateQuantity(cartItem, newQuantity)
+                                cartItems = cartItems.map { item ->
+                                    if (item.food.id == cartItem.food.id) {
+                                        item.copy(quantity = newQuantity)
+                                    } else item
+                                }
                             }
                         },
                         onRemove = {
-                            CartManager.removeFromCart(cartItem)
+                            cartItems = cartItems.filter { it.food.id != cartItem.food.id }
                         }
                     )
                 }
@@ -579,7 +544,7 @@ private fun CartSummarySection(
                 }
             }
             
-            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+            Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
             
             // Total
             Row(
@@ -666,131 +631,31 @@ private fun formatPrice(priceInCents: Long): String {
     return "$${String.format("%.2f", priceInCents / 100.0)}"
 }
 
-/**
- * Cart Item Card for Real CartItemModel
- */
-@Composable
-private fun CartItemCardReal(
-    cartItem: CartItemModel,
-    onQuantityChanged: (Int) -> Unit,
-    onRemove: () -> Unit
-) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+private fun createSampleCartData(): List<CartItem> {
+    return listOf(
+        CartItem(
+            food = FoodModel().apply {
+                id = "1"; name = "Margherita Pizza"; description = "Classic Italian pizza with fresh tomatoes and mozzarella"
+                imageUrl = "https://picsum.photos/300/200?random=1"; price = 1299L; categoryId = "Pizza"
+                isPopular = true; rating = 4.5; isAvailable = true; preparationTime = 20
+            },
+            quantity = 2
+        ),
+        CartItem(
+            food = FoodModel().apply {
+                id = "4"; name = "Classic Beef Burger"; description = "Juicy beef patty with lettuce, tomato, and cheese"
+                imageUrl = "https://picsum.photos/300/200?random=4"; price = 899L; categoryId = "Burger"
+                isPopular = true; rating = 4.4; isAvailable = true; preparationTime = 15
+            },
+            quantity = 1
+        ),
+        CartItem(
+            food = FoodModel().apply {
+                id = "11"; name = "Chocolate Cake"; description = "Rich chocolate cake with layers of frosting"
+                imageUrl = "https://picsum.photos/300/200?random=11"; price = 699L; categoryId = "Dessert"
+                isPopular = true; rating = 4.4; isAvailable = true; preparationTime = 5
+            },
+            quantity = 1
         )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Food Image
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(cartItem.foodImage)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = cartItem.foodName,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(8.dp))
-            )
-            
-            // Content
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Food Name and Description
-                Column {
-                    Text(
-                        text = cartItem.foodName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    
-                    Text(
-                        text = cartItem.foodDescription,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                
-                // Price and Quantity Controls
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = cartItem.foodPrice,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        // Decrease button
-                        IconButton(
-                            onClick = { onQuantityChanged(cartItem.quantity - 1) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Remove,
-                                contentDescription = "Decrease quantity",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        
-                        // Quantity
-                        Text(
-                            text = cartItem.quantity.toString(),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        
-                        // Increase button
-                        IconButton(
-                            onClick = { onQuantityChanged(cartItem.quantity + 1) },
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Increase quantity",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        
-                        // Remove button
-                        IconButton(
-                            onClick = onRemove,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Remove item",
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
+    )
 }
