@@ -2,9 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,64 +11,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.WaveOfFood">
-        
-        <!-- Splash Activity sebagai launcher -->
         <activity
-            android:name=".SplashActivity"
-            android:exported="true"
-            android:theme="@style/Theme.WaveOfFood">
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-        <!-- Login Activity -->
-        <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-        
-        <!-- Register Activity -->
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="false" />
-        
-        <!-- Main Activity -->
-        <activity
-            android:name=".MainActivityCompose"
-            android:exported="false" />
-        
-        <!-- Detail Activity -->
-        <activity
-            android:name=".DetailActivity"
-            android:exported="false" />
-        
-        <!-- New Enhanced Checkout Activity -->
-        <activity
-            android:name=".CheckoutActivityNew"
-            android:exported="false" />
-            
-        <!-- Order Confirmation Activity -->
-        <activity
-            android:name=".OrderConfirmationActivity"
-            android:exported="false" />
-            
-        <!-- My Orders Activity -->
-        <activity
-            android:name=".MyOrdersActivity"
-            android:exported="false" />
-            
-        <!-- Order Detail Activity -->
-        <activity
-            android:name=".OrderDetailActivity"
-            android:exported="false" />
-            
-        <!-- All Products Activity -->
-        <activity
-            android:name=".AllProductsActivity"
-            android:exported="false" />
-            
     </application>
 
 </manifest>
-
