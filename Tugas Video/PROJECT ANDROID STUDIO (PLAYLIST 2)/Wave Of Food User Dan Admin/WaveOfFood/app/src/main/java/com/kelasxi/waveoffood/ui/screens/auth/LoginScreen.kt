@@ -1,5 +1,6 @@
 package com.kelasxi.waveoffood.ui.screens.auth
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -24,8 +26,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.waveoffood.ui.theme.*
+import com.kelasxi.waveoffood.ui.viewmodel.AuthViewModel
+import com.kelasxi.waveoffood.ui.viewmodel.AuthViewModelFactory
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun LoginScreen(
@@ -33,11 +39,49 @@ fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onForgotPassword: () -> Unit
 ) {
+    val context = LocalContext.current
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(context)
+    )
+    
+    val uiState by authViewModel.uiState.collectAsState()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+    
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Observe login success - Priority utama
+    LaunchedEffect(uiState.isLoginSuccess) {
+        if (uiState.isLoginSuccess) {
+            // Clear state terlebih dahulu
+            authViewModel.clearSuccessStates()
+            // Navigate ke home
+            onNavigateToHome()
+        }
+    }
+    
+    // Observe auto login success
+    LaunchedEffect(uiState.isAutoLoginSuccess) {
+        if (uiState.isAutoLoginSuccess == true) {
+            // Auto login berhasil, langsung ke home
+            onNavigateToHome()
+        }
+    }
+    
+    // Observe login state from persistent storage
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn && !uiState.isLoading && uiState.isAutoLoginSuccess != false) {
+            onNavigateToHome()
+        }
+    }
+    
+    // Observe error
+    LaunchedEffect(uiState.errorMessage) {
+        errorMessage = uiState.errorMessage
+    }
     
     val alpha by animateFloatAsState(
         targetValue = if (isVisible) 1f else 0f,
@@ -48,6 +92,56 @@ fun LoginScreen(
     LaunchedEffect(Unit) {
         delay(100)
         isVisible = true
+        
+        // Debug logging
+        try {
+            val prefsManager = com.kelasxi.waveoffood.utils.PersistentLoginManager.getUserPreferencesManager(context)
+            val isLoggedInLocal = prefsManager.isLoggedIn.first()
+            val rememberLoginLocal = prefsManager.rememberLogin.first()
+            Log.d("LoginScreen", "App started - isLoggedIn: $isLoggedInLocal, rememberLogin: $rememberLoginLocal")
+        } catch (e: Exception) {
+            Log.e("LoginScreen", "Error checking login status: ${e.message}")
+        }
+    }
+    
+    // Show loading during auto login check
+    if (uiState.isAutoLoginSuccess == null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            LightGray,
+                            PureWhite,
+                            LightGray.copy(alpha = 0.5f)
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    color = OrangePrimary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Checking login status...",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MediumGray
+                )
+            }
+        }
+        return
+    }
+    
+    // Auto login berhasil, navigasi ke home (handled by LaunchedEffect above)
+    if (uiState.isAutoLoginSuccess == true) {
+        // LaunchedEffect akan handle navigasi
+        return
     }
     
     Box(
@@ -185,14 +279,52 @@ fun LoginScreen(
             // Login Button
             AnimatedGradientButton(
                 text = "Sign In",
-                isLoading = isLoading,
+                isLoading = uiState.isLoading,
                 onClick = {
-                    isLoading = true
-                    // Simulate API call
-                    // In real app, you would validate credentials here
-                    onNavigateToHome()
+                    if (email.isNotBlank() && password.isNotBlank()) {
+                        // Clear previous error
+                        errorMessage = null
+                        authViewModel.clearError()
+                        
+                        // Perform Firebase authentication
+                        authViewModel.signIn(email.trim(), password, rememberLogin = true)
+                    } else {
+                        errorMessage = "Please enter both email and password"
+                    }
                 }
             )
+            
+            // Error Message Display
+            errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Red.copy(alpha = 0.1f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.3f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
             
             Spacer(modifier = Modifier.height(Spacing.large))
             
