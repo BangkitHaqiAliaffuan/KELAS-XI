@@ -95,6 +95,9 @@ fun NavGraph(
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
+                },
+                onNavigateToCart = {
+                    navController.navigate(Screen.Cart.route)
                 }
             )
         }

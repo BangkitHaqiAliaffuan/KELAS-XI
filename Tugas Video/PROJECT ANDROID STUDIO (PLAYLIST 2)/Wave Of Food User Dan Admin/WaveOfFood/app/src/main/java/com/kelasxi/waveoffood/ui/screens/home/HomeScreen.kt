@@ -12,11 +12,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -25,69 +27,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.kelasxi.waveoffood.data.models.*
 import com.kelasxi.waveoffood.ui.theme.*
-
-data class Category(
-    val id: String,
-    val name: String,
-    val icon: String,
-    val isSelected: Boolean = false
-)
-
-data class Restaurant(
-    val id: String,
-    val name: String,
-    val imageUrl: String,
-    val rating: Float,
-    val deliveryTime: String,
-    val deliveryFee: String,
-    val isFreeDelivery: Boolean = false,
-    val isPopular: Boolean = false
-)
-
-data class Food(
-    val id: String,
-    val name: String,
-    val restaurant: String,
-    val price: Double,
-    val imageUrl: String,
-    val rating: Float,
-    val isRecommended: Boolean = false
-)
+import com.kelasxi.waveoffood.ui.viewmodels.HomeViewModel
+import com.kelasxi.waveoffood.ui.viewmodels.CartViewModel
 
 @Composable
 fun HomeScreen(
     onNavigateToRestaurant: (String) -> Unit,
     onNavigateToFood: (String) -> Unit,
-    onNavigateToProfile: () -> Unit
+    onNavigateToProfile: () -> Unit,
+    onNavigateToCart: () -> Unit = {}
 ) {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("") }
+    val homeViewModel: HomeViewModel = viewModel()
+    val cartViewModel: CartViewModel = viewModel()
     
-    // Sample data
-    val categories = listOf(
-        Category("pizza", "Pizza", "🍕"),
-        Category("burger", "Burger", "🍔"),
-        Category("sushi", "Sushi", "🍣"),
-        Category("pasta", "Pasta", "🍝"),
-        Category("dessert", "Dessert", "🍰"),
-        Category("drinks", "Drinks", "🥤")
-    )
+    // Observe ViewModels
+    val categories by homeViewModel.categories.collectAsState()
+    val popularFoods by homeViewModel.popularFoods.collectAsState()
+    val recommendedFoods by homeViewModel.recommendedFoods.collectAsState()
+    val selectedCategoryId by homeViewModel.selectedCategoryId.collectAsState()
+    val foods by homeViewModel.foods.collectAsState()
+    val searchResults by homeViewModel.searchResults.collectAsState()
+    val searchQuery by homeViewModel.searchQuery.collectAsState()
+    val isLoading by homeViewModel.isLoading.collectAsState()
+    val errorMessage by homeViewModel.errorMessage.collectAsState()
     
-    val restaurants = listOf(
-        Restaurant("1", "Pizza Palace", "", 4.5f, "25-30 min", "$2.99", true, true),
-        Restaurant("2", "Burger King", "", 4.2f, "20-25 min", "$1.99", false, true),
-        Restaurant("3", "Sushi Master", "", 4.8f, "30-35 min", "$3.99", false, false),
-        Restaurant("4", "Pasta House", "", 4.3f, "15-20 min", "Free", true, false)
-    )
+    // Cart state
+    val cartCount by cartViewModel.cartCount.collectAsState()
     
-    val recommendedFoods = listOf(
-        Food("1", "Margherita Pizza", "Pizza Palace", 12.99, "", 4.5f, true),
-        Food("2", "Chicken Burger", "Burger King", 8.99, "", 4.2f, true),
-        Food("3", "Salmon Roll", "Sushi Master", 15.99, "", 4.8f, true),
-        Food("4", "Carbonara", "Pasta House", 11.99, "", 4.3f, false)
-    )
+    var searchQueryState by remember { mutableStateOf("") }
+    
+    // Show error message if any
+    errorMessage?.let { error ->
+        LaunchedEffect(error) {
+            // You can show a snackbar or toast here
+            homeViewModel.clearError()
+        }
+    }
     
     LazyColumn(
         modifier = Modifier
@@ -98,73 +77,203 @@ fun HomeScreen(
         // Header Section
         item {
             HomeHeader(
-                onProfileClick = onNavigateToProfile
+                cartCount = cartCount,
+                onProfileClick = onNavigateToProfile,
+                onCartClick = onNavigateToCart
             )
         }
         
         // Search Section
         item {
             SearchSection(
-                searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it }
+                searchQuery = searchQueryState,
+                onSearchQueryChange = { 
+                    searchQueryState = it
+                    homeViewModel.searchFoods(it)
+                }
             )
         }
         
-        // Categories Section
-        item {
-            CategoriesSection(
-                categories = categories,
-                selectedCategory = selectedCategory,
-                onCategorySelected = { selectedCategory = it }
-            )
-        }
-        
-        // Banner Section
-        item {
-            BannerSection()
-        }
-        
-        // Popular Near You Section
-        item {
-            SectionHeader(
-                title = "Popular Near You",
-                onSeeAllClick = { /* Navigate to restaurants list */ }
-            )
-        }
-        
-        item {
-            PopularRestaurantsSection(
-                restaurants = restaurants,
-                onRestaurantClick = onNavigateToRestaurant
-            )
-        }
-        
-        // Recommended Section
-        item {
-            SectionHeader(
-                title = "Recommended for You",
-                onSeeAllClick = { /* Navigate to recommended foods */ }
-            )
-        }
-        
-        items(recommendedFoods.chunked(2)) { foodPair ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = Spacing.medium),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
-            ) {
-                foodPair.forEach { food ->
-                    RecommendedFoodCard(
-                        food = food,
-                        modifier = Modifier.weight(1f),
-                        onClick = { onNavigateToFood(food.id) }
+        // Show search results if searching
+        if (searchQueryState.isNotEmpty() && searchResults.isNotEmpty()) {
+            item {
+                Text(
+                    text = "Search Results (${searchResults.size})",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = DarkGray
+                    ),
+                    modifier = Modifier.padding(horizontal = Spacing.medium, vertical = Spacing.small)
+                )
+            }
+            
+            items(searchResults.chunked(2)) { foodPair ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Spacing.medium),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                ) {
+                    foodPair.forEach { food ->
+                        RecommendedFoodCard(
+                            food = food,
+                            cartViewModel = cartViewModel,
+                            modifier = Modifier.weight(1f),
+                            onClick = { onNavigateToFood(food.id) }
+                        )
+                    }
+                    
+                    if (foodPair.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        } else if (searchQueryState.isEmpty()) {
+            // Normal home content when not searching
+            
+            // Categories Section
+            item {
+                CategoriesSection(
+                    categories = categories,
+                    selectedCategory = selectedCategoryId,
+                    onCategorySelected = { categoryId ->
+                        homeViewModel.selectCategory(categoryId)
+                    }
+                )
+            }
+            
+            // Show foods for selected category
+            if (selectedCategoryId.isNotEmpty() && foods.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "Foods in ${categories.find { it.id == selectedCategoryId }?.name ?: "Category"}",
+                        onSeeAllClick = { }
                     )
                 }
                 
-                // Add empty space if odd number of items
-                if (foodPair.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
+                items(foods.chunked(2)) { foodPair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                    ) {
+                        foodPair.forEach { food ->
+                            RecommendedFoodCard(
+                                food = food,
+                                cartViewModel = cartViewModel,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onNavigateToFood(food.id) }
+                            )
+                        }
+                        
+                        if (foodPair.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+            
+            // Banner Section
+            item {
+                BannerSection()
+            }
+            
+            // Popular Foods Section
+            if (popularFoods.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "Popular Foods",
+                        onSeeAllClick = { }
+                    )
+                }
+                
+                item {
+                    PopularFoodsSection(
+                        foods = popularFoods,
+                        cartViewModel = cartViewModel,
+                        onFoodClick = onNavigateToFood
+                    )
+                }
+            }
+            
+            // Recommended Section
+            if (recommendedFoods.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "Recommended for You",
+                        onSeeAllClick = { }
+                    )
+                }
+                
+                items(recommendedFoods.chunked(2)) { foodPair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.medium),
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+                    ) {
+                        foodPair.forEach { food ->
+                            RecommendedFoodCard(
+                                food = food,
+                                cartViewModel = cartViewModel,
+                                modifier = Modifier.weight(1f),
+                                onClick = { onNavigateToFood(food.id) }
+                            )
+                        }
+                        
+                        if (foodPair.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        } else if (searchQueryState.isNotEmpty() && searchResults.isEmpty()) {
+            // No search results
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.xLarge),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "🔍",
+                            fontSize = 48.sp
+                        )
+                        Spacer(modifier = Modifier.height(Spacing.medium))
+                        Text(
+                            text = "No foods found",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = MediumGray
+                            )
+                        )
+                        Text(
+                            text = "Try searching with different keywords",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MediumGray
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Loading indicator
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Spacing.large),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = OrangePrimary
+                    )
                 }
             }
         }
@@ -173,7 +282,9 @@ fun HomeScreen(
 
 @Composable
 private fun HomeHeader(
-    onProfileClick: () -> Unit
+    cartCount: Int = 0,
+    onProfileClick: () -> Unit,
+    onCartClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -216,25 +327,69 @@ private fun HomeHeader(
             }
         }
         
-        // Profile Avatar
-        Card(
-            modifier = Modifier
-                .size(48.dp)
-                .clickable { onProfileClick() },
-            shape = CircleShape,
-            colors = CardDefaults.cardColors(
-                containerColor = OrangePrimary.copy(alpha = 0.1f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = Elevation.small)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(Spacing.small),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            // Cart Icon with badge
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(PureWhite)
+                    .clickable { onCartClick() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "👤",
-                    fontSize = 24.sp
+                Icon(
+                    imageVector = Icons.Outlined.ShoppingCart,
+                    contentDescription = "Cart",
+                    tint = DarkGray,
+                    modifier = Modifier.size(24.dp)
                 )
+                
+                if (cartCount > 0) {
+                    Box(
+                        modifier = Modifier
+                            .size(20.dp)
+                            .offset(x = 10.dp, y = (-10).dp)
+                            .background(
+                                color = OrangePrimary,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (cartCount > 99) "99+" else cartCount.toString(),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = PureWhite,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            )
+                        )
+                    }
+                }
+            }
+            
+            // Profile Avatar
+            Card(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clickable { onProfileClick() },
+                shape = CircleShape,
+                colors = CardDefaults.cardColors(
+                    containerColor = OrangePrimary.copy(alpha = 0.1f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = Elevation.small)
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "👤",
+                        fontSize = 24.sp
+                    )
+                }
             }
         }
     }
@@ -336,7 +491,9 @@ private fun CategoryItem(
     
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable { onClick() }
+        modifier = Modifier
+            .clickable { onClick() }
+            .scale(scale)
     ) {
         Card(
             modifier = Modifier
@@ -354,7 +511,7 @@ private fun CategoryItem(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = category.icon,
+                    text = "🍽️", // Default food icon
                     fontSize = 28.sp
                 )
             }
@@ -492,108 +649,82 @@ private fun SectionHeader(
 }
 
 @Composable
-private fun PopularRestaurantsSection(
-    restaurants: List<Restaurant>,
-    onRestaurantClick: (String) -> Unit
+private fun PopularFoodsSection(
+    foods: List<Food>,
+    cartViewModel: CartViewModel,
+    onFoodClick: (String) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = Spacing.medium),
         horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
     ) {
-        items(restaurants) { restaurant ->
-            RestaurantCard(
-                restaurant = restaurant,
-                onClick = { onRestaurantClick(restaurant.id) }
+        items(foods) { food ->
+            PopularFoodCard(
+                food = food,
+                cartViewModel = cartViewModel,
+                onClick = { onFoodClick(food.id) }
             )
         }
     }
 }
 
 @Composable
-private fun RestaurantCard(
-    restaurant: Restaurant,
+private fun PopularFoodCard(
+    food: Food,
+    cartViewModel: CartViewModel,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
-            .width(200.dp)
+            .width(160.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(CornerRadius.large),
         colors = CardDefaults.cardColors(containerColor = PureWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = Elevation.medium)
     ) {
         Column {
-            // Restaurant Image
+            // Food Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(OrangePrimary.copy(0.3f), OrangeSecondary.copy(0.1f))
-                        )
-                    )
+                    .height(100.dp)
+                    .background(LightGray)
             ) {
-                // Placeholder for restaurant image
-                Box(
+                AsyncImage(
+                    model = food.imageUrl,
+                    contentDescription = food.name,
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🏪",
-                        fontSize = 48.sp
-                    )
-                }
+                    contentScale = ContentScale.Crop
+                )
                 
-                // Favorite button
-                IconButton(
-                    onClick = { /* Handle favorite */ },
+                // Favorite Button
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(Spacing.small)
+                        .size(32.dp)
+                        .background(
+                            color = PureWhite.copy(alpha = 0.9f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = Icons.Default.FavoriteBorder,
                         contentDescription = "Favorite",
-                        tint = PureWhite,
-                        modifier = Modifier
-                            .background(
-                                color = Color.Black.copy(alpha = 0.3f),
-                                shape = CircleShape
-                            )
-                            .padding(4.dp)
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(18.dp)
                     )
-                }
-                
-                // Free delivery badge
-                if (restaurant.isFreeDelivery) {
-                    Card(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(Spacing.small),
-                        colors = CardDefaults.cardColors(containerColor = GreenSuccess),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = "Free Delivery",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = PureWhite,
-                                fontSize = 10.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
                 }
             }
             
-            // Restaurant Info
             Column(
                 modifier = Modifier.padding(Spacing.medium)
             ) {
                 Text(
-                    text = restaurant.name,
+                    text = food.name,
                     style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         color = DarkGray
                     ),
                     maxLines = 1,
@@ -602,44 +733,47 @@ private fun RestaurantCard(
                 
                 Spacer(modifier = Modifier.height(4.dp))
                 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Rating",
-                        tint = YellowRating,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    Text(
-                        text = restaurant.rating.toString(),
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = DarkGray,
-                            fontWeight = FontWeight.Medium
-                        )
-                    )
-                }
+                Text(
+                    text = "Food Item", // Placeholder for category name
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MediumGray
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(Spacing.small))
                 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = restaurant.deliveryTime,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = MediumGray
+                        text = "Rp ${food.price}",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = OrangePrimary
                         )
                     )
-                    Text(
-                        text = restaurant.deliveryFee,
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = if (restaurant.isFreeDelivery) GreenSuccess else MediumGray,
-                            fontWeight = FontWeight.Medium
+                    
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .background(
+                                color = OrangePrimary,
+                                shape = CircleShape
+                            )
+                            .clickable { cartViewModel.addToCart(food) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add to cart",
+                            tint = PureWhite,
+                            modifier = Modifier.size(18.dp)
                         )
-                    )
+                    }
                 }
             }
         }
@@ -649,6 +783,7 @@ private fun RestaurantCard(
 @Composable
 private fun RecommendedFoodCard(
     food: Food,
+    cartViewModel: CartViewModel,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
@@ -666,43 +801,64 @@ private fun RecommendedFoodCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp)
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                OrangePrimary.copy(0.2f),
-                                OrangeSecondary.copy(0.1f)
-                            )
-                        )
-                    )
+                    .background(LightGray)
             ) {
-                // Placeholder for food image
-                Box(
+                AsyncImage(
+                    model = food.imageUrl,
+                    contentDescription = food.name,
                     modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                
+                // Favorite Button
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(Spacing.small)
+                        .size(32.dp)
+                        .background(
+                            color = PureWhite.copy(alpha = 0.9f),
+                            shape = CircleShape
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "🍽️",
-                        fontSize = 48.sp
+                    Icon(
+                        imageVector = Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = OrangePrimary,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
                 
-                // Recommended badge
-                if (food.isRecommended) {
+                // Rating badge
+                if (food.rating > 0) {
                     Card(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(Spacing.small),
-                        colors = CardDefaults.cardColors(containerColor = RedAccent),
+                        colors = CardDefaults.cardColors(containerColor = DarkGray.copy(alpha = 0.8f)),
                         shape = RoundedCornerShape(4.dp)
                     ) {
-                        Text(
-                            text = "Recommended",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = PureWhite,
-                                fontSize = 9.sp
-                            ),
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "Rating",
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(
+                                text = String.format("%.1f", food.rating),
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = PureWhite,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                        }
                     }
                 }
             }
@@ -722,7 +878,7 @@ private fun RecommendedFoodCard(
                 )
                 
                 Text(
-                    text = food.restaurant,
+                    text = "Food Item", // Placeholder for category name
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MediumGray
                     ),
@@ -738,7 +894,7 @@ private fun RecommendedFoodCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "$${food.price}",
+                        text = "Rp ${food.price}",
                         style = MaterialTheme.typography.titleSmall.copy(
                             fontWeight = FontWeight.Bold,
                             color = OrangePrimary
@@ -749,7 +905,7 @@ private fun RecommendedFoodCard(
                     Card(
                         modifier = Modifier
                             .size(32.dp)
-                            .clickable { onClick() },
+                            .clickable { cartViewModel.addToCart(food) },
                         shape = CircleShape,
                         colors = CardDefaults.cardColors(containerColor = OrangePrimary),
                         elevation = CardDefaults.cardElevation(defaultElevation = Elevation.small)

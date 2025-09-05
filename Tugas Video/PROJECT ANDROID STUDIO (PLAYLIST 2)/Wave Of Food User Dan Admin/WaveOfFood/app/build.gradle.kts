@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -21,7 +22,12 @@ android {
         }
     }
 
+    
+
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -88,6 +94,22 @@ dependencies {
     
     // Splash Screen
     implementation(libs.androidx.core.splashscreen)
+    
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage)
+    
+    // Google Play Services
+    implementation(libs.play.services.auth)
+    implementation(libs.play.services.base)
+    
+    // JSON
+    implementation(libs.gson)
+    
+    // DataStore for user preferences
+    implementation(libs.androidx.datastore.preferences)
     
     // Testing
     testImplementation(libs.junit)

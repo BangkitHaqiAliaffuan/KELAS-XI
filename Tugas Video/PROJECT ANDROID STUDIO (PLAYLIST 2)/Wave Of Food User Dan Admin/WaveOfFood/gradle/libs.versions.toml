@@ -17,6 +17,11 @@ accompanist = "0.32.0"
 coil-compose = "2.5.0"
 lottie-compose = "6.2.0"
 splash-screen = "1.0.1"
+firebase-bom = "33.1.2"
+play-services-auth = "21.0.0"
+play-services-base = "18.3.0"
+datastore = "1.0.0"
+gson = "2.10.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -66,6 +71,22 @@ lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", versio
 
 # Splash Screen
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splash-screen" }
+
+# Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage-ktx" }
+
+# Google Play Services
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "play-services-auth" }
+play-services-base = { group = "com.google.android.gms", name = "play-services-base", version.ref = "play-services-base" }
+
+# DataStore
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# JSON
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
