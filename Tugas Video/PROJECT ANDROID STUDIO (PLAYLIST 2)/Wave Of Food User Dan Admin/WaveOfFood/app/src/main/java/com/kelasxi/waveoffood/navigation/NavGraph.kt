@@ -3,20 +3,32 @@ package com.kelasxi.waveoffood.navigation
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.kelasxi.waveoffood.ui.screens.auth.LoginScreen
 import com.kelasxi.waveoffood.ui.screens.auth.RegisterScreen
+import com.kelasxi.waveoffood.ui.screens.cart.CartScreen
+import com.kelasxi.waveoffood.ui.screens.cart.CheckoutScreen
+import com.kelasxi.waveoffood.ui.screens.cart.OrderSuccessScreen
 import com.kelasxi.waveoffood.ui.screens.home.HomeScreen
 import com.kelasxi.waveoffood.ui.screens.onboarding.OnboardingScreen
 import com.kelasxi.waveoffood.ui.screens.splash.SplashScreen
+import com.kelasxi.waveoffood.ui.viewmodels.CartViewModel
+import com.kelasxi.waveoffood.navigation.PlaceholderScreen
 
 @Composable
 fun NavGraph(
     navController: NavHostController,
     startDestination: String = Screen.Splash.route
 ) {
+    // Shared CartViewModel across all screens
+    val cartViewModel: CartViewModel = viewModel()
+    
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -98,7 +110,8 @@ fun NavGraph(
                 },
                 onNavigateToCart = {
                     navController.navigate(Screen.Cart.route)
-                }
+                },
+                cartViewModel = cartViewModel
             )
         }
         
@@ -140,15 +153,49 @@ fun NavGraph(
             )
         }
         
-        // Cart Screen (placeholder)
+        // Cart Screen
         composable(
             route = Screen.Cart.route
         ) {
-            // TODO: Implement CartScreen
-            PlaceholderScreen(
-                title = "Cart",
-                subtitle = "Your selected items",
-                onBackClick = { navController.popBackStack() }
+            CartScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCheckout = { cartSummary ->
+                    navController.navigate(Screen.Checkout.route)
+                },
+                cartViewModel = cartViewModel
+            )
+        }
+        
+        // Checkout Screen
+        composable(
+            route = Screen.Checkout.route
+        ) {
+            val cartSummary = cartViewModel.getCartSummary()
+            CheckoutScreen(
+                cartSummary = cartSummary,
+                onNavigateBack = { navController.popBackStack() },
+                onOrderPlaced = { orderId ->
+                    navController.navigate("order_success/$orderId") {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                    }
+                },
+                cartViewModel = cartViewModel
+            )
+        }
+        
+        // Order Success Screen
+        composable(
+            route = "order_success/{orderId}",
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            OrderSuccessScreen(
+                orderId = orderId,
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.OrderSuccess.route) { inclusive = true }
+                    }
+                }
             )
         }
         
