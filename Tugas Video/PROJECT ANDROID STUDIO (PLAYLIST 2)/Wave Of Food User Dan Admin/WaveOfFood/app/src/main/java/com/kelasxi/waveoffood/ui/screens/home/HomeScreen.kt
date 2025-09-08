@@ -39,10 +39,10 @@ fun HomeScreen(
     onNavigateToRestaurant: (String) -> Unit,
     onNavigateToFood: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
-    onNavigateToCart: () -> Unit = {}
+    onNavigateToCart: () -> Unit = {},
+    cartViewModel: CartViewModel = viewModel()
 ) {
     val homeViewModel: HomeViewModel = viewModel()
-    val cartViewModel: CartViewModel = viewModel()
     
     // Observe ViewModels
     val categories by homeViewModel.categories.collectAsState()

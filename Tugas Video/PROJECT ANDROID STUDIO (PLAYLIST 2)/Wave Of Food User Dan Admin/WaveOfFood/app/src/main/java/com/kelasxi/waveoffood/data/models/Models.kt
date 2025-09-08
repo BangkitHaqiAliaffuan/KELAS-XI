@@ -43,18 +43,24 @@ data class User(
 data class Order(
     val orderId: String = "",
     val userId: String = "",
+    val customerName: String = "",
+    val customerPhone: String = "",
+    val customerAddress: String = "",
     val items: List<OrderItem> = emptyList(),
+    val subtotal: Long = 0,
+    val serviceFee: Long = 2000, // Service fee sebesar 2000
+    val deliveryFee: Long = 10000, // Delivery fee sebesar 10000
     val total: Long = 0,
     val paymentMethod: String = "",
     val status: String = "pending",
-    val createdAt: Any? = null // Can handle both String and Timestamp
+    val timestamp: Any? = null // Can handle both String and Timestamp
 )
 
 data class OrderItem(
     val name: String = "",
     val price: Long = 0,
     val quantity: Int = 0,
-    val foodId: String = ""
+    val imageUrl: String = ""
 )
 
 // Cart Item untuk session lokal (tidak disimpan ke Firebase)
