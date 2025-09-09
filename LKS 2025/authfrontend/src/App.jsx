@@ -1,6 +1,6 @@
 import React from "react";
 import { assets } from "./Assets/assets";
-
+import './App.css'
 const App = () => {
   return (
     <form className="main-container">
