@@ -37,7 +37,11 @@ data class User(
     val email: String = "",
     val name: String = "",
     val address: String? = null,
-    val profileImage: String? = null
+    val phone: String? = null,
+    val profileImage: String? = null,
+    val favoritefoods: List<String> = emptyList(), // List of food IDs
+    val createdAt: Any? = null,
+    val updatedAt: Any? = null
 )
 
 data class Order(

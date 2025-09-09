@@ -1,19 +1,25 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { assets } from "./Assets/assets";
 import './App.css'
 const App = () => {
+
+  const [status, setStatus] = useState("Sign Up")
+  
   return (
     <form className="main-container">
       <div className="title">
-        SignUp
+        {status}
         <span></span>
       </div>
 
       <div className="input-container">
+        {status === "Sign Up"? 
         <div className="input-wrapper">
           <img src={assets.person} />
           <input type="text" placeholder="Name" />
-        </div>
+        </div>:""
+      }
+        
         <div className="input-wrapper">
           <img src={assets.email} />
           <input type="email" required placeholder="Email" />
@@ -31,8 +37,8 @@ const App = () => {
       </div>
 
       <div className="btn-container">
-        <div className="btn active">Sign Up</div>
-        <div className="btn ">Login</div>
+        <div className={`btn ${status === "Sign Up" ? "active" : ""}`} onClick={()=>{setStatus("Sign Up")}}>Sign Up</div>
+        <div className={`btn ${status === "Login" ? "active" : ""}`} onClick={()=>{setStatus("Login")}}>Login</div>
       </div>
     </form>
   );
