@@ -15,10 +15,16 @@ import com.kelasxi.waveoffood.ui.screens.auth.RegisterScreen
 import com.kelasxi.waveoffood.ui.screens.cart.CartScreen
 import com.kelasxi.waveoffood.ui.screens.cart.CheckoutScreen
 import com.kelasxi.waveoffood.ui.screens.cart.OrderSuccessScreen
+import com.kelasxi.waveoffood.ui.screens.profile.ProfileScreen
+import com.kelasxi.waveoffood.ui.screens.profile.EditProfileScreen
+import com.kelasxi.waveoffood.ui.screens.profile.OrderHistoryScreen
+import com.kelasxi.waveoffood.ui.screens.profile.OrderDetailScreen
+import com.kelasxi.waveoffood.ui.screens.profile.FavoriteFoodsScreen
 import com.kelasxi.waveoffood.ui.screens.home.HomeScreen
 import com.kelasxi.waveoffood.ui.screens.onboarding.OnboardingScreen
 import com.kelasxi.waveoffood.ui.screens.splash.SplashScreen
 import com.kelasxi.waveoffood.ui.viewmodels.CartViewModel
+import com.kelasxi.waveoffood.ui.viewmodels.ProfileViewModel
 import com.kelasxi.waveoffood.navigation.PlaceholderScreen
 
 @Composable
@@ -28,6 +34,8 @@ fun NavGraph(
 ) {
     // Shared CartViewModel across all screens
     val cartViewModel: CartViewModel = viewModel()
+    // Shared ProfileViewModel across profile screens
+    val profileViewModel: ProfileViewModel = viewModel()
     
     NavHost(
         navController = navController,
@@ -196,6 +204,83 @@ fun NavGraph(
                         popUpTo(Screen.OrderSuccess.route) { inclusive = true }
                     }
                 }
+            )
+        }
+        
+        // Profile Screen
+        composable(
+            route = Screen.Profile.route
+        ) {
+            ProfileScreen(
+                onNavigateToEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToOrderHistory = {
+                    navController.navigate(Screen.OrderHistory.route)
+                },
+                onNavigateToFavorites = {
+                    navController.navigate(Screen.FavoriteFoods.route)
+                },
+                onNavigateToSettings = {
+                    // TODO: Implement Settings Screen
+                },
+                onSignOut = {
+                    profileViewModel.signOut()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
+                },
+                profileViewModel = profileViewModel
+            )
+        }
+        
+        // Edit Profile Screen
+        composable(
+            route = Screen.EditProfile.route
+        ) {
+            EditProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                profileViewModel = profileViewModel
+            )
+        }
+        
+        // Order History Screen
+        composable(
+            route = Screen.OrderHistory.route
+        ) {
+            OrderHistoryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToOrderDetail = { orderId ->
+                    navController.navigate(Screen.OrderDetail.createRoute(orderId))
+                },
+                profileViewModel = profileViewModel
+            )
+        }
+        
+        // Order Detail Screen
+        composable(
+            route = Screen.OrderDetail.route,
+            arguments = listOf(navArgument("orderId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            OrderDetailScreen(
+                orderId = orderId,
+                onNavigateBack = { navController.popBackStack() },
+                profileViewModel = profileViewModel
+            )
+        }
+        
+        // Favorite Foods Screen
+        composable(
+            route = Screen.FavoriteFoods.route
+        ) {
+            FavoriteFoodsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToFoodDetail = { foodId ->
+                    navController.navigate(Screen.FoodDetail.createRoute(foodId))
+                },
+                profileViewModel = profileViewModel,
+                cartViewModel = cartViewModel
             )
         }
         

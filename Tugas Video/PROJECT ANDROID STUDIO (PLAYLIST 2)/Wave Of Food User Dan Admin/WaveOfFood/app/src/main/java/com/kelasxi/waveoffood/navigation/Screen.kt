@@ -16,5 +16,11 @@ sealed class Screen(val route: String) {
     object Checkout : Screen("checkout")
     object OrderSuccess : Screen("order_success")
     object Profile : Screen("profile")
+    object EditProfile : Screen("edit_profile")
+    object OrderHistory : Screen("order_history")
+    object OrderDetail : Screen("order_detail/{orderId}") {
+        fun createRoute(orderId: String) = "order_detail/$orderId"
+    }
+    object FavoriteFoods : Screen("favorite_foods")
     object ForgotPassword : Screen("forgot_password")
 }
