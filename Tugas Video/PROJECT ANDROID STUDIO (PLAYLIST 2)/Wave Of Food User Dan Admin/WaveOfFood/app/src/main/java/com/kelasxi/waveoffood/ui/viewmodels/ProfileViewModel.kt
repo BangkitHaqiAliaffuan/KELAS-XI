@@ -1,6 +1,8 @@
 package com.kelasxi.waveoffood.ui.viewmodels
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,12 +10,16 @@ import com.google.firebase.firestore.FieldValue
 import com.kelasxi.waveoffood.data.models.User
 import com.kelasxi.waveoffood.data.models.Order
 import com.kelasxi.waveoffood.data.models.Food
+import com.kelasxi.waveoffood.data.repository.AuthRepository
+import com.kelasxi.waveoffood.data.preferences.UserPreferencesManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-class ProfileViewModel : ViewModel() {
+class ProfileViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     
@@ -200,13 +206,32 @@ class ProfileViewModel : ViewModel() {
     }
     
     fun signOut() {
-        auth.signOut()
-        _user.value = null
-        _orderHistory.value = emptyList()
-        _favoriteFoods.value = emptyList()
+        viewModelScope.launch {
+            try {
+                // Gunakan AuthRepository untuk logout yang lengkap
+                authRepository.signOut()
+                
+                // Clear local state
+                _user.value = null
+                _orderHistory.value = emptyList()
+                _favoriteFoods.value = emptyList()
+            } catch (e: Exception) {
+                _errorMessage.value = "Logout failed: ${e.message}"
+            }
+        }
     }
     
     fun clearError() {
         _errorMessage.value = ""
+    }
+}
+
+class ProfileViewModelFactory(private val authRepository: AuthRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ProfileViewModel(authRepository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

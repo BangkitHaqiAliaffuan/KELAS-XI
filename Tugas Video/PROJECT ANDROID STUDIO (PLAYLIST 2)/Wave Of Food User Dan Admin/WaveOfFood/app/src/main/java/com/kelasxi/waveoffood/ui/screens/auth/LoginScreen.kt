@@ -30,6 +30,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.waveoffood.ui.theme.*
 import com.kelasxi.waveoffood.ui.viewmodel.AuthViewModel
 import com.kelasxi.waveoffood.ui.viewmodel.AuthViewModelFactory
+import com.kelasxi.waveoffood.ui.viewmodel.GoogleSignInViewModel
+import com.kelasxi.waveoffood.ui.viewmodel.GoogleSignInViewModelFactory
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
@@ -43,6 +45,9 @@ fun LoginScreen(
     val authViewModel: AuthViewModel = viewModel(
         factory = AuthViewModelFactory(context)
     )
+    val googleSignInViewModel: GoogleSignInViewModel = viewModel(
+        factory = GoogleSignInViewModelFactory(context)
+    )
     
     val uiState by authViewModel.uiState.collectAsState()
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
@@ -52,6 +57,7 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showGoogleSetupDialog by remember { mutableStateOf(false) }
     
     // Observe login success - Priority utama
     LaunchedEffect(uiState.isLoginSuccess) {
@@ -81,6 +87,13 @@ fun LoginScreen(
     // Observe error
     LaunchedEffect(uiState.errorMessage) {
         errorMessage = uiState.errorMessage
+    }
+    
+    // Observe Google Sign-In error
+    LaunchedEffect(googleSignInViewModel.errorMessage) {
+        if (googleSignInViewModel.errorMessage != null) {
+            errorMessage = googleSignInViewModel.errorMessage
+        }
     }
     
     val alpha by animateFloatAsState(
@@ -361,7 +374,21 @@ fun LoginScreen(
                     icon = "🔍",
                     backgroundColor = Color(0xFFDB4437),
                     modifier = Modifier.weight(1f),
-                    onClick = { /* Handle Google login */ }
+                    isLoading = googleSignInViewModel.isLoading,
+                    onClick = { 
+                        errorMessage = null
+                        googleSignInViewModel.signInWithGoogle(
+                            onSuccess = { onNavigateToHome() },
+                            onFailure = { error -> 
+                                errorMessage = error
+                                // Show setup dialog if no credentials available
+                                if (error.contains("No credentials available") || 
+                                    error.contains("Tidak ada akun Google")) {
+                                    showGoogleSetupDialog = true
+                                }
+                            }
+                        )
+                    }
                 )
                 
                 SocialLoginButton(
@@ -369,6 +396,7 @@ fun LoginScreen(
                     icon = "📘",
                     backgroundColor = Color(0xFF4267B2),
                     modifier = Modifier.weight(1f),
+                    isLoading = false,
                     onClick = { /* Handle Facebook login */ }
                 )
             }
@@ -499,6 +527,7 @@ private fun SocialLoginButton(
     icon: String,
     backgroundColor: Color,
     modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
     onClick: () -> Unit
 ) {
     Button(
@@ -510,24 +539,79 @@ private fun SocialLoginButton(
         shape = RoundedCornerShape(CornerRadius.medium),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = Elevation.small
-        )
+        ),
+        enabled = !isLoading
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = icon,
-                fontSize = 16.sp
-            )
-            Spacer(modifier = Modifier.width(Spacing.small))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelMedium.copy(
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
                     color = PureWhite,
-                    fontWeight = FontWeight.Medium
+                    strokeWidth = 2.dp
                 )
-            )
+            } else {
+                Text(
+                    text = icon,
+                    fontSize = 16.sp,
+                    color = PureWhite
+                )
+                Spacer(modifier = Modifier.width(Spacing.small))
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = PureWhite,
+                        fontWeight = FontWeight.Medium
+                    )
+                )
+            }
         }
+    }
+    
+    // Google Setup Dialog
+    if (showGoogleSetupDialog) {
+        AlertDialog(
+            onDismissRequest = { showGoogleSetupDialog = false },
+            title = {
+                Text(
+                    text = "Setup Google Sign-In",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Untuk mengaktifkan Google Sign-In, ikuti langkah berikut:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "1. Buka Google Cloud Console\n" +
+                              "2. Tambahkan SHA-1 fingerprint:\n" +
+                              "   C1:D9:47:2D:B0:60:56:24:12:0A:39:13:08:95:4B:36:68:FB:31:AC\n" +
+                              "3. Aktifkan Google Sign-In API\n" +
+                              "4. Download google-services.json terbaru\n" +
+                              "5. Pastikan Google Play Services terinstall",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = { showGoogleSetupDialog = false }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

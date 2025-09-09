@@ -16,12 +16,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.kelasxi.waveoffood.ui.theme.*
 import com.kelasxi.waveoffood.ui.viewmodels.ProfileViewModel
+import com.kelasxi.waveoffood.ui.viewmodels.ProfileViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,13 +33,56 @@ fun ProfileScreen(
     onNavigateToFavorites: () -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onSignOut: () -> Unit,
-    profileViewModel: ProfileViewModel = viewModel()
+    profileViewModel: ProfileViewModel
 ) {
     val user by profileViewModel.user.collectAsState()
     val isLoading by profileViewModel.isLoading.collectAsState()
+    val errorMessage by profileViewModel.errorMessage.collectAsState()
+    
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         profileViewModel.loadCurrentUser()
+    }
+    
+    // Show error message if any
+    LaunchedEffect(errorMessage) {
+        if (errorMessage.isNotEmpty()) {
+            // You can show a snackbar or toast here
+            // For now, we'll clear it after showing
+            profileViewModel.clearError()
+        }
+    }
+    
+    // Logout confirmation dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = {
+                Text("Konfirmasi Logout")
+            },
+            text = {
+                Text("Apakah Anda yakin ingin keluar dari akun?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        profileViewModel.signOut()
+                        onSignOut()
+                    }
+                ) {
+                    Text("Ya, Keluar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false }
+                ) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -77,7 +122,7 @@ fun ProfileScreen(
                     onNavigateToOrderHistory = onNavigateToOrderHistory,
                     onNavigateToFavorites = onNavigateToFavorites,
                     onNavigateToSettings = onNavigateToSettings,
-                    onSignOut = onSignOut
+                    onSignOut = { showLogoutDialog = true }
                 )
             }
         }

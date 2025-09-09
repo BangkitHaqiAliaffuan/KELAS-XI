@@ -22,5 +22,6 @@ sealed class Screen(val route: String) {
         fun createRoute(orderId: String) = "order_detail/$orderId"
     }
     object FavoriteFoods : Screen("favorite_foods")
+    object AllMenu : Screen("all_menu")
     object ForgotPassword : Screen("forgot_password")
 }

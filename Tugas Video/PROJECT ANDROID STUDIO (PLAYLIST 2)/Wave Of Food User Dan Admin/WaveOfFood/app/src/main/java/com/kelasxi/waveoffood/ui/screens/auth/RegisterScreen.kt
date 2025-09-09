@@ -1,5 +1,6 @@
 package com.kelasxi.waveoffood.ui.screens.auth
 
+import android.util.Log
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -25,7 +27,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.waveoffood.ui.theme.*
+import com.kelasxi.waveoffood.ui.viewmodel.GoogleSignInViewModel
+import com.kelasxi.waveoffood.ui.viewmodel.GoogleSignInViewModelFactory
 import kotlinx.coroutines.delay
 
 @Composable
@@ -33,6 +38,11 @@ fun RegisterScreen(
     onNavigateToLogin: () -> Unit,
     onNavigateToHome: () -> Unit
 ) {
+    val context = LocalContext.current
+    val googleSignInViewModel: GoogleSignInViewModel = viewModel(
+        factory = GoogleSignInViewModelFactory(context)
+    )
+    
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -43,6 +53,7 @@ fun RegisterScreen(
     var agreeToTerms by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val scrollState = rememberScrollState()
     
@@ -323,6 +334,95 @@ fun RegisterScreen(
                 }
             )
             
+            // Show error message if exists
+            errorMessage?.let { error ->
+                Spacer(modifier = Modifier.height(Spacing.medium))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.Red.copy(alpha = 0.1f)
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.Red.copy(alpha = 0.3f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(Spacing.medium),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Error,
+                            contentDescription = "Error",
+                            tint = Color.Red,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.small))
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.large))
+            
+            // Divider
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = DividerColor
+                )
+                Text(
+                    text = "  Or sign up with  ",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MediumGray
+                    )
+                )
+                Divider(
+                    modifier = Modifier.weight(1f),
+                    color = DividerColor
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.large))
+            
+            // Social Login Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.medium)
+            ) {
+                SocialLoginButton(
+                    text = "Google",
+                    icon = "🔍",
+                    backgroundColor = Color(0xFFDB4437),
+                    modifier = Modifier.weight(1f),
+                    isLoading = googleSignInViewModel.isLoading,
+                    onClick = { 
+                        errorMessage = null
+                        googleSignInViewModel.signInWithGoogle(
+                            onSuccess = { onNavigateToHome() },
+                            onFailure = { error -> 
+                                errorMessage = error
+                            }
+                        )
+                    }
+                )
+                
+                SocialLoginButton(
+                    text = "Facebook",
+                    icon = "📘",
+                    backgroundColor = Color(0xFF4267B2),
+                    modifier = Modifier.weight(1f),
+                    isLoading = false,
+                    onClick = { /* Handle Facebook login */ }
+                )
+            }
+            
             Spacer(modifier = Modifier.height(Spacing.xLarge))
             
             // Sign In Link
@@ -506,6 +606,56 @@ private fun AnimatedGradientButton(
                         fontSize = 16.sp
                     ),
                     color = PureWhite
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SocialLoginButton(
+    text: String,
+    icon: String,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    onClick: () -> Unit
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.height(ComponentSize.buttonHeightMedium),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = backgroundColor
+        ),
+        shape = RoundedCornerShape(CornerRadius.medium),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = Elevation.small
+        ),
+        enabled = !isLoading
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    color = PureWhite,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    text = icon,
+                    fontSize = 16.sp,
+                    color = PureWhite
+                )
+                Spacer(modifier = Modifier.width(Spacing.small))
+                Text(
+                    text = text,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = PureWhite,
+                        fontWeight = FontWeight.Medium
+                    )
                 )
             }
         }

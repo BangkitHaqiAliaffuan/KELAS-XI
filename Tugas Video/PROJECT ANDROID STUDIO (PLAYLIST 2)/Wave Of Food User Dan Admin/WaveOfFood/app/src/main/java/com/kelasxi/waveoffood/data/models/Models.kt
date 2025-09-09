@@ -10,7 +10,7 @@ data class Food(
     val isAvailable: Boolean = true,
     val isPopular: Boolean = false,
     val name: String = "",
-    val nutritionInfo: NutritionInfo = NutritionInfo(),
+    val nutritionInfo: Map<String, Any>? = null,
     val preparationTime: Int = 0,
     val price: Long = 0,
     val rating: Double = 0.0,

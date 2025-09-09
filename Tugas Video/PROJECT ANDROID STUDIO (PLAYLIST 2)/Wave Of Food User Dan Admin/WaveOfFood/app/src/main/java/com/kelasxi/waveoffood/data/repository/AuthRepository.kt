@@ -1,8 +1,10 @@
 package com.kelasxi.waveoffood.data.repository
 
 import android.util.Patterns
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.kelasxi.waveoffood.data.preferences.UserPreferencesManager
 import com.kelasxi.waveoffood.data.preferences.UserProfile
@@ -300,4 +302,60 @@ class AuthRepository(
             Result.failure(e)
         }
     }
+
+    // Google Sign-In
+    suspend fun signInWithGoogle(googleToken: String): FirebaseUser? {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(googleToken, null)
+            val result = firebaseAuth.signInWithCredential(credential).await()
+            
+            result.user?.let { user ->
+                // Cek apakah user sudah ada di Firestore
+                val userDoc = firestore.collection("users").document(user.uid).get().await()
+                
+                if (userDoc.exists()) {
+                    // User sudah ada, update data login
+                    userPreferencesManager.saveUserLogin(
+                        userId = user.uid,
+                        email = user.email ?: "",
+                        name = userDoc.getString("name") ?: user.displayName ?: "",
+                        phone = userDoc.getString("phone") ?: "",
+                        address = userDoc.getString("address") ?: "",
+                        avatarUrl = userDoc.getString("avatarUrl") ?: user.photoUrl?.toString() ?: "",
+                        rememberLogin = true
+                    )
+                } else {
+                    // User baru, buat dokumen baru di Firestore
+                    val userData = hashMapOf(
+                        "name" to (user.displayName ?: ""),
+                        "email" to (user.email ?: ""),
+                        "phone" to "",
+                        "address" to "",
+                        "avatarUrl" to (user.photoUrl?.toString() ?: ""),
+                        "createdAt" to System.currentTimeMillis(),
+                        "isActive" to true
+                    )
+                    
+                    firestore.collection("users").document(user.uid).set(userData).await()
+                    
+                    userPreferencesManager.saveUserLogin(
+                        userId = user.uid,
+                        email = user.email ?: "",
+                        name = user.displayName ?: "",
+                        phone = "",
+                        address = "",
+                        avatarUrl = user.photoUrl?.toString() ?: "",
+                        rememberLogin = true
+                    )
+                }
+            }
+            
+            result.user
+        } catch (e: Exception) {
+            throw Exception("Google Sign-In failed: ${e.message}")
+        }
+    }
+
+    // Get current Firebase user
+    suspend fun getCurrentUser(): FirebaseUser? = firebaseAuth.currentUser
 }
