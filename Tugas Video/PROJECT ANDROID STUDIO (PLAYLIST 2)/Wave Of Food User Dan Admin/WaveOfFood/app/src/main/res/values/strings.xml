@@ -1,6 +1,18 @@
 <resources>
     <string name="app_name">WaveOfFood</string>
     
+    <!-- Google Sign-In -->
+    <string name="default_web_client_id">576337930181-b2euv0bmcv4ldat8gnb9f0ruefnbsnpk.apps.googleusercontent.com</string>
+    
+    <!-- Google Sign-In Setup Instructions -->
+    <string name="google_signin_setup_instructions">
+        Untuk menggunakan Google Sign-In, Anda perlu:\n
+        1. Menambahkan SHA-1 fingerprint ke Google Console\n
+        2. Mengaktifkan Google Sign-In API\n
+        3. Pastikan google-services.json sudah benar\n\n
+        SHA-1 fingerprint Anda: C1:D9:47:2D:B0:60:56:24:12:0A:39:13:08:95:4B:36:68:FB:31:AC
+    </string>
+    
     <!-- Onboarding -->
     <string name="onboarding_title_1">Choose Your Favorite Food</string>
     <string name="onboarding_desc_1">Discover thousands of delicious recipes from around the world</string>

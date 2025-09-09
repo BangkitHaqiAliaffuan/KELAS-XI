@@ -40,6 +40,9 @@ class MenuViewModel : ViewModel() {
     private val _errorMessage = MutableStateFlow("")
     val errorMessage: StateFlow<String> = _errorMessage.asStateFlow()
 
+    private val _selectedFood = MutableStateFlow<Food?>(null)
+    val selectedFood: StateFlow<Food?> = _selectedFood.asStateFlow()
+
     // Filtered foods based on search and category
     val filteredFoods: StateFlow<List<Food>> = combine(
         _allFoods,
@@ -120,6 +123,36 @@ class MenuViewModel : ViewModel() {
             ViewMode.LIST
         } else {
             ViewMode.GRID
+        }
+    }
+
+    fun loadFoodDetail(foodId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = ""
+            
+            try {
+                // First check if food is already in allFoods
+                val existingFood = _allFoods.value.find { it.id == foodId }
+                if (existingFood != null) {
+                    _selectedFood.value = existingFood
+                } else {
+                    // Load from Firestore
+                    val doc = firestore.collection("foods").document(foodId).get().await()
+                    if (doc.exists()) {
+                        val food = doc.toObject<Food>()?.copy(id = doc.id)
+                        _selectedFood.value = food
+                    } else {
+                        _selectedFood.value = null
+                        _errorMessage.value = "Food not found"
+                    }
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Failed to load food detail: ${e.message}"
+                _selectedFood.value = null
+            } finally {
+                _isLoading.value = false
+            }
         }
     }
 

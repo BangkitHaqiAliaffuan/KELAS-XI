@@ -40,6 +40,7 @@ fun HomeScreen(
     onNavigateToFood: (String) -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToCart: () -> Unit = {},
+    onNavigateToAllMenu: () -> Unit = {},
     cartViewModel: CartViewModel = viewModel()
 ) {
     val homeViewModel: HomeViewModel = viewModel()
@@ -79,7 +80,8 @@ fun HomeScreen(
             HomeHeader(
                 cartCount = cartCount,
                 onProfileClick = onNavigateToProfile,
-                onCartClick = onNavigateToCart
+                onCartClick = onNavigateToCart,
+                onNavigateToAllMenu = onNavigateToAllMenu
             )
         }
         
@@ -147,7 +149,7 @@ fun HomeScreen(
                 item {
                     SectionHeader(
                         title = "Foods in ${categories.find { it.id == selectedCategoryId }?.name ?: "Category"}",
-                        onSeeAllClick = { }
+                        onSeeAllClick = onNavigateToAllMenu
                     )
                 }
                 
@@ -184,7 +186,7 @@ fun HomeScreen(
                 item {
                     SectionHeader(
                         title = "Popular Foods",
-                        onSeeAllClick = { }
+                        onSeeAllClick = onNavigateToAllMenu
                     )
                 }
                 
@@ -202,7 +204,7 @@ fun HomeScreen(
                 item {
                     SectionHeader(
                         title = "Recommended for You",
-                        onSeeAllClick = { }
+                        onSeeAllClick = onNavigateToAllMenu
                     )
                 }
                 
@@ -284,7 +286,8 @@ fun HomeScreen(
 private fun HomeHeader(
     cartCount: Int = 0,
     onProfileClick: () -> Unit,
-    onCartClick: () -> Unit
+    onCartClick: () -> Unit,
+    onNavigateToAllMenu: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -331,6 +334,23 @@ private fun HomeHeader(
             horizontalArrangement = Arrangement.spacedBy(Spacing.small),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Menu Icon
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(PureWhite)
+                    .clickable { onNavigateToAllMenu() },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.RestaurantMenu,
+                    contentDescription = "All Menu",
+                    tint = DarkGray,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
             // Cart Icon with badge
             Box(
                 modifier = Modifier

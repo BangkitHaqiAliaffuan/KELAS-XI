@@ -14,6 +14,9 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.kelasxi.waveoffood.navigation.NavGraph
 import com.kelasxi.waveoffood.ui.theme.WaveOfFoodTheme
+import com.kelasxi.waveoffood.data.repository.AuthRepository
+import com.kelasxi.waveoffood.data.preferences.UserPreferencesManager
+import androidx.compose.ui.platform.LocalContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,6 +38,9 @@ class MainActivity : ComponentActivity() {
 fun WaveOfFoodApp() {
     val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
+    val context = LocalContext.current
+    val userPreferencesManager = UserPreferencesManager(context)
+    val authRepository = AuthRepository(userPreferencesManager = userPreferencesManager)
     
     // Set system UI colors
     systemUiController.setSystemBarsColor(
@@ -46,6 +52,9 @@ fun WaveOfFoodApp() {
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        NavGraph(navController = navController)
+        NavGraph(
+            navController = navController,
+            authRepository = authRepository
+        )
     }
 }
