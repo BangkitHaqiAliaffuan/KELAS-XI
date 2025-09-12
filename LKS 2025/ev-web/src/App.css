@@ -8,7 +8,21 @@
     box-sizing: border-box;
 }
 
+video{
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    z-index: -1;
+    object-fit: cover;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+}
+
 .main-container{
+    position: relative;
+    z-index: 999;
     background-size: cover;
     height: 100vh;
 }
@@ -51,13 +65,84 @@
 .hero{
     display: flex;
     flex-direction: column;
-    gap: 200px;
+    justify-content: center;
+    /* background-color: rebeccapurple; */
     height: 70%;
-
     padding: 50px;
+    padding-left: 100px;
 }
 .title{
-    font-size: 50px;
+    font-size: 70px;
+    font-weight: 400;
     width: 700px;
-    text-wrap: wrap;
+    /* background-color: red; */
+    /* height: 300px; */
+}
+
+.btn-wrapper{
+    position: relative;
+    top: 30px;
+    background-color: #f3f3f3;
+    width: 320px;
+    /* right: 5px; */
+    padding: 20px;
+    padding-left: 25px;
+    align-items: center;
+    justify-content: space-between;
+    height: 80px;
+    border-radius: 50px;
+    display: flex;
+}
+
+.btn-wrapper p {
+    color: #525252;
+    
+}
+
+.btn-wrapper button{
+    /* outline: none; */
+    background-color: transparent;
+    border: none;
+}
+.btn-wrapper button img{
+    width: 60px;
+    position: relative;
+    top: 2px;
+}
+
+.features {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 100px;
+    padding-right: 100px;
+    position: relative;
+    top: -20px;
+}
+
+.round-btns{
+    display: flex;
+    gap: 20px;
+}
+
+.btn{
+    background-color: white;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.btn.active{
+   background-color: red;
+}
+
+.btn-play{
+    cursor: pointer;
+}
+
+.play-container{
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
