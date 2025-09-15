@@ -3,15 +3,18 @@ import "./NewsBoard.css";
 import NewsItem from "../NewsItem/NewsItem";
 import { API_KEY } from "../../../data";
 
-const NewsBoard = () => {
+const NewsBoard = ({category}) => {
   const [data, setData] = useState([]);
   const [hasData, setHasData] = useState(false);
   const [loading, setLoading] = useState(true);
 
+
+
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=${API_KEY}`;
+      let url = `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${API_KEY}`;
       const response = await fetch(url);
       const result = await response.json();
       
@@ -28,7 +31,7 @@ const NewsBoard = () => {
 
   useEffect(() => {
     fetchData();
-  }, []); // Empty dependency array memastikan hanya dipanggil sekali
+  }, [category]); // Empty dependency array memastikan hanya dipanggil sekali
 
   // Log data setelah state update
   useEffect(() => {
@@ -39,16 +42,18 @@ const NewsBoard = () => {
     return <div className="text-center">Loading...</div>;
   }
 
+  // console.log(category);
+
   return (
     <div>
-      <div className="title fs-1 text-center">
+      <div className="title fs-1 text-center mb-5 mt-5">
         Top <span className="text-danger">Headlines</span>
       </div>
 
-      <div className="row row-cols-1 row-cols-md-4 g-4">
+      <div className="row row-cols-1 row-cols-md-4 g-4 p-5">
         {hasData && data.length > 0 ? (
           data.map((article, index) => (
-            <NewsItem key={index} title={article.title} urlImage={article.urlToImage} />
+            <NewsItem key={index} description={article.description} title={article.title} urlImage={article.urlToImage} />
           ))
         ) : (
           <div className="text-center">No news available</div>
