@@ -1,0 +1,12 @@
+.navbar-collapse{
+    display: flex;
+    justify-content: end;
+    padding-right: 20px;
+}
+
+.navbar-brand{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+}
