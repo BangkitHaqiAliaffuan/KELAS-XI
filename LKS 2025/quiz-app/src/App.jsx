@@ -6,20 +6,32 @@ const App = () => {
     <div className="container">
       <div className="title">
         <h1>Quiz App</h1>
+        <div className="break-line"></div>
       </div>
 
-      <div className="break-line"></div>
-
-      <div className="questions">
-        <div className="option"></div>
-        <div className="option"></div>
-        <div className="option"></div>
-        <div className="option"></div>
+      <div className="question">
+        1. What is the best framework from javascript
       </div>
 
-      <div className="btn">Next</div>
+      <div className="answers">
+        <div className="option">
+          <div> tes</div>
+        </div>
+        <div className="option">
+          <div> tes</div>
+        </div>
+        <div className="option">
+          <div> tes</div>
+        </div>
+        <div className="option">
+          <div> tes</div>
+        </div>
+      </div>
 
-      <div className="status"></div>
+      <div className="info-wrapper">
+        <div className="btn">Next</div>
+        <div className="status">3 of 5 questions</div>
+      </div>
     </div>
   );
 };
