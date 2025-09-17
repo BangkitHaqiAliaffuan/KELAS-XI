@@ -14,7 +14,7 @@ html {
 .container {
   padding: 35px;
   width: 500px;
-  height: 550px;
+  /* height: 60%; */
   background-color: white;
 }
 
@@ -30,6 +30,10 @@ html {
     background-color: #8F8F8F;
 }
 
+.btn.reset{
+    margin: auto;
+}
+
 .question{
     margin-top: 5px;
     /* width: 100%; */
@@ -38,8 +42,17 @@ html {
     margin-bottom: 14px;
 }
 
+.option.right{
+    background-color: white;
+    border-color: #42c88d;
+}
+.option.wrong{
+    background-color: white;
+    border-color: red;
+}
+
 .answers{
-    height: 55%;
+    /* height: 55%; */
     width: 100%;
     gap: 10px;
     flex-direction: column;
@@ -65,9 +78,10 @@ html {
 }
 
 .info-wrapper{
+    margin-top: 20px;
     display: flex;
     flex-direction: column;
-    height: 25%;
+    /* height: 25%; */
     justify-content: center;
     align-items: center;
 }
@@ -85,7 +99,7 @@ html {
 
 .status{
     position: relative;
-    top: 20px; 
+    top: 7px; 
 }
 
 
