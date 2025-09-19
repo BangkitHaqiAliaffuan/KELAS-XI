@@ -66,6 +66,7 @@ html{
     align-items: center;
     justify-content: center;
     width: 200px;
+    cursor: pointer;
     height: 80px;
     background-color: #C72082;
     border-radius: 40px;
