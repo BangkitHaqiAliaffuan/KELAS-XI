@@ -1,5 +1,6 @@
 *.iml
 .gradle
+WeatherApiService.kt
 /local.properties
 /.idea/caches
 /.idea/libraries
