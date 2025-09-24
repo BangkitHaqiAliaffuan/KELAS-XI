@@ -46,6 +46,6 @@ interface WeatherApiService {
         const val BASE_URL = "https://api.weatherapi.com/v1/"
         // API Key - Ini harus didapatkan dari WeatherAPI.com
         // User perlu mendaftar di https://www.weatherapi.com/ untuk mendapatkan API key gratis
-        const val API_KEY = "de1466790b0c40bbad314318252409"
+        const val API_KEY = "tes min"
     }
 }
