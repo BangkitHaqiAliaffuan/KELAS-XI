@@ -1,0 +1,38 @@
+.home {
+  background-color: var(--netflix-black);
+  color: var(--netflix-white);
+  min-height: 100vh;
+}
+
+.home-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--netflix-black);
+}
+
+.home-content {
+  margin-top: -120px;
+  position: relative;
+  z-index: 2;
+  padding-bottom: 80px;
+  padding-top: 60px;
+}
+
+/* Responsive adjustments for home content */
+@media (max-width: 768px) {
+  .home-content {
+    margin-top: -100px;
+    padding-top: 40px;
+    padding-bottom: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-content {
+    margin-top: -80px;
+    padding-top: 30px;
+    padding-bottom: 50px;
+  }
+}
