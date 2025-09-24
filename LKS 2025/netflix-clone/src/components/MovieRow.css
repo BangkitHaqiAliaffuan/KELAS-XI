@@ -1,0 +1,187 @@
+.movie-row {
+  margin-left: 60px;
+  margin-bottom: 40px;
+}
+
+.movie-row:first-child {
+  margin-top: 40px;
+}
+
+.movie-row h2 {
+  color: var(--netflix-white);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-left: 0;
+}
+
+.movie-row-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.movie-row-posters {
+  display: flex;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  gap: 8px;
+  padding: 20px 0;
+  scroll-behavior: smooth;
+}
+
+.movie-row-posters::-webkit-scrollbar {
+  display: none;
+}
+
+.movie-poster-container {
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.movie-poster-container:hover {
+  transform: scale(1.08);
+}
+
+.movie-poster-container-large:hover {
+  transform: scale(1.1);
+}
+
+.movie-row-poster {
+  height: 150px;
+  width: auto;
+  border-radius: 4px;
+  object-fit: cover;
+  display: block;
+}
+
+.movie-row-poster-large {
+  height: 250px;
+}
+
+.movie-poster-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.7) 50%,
+    transparent 100%
+  );
+  padding: 16px 12px 12px;
+  border-radius: 0 0 4px 4px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.movie-poster-container:hover .movie-poster-overlay {
+  opacity: 1;
+}
+
+.movie-poster-title {
+  color: var(--netflix-white);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  line-height: 1.2;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Add fade effect at the edges */
+.movie-row {
+  position: relative;
+}
+
+.movie-row::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60px;
+  height: 100%;
+  background: linear-gradient(to left, var(--netflix-black), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .movie-row {
+    margin-left: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .movie-row:first-child {
+    margin-top: 20px;
+  }
+  
+  .movie-row h2 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  
+  .movie-row-poster {
+    height: 120px;
+  }
+  
+  .movie-row-poster-large {
+    height: 200px;
+  }
+  
+  .movie-poster-overlay {
+    padding: 12px 8px 8px;
+  }
+  
+  .movie-poster-title {
+    font-size: 12px;
+  }
+  
+  .movie-row::after {
+    width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-row {
+    margin-left: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .movie-row:first-child {
+    margin-top: 16px;
+  }
+  
+  .movie-row h2 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  
+  .movie-row-poster {
+    height: 100px;
+  }
+  
+  .movie-row-poster-large {
+    height: 160px;
+  }
+  
+  .movie-poster-overlay {
+    padding: 10px 6px 6px;
+  }
+  
+  .movie-poster-title {
+    font-size: 11px;
+  }
+  
+  .movie-row::after {
+    width: 30px;
+  }
+}

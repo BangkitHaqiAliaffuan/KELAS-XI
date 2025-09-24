@@ -1,10 +1,9 @@
 import React from 'react'
 import './Contact.css'
 import {assets} from '../../assets/assets.js'
-
+// import { send } from 'vite'
 const Contact = () => {
-    let send = false
-    return (
+  return (
     <section id='contact-page'>
         <div id='clients'>
             <h1 className='contact-page-title'>

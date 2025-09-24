@@ -1,0 +1,12 @@
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--netflix-black);
+}
+
+.netflix-spinner {
+  width: 50px;
+  height: 50px;
+}
