@@ -1,0 +1,309 @@
+.play-video {
+  padding: 20px;
+  color: #0f0f0f;
+  flex: 1;
+}
+
+.video-player {
+  width: 100%;
+  height: 400px;
+  margin-bottom: 20px;
+}
+
+.video-player iframe {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.video-info h3 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  line-height: 1.3;
+}
+
+.video-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.video-stats p {
+  color: #606060;
+  font-size: 14px;
+  margin: 0;
+}
+
+.video-actions {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.video-actions span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background-color: #f2f2f2;
+  transition: background-color 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.video-actions span:hover {
+  background-color: #e5e5e5;
+}
+
+.video-actions img {
+  width: 20px;
+  filter: invert(0);
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background: #e5e5e5;
+  margin: 20px 0;
+}
+
+.channel-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.channel-details {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.channel-details img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.channel-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 5px 0;
+}
+
+.subscriber-count {
+  color: #606060;
+  font-size: 13px;
+}
+
+.subscribe-btn {
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.subscribe-btn:hover {
+  background-color: #cc0000;
+}
+
+.video-description {
+  margin-bottom: 20px;
+}
+
+.video-description p {
+  color: #606060;
+  line-height: 1.6;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comments-section h4 {
+  margin-bottom: 20px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.comment {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.comment img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment h3 {
+  font-size: 14px;
+  margin: 0 0 5px 0;
+}
+
+.comment span {
+  font-size: 12px;
+  color: #606060;
+  font-weight: 400;
+}
+
+.comment p {
+  color: #0f0f0f;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 8px 0;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.comment-actions img {
+  width: 16px;
+  cursor: pointer;
+  filter: invert(0);
+}
+
+.comment-actions span {
+  color: #606060;
+  font-size: 12px;
+  margin-right: 15px;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #333;
+  border-top: 3px solid #ff0000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container h3 {
+  color: #ff4444;
+  margin-bottom: 15px;
+}
+
+.error-container p {
+  color: #ccc;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .play-video {
+    padding: 15px;
+  }
+  
+  .video-player {
+    height: 250px;
+  }
+  
+  .video-info h3 {
+    font-size: 18px;
+  }
+  
+  .video-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .video-actions {
+    gap: 15px;
+  }
+  
+  .video-actions span {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  
+  .channel-details {
+    gap: 12px;
+  }
+  
+  .channel-details img {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .channel-name {
+    font-size: 16px;
+  }
+  
+  .subscribe-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .play-video {
+    padding: 10px;
+  }
+  
+  .video-player {
+    height: 200px;
+  }
+  
+  .video-info h3 {
+    font-size: 16px;
+  }
+  
+  .video-actions {
+    gap: 10px;
+  }
+  
+  .video-actions span {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+  
+  .video-actions img {
+    width: 16px;
+  }
+  
+  .channel-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,56 @@
+.home {
+  display: flex;
+  min-height: 100vh;
+  background-color: white;
+}
+
+.container {
+  flex: 1;
+  background: white;
+  padding-top: 24px;
+  padding-left: 17%;
+  padding-right: 24px;
+  transition: padding-left 0.3s ease;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.large-container {
+  padding-left: 7%;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .container {
+    padding-left: 15%;
+    padding-right: 20px;
+  }
+  
+  .large-container {
+    padding-left: 6%;
+  }
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding-left: 0;
+    padding-right: 16px;
+  }
+  
+  .large-container {
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-top: 20px;
+    padding-right: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding-right: 8px;
+  }
+}
