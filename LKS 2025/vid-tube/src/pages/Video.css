@@ -1,0 +1,38 @@
+.video-page {
+  background-color: #0f0f0f;
+  min-height: 100vh;
+  padding-top: 80px;
+}
+
+.video-container {
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .video-container {
+    max-width: 100%;
+    padding: 0 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .video-page {
+    padding-top: 60px;
+  }
+  
+  .video-container {
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-page {
+    padding-top: 50px;
+  }
+}
