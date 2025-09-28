@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CommentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,4 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts', [PostController::class, 'store']); // Create Post
     Route::put('/posts/{id}', [PostController::class, 'update'])->middleware('pemilik_postingan'); // Update Post
     Route::delete('/posts/{id}', [PostController::class, 'destroy'])->middleware('pemilik_postingan'); // Delete Post
+
+    // Comments CRUD Routes (Authenticated)
+    Route::post('/comment', [CommentController::class, 'store']); // Create Comment
+    Route::patch('/comment/{id}', [CommentController::class, 'update'])->middleware('pemilik_komentar'); // Update Comment
+    Route::delete('/comment/{id}', [CommentController::class, 'destroy'])->middleware('pemilik_komentar'); // Delete Comment
 });
