@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register custom middleware aliases
         $middleware->alias([
             'pemilik_postingan' => \App\Http\Middleware\PemilikPostingan::class,
+            'pemilik_komentar' => \App\Http\Middleware\PemilikKomentar::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

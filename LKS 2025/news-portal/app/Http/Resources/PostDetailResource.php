@@ -21,6 +21,12 @@ class PostDetailResource extends JsonResource
             'created_at' => date_format($this->created_at, 'Y-m-d H:i:s'),
             // Conditional Loading untuk relationship writer
             'writer' => $this->whenLoaded('writer'),
+            // Conditional Loading untuk comments dengan user information
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
+            // Total jumlah komentar
+            'comment_total' => $this->whenLoaded('comments', function() {
+                return $this->comments->count();
+            }, 0),
         ];
     }
 }

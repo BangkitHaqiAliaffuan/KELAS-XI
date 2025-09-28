@@ -35,8 +35,8 @@ class PostController extends Controller
      */
     public function show(string $id): PostDetailResource
     {
-        // Ambil post dengan Eager Loading relationship 'writer'
-        $post = Post::with('writer')->findOrFail($id);
+        // Ambil post dengan Eager Loading relationship 'writer' dan 'comments' dengan 'user'
+        $post = Post::with(['writer', 'comments.user'])->findOrFail($id);
 
         // Gunakan new PostDetailResource untuk hasil berupa objek tunggal
         return new PostDetailResource($post);
