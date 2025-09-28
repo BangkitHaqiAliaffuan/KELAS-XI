@@ -27,6 +27,14 @@ class Post extends Model
     }
 
     /**
+     * Get the writer of the post (alias for user to avoid conflicts with 'author' column).
+     */
+    public function writer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author');
+    }
+
+    /**
      * Get the comments for the post.
      */
     public function comments(): HasMany
