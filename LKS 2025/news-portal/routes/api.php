@@ -9,4 +9,5 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 // Endpoint untuk mendapatkan semua data berita (posts)
-Route::get('/posts', [PostController::class, 'index']);
+Route::get('/posts', [PostController::class, 'index']); // Endpoint List
+Route::get('/posts/{id}', [PostController::class, 'show']); // Endpoint Detail
