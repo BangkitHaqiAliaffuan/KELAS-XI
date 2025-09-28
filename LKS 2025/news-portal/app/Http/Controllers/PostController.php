@@ -6,7 +6,10 @@ use App\Models\Post;
 use App\Http\Resources\PostResource;
 use App\Http\Resources\PostDetailResource;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
@@ -37,5 +40,95 @@ class PostController extends Controller
 
         // Gunakan new PostDetailResource untuk hasil berupa objek tunggal
         return new PostDetailResource($post);
+    }
+
+    /**
+     * Store a newly created post in storage.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'news_content' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $post = Post::create([
+            'title' => $request->title,
+            'news_content' => $request->news_content,
+            'author' => Auth::user()->id, // Otomatis mengisi dengan ID user yang login
+        ]);
+
+        // Load writer relationship untuk response
+        $post->load('writer');
+
+        return response()->json([
+            'message' => 'Post created successfully',
+            'data' => new PostDetailResource($post)
+        ], 201);
+    }
+
+    /**
+     * Update the specified post in storage.
+     *
+     * @param Request $request
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'news_content' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $post = Post::findOrFail($id);
+
+        $post->update([
+            'title' => $request->title,
+            'news_content' => $request->news_content,
+        ]);
+
+        // Load writer relationship untuk response
+        $post->load('writer');
+
+        return response()->json([
+            'message' => 'Post updated successfully',
+            'data' => new PostDetailResource($post)
+        ], 200);
+    }
+
+    /**
+     * Remove the specified post from storage (Soft Delete).
+     *
+     * @param string $id
+     * @return JsonResponse
+     */
+    public function destroy(string $id): JsonResponse
+    {
+        $post = Post::findOrFail($id);
+
+        // Soft delete the post
+        $post->delete();
+
+        return response()->json([
+            'message' => 'Post deleted successfully'
+        ], 200);
     }
 }

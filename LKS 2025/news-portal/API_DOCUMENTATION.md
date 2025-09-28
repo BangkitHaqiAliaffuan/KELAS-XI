@@ -110,7 +110,7 @@ POST /api/logout
 }
 ```
 
-#### 5. Get All Posts (Collection)
+#### 5. Get All Posts (Collection) - PUBLIC
 ```
 GET /api/posts
 ```
@@ -135,7 +135,7 @@ GET /api/posts
 }
 ```
 
-#### 6. Get Single Post (Detail)
+#### 6. Get Single Post (Detail) - PUBLIC
 ```
 GET /api/posts/{id}
 ```
@@ -157,6 +157,86 @@ GET /api/posts/{id}
             "created_at": "2024-01-15 09:00:00"
         }
     }
+}
+```
+
+#### 7. Create New Post
+```
+POST /api/posts
+```
+
+**Request Body:**
+```json
+{
+    "title": "Judul Berita Baru",
+    "news_content": "Isi konten berita yang lengkap dan informatif..."
+}
+```
+
+**Response (201):**
+```json
+{
+    "message": "Post created successfully",
+    "data": {
+        "id": 3,
+        "title": "Judul Berita Baru",
+        "news_content": "Isi konten berita yang lengkap dan informatif...",
+        "created_at": "2024-01-15 14:30:00",
+        "writer": {
+            "id": 1,
+            "first_name": "John",
+            "last_name": "Doe",
+            "username": "johndoe",
+            "email": "john@example.com",
+            "created_at": "2024-01-15 09:00:00"
+        }
+    }
+}
+```
+
+#### 8. Update Post (Only Post Owner)
+```
+PUT /api/posts/{id}
+```
+
+**Request Body:**
+```json
+{
+    "title": "Judul Berita yang Diperbarui",
+    "news_content": "Isi konten berita yang telah diperbarui..."
+}
+```
+
+**Response (200):**
+```json
+{
+    "message": "Post updated successfully",
+    "data": {
+        "id": 3,
+        "title": "Judul Berita yang Diperbarui",
+        "news_content": "Isi konten berita yang telah diperbarui...",
+        "created_at": "2024-01-15 14:30:00",
+        "writer": {
+            "id": 1,
+            "first_name": "John",
+            "last_name": "Doe",
+            "username": "johndoe",
+            "email": "john@example.com",
+            "created_at": "2024-01-15 09:00:00"
+        }
+    }
+}
+```
+
+#### 9. Delete Post (Only Post Owner)
+```
+DELETE /api/posts/{id}
+```
+
+**Response (200):**
+```json
+{
+    "message": "Post deleted successfully"
 }
 ```
 
@@ -184,6 +264,20 @@ GET /api/posts/{id}
 ```json
 {
     "message": "Unauthenticated."
+}
+```
+
+### Forbidden Access - Not Post Owner (404)
+```json
+{
+    "message": "Data not found"
+}
+```
+
+### Post Not Found (404)
+```json
+{
+    "message": "No query results for model [App\\Models\\Post] {id}"
 }
 ```
 
@@ -226,6 +320,36 @@ curl -X GET http://localhost:8000/api/profile \
 ### 3. Logout untuk revoke token
 ```bash
 curl -X POST http://localhost:8000/api/logout \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
+
+### 4. CRUD Operations untuk Posts
+
+#### Create New Post (Authenticated Users Only)
+```bash
+curl -X POST http://localhost:8000/api/posts \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Berita Teknologi Terbaru",
+    "news_content": "Konten berita yang informatif dan menarik untuk dibaca oleh pembaca..."
+  }'
+```
+
+#### Update Post (Only Post Owner)
+```bash
+curl -X PUT http://localhost:8000/api/posts/1 \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Berita Teknologi Terbaru - Updated",
+    "news_content": "Konten berita yang telah diperbarui dengan informasi terkini..."
+  }'
+```
+
+#### Delete Post (Only Post Owner)
+```bash
+curl -X DELETE http://localhost:8000/api/posts/1 \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
