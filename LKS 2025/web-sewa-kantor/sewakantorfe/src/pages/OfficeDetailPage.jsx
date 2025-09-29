@@ -23,6 +23,7 @@ const OfficeDetailPage = () => {
   const [selectedStartDate, setSelectedStartDate] = useState('')
   const [selectedEndDate, setSelectedEndDate] = useState('')
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [selectedDuration, setSelectedDuration] = useState('daily')
 
   const { data: office, isLoading, error } = useQuery({
     queryKey: ['office', id],
@@ -60,8 +61,58 @@ const OfficeDetailPage = () => {
   }
 
   const calculateTotal = () => {
+    if (!office?.price_for_duration) return 0
+    
     const days = calculateDays()
-    return office ? days * office.price : 0
+    const prices = office.price_for_duration
+    
+    if (selectedDuration === 'daily') {
+      return days * parseFloat(prices.daily || 0)
+    } else if (selectedDuration === 'weekly') {
+      const weeks = Math.ceil(days / 7)
+      return weeks * parseFloat(prices.weekly || 0)
+    } else if (selectedDuration === 'monthly') {
+      const months = Math.ceil(days / 30)
+      return months * parseFloat(prices.monthly || 0)
+    }
+    
+    return days * parseFloat(prices.daily || 0)
+  }
+
+  const getCurrentPrice = () => {
+    if (!office?.price_for_duration) return 0
+    const prices = office.price_for_duration
+    return parseFloat(prices[selectedDuration] || prices.daily || 0)
+  }
+
+  const getDurationText = () => {
+    switch (selectedDuration) {
+      case 'weekly': return 'per week'
+      case 'monthly': return 'per month'
+      default: return 'per day'
+    }
+  }
+
+  const getBillingUnits = () => {
+    const days = calculateDays()
+    if (selectedDuration === 'weekly') {
+      return Math.ceil(days / 7)
+    } else if (selectedDuration === 'monthly') {
+      return Math.ceil(days / 30)
+    }
+    return days
+  }
+
+  const getBillingUnitText = () => {
+    const units = getBillingUnits()
+    switch (selectedDuration) {
+      case 'weekly': 
+        return `${units} week${units > 1 ? 's' : ''}`
+      case 'monthly': 
+        return `${units} month${units > 1 ? 's' : ''}`
+      default: 
+        return `${units} day${units > 1 ? 's' : ''}`
+    }
   }
 
   const facilityIcons = {
@@ -210,6 +261,52 @@ const OfficeDetailPage = () => {
                   </div>
                 </div>
 
+                {/* Pricing Information */}
+                {office.price_for_duration && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-4">Pricing Options</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {office.price_for_duration.daily && (
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-sm text-blue-600 font-medium">Daily Rate</p>
+                          <p className="text-2xl font-bold text-blue-900">
+                            Rp {parseFloat(office.price_for_duration.daily).toLocaleString('id-ID')}
+                          </p>
+                          <p className="text-sm text-blue-600">per day</p>
+                        </div>
+                      )}
+                      {office.price_for_duration.weekly && (
+                        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                          <p className="text-sm text-green-600 font-medium">Weekly Rate</p>
+                          <p className="text-2xl font-bold text-green-900">
+                            Rp {parseFloat(office.price_for_duration.weekly).toLocaleString('id-ID')}
+                          </p>
+                          <p className="text-sm text-green-600">per week</p>
+                          {office.price_for_duration.daily && (
+                            <p className="text-xs text-green-500 mt-1">
+                              Save {Math.round((1 - (parseFloat(office.price_for_duration.weekly) / 7) / parseFloat(office.price_for_duration.daily)) * 100)}%
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {office.price_for_duration.monthly && (
+                        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                          <p className="text-sm text-purple-600 font-medium">Monthly Rate</p>
+                          <p className="text-2xl font-bold text-purple-900">
+                            Rp {parseFloat(office.price_for_duration.monthly).toLocaleString('id-ID')}
+                          </p>
+                          <p className="text-sm text-purple-600">per month</p>
+                          {office.price_for_duration.daily && (
+                            <p className="text-xs text-purple-500 mt-1">
+                              Save {Math.round((1 - (parseFloat(office.price_for_duration.monthly) / 30) / parseFloat(office.price_for_duration.daily)) * 100)}%
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Office Details */}
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">Office Details</h3>
@@ -249,10 +346,57 @@ const OfficeDetailPage = () => {
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-3xl font-bold text-gray-900">
-                          Rp {office.price?.toLocaleString('id-ID')}
+                          Rp {getCurrentPrice().toLocaleString('id-ID')}
                         </span>
-                        <span className="text-gray-600">/ day</span>
+                        <span className="text-gray-600">{getDurationText()}</span>
                       </div>
+                      
+                      {/* Duration Selection */}
+                      {office.price_for_duration && (
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Billing Period
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {office.price_for_duration.daily && (
+                              <button
+                                onClick={() => setSelectedDuration('daily')}
+                                className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                                  selectedDuration === 'daily'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                Daily
+                              </button>
+                            )}
+                            {office.price_for_duration.weekly && (
+                              <button
+                                onClick={() => setSelectedDuration('weekly')}
+                                className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                                  selectedDuration === 'weekly'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                Weekly
+                              </button>
+                            )}
+                            {office.price_for_duration.monthly && (
+                              <button
+                                onClick={() => setSelectedDuration('monthly')}
+                                className={`px-3 py-2 text-sm rounded-md border transition-colors ${
+                                  selectedDuration === 'monthly'
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                Monthly
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Date Selection */}
@@ -295,8 +439,12 @@ const OfficeDetailPage = () => {
                           <span className="font-medium">{calculateDays()} days</span>
                         </div>
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-gray-600">Price per day</span>
-                          <span className="font-medium">Rp {office.price?.toLocaleString('id-ID')}</span>
+                          <span className="text-gray-600">Billing units</span>
+                          <span className="font-medium">{getBillingUnitText()}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="text-gray-600">Price {getDurationText()}</span>
+                          <span className="font-medium">Rp {getCurrentPrice().toLocaleString('id-ID')}</span>
                         </div>
                         <div className="border-t border-gray-200 pt-2 mt-2">
                           <div className="flex justify-between items-center">
