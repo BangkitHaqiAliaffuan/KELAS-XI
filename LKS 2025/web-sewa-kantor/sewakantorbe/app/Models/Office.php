@@ -70,25 +70,32 @@ class Office extends Model
 
     public function scopeByCity(Builder $query, $cityId): Builder
     {
+        if (empty($cityId)) {
+            return $query;
+        }
         return $query->where('city_id', $cityId);
     }
 
     public function scopeByCapacity(Builder $query, $minCapacity, $maxCapacity = null): Builder
     {
-        $query->where('capacity', '>=', $minCapacity);
+        if (is_numeric($minCapacity) && $minCapacity > 0) {
+            $query->where('capacity', '>=', $minCapacity);
+        }
 
-        if ($maxCapacity) {
+        if (is_numeric($maxCapacity) && $maxCapacity > 0) {
             $query->where('capacity', '<=', $maxCapacity);
         }
 
         return $query;
     }
 
-    public function scopeByPriceRange(Builder $query, $minPrice, $maxPrice = null, $priceType = 'price_per_day'): Builder
+    public function scopeByPriceRange(Builder $query, $minPrice, $maxPrice = null, $priceType = 'price'): Builder
     {
-        $query->where($priceType, '>=', $minPrice);
+        if (is_numeric($minPrice) && $minPrice > 0) {
+            $query->where($priceType, '>=', $minPrice);
+        }
 
-        if ($maxPrice) {
+        if (is_numeric($maxPrice) && $maxPrice > 0) {
             $query->where($priceType, '<=', $maxPrice);
         }
 
@@ -97,8 +104,21 @@ class Office extends Model
 
     public function scopeWithFacilities(Builder $query, array $facilityIds): Builder
     {
-        return $query->whereHas('facilities', function ($q) use ($facilityIds) {
-            $q->whereIn('facilities.id', $facilityIds);
+        if (empty($facilityIds)) {
+            return $query;
+        }
+
+        // Filter out invalid IDs
+        $validIds = array_filter($facilityIds, function($id) {
+            return is_numeric($id) && $id > 0;
+        });
+
+        if (empty($validIds)) {
+            return $query;
+        }
+
+        return $query->whereHas('facilities', function ($q) use ($validIds) {
+            $q->whereIn('facilities.id', $validIds);
         });
     }
 

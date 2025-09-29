@@ -84,7 +84,7 @@ export const officeService = {
   },
   
   getById: async (id) => {
-    const response = await api.get(`/offices/${id}`);
+    const response = await api.get(`v1/offices/${id}`);
     return response.data;
   },
   

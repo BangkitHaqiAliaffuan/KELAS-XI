@@ -15,6 +15,8 @@ Route::prefix('v1')->group(function () {
     // Offices
     Route::apiResource('offices', OfficeController::class)->only(['index', 'show']);
 
+    
+
     // Facilities
     Route::apiResource('facilities', FacilityController::class)->only(['index', 'show']);
 

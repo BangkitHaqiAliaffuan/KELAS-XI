@@ -18,50 +18,55 @@ class OfficeController extends Controller
         $query = Office::with(['city', 'facilities']);
 
         // Filter by city
-        if ($request->has('city_id')) {
+        if ($request->filled('city_id')) {
             $query->byCity($request->city_id);
         }
 
         // Filter by capacity
-        if ($request->has('min_capacity')) {
-            $query->byCapacity(
-                $request->min_capacity,
-                $request->max_capacity
-            );
+        if ($request->filled('min_capacity')) {
+            $maxCapacity = $request->filled('max_capacity') ? $request->max_capacity : null;
+            $query->byCapacity($request->min_capacity, $maxCapacity);
         }
 
         // Filter by price range
-        if ($request->has('min_price')) {
-            $priceType = $request->input('price_type', 'price_per_day');
-            $query->byPriceRange(
-                $request->min_price,
-                $request->max_price,
-                $priceType
-            );
+        if ($request->filled('min_price')) {
+            $priceType = $request->input('price_type', 'price');
+            $maxPrice = $request->filled('max_price') ? $request->max_price : null;
+            $query->byPriceRange($request->min_price, $maxPrice, $priceType);
         }
 
         // Filter by facilities
-        if ($request->has('facilities')) {
-            $facilityIds = explode(',', $request->facilities);
-            $query->withFacilities($facilityIds);
+        if ($request->filled('facilities')) {
+            $facilities = $request->facilities;
+            if (is_string($facilities)) {
+                $facilityIds = array_filter(explode(',', $facilities));
+            } else {
+                $facilityIds = is_array($facilities) ? $facilities : [];
+            }
+
+            if (!empty($facilityIds)) {
+                $query->withFacilities($facilityIds);
+            }
         }
 
         // Filter by status (default to available)
         $status = $request->input('status', 'available');
         if ($status === 'available') {
             $query->available();
-        } else {
+        } elseif ($request->filled('status')) {
             $query->where('status', $status);
         }
 
         // Search by name or address
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('address', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
-            });
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('address', 'like', "%{$search}%")
+                      ->orWhere('description', 'like', "%{$search}%");
+                });
+            }
         }
 
         // Sorting
