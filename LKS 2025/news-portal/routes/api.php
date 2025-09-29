@@ -17,7 +17,7 @@ Route::get('/posts/{id}', [PostController::class, 'show']); // Endpoint Detail
 Route::get('/login',function(){
     return response()->json([
         'message' => 'Please Login First',
-        'error' => 'authenticated',
+        'error' => 'unauthenticated',
     ]);
 });
 
