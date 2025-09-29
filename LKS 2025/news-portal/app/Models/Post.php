@@ -16,6 +16,7 @@ class Post extends Model
         'title',
         'news_content',
         'author',
+        'image',
     ];
 
     /**

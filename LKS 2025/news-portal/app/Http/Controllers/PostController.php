@@ -10,6 +10,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
@@ -50,22 +52,70 @@ class PostController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Debug: Log semua data request
+        \Log::info('POST request received:', [
+            'all_data' => $request->all(),
+            'files' => $request->allFiles(),
+            'has_file' => $request->hasFile('file'),
+            'content_type' => $request->header('Content-Type')
+        ]);
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'news_content' => 'required|string',
+            'file' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validasi file image
         ]);
 
         if ($validator->fails()) {
+            \Log::error('Validation failed:', $validator->errors()->toArray());
             return response()->json([
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
 
+        // Inisialisasi variabel untuk nama file dan ekstensi
+        $fileName = null;
+        $extension = null;
+
+        // Proses upload file jika ada
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+
+            // Debug: Log bahwa file diterima
+            \Log::info('File received:', [
+                'original_name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'mime_type' => $file->getMimeType()
+            ]);
+
+            // Generate nama file acak 30 karakter
+            $randomName = Str::random(30);
+
+            // Ambil ekstensi file asli
+            $extension = $file->getClientOriginalExtension();
+
+            // Gabungkan nama acak dengan ekstensi
+            $fileName = $randomName . '.' . $extension;
+
+            // Debug: Log nama file yang akan disimpan
+            \Log::info('Saving file as:', ['filename' => $fileName]);
+
+            // Simpan file ke storage/app/image menggunakan Storage::putFileAs dengan disk public
+            $saved = Storage::disk('public')->putFileAs('image', $file, $fileName);
+
+            // Debug: Log hasil penyimpanan
+            \Log::info('File save result:', ['saved' => $saved, 'path' => 'image/' . $fileName]);
+        } else {
+            // Debug: Log jika tidak ada file
+            \Log::info('No file received in request');
+        }
+
         $post = Post::create([
             'title' => $request->title,
             'news_content' => $request->news_content,
             'author' => Auth::user()->id, // Otomatis mengisi dengan ID user yang login
+            'image' => $fileName, // Simpan nama file atau null jika tidak ada file
         ]);
 
         // Load writer relationship untuk response
