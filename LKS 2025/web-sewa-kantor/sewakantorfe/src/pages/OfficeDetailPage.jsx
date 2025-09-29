@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, data } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { 
   MapPin, 
@@ -30,6 +30,47 @@ const OfficeDetailPage = () => {
     queryFn: () => officeService.getById(id)
   })
 
+  // Initialize duration when office data loads
+  useEffect(() => {
+    if (office?.data.price_for_duration && !selectedStartDate && !selectedEndDate) {
+      // Set initial duration to daily if available
+      if (office.data.price_for_duration.daily) {
+        setSelectedDuration('daily')
+      } else if (office.data.price_for_duration.weekly) {
+        setSelectedDuration('weekly')
+      } else if (office.data.price_for_duration.monthly) {
+        setSelectedDuration('monthly')
+      }
+    }
+  }, [office])
+
+  // Auto-select best duration based on date range
+  useEffect(() => {
+    if (selectedStartDate && selectedEndDate && office?.data.price_for_duration) {
+      const start = new Date(selectedStartDate)
+      const end = new Date(selectedEndDate)
+      
+      if (end <= start) return
+      
+      const diffTime = end - start
+      const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      console.log('Auto-selecting duration for', days, 'days')
+      
+      // Auto-select the most appropriate billing period
+      if (days >= 28 && office.data.price_for_duration.monthly) {
+        console.log('Setting duration to monthly')
+        setSelectedDuration('monthly')
+      } else if (days >= 7 && office.data.price_for_duration.weekly) {
+        console.log('Setting duration to weekly')
+        setSelectedDuration('weekly')
+      } else if (office.data.price_for_duration.daily) {
+        console.log('Setting duration to daily')
+        setSelectedDuration('daily')
+      }
+    }
+  }, [selectedStartDate, selectedEndDate, office])
+
   const handleBooking = () => {
     if (!isAuthenticated) {
       navigate('/login', { state: { from: `/offices/${id}` } })
@@ -53,35 +94,50 @@ const OfficeDetailPage = () => {
 
   const calculateDays = () => {
     if (!selectedStartDate || !selectedEndDate) return 0
+    
     const start = new Date(selectedStartDate)
     const end = new Date(selectedEndDate)
-    const diffTime = Math.abs(end - start)
+    
+    // Validate dates
+    if (end <= start) return 0
+    
+    const diffTime = end - start
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays || 1
+    return diffDays > 0 ? diffDays : 0
   }
 
   const calculateTotal = () => {
-    if (!office?.price_for_duration) return 0
+    if (!office?.data.price_for_duration || !selectedStartDate || !selectedEndDate) return 0
     
     const days = calculateDays()
-    const prices = office.price_for_duration
+    if (days <= 0) return 0
     
-    if (selectedDuration === 'daily') {
-      return days * parseFloat(prices.daily || 0)
-    } else if (selectedDuration === 'weekly') {
+    const prices = office.data.price_for_duration
+    
+    if (selectedDuration === 'daily' && prices.daily) {
+      return days * parseFloat(prices.daily)
+    } else if (selectedDuration === 'weekly' && prices.weekly) {
       const weeks = Math.ceil(days / 7)
-      return weeks * parseFloat(prices.weekly || 0)
-    } else if (selectedDuration === 'monthly') {
+      return weeks * parseFloat(prices.weekly)
+    } else if (selectedDuration === 'monthly' && prices.monthly) {
       const months = Math.ceil(days / 30)
-      return months * parseFloat(prices.monthly || 0)
+      return months * parseFloat(prices.monthly)
     }
     
+    // Fallback to daily rate if selected duration not available
     return days * parseFloat(prices.daily || 0)
   }
 
+  console.log('Office data:', office)
+  console.log('Selected duration:', selectedDuration)
+  console.log('Price for duration:', office?.data.price_for_duration)
+
   const getCurrentPrice = () => {
-    if (!office?.price_for_duration) return 0
-    const prices = office.price_for_duration
+    if (!office?.data.price_for_duration) return 0
+
+    const prices = office.data.price_for_duration
+    console.log('Getting current price for:', selectedDuration, 'from prices:', prices)
+    
     return parseFloat(prices[selectedDuration] || prices.daily || 0)
   }
 
@@ -93,7 +149,14 @@ const OfficeDetailPage = () => {
     }
   }
 
+  const getDisplayPrice = () => {
+    if (!office) return '0'
+    const price = getCurrentPrice()
+    return price > 0 ? price.toLocaleString('id-ID') : '0'
+  }
+
   const getBillingUnits = () => {
+    if (!selectedStartDate || !selectedEndDate) return 0
     const days = calculateDays()
     if (selectedDuration === 'weekly') {
       return Math.ceil(days / 7)
@@ -104,6 +167,7 @@ const OfficeDetailPage = () => {
   }
 
   const getBillingUnitText = () => {
+    if (!selectedStartDate || !selectedEndDate) return '0 days'
     const units = getBillingUnits()
     switch (selectedDuration) {
       case 'weekly': 
@@ -262,43 +326,43 @@ const OfficeDetailPage = () => {
                 </div>
 
                 {/* Pricing Information */}
-                {office.price_for_duration && (
+                {office?.data.price_for_duration && (
                   <div className="mb-8">
                     <h3 className="text-xl font-semibold text-gray-900 mb-4">Pricing Options</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {office.price_for_duration.daily && (
+                      {office.data.price_for_duration.daily && (
                         <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                           <p className="text-sm text-blue-600 font-medium">Daily Rate</p>
                           <p className="text-2xl font-bold text-blue-900">
-                            Rp {parseFloat(office.price_for_duration.daily).toLocaleString('id-ID')}
+                            Rp {parseFloat(office.data.price_for_duration.daily).toLocaleString('id-ID')}
                           </p>
                           <p className="text-sm text-blue-600">per day</p>
                         </div>
                       )}
-                      {office.price_for_duration.weekly && (
+                      {office.data.price_for_duration.weekly && (
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200">
                           <p className="text-sm text-green-600 font-medium">Weekly Rate</p>
                           <p className="text-2xl font-bold text-green-900">
-                            Rp {parseFloat(office.price_for_duration.weekly).toLocaleString('id-ID')}
+                            Rp {parseFloat(office.data.price_for_duration.weekly).toLocaleString('id-ID')}
                           </p>
                           <p className="text-sm text-green-600">per week</p>
-                          {office.price_for_duration.daily && (
+                          {office.data.price_for_duration.daily && (
                             <p className="text-xs text-green-500 mt-1">
-                              Save {Math.round((1 - (parseFloat(office.price_for_duration.weekly) / 7) / parseFloat(office.price_for_duration.daily)) * 100)}%
+                              Save {Math.round((1 - (parseFloat(office.data.price_for_duration.weekly) / 7) / parseFloat(office.data.price_for_duration.daily)) * 100)}%
                             </p>
                           )}
                         </div>
                       )}
-                      {office.price_for_duration.monthly && (
+                      {office.data.price_for_duration.monthly && (
                         <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                           <p className="text-sm text-purple-600 font-medium">Monthly Rate</p>
                           <p className="text-2xl font-bold text-purple-900">
-                            Rp {parseFloat(office.price_for_duration.monthly).toLocaleString('id-ID')}
+                            Rp {parseFloat(office.data.price_for_duration.monthly).toLocaleString('id-ID')}
                           </p>
                           <p className="text-sm text-purple-600">per month</p>
-                          {office.price_for_duration.daily && (
+                          {office.data.price_for_duration.daily && (
                             <p className="text-xs text-purple-500 mt-1">
-                              Save {Math.round((1 - (parseFloat(office.price_for_duration.monthly) / 30) / parseFloat(office.price_for_duration.daily)) * 100)}%
+                              Save {Math.round((1 - (parseFloat(office.data.price_for_duration.monthly) / 30) / parseFloat(office.data.price_for_duration.daily)) * 100)}%
                             </p>
                           )}
                         </div>
@@ -332,7 +396,7 @@ const OfficeDetailPage = () => {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Available</p>
                       <p className="text-lg font-semibold text-green-600">
-                        {office.is_available ? 'Yes' : 'No'}
+                        {office.status === 'available' ? 'Yes' : 'No'}
                       </p>
                     </div>
                   </div>
@@ -346,7 +410,7 @@ const OfficeDetailPage = () => {
                     <div className="mb-6">
                       <div className="flex items-center justify-between mb-4">
                         <span className="text-3xl font-bold text-gray-900">
-                          Rp {getCurrentPrice().toLocaleString('id-ID')}
+                          Rp {getDisplayPrice()}
                         </span>
                         <span className="text-gray-600">{getDurationText()}</span>
                       </div>
@@ -356,6 +420,11 @@ const OfficeDetailPage = () => {
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Billing Period
+                            {selectedStartDate && selectedEndDate && (
+                              <span className="text-xs text-gray-500 ml-2">
+                                (Auto-selected for {calculateDays()} days)
+                              </span>
+                            )}
                           </label>
                           <div className="grid grid-cols-3 gap-2">
                             {office.price_for_duration.daily && (
@@ -424,7 +493,10 @@ const OfficeDetailPage = () => {
                             type="date"
                             value={selectedEndDate}
                             onChange={(e) => setSelectedEndDate(e.target.value)}
-                            min={selectedStartDate || new Date().toISOString().split('T')[0]}
+                            min={selectedStartDate ? 
+                              new Date(new Date(selectedStartDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] : 
+                              new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                            }
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
@@ -444,13 +516,13 @@ const OfficeDetailPage = () => {
                         </div>
                         <div className="flex justify-between items-center mb-2">
                           <span className="text-gray-600">Price {getDurationText()}</span>
-                          <span className="font-medium">Rp {getCurrentPrice().toLocaleString('id-ID')}</span>
+                          <span className="font-medium">Rp {getDisplayPrice()}</span>
                         </div>
                         <div className="border-t border-gray-200 pt-2 mt-2">
                           <div className="flex justify-between items-center">
                             <span className="font-semibold">Total</span>
                             <span className="font-bold text-lg text-blue-600">
-                              Rp {calculateTotal().toLocaleString('id-ID')}
+                              Rp {calculateTotal() > 0 ? calculateTotal().toLocaleString('id-ID') : '0'}
                             </span>
                           </div>
                         </div>
@@ -460,15 +532,15 @@ const OfficeDetailPage = () => {
                     {/* Book Button */}
                     <button
                       onClick={handleBooking}
-                      disabled={!office.is_available}
+                      disabled={office.status !== 'available'}
                       className={`w-full py-3 px-4 rounded-md font-semibold flex items-center justify-center ${
-                        office.is_available
+                        office.status === 'available'
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                     >
                       <CreditCard className="h-5 w-5 mr-2" />
-                      {office.is_available ? 'Book Now' : 'Not Available'}
+                      {office.status === 'available' ? 'Book Now' : 'Not Available'}
                     </button>
 
                     {!isAuthenticated && (
