@@ -29,8 +29,14 @@ export const AuthProvider = ({ children }) => {
   const fetchUser = async () => {
     try {
       const response = await authApi.user();
-      setUser(response.data);
-      setIsAuthenticated(true);
+      console.log('Fetch user response:', response.data);
+      
+      if (response.data.success) {
+        setUser(response.data.data);
+        setIsAuthenticated(true);
+      } else {
+        throw new Error('Failed to get user data');
+      }
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('auth_token');
@@ -43,18 +49,32 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       const response = await authApi.login(credentials);
-      const { token, user } = response.data;
+      console.log('Login response:', response.data);
       
-      localStorage.setItem('auth_token', token);
-      setUser(user);
-      setIsAuthenticated(true);
-      
-      return { success: true, user };
+      if (response.data.success) {
+        const { token, user } = response.data.data;
+        
+        localStorage.setItem('auth_token', token);
+        setUser(user);
+        setIsAuthenticated(true);
+        
+        return { success: true, user };
+      } else {
+        throw new Error(response.data.message || 'Login failed');
+      }
     } catch (error) {
       console.error('Login failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Login failed' 
+      
+      // Handle validation errors
+      if (error.response?.data?.errors) {
+        throw {
+          errors: error.response.data.errors,
+          message: error.response.data.message || 'Validation failed'
+        };
+      }
+      
+      throw {
+        message: error.response?.data?.message || error.message || 'Login failed'
       };
     }
   };
@@ -62,18 +82,32 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await authApi.register(userData);
-      const { token, user } = response.data;
+      console.log('Register response:', response.data);
       
-      localStorage.setItem('auth_token', token);
-      setUser(user);
-      setIsAuthenticated(true);
-      
-      return { success: true, user };
+      if (response.data.success) {
+        const { token, user } = response.data.data;
+        
+        localStorage.setItem('auth_token', token);
+        setUser(user);
+        setIsAuthenticated(true);
+        
+        return { success: true, user };
+      } else {
+        throw new Error(response.data.message || 'Registration failed');
+      }
     } catch (error) {
       console.error('Registration failed:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Registration failed' 
+      
+      // Handle validation errors
+      if (error.response?.data?.errors) {
+        throw {
+          errors: error.response.data.errors,
+          message: error.response.data.message || 'Validation failed'
+        };
+      }
+      
+      throw {
+        message: error.response?.data?.message || error.message || 'Registration failed'
       };
     }
   };

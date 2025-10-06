@@ -2,10 +2,15 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\CityController;
-use App\Http\Controllers\Api\OfficeController;
-use App\Http\Controllers\Api\FacilityController;
-use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\{AuthController, CityController, OfficeController, FacilityController, TransactionController};
+
+// Authentication routes (public)
+Route::prefix('v1/auth')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+});
 
 // Public routes (tidak memerlukan authentication)
 Route::prefix('v1')->group(function () {
@@ -15,7 +20,7 @@ Route::prefix('v1')->group(function () {
     // Offices
     Route::apiResource('offices', OfficeController::class)->only(['index', 'show']);
 
-    
+
 
     // Facilities
     Route::apiResource('facilities', FacilityController::class)->only(['index', 'show']);
