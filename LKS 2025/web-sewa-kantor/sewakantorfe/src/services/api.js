@@ -170,4 +170,22 @@ export const transactionService = {
   }
 };
 
+// Dashboard Service
+export const dashboardService = {
+  getStatistics: async () => {
+    const response = await api.get('/v1/dashboard/statistics');
+    return response.data;
+  },
+  
+  getUserBookings: async (params = {}) => {
+    const response = await api.get('/v1/dashboard/bookings', { params });
+    return response.data;
+  },
+  
+  cancelBooking: async (id) => {
+    const response = await api.patch(`/v1/dashboard/bookings/${id}/cancel`);
+    return response.data;
+  }
+};
+
 export default api;
