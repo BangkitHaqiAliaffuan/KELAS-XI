@@ -47,6 +47,13 @@ Route::prefix('v1')->middleware('auth:sanctum')->group(function () {
     // Create booking/transaction
     Route::post('/bookings', [TransactionController::class, 'store']);
     Route::get('/bookings/{booking}', [TransactionController::class, 'show']);
+
+    // User Dashboard routes
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/statistics', [TransactionController::class, 'userStatistics']);
+        Route::get('/bookings', [TransactionController::class, 'userBookings']);
+        Route::patch('/bookings/{id}/cancel', [TransactionController::class, 'cancelBooking']);
+    });
 });
 
 // Admin routes (memerlukan authentication dan admin role)

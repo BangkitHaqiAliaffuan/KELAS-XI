@@ -245,4 +245,138 @@ class TransactionController extends Controller
             'message' => 'Payment status updated successfully'
         ]);
     }
+
+    /**
+     * Get user's booking history
+     */
+    public function userBookings(Request $request): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            $query = Transaction::where('user_id', $user->id)
+                ->with(['office.city', 'office.facilities']);
+
+            // Filter by status if provided
+            if ($request->has('status') && $request->status !== '') {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by date range
+            if ($request->has('start_date') && $request->start_date) {
+                $query->where('start_date', '>=', $request->start_date);
+            }
+
+            if ($request->has('end_date') && $request->end_date) {
+                $query->where('end_date', '<=', $request->end_date);
+            }
+
+            $transactions = $query->orderBy('created_at', 'desc')
+                ->paginate($request->get('per_page', 10));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking history retrieved successfully',
+                'data' => $transactions
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve booking history',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get dashboard statistics
+     */
+    public function userStatistics(): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            $totalBookings = Transaction::where('user_id', $user->id)->count();
+
+            $upcomingBookings = Transaction::where('user_id', $user->id)
+                ->where('start_date', '>', now())
+                ->where('status', 'confirmed')
+                ->count();
+
+            $activeBookings = Transaction::where('user_id', $user->id)
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->where('status', 'confirmed')
+                ->count();
+
+            $completedBookings = Transaction::where('user_id', $user->id)
+                ->where('status', 'completed')
+                ->count();
+
+            $totalSpent = Transaction::where('user_id', $user->id)
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->sum('total_price');
+
+            $thisMonthSpent = Transaction::where('user_id', $user->id)
+                ->whereIn('status', ['confirmed', 'completed'])
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->sum('total_price');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dashboard statistics retrieved successfully',
+                'data' => [
+                    'total_bookings' => $totalBookings,
+                    'upcoming_bookings' => $upcomingBookings,
+                    'active_bookings' => $activeBookings,
+                    'completed_bookings' => $completedBookings,
+                    'total_spent' => $totalSpent,
+                    'this_month_spent' => $thisMonthSpent,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve dashboard statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Cancel a booking
+     */
+    public function cancelBooking($id): JsonResponse
+    {
+        try {
+            $user = auth()->user();
+
+            $transaction = Transaction::where('id', $id)
+                ->where('user_id', $user->id)
+                ->where('status', 'confirmed')
+                ->where('start_date', '>', now()->addHours(24)) // Can only cancel 24h before
+                ->firstOrFail();
+
+            $transaction->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking cancelled successfully',
+                'data' => new TransactionResource($transaction)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel booking. Bookings can only be cancelled 24 hours before the start date.',
+                'error' => $e->getMessage()
+            ], 400);
+        }
+    }
 }

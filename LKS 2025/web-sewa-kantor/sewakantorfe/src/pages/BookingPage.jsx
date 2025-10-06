@@ -12,7 +12,7 @@ import {
   AlertCircle,
   ArrowLeft
 } from 'lucide-react'
-import { transactionService } from '../services/api'
+import api, { transactionService } from '../services/api'
 import { useAuth } from '../context/AuthContext'
 
 const BookingPage = () => {
@@ -53,7 +53,10 @@ const BookingPage = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false)
 
   const bookingMutation = useMutation({
-    mutationFn: transactionService.create,
+    mutationFn: async (bookingData) => {
+      const response = await api.post('/v1/bookings', bookingData);
+      return response.data;
+    },
     onSuccess: (data) => {
       setStep(3)
     },
@@ -147,20 +150,26 @@ const BookingPage = () => {
           office_id: office?.data?.id || office?.id,
           start_date: startDate,
           end_date: endDate,
-          total_amount: calculateTotal().total,
-          booking_details: {
-            ...formData,
-            days: calculateDays(),
-            ...calculateTotal(),
-            payment_method: 'credit_card',
-            payment_status: 'completed'
-          }
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          special_requests: formData.special_requests || ''
         }
         
         console.log('Booking data:', bookingData)
-        setIsProcessingPayment(false)
-        setStep(3)
-        // bookingMutation.mutate(bookingData)
+        
+        // Submit the actual booking
+        bookingMutation.mutate(bookingData, {
+          onSuccess: () => {
+            setIsProcessingPayment(false)
+            setStep(3)
+          },
+          onError: (error) => {
+            setIsProcessingPayment(false)
+            console.error('Booking error:', error)
+            alert('Failed to create booking: ' + (error.response?.data?.message || error.message))
+          }
+        })
       }, 2000) // 2 second delay to simulate processing
     }
   }
