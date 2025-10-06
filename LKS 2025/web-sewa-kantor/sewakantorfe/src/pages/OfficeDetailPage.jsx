@@ -130,10 +130,10 @@ const OfficeDetailPage = () => {
 
   console.log('Office data:', office)
   console.log('Selected duration:', selectedDuration)
-  console.log('Price for duration:', office?.data.price_for_duration)
+  console.log('Price for duration:', office?.data?.price_for_duration)
 
   const getCurrentPrice = () => {
-    if (!office?.data.price_for_duration) return 0
+    if (!office?.data?.price_for_duration) return 0
 
     const prices = office.data.price_for_duration
     console.log('Getting current price for:', selectedDuration, 'from prices:', prices)
@@ -235,7 +235,7 @@ const OfficeDetailPage = () => {
           <div className="relative h-96 bg-gray-200">
             <img 
               src={images[selectedImageIndex]} 
-              alt={office.name}
+              alt={office.data?.name}
               className="w-full h-full object-cover"
             />
             <div className="absolute bottom-4 left-4 flex space-x-2">
@@ -256,10 +256,10 @@ const OfficeDetailPage = () => {
               {/* Left Column - Office Details */}
               <div className="lg:col-span-2">
                 <div className="mb-6">
-                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{office.name}</h1>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">{office.data?.name}</h1>
                   <div className="flex items-center text-gray-600 mb-4">
                     <MapPin className="h-5 w-5 mr-2" />
-                    <span>{office.address}, {office.city?.name}</span>
+                    <span>{office.data?.address}, {office.data?.city?.name}</span>
                   </div>
                   <div className="flex items-center mb-4">
                     <div className="flex items-center">
@@ -278,7 +278,7 @@ const OfficeDetailPage = () => {
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold text-gray-900 mb-3">Description</h3>
                   <p className="text-gray-600 leading-relaxed">
-                    {office.description || "This modern office space offers a professional environment perfect for businesses of all sizes. Located in the heart of the business district, it provides easy access to public transportation and various amenities. The space is fully furnished and ready to move in."}
+                    {office.data?.description || "This modern office space offers a professional environment perfect for businesses of all sizes. Located in the heart of the business district, it provides easy access to public transportation and various amenities. The space is fully furnished and ready to move in."}
                   </p>
                 </div>
 
@@ -286,7 +286,7 @@ const OfficeDetailPage = () => {
                 <div className="mb-8">
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">Facilities</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {office.facilities?.map((facility) => {
+                    {office.data?.facilities?.map((facility) => {
                       const IconComponent = facilityIcons[facility.icon] || Shield
                       return (
                         <div key={facility.id} className="flex items-center p-3 bg-gray-50 rounded-lg">
@@ -378,25 +378,25 @@ const OfficeDetailPage = () => {
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Capacity</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {office.capacity || '10-20'} People
+                        {office.data?.capacity || '10-20'} People
                       </p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Size</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {office.size || '250'} m²
+                        {office.data?.size || '250'} m²
                       </p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Floor</p>
                       <p className="text-lg font-semibold text-gray-900">
-                        {office.floor || '5th'} Floor
+                        {office.data?.floor || '5th'} Floor
                       </p>
                     </div>
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <p className="text-sm text-gray-600">Available</p>
                       <p className="text-lg font-semibold text-green-600">
-                        {office.status === 'available' ? 'Yes' : 'No'}
+                        {office.data?.status === 'available' ? 'Yes' : 'No'}
                       </p>
                     </div>
                   </div>
@@ -416,7 +416,7 @@ const OfficeDetailPage = () => {
                       </div>
                       
                       {/* Duration Selection */}
-                      {office.price_for_duration && (
+                      {office.data?.price_for_duration && (
                         <div className="mb-4">
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Billing Period
@@ -427,7 +427,7 @@ const OfficeDetailPage = () => {
                             )}
                           </label>
                           <div className="grid grid-cols-3 gap-2">
-                            {office.price_for_duration.daily && (
+                            {office.data?.price_for_duration?.daily && (
                               <button
                                 onClick={() => setSelectedDuration('daily')}
                                 className={`px-3 py-2 text-sm rounded-md border transition-colors ${
@@ -439,7 +439,7 @@ const OfficeDetailPage = () => {
                                 Daily
                               </button>
                             )}
-                            {office.price_for_duration.weekly && (
+                            {office.data?.price_for_duration?.weekly && (
                               <button
                                 onClick={() => setSelectedDuration('weekly')}
                                 className={`px-3 py-2 text-sm rounded-md border transition-colors ${
@@ -451,7 +451,7 @@ const OfficeDetailPage = () => {
                                 Weekly
                               </button>
                             )}
-                            {office.price_for_duration.monthly && (
+                            {office.data?.price_for_duration?.monthly && (
                               <button
                                 onClick={() => setSelectedDuration('monthly')}
                                 className={`px-3 py-2 text-sm rounded-md border transition-colors ${
@@ -532,15 +532,15 @@ const OfficeDetailPage = () => {
                     {/* Book Button */}
                     <button
                       onClick={handleBooking}
-                      disabled={office.status !== 'available'}
+                      disabled={office.data?.status !== 'available'}
                       className={`w-full py-3 px-4 rounded-md font-semibold flex items-center justify-center ${
-                        office.status === 'available'
+                        office.data?.status === 'available'
                           ? 'bg-blue-600 text-white hover:bg-blue-700'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                     >
                       <CreditCard className="h-5 w-5 mr-2" />
-                      {office.status === 'available' ? 'Book Now' : 'Not Available'}
+                      {office.data?.status === 'available' ? 'Book Now' : 'Not Available'}
                     </button>
 
                     {!isAuthenticated && (

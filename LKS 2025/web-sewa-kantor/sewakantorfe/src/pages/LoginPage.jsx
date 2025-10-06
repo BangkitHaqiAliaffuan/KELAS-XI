@@ -59,12 +59,19 @@ const LoginPage = () => {
 
     setIsLoading(true)
     try {
-      await login(formData.email, formData.password)
+      console.log('Submitting login with:', formData)
+      await login(formData)
       navigate(from, { replace: true })
     } catch (error) {
-      setErrors({
-        submit: error.message || 'Login failed. Please check your credentials.'
-      })
+      console.error('Login error:', error)
+      if (error.errors) {
+        // Laravel validation errors
+        setErrors(error.errors)
+      } else {
+        setErrors({
+          submit: error.message || 'Login failed. Please check your credentials.'
+        })
+      }
     } finally {
       setIsLoading(false)
     }

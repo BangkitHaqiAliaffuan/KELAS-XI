@@ -43,10 +43,10 @@ export const transactionsApi = {
 
 // Auth API
 export const authApi = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  register: (userData) => api.post('/auth/register', userData),
-  logout: () => api.post('/auth/logout'),
-  user: () => api.get('/v1/user'),
-  forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
-  resetPassword: (data) => api.post('/auth/reset-password', data),
+  login: (credentials) => api.post('/v1/auth/login', credentials),
+  register: (userData) => api.post('/v1/auth/register', userData),
+  logout: () => api.post('/v1/auth/logout'),
+  user: () => api.get('/v1/auth/me'),
+  forgotPassword: (email) => api.post('/v1/auth/forgot-password', { email }),
+  resetPassword: (data) => api.post('/v1/auth/reset-password', data),
 };

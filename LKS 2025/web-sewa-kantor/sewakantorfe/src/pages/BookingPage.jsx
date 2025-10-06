@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { 
   MapPin, 
@@ -18,9 +18,29 @@ import { useAuth } from '../context/AuthContext'
 const BookingPage = () => {
   const location = useLocation()
   const navigate = useNavigate()
+  const { officeId } = useParams()
   const { user } = useAuth()
   
   const { office, startDate, endDate } = location.state || {}
+  
+  // If no office data, show error or redirect
+  if (!office && !officeId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No Office Selected</h2>
+          <p className="text-gray-600 mb-4">Please select an office to book.</p>
+          <button
+            onClick={() => navigate('/offices')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Browse Offices
+          </button>
+        </div>
+      </div>
+    )
+  }
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -30,6 +50,7 @@ const BookingPage = () => {
   })
   const [errors, setErrors] = useState({})
   const [step, setStep] = useState(1) // 1: Details, 2: Payment, 3: Confirmation
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
 
   const bookingMutation = useMutation({
     mutationFn: transactionService.create,
@@ -58,14 +79,17 @@ const BookingPage = () => {
 
   const calculateTotal = () => {
     const days = calculateDays()
-    const subtotal = office ? days * office.price : 0
+    // Use daily price from office data structure
+    const dailyPrice = office?.data?.price_for_duration?.daily || office?.data?.price_per_day || 0
+    const subtotal = parseFloat(dailyPrice) * days
     const serviceFee = subtotal * 0.05 // 5% service fee
     const tax = subtotal * 0.11 // 11% tax (PPN)
     return {
       subtotal,
       serviceFee,
       tax,
-      total: subtotal + serviceFee + tax
+      total: subtotal + serviceFee + tax,
+      dailyPrice: parseFloat(dailyPrice)
     }
   }
 
@@ -112,20 +136,32 @@ const BookingPage = () => {
       if (!validateForm()) return
       setStep(2)
     } else if (step === 2) {
-      // Process booking
-      const bookingData = {
-        office_id: office.id,
-        start_date: startDate,
-        end_date: endDate,
-        total_amount: calculateTotal().total,
-        booking_details: {
-          ...formData,
-          days: calculateDays(),
-          ...calculateTotal()
-        }
-      }
+      // Simulate payment processing
+      setErrors({})
+      setIsProcessingPayment(true)
       
-      bookingMutation.mutate(bookingData)
+      // Dummy payment processing
+      setTimeout(() => {
+        // Process booking after "payment"
+        const bookingData = {
+          office_id: office?.data?.id || office?.id,
+          start_date: startDate,
+          end_date: endDate,
+          total_amount: calculateTotal().total,
+          booking_details: {
+            ...formData,
+            days: calculateDays(),
+            ...calculateTotal(),
+            payment_method: 'credit_card',
+            payment_status: 'completed'
+          }
+        }
+        
+        console.log('Booking data:', bookingData)
+        setIsProcessingPayment(false)
+        setStep(3)
+        // bookingMutation.mutate(bookingData)
+      }, 2000) // 2 second delay to simulate processing
     }
   }
 
@@ -391,10 +427,14 @@ const BookingPage = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={bookingMutation.isPending}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                      disabled={isProcessingPayment || bookingMutation.isPending}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
                     >
-                      {bookingMutation.isPending ? 'Processing...' : 'Complete Booking'}
+                      {(isProcessingPayment || bookingMutation.isPending) && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      )}
+                      {isProcessingPayment ? 'Processing Payment...' : 
+                       bookingMutation.isPending ? 'Completing Booking...' : 'Complete Booking'}
                     </button>
                   </div>
                 </form>
@@ -435,10 +475,10 @@ const BookingPage = () => {
               
               {/* Office Info */}
               <div className="mb-6">
-                <h4 className="font-medium text-gray-900">{office.name}</h4>
+                <h4 className="font-medium text-gray-900">{office?.data?.name || office?.name}</h4>
                 <div className="flex items-center text-gray-600 text-sm mt-1">
                   <MapPin className="h-4 w-4 mr-1" />
-                  <span>{office.address}, {office.city?.name}</span>
+                  <span>{office?.data?.address || office?.address}, {office?.data?.city?.name || office?.city?.name}</span>
                 </div>
               </div>
 
@@ -469,7 +509,7 @@ const BookingPage = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span>Price per day</span>
-                  <span>Rp {office.price?.toLocaleString('id-ID')}</span>
+                  <span>Rp {costs.dailyPrice.toLocaleString('id-ID')}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Subtotal ({days} day{days > 1 ? 's' : ''})</span>
