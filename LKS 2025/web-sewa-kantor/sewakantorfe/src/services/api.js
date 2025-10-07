@@ -9,14 +9,25 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
     'X-API-Key': API_KEY,
   },
+  withCredentials: true, // Important for CORS with credentials
 });
 
 // Request interceptor to add auth token if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token');
+    // Check if this is an admin route
+    const isAdminRoute = config.url.includes('/v1/admin/');
+    
+    let token = null;
+    if (isAdminRoute) {
+      token = localStorage.getItem('admin_token');
+    } else {
+      token = localStorage.getItem('auth_token');
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,9 +43,19 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear auth token and redirect to login
-      localStorage.removeItem('auth_token');
-      window.location.href = '/login';
+      // Check if this was an admin route
+      const wasAdminRoute = error.config.url.includes('/v1/admin/');
+      
+      // Clear appropriate token
+      if (wasAdminRoute) {
+        localStorage.removeItem('admin_token');
+        // Redirect to admin login
+        window.location.href = '/admin/login';
+      } else {
+        localStorage.removeItem('auth_token');
+        // Redirect to public login
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -63,15 +84,43 @@ export const authService = {
   }
 };
 
+// Admin Authentication Service
+export const adminAuthApi = {
+  login: async (credentials) => {
+    const response = await api.post('/v1/admin/auth/login', credentials);
+    return response.data;
+  },
+  
+  logout: async () => {
+    const response = await api.post('/v1/admin/auth/logout');
+    return response.data;
+  },
+  
+  me: async () => {
+    const response = await api.get('/v1/admin/auth/me');
+    return response.data;
+  },
+  
+  updateProfile: async (profileData) => {
+    const response = await api.put('/v1/admin/auth/profile', profileData);
+    return response.data;
+  },
+  
+  changePassword: async (passwordData) => {
+    const response = await api.post('/v1/admin/auth/change-password', passwordData);
+    return response.data;
+  }
+};
+
 // City Service
 export const cityService = {
   getAll: async () => {
-    const response = await api.get('/cities');
+    const response = await api.get('/v1/cities');
     return response.data;
   },
   
   getById: async (id) => {
-    const response = await api.get(`/cities/${id}`);
+    const response = await api.get(`/v1/cities/${id}`);
     return response.data;
   }
 };
@@ -79,32 +128,32 @@ export const cityService = {
 // Office Service
 export const officeService = {
   getAll: async (params = {}) => {
-    const response = await api.get('/offices', { params });
+    const response = await api.get('/v1/offices', { params });
     return response.data;
   },
   
   getById: async (id) => {
-    const response = await api.get(`v1/offices/${id}`);
+    const response = await api.get(`/v1/offices/${id}`);
     return response.data;
   },
   
   getFeatured: async () => {
-    const response = await api.get('/offices?featured=1');
+    const response = await api.get('/v1/offices?featured=1');
     return response.data;
   },
   
   create: async (officeData) => {
-    const response = await api.post('/offices', officeData);
+    const response = await api.post('/v1/admin/offices', officeData);
     return response.data;
   },
   
   update: async (id, officeData) => {
-    const response = await api.put(`/offices/${id}`, officeData);
+    const response = await api.put(`/v1/admin/offices/${id}`, officeData);
     return response.data;
   },
   
   delete: async (id) => {
-    const response = await api.delete(`/offices/${id}`);
+    const response = await api.delete(`/v1/admin/offices/${id}`);
     return response.data;
   }
 };
@@ -112,27 +161,27 @@ export const officeService = {
 // Facility Service
 export const facilityService = {
   getAll: async () => {
-    const response = await api.get('/facilities');
+    const response = await api.get('/v1/facilities');
     return response.data;
   },
   
   getById: async (id) => {
-    const response = await api.get(`/facilities/${id}`);
+    const response = await api.get(`/v1/facilities/${id}`);
     return response.data;
   },
   
   create: async (facilityData) => {
-    const response = await api.post('/facilities', facilityData);
+    const response = await api.post('/v1/admin/facilities', facilityData);
     return response.data;
   },
   
   update: async (id, facilityData) => {
-    const response = await api.put(`/facilities/${id}`, facilityData);
+    const response = await api.put(`/v1/admin/facilities/${id}`, facilityData);
     return response.data;
   },
   
   delete: async (id) => {
-    const response = await api.delete(`/facilities/${id}`);
+    const response = await api.delete(`/v1/admin/facilities/${id}`);
     return response.data;
   }
 };
@@ -140,32 +189,32 @@ export const facilityService = {
 // Transaction Service
 export const transactionService = {
   getAll: async (params = {}) => {
-    const response = await api.get('/transactions', { params });
+    const response = await api.get('/v1/admin/transactions', { params });
     return response.data;
   },
   
   getById: async (id) => {
-    const response = await api.get(`/transactions/${id}`);
+    const response = await api.get(`/v1/bookings/${id}`);
     return response.data;
   },
   
   create: async (transactionData) => {
-    const response = await api.post('/transactions', transactionData);
+    const response = await api.post('/v1/bookings', transactionData);
     return response.data;
   },
   
   update: async (id, transactionData) => {
-    const response = await api.put(`/transactions/${id}`, transactionData);
+    const response = await api.put(`/v1/admin/transactions/${id}`, transactionData);
     return response.data;
   },
   
   delete: async (id) => {
-    const response = await api.delete(`/transactions/${id}`);
+    const response = await api.delete(`/v1/admin/transactions/${id}`);
     return response.data;
   },
   
   updateStatus: async (id, status) => {
-    const response = await api.patch(`/transactions/${id}/status`, { status });
+    const response = await api.patch(`/v1/admin/transactions/${id}/status`, { status });
     return response.data;
   }
 };

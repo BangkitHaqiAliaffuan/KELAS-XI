@@ -2,14 +2,30 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\{AuthController, CityController, OfficeController, FacilityController, TransactionController};
+use App\Http\Controllers\Api\{
+    AuthController,
+    AdminAuthController,
+    CityController,
+    OfficeController,
+    FacilityController,
+    TransactionController
+};
 
-// Authentication routes (public)
+// User Authentication routes (public)
 Route::prefix('v1/auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+});
+
+// Admin Authentication routes (public)
+Route::prefix('v1/admin/auth')->group(function () {
+    Route::post('/login', [AdminAuthController::class, 'login']);
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->middleware('auth:sanctum');
+    Route::get('/me', [AdminAuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::put('/profile', [AdminAuthController::class, 'updateProfile'])->middleware('auth:sanctum');
+    Route::post('/change-password', [AdminAuthController::class, 'changePassword'])->middleware('auth:sanctum');
 });
 
 // Public routes (tidak memerlukan authentication)
@@ -19,8 +35,6 @@ Route::prefix('v1')->group(function () {
 
     // Offices
     Route::apiResource('offices', OfficeController::class)->only(['index', 'show']);
-
-
 
     // Facilities
     Route::apiResource('facilities', FacilityController::class)->only(['index', 'show']);

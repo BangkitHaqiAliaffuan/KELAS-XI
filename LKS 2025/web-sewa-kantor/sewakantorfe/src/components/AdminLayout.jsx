@@ -10,16 +10,45 @@ import {
   Menu,
   X
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
+import { useAdminAuth } from '../context/AdminAuthContext'
 
 const AdminLayout = () => {
   const navigate = useNavigate()
-  const { logout, user } = useAuth()
+  const { logout, admin, loading } = useAdminAuth()
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+
+  // Redirect to admin login if not authenticated
+  React.useEffect(() => {
+    console.log('AdminLayout useEffect: loading=', loading, 'admin=', admin);
+    
+    if (!loading && !admin) {
+      console.log('❌ AdminLayout: Not authenticated, redirecting to /admin/login');
+      navigate('/admin/login', { replace: true });
+    } else if (!loading && admin) {
+      console.log('✅ AdminLayout: Authenticated as', admin.email);
+    }
+  }, [loading, admin, navigate]);
 
   const handleLogout = async () => {
     await logout()
-    navigate('/login')
+    navigate('/admin/login', { replace: true })
+  }
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render layout if not authenticated
+  if (!admin) {
+    return null
   }
 
   const navigation = [
@@ -31,7 +60,7 @@ const AdminLayout = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -43,64 +72,72 @@ const AdminLayout = () => {
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        <div className="flex items-center justify-between h-16 px-6 bg-blue-600">
-          <h1 className="text-xl font-bold text-white">Office Admin</h1>
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-white hover:text-gray-200"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-        
-        <nav className="mt-8">
-          <div className="px-4 space-y-2">
-            {navigation.map((item) => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.name}
-                  to={item.href}
-                  end={item.href === '/admin'}
-                  className={({ isActive }) =>
-                    `flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                    }`
-                  }
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </NavLink>
-              )
-            })}
+        <div className="flex flex-col h-full">
+          {/* Logo/Brand */}
+          <div className="flex items-center justify-between h-16 px-6 bg-blue-600 flex-shrink-0">
+            <h1 className="text-xl font-bold text-white">Office Admin</h1>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden text-white hover:text-gray-200"
+            >
+              <X className="h-6 w-6" />
+            </button>
           </div>
-        </nav>
+          
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto py-4">
+            <div className="px-4 space-y-1">
+              {navigation.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.name}
+                    to={item.href}
+                    end={item.href === '/admin'}
+                    onClick={() => setSidebarOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`
+                    }
+                  >
+                    <Icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </NavLink>
+                )
+              })}
+            </div>
+          </nav>
 
-        {/* User info and logout */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="mb-4 px-4 py-2 bg-gray-50 rounded-md">
-            <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-            <p className="text-xs text-gray-600">{user?.email}</p>
+          {/* User info and logout */}
+          <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
+            <div className="mb-3 px-3 py-2 bg-gray-50 rounded-lg">
+              <p className="text-sm font-medium text-gray-900 truncate">{admin?.name || 'Admin'}</p>
+              <p className="text-xs text-gray-600 truncate">{admin?.email || 'admin@sewakantor.com'}</p>
+              {admin?.role && (
+                <p className="text-xs text-blue-600 font-medium mt-1 capitalize">{admin.role.replace('_', ' ')}</p>
+              )}
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-700 rounded-lg hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Logout
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-700 rounded-md hover:bg-red-50 transition-colors"
-          >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
-          </button>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top header */}
-        <div className="sticky top-0 z-10 bg-white shadow-sm border-b border-gray-200">
+        <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between h-16 px-6">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -109,16 +146,20 @@ const AdminLayout = () => {
               <Menu className="h-6 w-6" />
             </button>
             
+            <div className="hidden lg:block">
+              {/* Breadcrumb or page title can go here */}
+            </div>
+            
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Welcome back, {user?.name}
+              <span className="text-sm text-gray-600 hidden sm:block">
+                Welcome back, <span className="font-medium">{admin?.name || 'Admin'}</span>
               </span>
             </div>
           </div>
-        </div>
+        </header>
 
-        {/* Page content */}
-        <main className="flex-1">
+        {/* Page content - scrollable */}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <Outlet />
         </main>
       </div>
