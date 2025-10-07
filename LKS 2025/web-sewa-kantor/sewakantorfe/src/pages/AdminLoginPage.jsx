@@ -10,12 +10,11 @@ const AdminLoginPage = () => {
   const navigate = useNavigate();
   const { login, admin, loading: authLoading } = useAdminAuth();
 
-  console.log('AdminLoginPage: Rendered, authLoading:', authLoading, 'admin:', admin);
+  
 
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && admin) {
-      console.log('AdminLoginPage: Already logged in, redirecting to /admin');
       navigate('/admin', { replace: true });
     }
   }, [authLoading, admin, navigate]);
@@ -26,19 +25,11 @@ const AdminLoginPage = () => {
     setLoading(true);
 
     try {
-      console.log('AdminLoginPage: Attempting login...');
       const result = await login({ email, password });
-      console.log('AdminLoginPage: Login result:', result);
-      
-      if (result.success) {
-        console.log('AdminLoginPage: Login successful, admin:', result.admin);
-        // Don't navigate immediately - let useEffect handle it after admin state updates
-        // The useEffect will detect admin is set and redirect
-      } else {
+      if (!result.success) {
         setError(result.message || 'Login failed');
       }
     } catch (err) {
-      console.error('AdminLoginPage: Login error:', err);
       setError('An error occurred during login');
     } finally {
       setLoading(false);

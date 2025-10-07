@@ -17,28 +17,39 @@ class TransactionController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Transaction::with(['office.city', 'user']);
+        try {
+            // Validate input parameters
+            $request->validate([
+                'status' => 'nullable|in:confirmed,completed,cancelled',
+                'payment_status' => 'nullable|in:pending,paid,cancelled',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
+                'search' => 'nullable|string|max:255',
+                'per_page' => 'nullable|integer|min:1|max:100'
+            ]);
+
+            $query = Transaction::with(['office.city', 'user']);
 
         // Filter by status
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
         // Filter by payment status
-        if ($request->has('payment_status')) {
+        if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
 
         // Filter by date range
-        if ($request->has('start_date')) {
+        if ($request->filled('start_date')) {
             $query->where('start_date', '>=', $request->start_date);
         }
-        if ($request->has('end_date')) {
+        if ($request->filled('end_date')) {
             $query->where('end_date', '<=', $request->end_date);
         }
 
         // Search by booking code or customer
-        if ($request->has('search')) {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('booking_code', 'like', "%{$search}%")
@@ -61,6 +72,13 @@ class TransactionController extends Controller
             ],
             'message' => 'Transactions retrieved successfully'
         ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve transactions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

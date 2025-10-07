@@ -19,13 +19,8 @@ const AdminLayout = () => {
 
   // Redirect to admin login if not authenticated
   React.useEffect(() => {
-    console.log('AdminLayout useEffect: loading=', loading, 'admin=', admin);
-    
     if (!loading && !admin) {
-      console.log('❌ AdminLayout: Not authenticated, redirecting to /admin/login');
       navigate('/admin/login', { replace: true });
-    } else if (!loading && admin) {
-      console.log('✅ AdminLayout: Authenticated as', admin.email);
     }
   }, [loading, admin, navigate]);
 
@@ -148,12 +143,6 @@ const AdminLayout = () => {
             
             <div className="hidden lg:block">
               {/* Breadcrumb or page title can go here */}
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600 hidden sm:block">
-                Welcome back, <span className="font-medium">{admin?.name || 'Admin'}</span>
-              </span>
             </div>
           </div>
         </header>

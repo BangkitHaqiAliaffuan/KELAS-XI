@@ -26,8 +26,10 @@ class OfficeResource extends JsonResource
             'price_per_day' => $this->price_per_day,
             'price_per_week' => $this->price_per_week,
             'price_per_month' => $this->price_per_month,
-            'photos' => $this->photos,
-            'main_photo' => $this->main_photo,
+            'photos' => $this->photos ? array_map(function($photo) {
+                return asset('storage/' . $photo);
+            }, $this->photos) : [],
+            'main_photo' => $this->main_photo ? asset('storage/' . $this->main_photo) : null,
             'status' => $this->status,
             'operating_hours' => $this->operating_hours,
             'rating' => $this->rating,

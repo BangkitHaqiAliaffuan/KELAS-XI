@@ -28,8 +28,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await authApi.user();
-      console.log('Fetch user response:', response.data);
+  const response = await authApi.user();
       
       if (response.data.success) {
         setUser(response.data.data);
@@ -48,8 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await authApi.login(credentials);
-      console.log('Login response:', response.data);
+  const response = await authApi.login(credentials);
       
       if (response.data.success) {
         const { token, user } = response.data.data;
@@ -81,8 +79,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await authApi.register(userData);
-      console.log('Register response:', response.data);
+  const response = await authApi.register(userData);
       
       if (response.data.success) {
         const { token, user } = response.data.data;

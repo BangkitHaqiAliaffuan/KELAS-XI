@@ -7,9 +7,61 @@ use App\Http\Resources\OfficeResource;
 use App\Models\Office;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class OfficeController extends Controller
 {
+    /**
+     * Handle image upload and return the stored path
+     */
+    private function handleImageUpload($image, $existingPath = null): string
+    {
+        // Delete existing image if provided
+        if ($existingPath && Storage::disk('public')->exists($existingPath)) {
+            Storage::disk('public')->delete($existingPath);
+        }
+
+        // Generate unique filename
+        $filename = Str::uuid() . '.' . $image->getClientOriginalExtension();
+
+        // Store the image in the offices directory
+        $path = $image->storeAs('offices', $filename, 'public');
+
+        return $path;
+    }
+
+    /**
+     * Process uploaded images and return array of paths
+     */
+    private function processImages(Request $request, $existingPhotos = []): array
+    {
+        $photos = [];
+
+        if ($request->hasFile('images')) {
+            // Delete existing photos if we're replacing them
+            if (!empty($existingPhotos)) {
+                foreach ($existingPhotos as $photo) {
+                    if (Storage::disk('public')->exists($photo)) {
+                        Storage::disk('public')->delete($photo);
+                    }
+                }
+            }
+
+            // Upload new images
+            foreach ($request->file('images') as $image) {
+                if ($image->isValid()) {
+                    $photos[] = $this->handleImageUpload($image);
+                }
+            }
+        } elseif (!empty($existingPhotos)) {
+            // Keep existing photos if no new images uploaded
+            $photos = $existingPhotos;
+        }
+
+        return $photos;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -108,16 +160,20 @@ class OfficeController extends Controller
             'price_per_day' => 'required|numeric|min:0',
             'price_per_week' => 'required|numeric|min:0',
             'price_per_month' => 'required|numeric|min:0',
-            'photos' => 'nullable|array',
-            'photos.*' => 'string',
             'operating_hours' => 'nullable|string',
             'city_id' => 'required|exists:cities,id',
             'facility_ids' => 'nullable|array',
             'facility_ids.*' => 'exists:facilities,id',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,jpg,png,webp|max:2048',
         ]);
 
         $facilityIds = $validated['facility_ids'] ?? [];
         unset($validated['facility_ids']);
+
+        // Process image uploads
+        $photos = $this->processImages($request);
+        $validated['photos'] = $photos;
 
         $office = Office::create($validated);
 
@@ -166,17 +222,33 @@ class OfficeController extends Controller
             'price_per_day' => 'sometimes|required|numeric|min:0',
             'price_per_week' => 'sometimes|required|numeric|min:0',
             'price_per_month' => 'sometimes|required|numeric|min:0',
-            'photos' => 'nullable|array',
-            'photos.*' => 'string',
             'status' => 'sometimes|in:available,unavailable,maintenance',
             'operating_hours' => 'nullable|string',
             'city_id' => 'sometimes|required|exists:cities,id',
             'facility_ids' => 'nullable|array',
             'facility_ids.*' => 'exists:facilities,id',
+            'images' => 'nullable|array|max:5',
+            'images.*' => 'image|mimes:jpeg,jpg,png,webp|max:2048',
+            'remove_images' => 'nullable|boolean',
         ]);
 
         $facilityIds = $validated['facility_ids'] ?? null;
         unset($validated['facility_ids']);
+
+        // Handle image uploads if provided
+        if ($request->hasFile('images') || $request->boolean('remove_images')) {
+            $existingPhotos = $office->photos ?? [];
+
+            if ($request->boolean('remove_images')) {
+                // Remove all existing images
+                $photos = $this->processImages($request, $existingPhotos);
+            } else {
+                // Add new images to existing ones or replace if new images provided
+                $photos = $this->processImages($request, $existingPhotos);
+            }
+
+            $validated['photos'] = $photos;
+        }
 
         $office->update($validated);
 
@@ -199,6 +271,16 @@ class OfficeController extends Controller
     public function destroy(string $id): JsonResponse
     {
         $office = Office::findOrFail($id);
+
+        // Delete associated images
+        if (!empty($office->photos)) {
+            foreach ($office->photos as $photo) {
+                if (Storage::disk('public')->exists($photo)) {
+                    Storage::disk('public')->delete($photo);
+                }
+            }
+        }
+
         $office->delete();
 
         return response()->json([

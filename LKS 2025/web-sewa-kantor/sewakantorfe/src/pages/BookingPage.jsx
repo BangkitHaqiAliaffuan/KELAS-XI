@@ -158,7 +158,7 @@ const BookingPage = () => {
           payment_method: 'credit_card',
         }
         
-        console.log('Booking data:', bookingData)
+        
         
         // Submit the actual booking
         bookingMutation.mutate(bookingData, {
@@ -168,7 +168,6 @@ const BookingPage = () => {
           },
           onError: (error) => {
             setIsProcessingPayment(false)
-            console.error('Booking error:', error)
             alert('Failed to create booking: ' + (error.response?.data?.message || error.message))
           }
         })

@@ -11,7 +11,7 @@ const AdminRoutes = () => {
   const location = useLocation();
   
   React.useEffect(() => {
-    console.log('🔵 AdminRoutes: Rendering for path:', location.pathname);
+    // Effect to respond to location changes if needed
   }, [location.pathname]);
   
   return (

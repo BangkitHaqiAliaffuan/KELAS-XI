@@ -143,12 +143,51 @@ export const officeService = {
   },
   
   create: async (officeData) => {
-    const response = await api.post('/v1/admin/offices', officeData);
+    const formData = new FormData();
+    
+    // Add all form fields to FormData
+    Object.keys(officeData).forEach(key => {
+      if (key === 'images' && officeData[key]) {
+        // Add each image file
+        officeData[key].forEach(image => {
+          formData.append('images[]', image);
+        });
+      } else if (officeData[key] !== null && officeData[key] !== undefined) {
+        formData.append(key, officeData[key]);
+      }
+    });
+    
+    const response = await api.post('/v1/admin/offices', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
   
   update: async (id, officeData) => {
-    const response = await api.put(`/v1/admin/offices/${id}`, officeData);
+    const formData = new FormData();
+    
+    // Add _method for Laravel to handle PUT request via POST
+    formData.append('_method', 'PUT');
+    
+    // Add all form fields to FormData
+    Object.keys(officeData).forEach(key => {
+      if (key === 'images' && officeData[key]) {
+        // Add each image file
+        officeData[key].forEach(image => {
+          formData.append('images[]', image);
+        });
+      } else if (officeData[key] !== null && officeData[key] !== undefined) {
+        formData.append(key, officeData[key]);
+      }
+    });
+    
+    const response = await api.post(`/v1/admin/offices/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
   
@@ -188,18 +227,19 @@ export const facilityService = {
 
 // Transaction Service
 export const transactionService = {
+  // Admin endpoints
   getAll: async (params = {}) => {
     const response = await api.get('/v1/admin/transactions', { params });
     return response.data;
   },
   
   getById: async (id) => {
-    const response = await api.get(`/v1/bookings/${id}`);
+    const response = await api.get(`/v1/admin/transactions/${id}`);
     return response.data;
   },
   
   create: async (transactionData) => {
-    const response = await api.post('/v1/bookings', transactionData);
+    const response = await api.post('/v1/admin/transactions', transactionData);
     return response.data;
   },
   
@@ -215,6 +255,38 @@ export const transactionService = {
   
   updateStatus: async (id, status) => {
     const response = await api.patch(`/v1/admin/transactions/${id}/status`, { status });
+    return response.data;
+  },
+
+  updatePaymentStatus: async (id, paymentData) => {
+    const response = await api.patch(`/v1/admin/transactions/${id}/payment-status`, paymentData);
+    return response.data;
+  },
+
+  // Public booking endpoints
+  createBooking: async (bookingData) => {
+    const response = await api.post('/v1/bookings', bookingData);
+    return response.data;
+  },
+
+  getBookingById: async (id) => {
+    const response = await api.get(`/v1/bookings/${id}`);
+    return response.data;
+  },
+
+  // User endpoints
+  getUserBookings: async (params = {}) => {
+    const response = await api.get('/v1/user/bookings', { params });
+    return response.data;
+  },
+
+  cancelBooking: async (id) => {
+    const response = await api.patch(`/v1/user/bookings/${id}/cancel`);
+    return response.data;
+  },
+
+  getUserStatistics: async () => {
+    const response = await api.get('/v1/user/statistics');
     return response.data;
   }
 };

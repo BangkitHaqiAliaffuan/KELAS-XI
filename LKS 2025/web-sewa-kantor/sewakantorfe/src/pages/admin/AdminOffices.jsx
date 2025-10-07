@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { 
   Building2, 
@@ -8,36 +8,119 @@ import {
   Search,
   Filter,
   MapPin,
-  Eye
+  Eye,
+  AlertCircle,
+  CheckCircle
 } from 'lucide-react'
 import { officeService } from '../../services/api'
+import OfficeFormModal from '../../components/OfficeFormModal'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const AdminOffices = () => {
   const queryClient = useQueryClient()
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [editingOffice, setEditingOffice] = useState(null)
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' })
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingOffice, setDeletingOffice] = useState(null)
 
-  const { data: offices, isLoading } = useQuery({
-    queryKey: ['offices', searchTerm, selectedCity],
+  // Debounce search term to prevent excessive API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const { data: offices, isLoading, error } = useQuery({
+    queryKey: ['offices', debouncedSearchTerm, selectedCity],
     queryFn: () => officeService.getAll({ 
-      search: searchTerm,
+      search: debouncedSearchTerm,
       city_id: selectedCity 
-    })
+    }),
+    retry: 2,
+    refetchOnWindowFocus: false
   })
 
+  // Create Office Mutation
+  const createMutation = useMutation({
+    mutationFn: officeService.create,
+    onSuccess: (response) => {
+      queryClient.invalidateQueries(['offices'])
+      setShowForm(false)
+      setEditingOffice(null)
+      showNotification('Office created successfully!', 'success')
+    },
+    onError: (error) => {
+      console.error('Create office error:', error)
+      showNotification(
+        error.response?.data?.message || 'Failed to create office', 
+        'error'
+      )
+    }
+  })
+
+  // Update Office Mutation
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => officeService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['offices'])
+      setShowForm(false)
+      setEditingOffice(null)
+      showNotification('Office updated successfully!', 'success')
+    },
+    onError: (error) => {
+      console.error('Update office error:', error)
+      showNotification(
+        error.response?.data?.message || 'Failed to update office', 
+        'error'
+      )
+    }
+  })
+
+  // Delete Office Mutation
   const deleteMutation = useMutation({
     mutationFn: officeService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries(['offices'])
+      showNotification('Office deleted successfully!', 'success')
+    },
+    onError: (error) => {
+      console.error('Delete office error:', error)
+      showNotification(
+        error.response?.data?.message || 'Failed to delete office', 
+        'error'
+      )
     }
   })
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this office?')) {
-      deleteMutation.mutate(id)
+  const showNotification = (message, type) => {
+    setNotification({ show: true, message, type })
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' })
+    }, 5000)
+  }
+
+  const handleDelete = (office) => {
+    setDeletingOffice(office)
+    setShowDeleteModal(true)
+  }
+
+  const confirmDelete = () => {
+    if (deletingOffice) {
+      deleteMutation.mutate(deletingOffice.id)
+      setShowDeleteModal(false)
+      setDeletingOffice(null)
     }
+  }
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false)
+    setDeletingOffice(null)
   }
 
   const handleEdit = (office) => {
@@ -50,7 +133,39 @@ const AdminOffices = () => {
     setShowForm(true)
   }
 
-  if (isLoading) {
+  const handleFormSubmit = async (formData) => {
+    try {
+      if (editingOffice) {
+        // Update existing office
+        await updateMutation.mutateAsync({ 
+          id: editingOffice.id, 
+          data: formData 
+        })
+      } else {
+        // Create new office
+        await createMutation.mutateAsync(formData)
+      }
+    } catch (error) {
+      // Error handling is done in mutation onError callbacks
+      console.error('Form submit error:', error)
+    }
+  }
+
+  const [isInitialLoadState, setIsInitialLoadState] = useState(true)
+  const isInitialLoad = isInitialLoadState && !offices
+
+  useEffect(() => {
+    if (offices) {
+      setIsInitialLoadState(false)
+    }
+  }, [offices])
+
+  const handleCloseForm = () => {
+    setShowForm(false)
+    setEditingOffice(null)
+  }
+
+  if (isInitialLoad && isLoading) {
     return (
       <div className="p-6">
         <div className="animate-pulse">
@@ -65,8 +180,55 @@ const AdminOffices = () => {
     )
   }
 
+  if (error && isInitialLoad) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <h3 className="text-sm font-medium text-red-800">Error loading offices</h3>
+          </div>
+          <p className="text-sm text-red-700 mt-2">
+            {error.response?.data?.message || 'Failed to load offices. Please try again.'}
+          </p>
+          <button
+            onClick={() => {
+              queryClient.invalidateQueries(['offices'])
+              setIsInitialLoadState(true) // Reset initial load state
+            }}
+            className="mt-3 text-sm bg-red-100 text-red-800 px-3 py-1 rounded hover:bg-red-200"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  
+
   return (
     <div className="p-6">
+      {/* Notification */}
+      {notification.show && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg ${
+          notification.type === 'success' 
+            ? 'bg-green-50 border border-green-200' 
+            : 'bg-red-50 border border-red-200'
+        }`}>
+          {notification.type === 'success' ? (
+            <CheckCircle className="h-5 w-5 text-green-400 mr-3" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-red-400 mr-3" />
+          )}
+          <p className={`text-sm font-medium ${
+            notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+          }`}>
+            {notification.message}
+          </p>
+        </div>
+      )}
+
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -75,7 +237,8 @@ const AdminOffices = () => {
           </div>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center transition-colors"
+            disabled={createMutation.isLoading}
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Office
@@ -93,8 +256,13 @@ const AdminOffices = () => {
               placeholder="Search offices..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {isLoading && debouncedSearchTerm !== '' && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              </div>
+            )}
           </div>
           
           <select
@@ -123,7 +291,8 @@ const AdminOffices = () => {
           <div key={office.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
             <div className="h-48 bg-gray-200 rounded-t-lg relative">
               <img 
-                src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
+              
+                src={office.photos[0]? office.photos[0] : 'https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'}
                 alt={office.name}
                 className="w-full h-full object-cover rounded-t-lg"
               />
@@ -162,9 +331,10 @@ const AdminOffices = () => {
                     <Edit className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(office.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    onClick={() => handleDelete(office)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete"
+                    disabled={deleteMutation.isLoading}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -195,30 +365,25 @@ const AdminOffices = () => {
         </div>
       )}
 
-      {/* Office Form Modal - Placeholder */}
-      {showForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {editingOffice ? 'Edit Office' : 'Add New Office'}
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Office form will be implemented here with all necessary fields.
-            </p>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={() => setShowForm(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                {editingOffice ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Office Form Modal */}
+      <OfficeFormModal
+        isOpen={showForm}
+        onClose={handleCloseForm}
+        office={editingOffice}
+        onSubmit={handleFormSubmit}
+        isLoading={createMutation.isLoading || updateMutation.isLoading}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={cancelDelete}
+        onConfirm={confirmDelete}
+        title="Delete Office"
+        message="Are you sure you want to delete this office?"
+        itemName={deletingOffice?.name}
+        isLoading={deleteMutation.isLoading}
+      />
     </div>
   )
 }
