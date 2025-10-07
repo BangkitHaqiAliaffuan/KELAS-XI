@@ -165,9 +165,9 @@ const DashboardPage = () => {
       <div className="flex justify-between items-center pt-4 border-t">
         <div className="flex items-center text-gray-900">
           <DollarSign className="h-4 w-4 mr-1" />
-          <span className="font-semibold">{formatCurrency(booking.total_price || 0)}</span>
+          <span className="font-semibold">{formatCurrency(booking.final_amount || 0)}</span>
           <span className="text-sm text-gray-600 ml-1">
-            ({booking.days || 0} hari)
+            ({booking.duration_days || 0} hari)
           </span>
         </div>
         <div className="flex space-x-2">
@@ -247,11 +247,11 @@ const DashboardPage = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600">Duration</p>
-                    <p>{booking.days || 0} days</p>
+                    <p>{booking.duration_days || 0} days</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Price</p>
-                    <p className="text-lg font-semibold text-green-600">{formatCurrency(booking.total_price || 0)}</p>
+                    <p className="text-lg font-semibold text-green-600">{formatCurrency(booking.final_amount || 0)}</p>
                   </div>
                 </div>
               </div>
@@ -259,17 +259,17 @@ const DashboardPage = () => {
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">Customer Information</h3>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="font-semibold">{booking.customer_name || booking.name || user?.name}</p>
-                  <p className="text-gray-600">{booking.customer_email || booking.email || user?.email}</p>
-                  <p className="text-gray-600">{booking.customer_phone || booking.phone || user?.phone}</p>
+                  <p className="font-semibold">{booking.customer_name || user?.name}</p>
+                  <p className="text-gray-600">{booking.customer_email || user?.email}</p>
+                  <p className="text-gray-600">{booking.customer_phone || user?.phone}</p>
                 </div>
               </div>
 
-              {booking.special_requests && (
+              {booking.notes && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Special Requests</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Notes</h3>
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <p className="text-gray-700">{booking.special_requests}</p>
+                    <p className="text-gray-700">{booking.notes}</p>
                   </div>
                 </div>
               )}

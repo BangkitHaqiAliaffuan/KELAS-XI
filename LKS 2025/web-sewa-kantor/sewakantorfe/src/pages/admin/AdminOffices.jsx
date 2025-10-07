@@ -147,7 +147,7 @@ const AdminOffices = () => {
               
               <div className="mb-4">
                 <span className="text-2xl font-bold text-blue-600">
-                  Rp {office.price?.toLocaleString('id-ID')}
+                  Rp {office.price_per_day?.toLocaleString('id-ID') || office.price?.toLocaleString('id-ID')}
                 </span>
                 <span className="text-gray-600"> / day</span>
               </div>

@@ -150,10 +150,12 @@ const BookingPage = () => {
           office_id: office?.data?.id || office?.id,
           start_date: startDate,
           end_date: endDate,
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          special_requests: formData.special_requests || ''
+          rental_type: 'daily', // daily, weekly, monthly
+          customer_name: formData.name,
+          customer_email: formData.email,
+          customer_phone: formData.phone,
+          notes: formData.special_requests || '',
+          payment_method: 'credit_card',
         }
         
         console.log('Booking data:', bookingData)
