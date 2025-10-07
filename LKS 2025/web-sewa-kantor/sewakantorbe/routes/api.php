@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\{
     FacilityController,
     TransactionController
 };
+use App\Http\Controllers\Api\Admin\UserController as AdminUserController;
 
 // User Authentication routes (public)
 Route::prefix('v1/auth')->group(function () {
@@ -85,4 +86,8 @@ Route::prefix('v1/admin')->middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('transactions', TransactionController::class);
     Route::patch('transactions/{transaction}/status', [TransactionController::class, 'updateStatus']);
     Route::patch('transactions/{transaction}/payment-status', [TransactionController::class, 'updatePaymentStatus']);
+
+    // Users management
+    Route::apiResource('users', AdminUserController::class)->except(['store']);
+    Route::patch('users/{user}/toggle-status', [AdminUserController::class, 'toggleStatus']);
 });

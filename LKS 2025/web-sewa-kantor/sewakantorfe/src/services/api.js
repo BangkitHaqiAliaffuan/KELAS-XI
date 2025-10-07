@@ -309,4 +309,37 @@ export const dashboardService = {
   }
 };
 
+// User Management Service (Admin)
+export const userService = {
+  // Get all users (admin only)
+  getAll: async (params = {}) => {
+    const response = await api.get('/v1/admin/users', { params });
+    return response.data;
+  },
+
+  // Get single user (admin only)
+  getById: async (id) => {
+    const response = await api.get(`/v1/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Update user (admin only)
+  update: async (id, userData) => {
+    const response = await api.put(`/v1/admin/users/${id}`, userData);
+    return response.data;
+  },
+
+  // Delete user (admin only)
+  delete: async (id) => {
+    const response = await api.delete(`/v1/admin/users/${id}`);
+    return response.data;
+  },
+
+  // Toggle user status (admin only)
+  toggleStatus: async (id) => {
+    const response = await api.patch(`/v1/admin/users/${id}/toggle-status`);
+    return response.data;
+  }
+};
+
 export default api;
