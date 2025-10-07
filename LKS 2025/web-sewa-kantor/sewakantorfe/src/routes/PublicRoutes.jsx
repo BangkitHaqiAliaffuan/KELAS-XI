@@ -15,11 +15,7 @@ const PublicRoutes = () => {
   
   // CRITICAL: Prevent public routes from handling /admin paths
   React.useEffect(() => {
-    if (location.pathname.startsWith('/admin')) {
-      console.error('❌ PublicRoutes: Should NOT handle /admin paths! Path:', location.pathname);
-    } else {
-      console.log('✅ PublicRoutes: Rendering for path:', location.pathname);
-    }
+    // Location change hook - intentionally left blank for now
   }, [location.pathname]);
   
   // Early return if admin path - DO NOT RENDER ANYTHING

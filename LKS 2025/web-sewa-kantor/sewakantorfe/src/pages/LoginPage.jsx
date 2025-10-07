@@ -59,7 +59,6 @@ const LoginPage = () => {
 
     setIsLoading(true)
     try {
-      console.log('Submitting login with:', formData)
       await login(formData)
       navigate(from, { replace: true })
     } catch (error) {

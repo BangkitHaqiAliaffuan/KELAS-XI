@@ -55,18 +55,15 @@ const OfficeDetailPage = () => {
       const diffTime = end - start
       const days = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       
-      console.log('Auto-selecting duration for', days, 'days')
+      
       
       // Auto-select the most appropriate billing period
       if (days >= 28 && office.data.price_for_duration.monthly) {
-        console.log('Setting duration to monthly')
-        setSelectedDuration('monthly')
+  setSelectedDuration('monthly')
       } else if (days >= 7 && office.data.price_for_duration.weekly) {
-        console.log('Setting duration to weekly')
-        setSelectedDuration('weekly')
+  setSelectedDuration('weekly')
       } else if (office.data.price_for_duration.daily) {
-        console.log('Setting duration to daily')
-        setSelectedDuration('daily')
+  setSelectedDuration('daily')
       }
     }
   }, [selectedStartDate, selectedEndDate, office])
@@ -128,15 +125,13 @@ const OfficeDetailPage = () => {
     return days * parseFloat(prices.daily || 0)
   }
 
-  console.log('Office data:', office)
-  console.log('Selected duration:', selectedDuration)
-  console.log('Price for duration:', office?.data?.price_for_duration)
+  
 
   const getCurrentPrice = () => {
     if (!office?.data?.price_for_duration) return 0
 
     const prices = office.data.price_for_duration
-    console.log('Getting current price for:', selectedDuration, 'from prices:', prices)
+    
     
     return parseFloat(prices[selectedDuration] || prices.daily || 0)
   }
