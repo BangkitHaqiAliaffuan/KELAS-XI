@@ -110,7 +110,7 @@ class UserController extends Controller
             // Update user data
             $user->name = $validatedData['name'];
             $user->email = $validatedData['email'];
-            
+
             if (!empty($validatedData['password'])) {
                 $user->password = Hash::make($validatedData['password']);
             }

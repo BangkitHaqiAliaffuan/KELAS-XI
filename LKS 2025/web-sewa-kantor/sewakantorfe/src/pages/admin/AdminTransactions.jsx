@@ -74,22 +74,8 @@ const AdminTransactions = () => {
           }
         }
         
-        const result = await transactionService.getAll(params);
-        
-        // Debug: Check final_amount values
-        if (result?.data) {
-          const amounts = result.data.map(t => ({ 
-            id: t.id, 
-            final_amount: t.final_amount, 
-            total_amount: t.total_amount,
-            payment_status: t.payment_status 
-          }));
-          console.log('Transaction amounts:', amounts);
-        }
-        
-        return result;
+        return await transactionService.getAll(params);
       } catch (error) {
-        console.error('Transaction fetch error:', error);
         throw error;
       }
     },

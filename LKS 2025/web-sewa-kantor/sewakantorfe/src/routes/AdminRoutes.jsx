@@ -6,6 +6,7 @@ import AdminLayout from '../components/AdminLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import AdminOffices from '../pages/admin/AdminOffices';
 import AdminTransactions from '../pages/admin/AdminTransactions';
+import AdminUsers from '../pages/admin/AdminUsers';
 
 const AdminRoutes = () => {
   const location = useLocation();
@@ -22,6 +23,7 @@ const AdminRoutes = () => {
           <Route index element={<AdminDashboard />} />
           <Route path="offices" element={<AdminOffices />} />
           <Route path="transactions" element={<AdminTransactions />} />
+          <Route path="users" element={<AdminUsers />} />
         </Route>
       </Routes>
     </AdminAuthProvider>
