@@ -6,51 +6,86 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh' }} className="bg-gray-50">
       {/* Header/Navbar */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <header className="bg-white" style={{ boxShadow: 'var(--shadow)', borderBottom: '1px solid var(--color-gray-200)' }}>
+        <div className="container">
+          <div className="flex justify-between items-center" style={{ height: '4rem' }}>
             {/* Logo */}
-            <div className="flex-shrink-0">
-              <h1 className="text-2xl font-bold text-primary-600">
+            <div>
+              <h1 className="text-2xl font-bold text-primary">
                 Food Recipes
               </h1>
             </div>
 
             {/* Navigation */}
-            <nav className="hidden md:flex space-x-8">
+            <nav className="flex" style={{ gap: '2rem' }}>
               <a
                 href="/"
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+                className="text-gray-700"
+                style={{ 
+                  padding: '0.5rem 0.75rem', 
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease-in-out'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Home
               </a>
               <a
                 href="/categories"
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+                className="text-gray-700"
+                style={{ 
+                  padding: '0.5rem 0.75rem', 
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease-in-out'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Categories
               </a>
               <a
                 href="/recipes"
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition-colors"
+                className="text-gray-700"
+                style={{ 
+                  padding: '0.5rem 0.75rem', 
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  transition: 'color 0.2s ease-in-out'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--color-primary)'}
+                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Recipes
               </a>
             </nav>
 
-            {/* Search (placeholder) */}
+            {/* Search */}
             <div className="flex items-center">
-              <div className="relative">
+              <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   placeholder="Search recipes..."
-                  className="w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  className="input"
+                  style={{ width: '16rem', paddingRight: '3rem' }}
                 />
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <div style={{ 
+                  position: 'absolute', 
+                  top: '50%', 
+                  right: '0.75rem', 
+                  transform: 'translateY(-50%)',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
                   <svg
-                    className="h-5 w-5 text-gray-400"
+                    style={{ width: '1.25rem', height: '1.25rem', color: 'var(--color-gray-400)' }}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -73,31 +108,58 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main>{children}</main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
+      <footer className="bg-gray-800 text-white" style={{ marginTop: '3rem' }}>
+        <div className="container" style={{ padding: '3rem 1rem' }}>
+          <div className="grid md-grid-cols-4" style={{ gap: '2rem' }}>
+            <div style={{ gridColumn: 'span 2' }}>
               <h3 className="text-xl font-bold mb-4">Food Recipes</h3>
-              <p className="text-gray-300 mb-4">
+              <p style={{ color: '#cbd5e1', marginBottom: '1rem', lineHeight: '1.6' }}>
                 Discover amazing recipes from around the world. Cook delicious meals 
                 with step-by-step instructions and helpful tips from our expert chefs.
               </p>
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/" className="text-gray-300 hover:text-white transition-colors">
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     Home
                   </a>
                 </li>
-                <li>
-                  <a href="/categories" className="text-gray-300 hover:text-white transition-colors">
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/categories" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     Categories
                   </a>
                 </li>
-                <li>
-                  <a href="/recipes" className="text-gray-300 hover:text-white transition-colors">
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/recipes" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     All Recipes
                   </a>
                 </li>
@@ -105,26 +167,61 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div>
               <h4 className="text-lg font-semibold mb-4">Categories</h4>
-              <ul className="space-y-2">
-                <li>
-                  <a href="/categories/main-course" className="text-gray-300 hover:text-white transition-colors">
+              <ul style={{ listStyle: 'none', padding: 0 }}>
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/categories/main-course" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     Main Course
                   </a>
                 </li>
-                <li>
-                  <a href="/categories/desserts" className="text-gray-300 hover:text-white transition-colors">
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/categories/desserts" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     Desserts
                   </a>
                 </li>
-                <li>
-                  <a href="/categories/appetizers" className="text-gray-300 hover:text-white transition-colors">
+                <li style={{ marginBottom: '0.5rem' }}>
+                  <a 
+                    href="/categories/appetizers" 
+                    style={{ 
+                      color: '#cbd5e1', 
+                      textDecoration: 'none',
+                      transition: 'color 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = 'white'}
+                    onMouseLeave={(e) => e.currentTarget.style.color = '#cbd5e1'}
+                  >
                     Appetizers
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+          <div 
+            style={{ 
+              borderTop: '1px solid #475569', 
+              marginTop: '2rem', 
+              paddingTop: '2rem', 
+              textAlign: 'center',
+              color: '#cbd5e1'
+            }}
+          >
             <p>&copy; 2025 Food Recipes. All rights reserved.</p>
           </div>
         </div>
