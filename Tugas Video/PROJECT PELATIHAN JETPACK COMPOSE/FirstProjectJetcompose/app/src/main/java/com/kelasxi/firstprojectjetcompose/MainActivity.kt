@@ -1,6 +1,7 @@
 package com.kelasxi.firstprojectjetcompose
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +40,9 @@ fun FormProfile(modifier: Modifier = Modifier) {
     // State untuk menyimpan input user
     var nama by remember { mutableStateOf("") }
     var alamat by remember { mutableStateOf("") }
+    var hasil by remember { mutableStateOf("") }
+    
+    val context = LocalContext.current
     
     Column(
         modifier = modifier
@@ -94,6 +99,9 @@ fun FormProfile(modifier: Modifier = Modifier) {
         // Button Simpan
         Button(
             onClick = {
+
+                Toast.makeText(context, "Data berhasil disimpan!", Toast.LENGTH_SHORT).show()
+                hasil = "Nama: $nama\nAlamat: $alamat"
                 // Aksi ketika button diklik
                 // Bisa ditambahkan logika penyimpanan data
             },
@@ -105,6 +113,15 @@ fun FormProfile(modifier: Modifier = Modifier) {
                 text = "Simpan",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
+            )
+        }
+        
+        // Text untuk menampilkan hasil
+        if (hasil.isNotEmpty()) {
+            Text(
+                text = hasil,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 16.dp)
             )
         }
     }
