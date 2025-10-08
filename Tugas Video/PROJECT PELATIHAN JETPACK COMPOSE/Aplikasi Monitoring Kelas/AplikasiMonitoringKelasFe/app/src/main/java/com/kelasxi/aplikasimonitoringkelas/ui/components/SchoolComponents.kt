@@ -278,6 +278,7 @@ fun SchoolTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolButton(
     onClick: () -> Unit,
@@ -401,6 +402,7 @@ fun SchoolCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolLoadingCard(
     modifier: Modifier = Modifier
@@ -426,6 +428,7 @@ fun SchoolLoadingCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolEmptyState(
     title: String,
@@ -478,6 +481,7 @@ fun SchoolEmptyState(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolTopBar(
     title: String,
@@ -497,7 +501,7 @@ fun SchoolTopBar(
             if (onNavigationClick != null) {
                 IconButton(onClick = onNavigationClick) {
                     Icon(
-                        imageVector = Icons.Default.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
                         contentDescription = "Kembali"
                     )
                 }
