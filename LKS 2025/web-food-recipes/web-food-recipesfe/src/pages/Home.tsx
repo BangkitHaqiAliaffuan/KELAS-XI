@@ -1,8 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useCategories, useFeaturedRecipes } from '../hooks/useApi';
 import type { Recipe, Category } from '../types';
 
 const Home: React.FC = () => {
+  const navigate = useNavigate();
   const { categories, loading: categoriesLoading } = useCategories();
   const { recipes: featuredRecipes, loading: recipesLoading } = useFeaturedRecipes();
 
@@ -31,8 +33,8 @@ const Home: React.FC = () => {
             Cook delicious meals with step-by-step instructions from expert chefs
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-            <a 
-              href="/recipes" 
+            <button 
+              onClick={() => navigate('/recipes')}
               className="btn"
               style={{ 
                 backgroundColor: 'white',
@@ -40,14 +42,15 @@ const Home: React.FC = () => {
                 padding: '0.75rem 2rem',
                 fontSize: '1.125rem',
                 fontWeight: '600',
-                textDecoration: 'none',
-                borderRadius: 'var(--radius-lg)'
+                border: 'none',
+                borderRadius: 'var(--radius-lg)',
+                cursor: 'pointer'
               }}
             >
               Browse Recipes
-            </a>
-            <a 
-              href="/categories" 
+            </button>
+            <button 
+              onClick={() => navigate('/categories')}
               className="btn"
               style={{ 
                 backgroundColor: 'transparent',
@@ -56,12 +59,12 @@ const Home: React.FC = () => {
                 padding: '0.75rem 2rem',
                 fontSize: '1.125rem',
                 fontWeight: '600',
-                textDecoration: 'none',
-                borderRadius: 'var(--radius-lg)'
+                borderRadius: 'var(--radius-lg)',
+                cursor: 'pointer'
               }}
             >
               View Categories
-            </a>
+            </button>
           </div>
         </div>
       </section>
@@ -113,13 +116,13 @@ const Home: React.FC = () => {
                   <p className="text-sm text-gray-500 mb-4">
                     {category.recipes_count || 0} recipes
                   </p>
-                  <a 
-                    href={`/categories/${category.slug}`}
+                  <button 
+                    onClick={() => navigate(`/categories/${category.slug}`)}
                     className="btn btn-primary"
-                    style={{ textDecoration: 'none' }}
+                    style={{ border: 'none', cursor: 'pointer', width: '100%' }}
                   >
                     View Recipes
-                  </a>
+                  </button>
                 </div>
               ))}
             </div>
@@ -153,7 +156,12 @@ const Home: React.FC = () => {
           ) : (
             <div className="grid sm-grid-cols-2 md-grid-cols-3" style={{ gap: '1.5rem' }}>
               {featuredRecipes.slice(0, 6).map((recipe: Recipe) => (
-                <div key={recipe.id} className="card" style={{ overflow: 'hidden' }}>
+                <div 
+                  key={recipe.id} 
+                  className="card" 
+                  onClick={() => navigate(`/recipes/${recipe.slug}`)}
+                  style={{ overflow: 'hidden', cursor: 'pointer' }}
+                >
                   <div 
                     style={{ 
                       height: '12rem', 
@@ -200,13 +208,13 @@ const Home: React.FC = () => {
                         {recipe.difficulty}
                       </span>
                     </div>
-                    <a 
-                      href={`/recipes/${recipe.slug}`}
+                    <button 
+                      onClick={() => navigate(`/recipes/${recipe.slug}`)}
                       className="btn btn-primary"
-                      style={{ textDecoration: 'none', width: '100%' }}
+                      style={{ border: 'none', cursor: 'pointer', width: '100%' }}
                     >
                       View Recipe
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}
