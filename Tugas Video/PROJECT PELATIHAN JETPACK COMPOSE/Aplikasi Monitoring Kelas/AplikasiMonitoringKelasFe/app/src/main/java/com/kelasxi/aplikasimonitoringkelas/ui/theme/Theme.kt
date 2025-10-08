@@ -11,33 +11,53 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+private val SchoolDarkColorScheme = darkColorScheme(
+    primary = SchoolBlue80,
+    secondary = SchoolTeal80,
+    tertiary = SchoolGreen80,
+    background = NeutralGray90,
+    surface = NeutralGray80,
+    onPrimary = NeutralGray10,
+    onSecondary = NeutralGray10,
+    onTertiary = NeutralGray10,
+    onBackground = NeutralGray10,
+    onSurface = NeutralGray10,
+    primaryContainer = SchoolBlue40,
+    secondaryContainer = SchoolTeal40,
+    onPrimaryContainer = NeutralGray10,
+    onSecondaryContainer = NeutralGray10
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+private val SchoolLightColorScheme = lightColorScheme(
+    primary = SchoolBlue40,
+    secondary = SchoolTeal40,
+    tertiary = SchoolGreen40,
+    background = NeutralGray10,
+    surface = androidx.compose.ui.graphics.Color.White,
+    onPrimary = androidx.compose.ui.graphics.Color.White,
+    onSecondary = androidx.compose.ui.graphics.Color.White,
+    onTertiary = androidx.compose.ui.graphics.Color.White,
+    onBackground = NeutralGray90,
+    onSurface = NeutralGray90,
+    primaryContainer = SchoolBlue80,
+    secondaryContainer = SchoolTeal80,
+    onPrimaryContainer = NeutralGray90,
+    onSecondaryContainer = NeutralGray90,
+    surfaceVariant = NeutralGray20,
+    onSurfaceVariant = NeutralGray80,
+    outline = NeutralGray80,
+    outlineVariant = SchoolTeal80
 )
+
+// Legacy schemes for backward compatibility
+private val DarkColorScheme = SchoolDarkColorScheme
+private val LightColorScheme = SchoolLightColorScheme
 
 @Composable
 fun AplikasiMonitoringKelasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Disable dynamic color untuk konsistensi dengan branding sekolah
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -46,8 +66,8 @@ fun AplikasiMonitoringKelasTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        darkTheme -> SchoolDarkColorScheme
+        else -> SchoolLightColorScheme
     }
 
     MaterialTheme(
