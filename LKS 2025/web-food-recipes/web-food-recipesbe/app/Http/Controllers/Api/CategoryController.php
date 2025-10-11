@@ -15,9 +15,9 @@ class CategoryController extends Controller
      */
     public function index(): JsonResponse
     {
-        $categories = Category::with(['recipes' => function ($query) {
-            $query->take(6); // Limit recipes for performance
-        }])->get();
+        $categories = Category::withCount('recipes')
+            ->orderBy('name')
+            ->get();
 
         return response()->json([
             'success' => true,

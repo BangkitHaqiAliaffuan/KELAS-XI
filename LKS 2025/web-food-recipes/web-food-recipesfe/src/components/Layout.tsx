@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <div style={{ minHeight: '100vh' }} className="bg-gray-50">
       {/* Header/Navbar */}
@@ -20,12 +32,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
             {/* Navigation */}
             <nav className="flex" style={{ gap: '2rem' }}>
-              <a
-                href="/"
+              <button
+                onClick={() => navigate('/')}
                 className="text-gray-700"
                 style={{ 
                   padding: '0.5rem 0.75rem', 
-                  textDecoration: 'none',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '500',
                   transition: 'color 0.2s ease-in-out'
@@ -34,13 +48,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Home
-              </a>
-              <a
-                href="/categories"
+              </button>
+              <button
+                onClick={() => navigate('/categories')}
                 className="text-gray-700"
                 style={{ 
                   padding: '0.5rem 0.75rem', 
-                  textDecoration: 'none',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '500',
                   transition: 'color 0.2s ease-in-out'
@@ -49,13 +65,15 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Categories
-              </a>
-              <a
-                href="/recipes"
+              </button>
+              <button
+                onClick={() => navigate('/recipes')}
                 className="text-gray-700"
                 style={{ 
                   padding: '0.5rem 0.75rem', 
-                  textDecoration: 'none',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
                   fontSize: '0.875rem',
                   fontWeight: '500',
                   transition: 'color 0.2s ease-in-out'
@@ -64,26 +82,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--color-gray-700)'}
               >
                 Recipes
-              </a>
+              </button>
             </nav>
 
             {/* Search */}
             <div className="flex items-center">
-              <div style={{ position: 'relative' }}>
+              <form onSubmit={handleSearchSubmit} style={{ position: 'relative' }}>
                 <input
                   type="text"
                   placeholder="Search recipes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="input"
                   style={{ width: '16rem', paddingRight: '3rem' }}
                 />
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '50%', 
-                  right: '0.75rem', 
-                  transform: 'translateY(-50%)',
-                  display: 'flex',
-                  alignItems: 'center'
-                }}>
+                <button
+                  type="submit"
+                  style={{ 
+                    position: 'absolute', 
+                    top: '50%', 
+                    right: '0.75rem', 
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0.25rem'
+                  }}
+                >
                   <svg
                     style={{ width: '1.25rem', height: '1.25rem', color: 'var(--color-gray-400)' }}
                     fill="none"
@@ -97,8 +124,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                     />
                   </svg>
-                </div>
-              </div>
+                </button>
+              </form>
             </div>
           </div>
         </div>
