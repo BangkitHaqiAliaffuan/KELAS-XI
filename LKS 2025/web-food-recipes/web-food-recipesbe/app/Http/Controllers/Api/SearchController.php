@@ -25,7 +25,7 @@ class SearchController extends Controller
             ], 400);
         }
 
-        $recipes = Recipe::with(['category', 'recipeAuthor'])
+        $recipes = Recipe::with(['category', 'recipeAuthor', 'recipePhotos'])
             ->search($query)
             ->paginate($request->get('per_page', 12));
 

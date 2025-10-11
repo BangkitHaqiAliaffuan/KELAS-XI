@@ -30,6 +30,15 @@ class RecipeResource extends JsonResource
             'recipe_author' => new RecipeAuthorResource($this->whenLoaded('recipeAuthor')),
             'ingredients' => RecipeIngredientResource::collection($this->whenLoaded('recipeIngredients')),
             'photos' => RecipePhotoResource::collection($this->whenLoaded('recipePhotos')),
+            'recipe_photos' => $this->whenLoaded('recipePhotos', function() {
+                return $this->recipePhotos->map(function($photo) {
+                    return [
+                        'photo_url' => $photo->photo_path,
+                        'alt_text' => $photo->alt_text,
+                        'order' => $photo->order,
+                    ];
+                });
+            }),
             'tutorials' => RecipeTutorialResource::collection($this->whenLoaded('recipeTutorials')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

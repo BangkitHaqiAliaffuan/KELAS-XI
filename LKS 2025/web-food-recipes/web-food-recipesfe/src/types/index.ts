@@ -67,6 +67,7 @@ export interface Recipe extends BaseEntity {
   recipe_author?: RecipeAuthor;
   ingredients?: RecipeIngredient[];
   photos?: RecipePhoto[];
+  recipe_photos?: Array<{ photo_url: string; alt_text?: string; order?: number }>;
   tutorials?: RecipeTutorial[];
 }
 
