@@ -2,55 +2,148 @@ package com.trashbin.app.ui.maps
 
 import android.app.Activity
 import android.content.Intent
-import android.location.Geocoder
 import android.os.Bundle
-import android.view.View
+import android.text.Editable
+import android.text.TextWatcher
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.*
-import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.widget.AutocompleteSupportFragment
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.PlacesClient
+import com.tomtom.sdk.common.CommonDependencyRegistry
+import com.tomtom.sdk.common.configuration.MapConfiguration
+import com.tomtom.sdk.map.display.MapOptions
+import com.tomtom.sdk.map.display.TomTomMap
+import com.tomtom.sdk.map.display.gesture.OnMapClickListener
+import com.tomtom.sdk.map.display.markers.Marker
+import com.tomtom.sdk.map.display.markers.MarkerOptions
+import com.tomtom.sdk.search.SearchDependencyRegistry
+import com.tomtom.sdk.search.SearchOptions
+import com.tomtom.sdk.search.SearchQuery
+import com.tomtom.sdk.search.SearchService
+import com.tomtom.sdk.geocoding.GeocodingService
+import com.tomtom.sdk.geocoding.GeocodingDependencyRegistry
+import com.tomtom.sdk.geocoding.data.GeocodingQuery
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textview.MaterialTextView
+import com.tomtom.sdk.common.data.Position
 import com.trashbin.app.R
 import com.trashbin.app.databinding.ActivityMapPickerBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 
-class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
+class MapPickerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMapPickerBinding
-    private lateinit var mMap: GoogleMap
-    private lateinit var placesClient: PlacesClient
-    private var selectedLatLng: LatLng? = null
+    private lateinit var tomTomMap: TomTomMap
+    private lateinit var searchService: SearchService
+    private lateinit var geocodingService: GeocodingService
+    private var selectedPosition: Position? = null
     private var selectedAddress: String? = null
+    private var marker: Marker? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapPickerBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize Places SDK
-        if (!Places.isInitialized()) {
-            val apiKey = getString(R.string.google_maps_api_key)
-            Places.initialize(applicationContext, apiKey)
-        }
-        placesClient = Places.createClient(this)
+        // Initialize TomTom Services
+        val mapConfiguration = MapConfiguration(
+            apiKey = getString(R.string.tomtom_api_key),
+            context = applicationContext
+        )
+        
+        val mapOptions = MapOptions(
+            configuration = mapConfiguration,
+            view = binding.tomtomMap
+        )
+        
+        // Initialize TomTom map
+        val map = CommonDependencyRegistry.createMapDisplay().create(mapOptions)
+        tomTomMap = map
+        
+        // Initialize services
+        searchService = SearchDependencyRegistry.createSearchService(
+            context = applicationContext,
+            apiKey = getString(R.string.tomtom_api_key)
+        )
+        
+        geocodingService = GeocodingDependencyRegistry.createGeocodingService(
+            context = applicationContext,
+            apiKey = getString(R.string.tomtom_api_key)
+        )
 
-        setupMapFragment()
         setupUI()
+        setupInitialMap()
     }
 
-    private fun setupMapFragment() {
-        val mapFragment = supportFragmentManager
-            .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
+    private fun setupInitialMap() {
+        // Set initial position to Jakarta
+        val jakartaPosition = Position(latitude = -6.2088, longitude = 106.8456)
+        tomTomMap.setCameraPosition(jakartaPosition, zoom = 15.0)
+        
+        // Add initial marker
+        addMarkerAtPosition(jakartaPosition, "Pilih Lokasi")
+        selectedPosition = jakartaPosition
+        
+        // Update address for initial position
+        updateAddressFromPosition(jakartaPosition)
+        
+        // Set map click listener to update position when user clicks on map
+        tomTomMap.addOnMapClickListener(object : OnMapClickListener {
+            override fun onMapClick(position: Position) {
+                addMarkerAtPosition(position, "Lokasi Anda")
+                selectedPosition = position
+                updateAddressFromPosition(position)
+            }
+        })
+    }
+
+    private fun addMarkerAtPosition(position: Position, title: String) {
+        marker?.let { tomTomMap.removeMarker(it) }
+        val markerOptions = MarkerOptions(
+            position = position,
+            title = title
+        )
+        marker = tomTomMap.addMarker(markerOptions)
+    }
+
+    private fun updateAddressFromPosition(position: Position) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val geocodingQuery = GeocodingQuery(
+                    position = position,
+                    language = Locale.getDefault().language
+                )
+                
+                val results = geocodingService.geocode(geocodingQuery)
+                if (results.isNotEmpty()) {
+                    val address = results.first().address
+                    selectedAddress = buildAddressString(address)
+                    
+                    withContext(Dispatchers.Main) {
+                        binding.tvAddress.text = selectedAddress
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun buildAddressString(address: com.tomtom.sdk.geocoding.data.Address): String {
+        val addressParts = mutableListOf<String>()
+        
+        address.street?.let { addressParts.add(it) }
+        address.city?.let { addressParts.add(it) }
+        address.country?.let { addressParts.add(it) }
+        
+        return addressParts.joinToString(", ")
     }
 
     private fun setupUI() {
-        // Set up search bar
-        setupPlacesAutocomplete()
+        // Set up search functionality
+        setupSearchFunctionality()
 
         // Current location button
         binding.fabCurrentLocation.setOnClickListener {
@@ -59,10 +152,10 @@ class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
 
         // Confirm button
         binding.btnConfirm.setOnClickListener {
-            if (selectedLatLng != null && !selectedAddress.isNullOrEmpty()) {
+            if (selectedPosition != null && !selectedAddress.isNullOrEmpty()) {
                 val resultIntent = Intent().apply {
-                    putExtra("lat", selectedLatLng?.latitude)
-                    putExtra("lng", selectedLatLng?.longitude)
+                    putExtra("lat", selectedPosition?.latitude)
+                    putExtra("lng", selectedPosition?.longitude)
                     putExtra("address", selectedAddress)
                 }
                 setResult(Activity.RESULT_OK, resultIntent)
@@ -76,104 +169,70 @@ class MapPickerActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    private fun setupPlacesAutocomplete() {
-        val autocompleteFragment = supportFragmentManager
-            .findFragmentById(R.id.autocomplete_fragment) as AutocompleteSupportFragment
+    private fun setupSearchFunctionality() {
+        val searchInput = binding.searchInput
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
-        autocompleteFragment.setPlaceFields(listOf(Place.Field.ID, Place.Field.NAME, Place.Field.LAT_LNG, Place.Field.ADDRESS))
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                // Handle text change if needed
+            }
 
-        autocompleteFragment.setOnPlaceSelectedListener(object : AutocompleteSupportFragment.OnPlaceSelectedListener {
-            override fun onPlaceSelected(place: Place) {
-                selectedLatLng = place.latLng
-                selectedAddress = place.address
-
-                // Move camera to selected location
-                selectedLatLng?.let { latLng ->
-                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
-                    
-                    // Update address text
-                    binding.tvAddress.text = selectedAddress
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString()
+                if (query.length > 3) {  // Start search after 3 characters
+                    performSearch(query)
                 }
             }
-
-            override fun onError(status: com.google.android.gms.common.api.Status) {
-                // Handle error
-            }
         })
     }
 
-    override fun onMapReady(googleMap: GoogleMap) {
-        mMap = googleMap
-
-        // Add a marker in the initial position and move the camera
-        val jakarta = LatLng(-6.2088, 106.8456) // Default to Jakarta
-        mMap.addMarker(MarkerOptions().position(jakarta).title("Pilih Lokasi"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(jakarta))
-        mMap.uiSettings.isZoomControlsEnabled = true
-        mMap.uiSettings.isMyLocationButtonEnabled = true
-
-        // Add draggable marker
-        var marker = mMap.addMarker(
-            MarkerOptions()
-                .position(jakarta)
-                .draggable(true)
-                .title("Lokasi Anda")
-        )
-
-        selectedLatLng = jakarta
-
-        // Update address initially
-        updateAddress(jakarta)
-
-        // Add camera idle listener to update address when map moves
-        mMap.setOnCameraIdleListener {
-            val center = mMap.cameraPosition.target
-            marker?.remove()
-            marker = mMap.addMarker(
-                MarkerOptions()
-                    .position(center)
-                    .draggable(true)
-                    .title("Lokasi Anda")
-            )
-            updateAddress(center)
-            selectedLatLng = center
-        }
-
-        // Add marker drag listener
-        mMap.setOnMarkerDragListener(object : GoogleMap.OnMarkerDragListener {
-            override fun onMarkerDragStart(marker: Marker) {}
-
-            override fun onMarkerDrag(marker: Marker) {}
-
-            override fun onMarkerDragEnd(marker: Marker) {
-                val position = marker.position
-                updateAddress(position)
-                selectedLatLng = position
-            }
-        })
-    }
-
-    private fun updateAddress(latLng: LatLng) {
-        Thread {
+    private fun performSearch(query: String) {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val geocoder = Geocoder(this, Locale.getDefault())
-                val addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
-                if (addresses != null && addresses.isNotEmpty()) {
-                    runOnUiThread {
-                        selectedAddress = addresses[0].getAddressLine(0)
+                val searchQuery = SearchQuery(query)
+                val searchOptions = SearchOptions(
+                    position = tomTomMap.cameraPosition.position,
+                    language = Locale.getDefault().language
+                )
+                
+                val results = searchService.search(searchQuery, searchOptions)
+                if (results.isNotEmpty()) {
+                    val firstResult = results.first()
+                    val position = firstResult.position
+                    
+                    withContext(Dispatchers.Main) {
+                        // Move camera to found location
+                        tomTomMap.setCameraPosition(position, zoom = 15.0)
+                        
+                        // Add marker
+                        addMarkerAtPosition(position, firstResult.address?.freeformAddress ?: "Lokasi")
+                        
+                        // Update selected position and address
+                        selectedPosition = position
+                        selectedAddress = firstResult.address?.freeformAddress
                         binding.tvAddress.text = selectedAddress
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        }.start()
+        }
     }
 
     private fun getCurrentLocation() {
         // This would require location permissions and implementation
         // For now, we'll just center on a default location
-        val location = LatLng(-6.2088, 106.8456) // Jakarta
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location, 15f))
+        val jakartaPosition = Position(latitude = -6.2088, longitude = 106.8456)
+        tomTomMap.setCameraPosition(jakartaPosition, zoom = 15.0)
+        addMarkerAtPosition(jakartaPosition, "Lokasi Anda")
+        selectedPosition = jakartaPosition
+        updateAddressFromPosition(jakartaPosition)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        marker?.let { tomTomMap.removeMarker(it) }
+        tomTomMap.destroy()
     }
 }

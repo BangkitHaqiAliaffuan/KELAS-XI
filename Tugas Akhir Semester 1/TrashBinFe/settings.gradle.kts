@@ -16,6 +16,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // TomTom repository dihilangkan karena memerlukan autentikasi khusus
+        // Menggunakan Google Maps SDK sebagai gantinya
     }
 }
 

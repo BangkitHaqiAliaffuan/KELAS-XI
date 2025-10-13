@@ -4,18 +4,26 @@ plugins {
     id("kotlin-kapt")
 }
 
+// TomTom API Key configuration
+val tomtomApiKey: String by project
+
 android {
     namespace = "com.trashbin.app"
     compileSdk = 34
 
     defaultConfig {
         applicationId = "com.trashbin.app"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // TomTom Maps SDK requirements
+        ndk {
+            abiFilters += listOf("arm64-v8a", "x86_64")
+        }
     }
 
     buildTypes {
@@ -26,6 +34,13 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+    
+    buildTypes.configureEach {
+        // Gunakan Google Maps API Key sebagai gantinya
+        buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${project.findProperty("googleMapsApiKey") ?: ""}\"")
+        // Simpan TomTom API key juga jika masih diperlukan untuk implementasi manual
+        buildConfigField("String", "TOMTOM_API_KEY", "\"$tomtomApiKey\"")
     }
 
     compileOptions {
@@ -70,11 +85,18 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     kapt("com.github.bumptech.glide:compiler:4.16.0")
 
-    // Google Maps and Places
+    // Alternative: Menggunakan Google Maps SDK untuk menghindari masalah autentikasi TomTom
+    // Google Maps SDK lebih mudah diimplementasikan dan tidak memerlukan repository khusus
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
-    implementation("com.google.android.libraries.places:places:3.2.0")
+    implementation("com.google.android.libraries.places:places:3.3.0")
+    
+    // Untuk Places API dan Geocoding
+    implementation("com.google.maps.android:android-maps-utils:3.4.0")
+    
+    // ATAU jika tetap ingin menggunakan TomTom, gunakan implementasi manual tanpa SDK
 
+    // Standard Android Dependencies
     // Firebase
     implementation("com.google.firebase:firebase-messaging:23.4.0")
     implementation("com.google.firebase:firebase-analytics:21.5.0")

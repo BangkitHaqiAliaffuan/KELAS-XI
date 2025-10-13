@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">TrashBin</string>
-    <string name="google_maps_api_key">YOUR_GOOGLE_MAPS_API_KEY_HERE</string>
+    <string name="tomtom_api_key">l8waPMgsQ2VEEOKMeEOJPi8RG7Ri4kAf</string>
 </resources>
