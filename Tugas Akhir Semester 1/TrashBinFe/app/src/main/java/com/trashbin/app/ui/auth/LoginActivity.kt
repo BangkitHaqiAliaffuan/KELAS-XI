@@ -258,7 +258,9 @@ class LoginActivity : AppCompatActivity() {
                     btnLogin.isEnabled = true
                     progressBar.visibility = View.GONE
                     Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, MainActivity::class.java))
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                     finish()
                 }
                 is com.trashbin.app.data.repository.Result.Error -> {
@@ -266,6 +268,28 @@ class LoginActivity : AppCompatActivity() {
                     progressBar.visibility = View.GONE
                     showErrorMessage(result.message)
                 }
+            }
+        }
+    }
+
+    private fun setupObservers() {
+        viewModel.isLoading.observe(this) { isLoading ->
+            progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+            btnLogin.isEnabled = !isLoading
+        }
+
+        viewModel.loginResult.observe(this) { result ->
+            if (result.isSuccess) {
+                // Login berhasil, redirect ke MainActivity
+                showSuccessMessage("Login successful!") {
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
+                    finish()
+                }
+            } else {
+                // Login gagal, tampilkan error
+                showErrorMessage(result.exceptionOrNull()?.message ?: "Login failed")
             }
         }
     }
@@ -305,6 +329,18 @@ class LoginActivity : AppCompatActivity() {
         }
 
         viewModel.login(email, password)
+    }
+
+    private fun showSuccessMessage(message: String, onSuccess: () -> Unit) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Login Successful")
+            .setMessage(message)
+            .setPositiveButton("OK") { dialog, _ -> 
+                dialog.dismiss()
+                onSuccess()
+            }
+            .setCancelable(false)
+            .show()
     }
 
     private fun showErrorMessage(message: String) {

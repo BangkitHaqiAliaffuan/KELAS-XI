@@ -5,7 +5,6 @@ plugins {
 }
 
 // TomTom API Key configuration
-val tomtomApiKey: String by project
 
 android {
     namespace = "com.trashbin.app"
@@ -40,7 +39,7 @@ android {
         // Gunakan Google Maps API Key sebagai gantinya
         buildConfigField("String", "GOOGLE_MAPS_API_KEY", "\"${project.findProperty("googleMapsApiKey") ?: ""}\"")
         // Simpan TomTom API key juga jika masih diperlukan untuk implementasi manual
-        buildConfigField("String", "TOMTOM_API_KEY", "\"$tomtomApiKey\"")
+
     }
 
     compileOptions {

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.trashbin.app.data.api.RetrofitClient
 import com.trashbin.app.data.api.TokenManager
+import com.trashbin.app.data.model.LoginResponse
 import com.trashbin.app.data.model.User
 import com.trashbin.app.data.repository.AuthRepository
 import com.trashbin.app.data.repository.Result
@@ -17,6 +18,12 @@ class AuthViewModel : ViewModel() {
     private val _loginState = MutableLiveData<Result<*>>()
     val loginState: LiveData<Result<*>> = _loginState
 
+    private val _loginResult = MutableLiveData<kotlin.Result<LoginResponse>>()
+    val loginResult: LiveData<kotlin.Result<LoginResponse>> = _loginResult
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+
     private val _registerState = MutableLiveData<Result<*>>()
     val registerState: LiveData<Result<*>> = _registerState
 
@@ -25,9 +32,29 @@ class AuthViewModel : ViewModel() {
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
+            _isLoading.value = true
             _loginState.value = Result.Loading
-            val result = repository.login(email, password)
-            _loginState.value = result
+            
+            try {
+                val result = repository.login(email, password)
+                _isLoading.value = false
+                _loginState.value = result
+                
+                when (result) {
+                    is Result.Success -> {
+                        _loginResult.value = kotlin.Result.success(result.data as LoginResponse)
+                    }
+                    is Result.Error -> {
+                        _loginResult.value = kotlin.Result.failure(Exception(result.message))
+                    }
+                    else -> {
+                        _loginResult.value = kotlin.Result.failure(Exception("Unknown error"))
+                    }
+                }
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _loginResult.value = kotlin.Result.failure(e)
+            }
         }
     }
 

@@ -336,7 +336,9 @@ class RegisterActivity : AppCompatActivity() {
                     Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
                     // After successful registration, user is already authenticated
                     // Redirect to main activity instead of login
-                    startActivity(Intent(this, MainActivity::class.java))
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    startActivity(intent)
                     finish()
                 }
                 is com.trashbin.app.data.repository.Result.Error -> {

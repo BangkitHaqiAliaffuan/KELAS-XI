@@ -7,6 +7,8 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -34,14 +36,18 @@ class MainActivity : AppCompatActivity() {
         createLayout()
         setupClickListeners()
         
-        // Check session on app start
-        checkSession()
-        
         // Check required permissions
         checkPermissions()
         
         // Handle deep links
         handleDeepLink()
+        
+        // Delay session check to ensure proper initialization
+        // This prevents potential race condition where token is not yet available 
+        // when MainActivity is launched after login/registration
+        Handler(Looper.getMainLooper()).postDelayed({
+            checkSession()
+        }, 100) // 100ms delay to ensure token is properly loaded
     }
     
     private fun createLayout() {
