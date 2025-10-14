@@ -10,7 +10,7 @@ import com.trashbin.app.data.model.PickupItemRequest
 import com.trashbin.app.data.model.PickupRequest
 import com.trashbin.app.data.model.PickupResponse
 import com.trashbin.app.data.model.WasteCategory
-import com.trashbin.app.utils.Result
+import com.trashbin.app.data.repository.Result
 import kotlinx.coroutines.launch
 
 class PickupViewModel : ViewModel() {
@@ -61,14 +61,25 @@ class PickupViewModel : ViewModel() {
         viewModelScope.launch {
             _createState.value = Result.Loading
             try {
-                val request = PickupRequest(address, lat, lng, date, selectedItems.value!!, notes)
+                val items = selectedItems.value ?: mutableListOf()
+                android.util.Log.d("PickupViewModel", "Creating pickup with ${items.size} items")
+                android.util.Log.d("PickupViewModel", "Address: $address, Lat: $lat, Lng: $lng, Date: $date")
+                android.util.Log.d("PickupViewModel", "Items: $items")
+                
+                val request = PickupRequest(address, lat, lng, date, items, notes)
                 val response = apiService.createPickup(request)
+                
+                android.util.Log.d("PickupViewModel", "Response: ${response.code()}")
+                android.util.Log.d("PickupViewModel", "Response body: ${response.body()}")
+                
                 if (response.isSuccessful && response.body()?.success == true) {
                     _createState.value = Result.Success(response.body()!!.data!!)
                 } else {
-                    _createState.value = Result.Error(response.message() ?: "Error creating pickup")
+                    val errorMessage = response.body()?.message ?: response.message() ?: "Error creating pickup"
+                    _createState.value = Result.Error(errorMessage)
                 }
             } catch (e: Exception) {
+                android.util.Log.e("PickupViewModel", "Error creating pickup", e)
                 _createState.value = Result.Error(e.message ?: "Error")
             }
         }

@@ -18,4 +18,11 @@
     <color name="blue_700">#1976D2</color>
     <color name="gray_200">#EEEEEE</color>
     <color name="gray_500">#9E9E9E</color>
+    <!-- Additional colors needed for material design -->
+    <color name="material_dynamic_neutral0">#FFFBFE</color>
+    <color name="design_default_color_primary">#FF6200EE</color>
+    <color name="design_default_color_secondary">#FF03DAC6</color>
+    <color name="design_default_color_on_surface">#FF000000</color>
+    <color name="design_default_color_on_primary">#FFFFFFFF</color>
+    <color name="design_default_color_error">#B00020</color>
 </resources>

@@ -1,35 +1,44 @@
-package com.trashbin.app.ui.adapters
+package com.trashbin.app.ui
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
 import com.trashbin.app.R
 import com.trashbin.app.data.model.Order
 import com.trashbin.app.utils.CurrencyHelper
-import com.trashbin.app.utils.DateHelper
 
 class OrderAdapter(
-    private val onItemClick: (Order) -> Unit
-) : ListAdapter<Order, OrderAdapter.ViewHolder>(DiffCallback()) {
+    private val orders: List<Order>,
+    private val onOrderAction: (Order, String) -> Unit
+) : RecyclerView.Adapter<OrderAdapter.OrderViewHolder>() {
 
-    class DiffCallback : DiffUtil.ItemCallback<Order>() {
-        override fun areItemsTheSame(oldItem: Order, newItem: Order): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(oldItem: Order, newItem: Order): Boolean {
-            return oldItem == newItem
-        }
+    class OrderViewHolder(itemView: View,
+        private val ivListingImage: ImageView,
+        private val tvListingTitle: TextView,
+        private val tvListingCategory: TextView,
+        private val tvOrderQuantity: TextView,
+        private val tvPricePerUnit: TextView,
+        private val tvTotalPrice: TextView,
+        private val tvStatus: TextView,
+        private val tvSellerName: TextView,
+        private val tvOrderDate: TextView
+    ) : RecyclerView.ViewHolder(itemView) {
+        val listingImage: ImageView = ivListingImage
+        val listingTitle: TextView = tvListingTitle
+        val listingCategory: TextView = tvListingCategory
+        val orderQuantity: TextView = tvOrderQuantity
+        val pricePerUnit: TextView = tvPricePerUnit
+        val totalPrice: TextView = tvTotalPrice
+        val status: TextView = tvStatus
+        val sellerName: TextView = tvSellerName
+        val orderDate: TextView = tvOrderDate
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): OrderViewHolder {
         val cardView = MaterialCardView(parent.context).apply {
             val margin = (4 * parent.context.resources.displayMetrics.density).toInt()
             setCardBackgroundColor(parent.context.resources.getColor(R.color.material_dynamic_neutral0))
@@ -62,7 +71,7 @@ class OrderAdapter(
         }
 
         val imageView = ImageView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be iv_listing_image
             layoutParams = LinearLayout.LayoutParams(
                 (60 * parent.context.resources.displayMetrics.density).toInt(),
                 (60 * parent.context.resources.displayMetrics.density).toInt()
@@ -80,7 +89,7 @@ class OrderAdapter(
         }
 
         val title = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_listing_title
             textSize = 16f
             setTypeface(null, android.graphics.Typeface.BOLD)
             maxLines = 1
@@ -88,7 +97,7 @@ class OrderAdapter(
         }
 
         val category = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_listing_category
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -100,7 +109,7 @@ class OrderAdapter(
         }
 
         val quantity = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_order_quantity
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -129,13 +138,13 @@ class OrderAdapter(
         }
 
         val pricePerUnit = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_price_per_unit
             setTextColor(parent.context.resources.getColor(R.color.design_default_color_secondary))
             textSize = 14f
         }
 
         val totalPrice = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_total_price
             setTypeface(null, android.graphics.Typeface.BOLD)
             setTextColor(parent.context.resources.getColor(R.color.design_default_color_primary))
             textSize = 16f
@@ -156,7 +165,7 @@ class OrderAdapter(
         }
 
         val status = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_status
             // setBackgroundResource(R.drawable.bg_status_badge) // Assuming this drawable exists
             setPadding(
                 (8 * parent.context.resources.displayMetrics.density).toInt(),
@@ -169,13 +178,12 @@ class OrderAdapter(
         }
 
         val sellerName = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_seller_name
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 setMargins((8 * parent.context.resources.displayMetrics.density).toInt(), 0, 0, 0)
                 gravity = android.view.Gravity.END
             }
-            // Use fallback color if design_default_color_secondary is not available
-            setTextColor(parent.context.resources.getColor(android.R.color.darker_gray))
+            setTextColor(parent.context.resources.getColor(R.color.design_default_color_secondary))
             textSize = 12f
         }
 
@@ -184,15 +192,14 @@ class OrderAdapter(
 
         // Order Date
         val orderDate = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_order_date
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 setMargins(0, (8 * parent.context.resources.displayMetrics.density).toInt(), 0, 0)
             }
-            // Use fallback color if design_default_color_secondary is not available
-            setTextColor(parent.context.resources.getColor(android.R.color.darker_gray))
+            setTextColor(parent.context.resources.getColor(R.color.design_default_color_secondary))
             textSize = 12f
         }
 
@@ -203,91 +210,27 @@ class OrderAdapter(
         
         cardView.addView(mainLayout)
         
-        return ViewHolder(
-            cardView,
-            imageView,
-            title,
-            category,
-            quantity,
-            pricePerUnit,
-            totalPrice,
-            status,
-            sellerName,
-            orderDate
-        )
+        return OrderViewHolder(cardView, imageView, title, category, quantity, pricePerUnit, totalPrice, status, sellerName, orderDate)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
+    override fun onBindViewHolder(holder: OrderViewHolder, position: Int) {
+        val order = orders[position]
+        holder.listingTitle.text = order.listing.title
+        holder.listingCategory.text = order.listing.category.name
+        holder.orderQuantity.text = "Jumlah: ${order.quantity}"
+        holder.pricePerUnit.text = CurrencyHelper.formatRupiah(order.listing.pricePerUnit)
+        holder.totalPrice.text = CurrencyHelper.formatRupiah(order.totalPrice)
+        holder.status.text = order.status
+        holder.sellerName.text = "Oleh: ${order.seller.name}"
+        holder.orderDate.text = order.createdAt // Using createdAt as order date
+        
+        // Set image if available
+        // if (order.listingImage != null) {
+        //     holder.listingImage.setImageResource(order.listingImage)
+        // } else {
+        //     holder.listingImage.setImageResource(R.drawable.default_thumbnail) // Use a default image
+        // }
     }
 
-    inner class ViewHolder(
-        itemView: View,
-        private val ivListingImage: ImageView,
-        private val tvListingTitle: TextView,
-        private val tvListingCategory: TextView,
-        private val tvOrderQuantity: TextView,
-        private val tvPricePerUnit: TextView,
-        private val tvTotalPrice: TextView,
-        private val tvStatus: TextView,
-        private val tvSellerName: TextView,
-        private val tvOrderDate: TextView
-    ) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(order: Order) {
-            // Load first image of the listing
-            if (order.listing.photos.isNotEmpty()) {
-                Glide.with(itemView.context)
-                    .load(order.listing.photos[0])
-                    .placeholder(R.drawable.ic_image_placeholder)
-                    .into(ivListingImage)
-            } else {
-                ivListingImage.setImageResource(R.drawable.ic_image_placeholder)
-            }
-
-            tvListingTitle.text = order.listing.title
-            tvListingCategory.text = order.listing.category.name
-            tvOrderQuantity.text = "Jumlah: ${order.quantity.toInt()}"
-            tvPricePerUnit.text = "Rp ${CurrencyHelper.formatRupiah(order.listing.pricePerUnit)}/unit"
-            tvTotalPrice.text = CurrencyHelper.formatRupiah(order.totalPrice)
-
-            // Set status badge
-            when (order.status) {
-                "pending" -> {
-                    tvStatus.text = "Menunggu"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.orange_500))
-                }
-                "confirmed" -> {
-                    tvStatus.text = "Dikonfirmasi"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.blue_500))
-                }
-                "shipping" -> {
-                    tvStatus.text = "Dikirim"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.blue_500))
-                }
-                "completed" -> {
-                    tvStatus.text = "Selesai"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.green_500))
-                }
-                "cancelled" -> {
-                    tvStatus.text = "Dibatalkan"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.red_500))
-                }
-                else -> {
-                    tvStatus.text = order.status
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.gray_500))
-                }
-            }
-
-            // Show seller name
-            tvSellerName.text = "Oleh: ${order.seller.name}"
-
-            // Format date
-            tvOrderDate.text = "Dipesan: ${DateHelper.formatDate(order.createdAt)}"
-
-            itemView.setOnClickListener {
-                onItemClick(order)
-            }
-        }
-    }
+    override fun getItemCount(): Int = orders.size
 }

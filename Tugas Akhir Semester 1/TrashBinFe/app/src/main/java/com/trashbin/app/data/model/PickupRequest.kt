@@ -3,9 +3,9 @@ package com.trashbin.app.data.model
 import com.google.gson.annotations.SerializedName
 
 data class PickupRequest(
-    @SerializedName("address") val address: String,
-    @SerializedName("lat") val lat: Double,
-    @SerializedName("lng") val lng: Double,
+    @SerializedName("pickup_address") val address: String,
+    @SerializedName("pickup_lat") val lat: Double,
+    @SerializedName("pickup_lng") val lng: Double,
     @SerializedName("scheduled_date") val scheduledDate: String,
     @SerializedName("items") val items: List<PickupItemRequest>,
     @SerializedName("notes") val notes: String?

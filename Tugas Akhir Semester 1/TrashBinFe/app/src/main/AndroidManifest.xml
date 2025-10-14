@@ -59,6 +59,28 @@
         <activity
             android:name=".ui.maps.DriverStatusActivity"
             android:exported="false" />
+            
+        <activity
+            android:name=".ui.marketplace.CreateListingActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <activity
+            android:name=".ui.marketplace.ListingDetailActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name=".ui.marketplace.MarketplaceActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name=".ui.pickup.PickupRequestActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+            
+        <activity
+            android:name=".ui.profile.ProfileActivity"
+            android:exported="false" />
 
 
 

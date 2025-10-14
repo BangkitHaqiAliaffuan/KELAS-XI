@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -18,25 +20,49 @@ class CategoryBottomSheet(
     private val onCategorySelected: (WasteCategory) -> Unit
 ) : BottomSheetDialogFragment() {
 
+    private lateinit var mainLayout: LinearLayout
+    private lateinit var titleText: TextView
+    private lateinit var recyclerView: RecyclerView
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.bottom_sheet_category, container, false)
-    }
+    ): View {
+        mainLayout = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(
+                (16 * resources.displayMetrics.density).toInt(),
+                (16 * resources.displayMetrics.density).toInt(),
+                (16 * resources.displayMetrics.density).toInt(),
+                (16 * resources.displayMetrics.density).toInt()
+            )
+        }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+        titleText = TextView(requireContext()).apply {
+            text = "Pilih Kategori Sampah"
+            textSize = 18f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 0, 0, (16 * resources.displayMetrics.density).toInt())
+        }
+        mainLayout.addView(titleText)
 
-        val recyclerView: RecyclerView = view.findViewById(R.id.rv_categories)
+        recyclerView = RecyclerView(requireContext()).apply {
+            id = View.generateViewId()
+            layoutManager = LinearLayoutManager(requireContext())
+            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+        }
+        mainLayout.addView(recyclerView)
+
         val adapter = CategoryAdapter(categories) { category ->
             onCategorySelected(category)
             dismiss()
         }
         
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        return mainLayout
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {

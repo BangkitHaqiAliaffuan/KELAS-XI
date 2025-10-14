@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // requesting user
             $table->foreignId('collector_id')->nullable()->constrained('users')->onDelete('set null'); // assigned collector
             $table->text('pickup_address'); // pickup address
-            $table->decimal('pickup_lat', 10, 8); // pickup latitude
-            $table->decimal('pickup_lng', 11, 8); // pickup longitude
+            $table->decimal('pickup_lat', 10, 8)->nullable(); // pickup latitude
+            $table->decimal('pickup_lng', 11, 8)->nullable(); // pickup longitude
             $table->dateTime('scheduled_date'); // scheduled pickup date/time
             $table->enum('status', ['pending', 'accepted', 'on_the_way', 'picked_up', 'completed', 'cancelled'])->default('pending'); // status
             $table->decimal('total_weight', 8, 2)->nullable(); // total actual weight
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->integer('rating')->nullable(); // rating 1-5
             $table->text('review')->nullable(); // review text
             $table->timestamps();
-            
+
             // Indexes for performance
             $table->index(['pickup_lat', 'pickup_lng']);
             $table->index('status');

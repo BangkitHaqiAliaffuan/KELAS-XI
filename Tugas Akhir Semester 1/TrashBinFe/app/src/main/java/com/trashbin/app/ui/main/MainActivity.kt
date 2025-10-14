@@ -160,15 +160,15 @@ class MainActivity : AppCompatActivity() {
     
     private fun setupClickListeners() {
         btnPickup.setOnClickListener {
-            Toast.makeText(this, "Pickup feature coming soon", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, com.trashbin.app.ui.pickup.PickupRequestActivity::class.java))
         }
         
         btnMarketplace.setOnClickListener {
-            Toast.makeText(this, "Marketplace feature coming soon", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, com.trashbin.app.ui.marketplace.MarketplaceActivity::class.java))
         }
         
         btnProfile.setOnClickListener {
-            Toast.makeText(this, "Profile feature coming soon", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, com.trashbin.app.ui.profile.ProfileActivity::class.java))
         }
         
         btnLogout.setOnClickListener {

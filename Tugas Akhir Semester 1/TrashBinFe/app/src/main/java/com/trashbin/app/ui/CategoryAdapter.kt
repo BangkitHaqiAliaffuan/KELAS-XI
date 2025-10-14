@@ -1,4 +1,4 @@
-package com.trashbin.app.ui.adapters
+package com.trashbin.app.ui
 
 import android.view.View
 import android.view.ViewGroup
@@ -13,9 +13,14 @@ import com.trashbin.app.data.model.WasteCategory
 class CategoryAdapter(
     private val categories: List<WasteCategory>,
     private val onCategorySelected: (WasteCategory) -> Unit
-) : RecyclerView.Adapter<CategoryAdapter.ViewHolder>() {
+) : RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    class CategoryViewHolder(itemView: View, private val tvCategoryName: TextView, private val btnSelect: ImageButton) : RecyclerView.ViewHolder(itemView) {
+        val categoryName: TextView = tvCategoryName
+        val selectButton: ImageButton = btnSelect
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CategoryViewHolder {
         val cardView = MaterialCardView(parent.context).apply {
             val margin = (4 * parent.context.resources.displayMetrics.density).toInt()
             setCardBackgroundColor(parent.context.resources.getColor(R.color.material_dynamic_neutral0))
@@ -37,7 +42,7 @@ class CategoryAdapter(
         }
 
         val textView = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_category_name
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 gravity = android.view.Gravity.CENTER_VERTICAL
             }
@@ -45,9 +50,9 @@ class CategoryAdapter(
         }
 
         val selectButton = ImageButton(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
-            setBackgroundResource(androidx.appcompat.R.drawable.abc_btn_borderless_material)
+            id = View.generateViewId() // This will be btn_select
             // setImageResource(R.drawable.ic_check) // Assuming this drawable exists
+            setBackgroundResource(androidx.appcompat.R.drawable.abc_btn_borderless_material)
             contentDescription = "Pilih kategori"
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -61,26 +66,17 @@ class CategoryAdapter(
         linearLayout.addView(selectButton)
         cardView.addView(linearLayout)
         
-        return ViewHolder(cardView, textView, selectButton)
+        return CategoryViewHolder(cardView, textView, selectButton)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(categories[position])
-    }
-
-    override fun getItemCount() = categories.size
-
-    inner class ViewHolder(
-        itemView: View,
-        private val tvCategoryName: TextView,
-        private val btnSelect: ImageButton
-    ) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(category: WasteCategory) {
-            tvCategoryName.text = category.name
-            btnSelect.setOnClickListener {
-                onCategorySelected(category)
-            }
+    override fun onBindViewHolder(holder: CategoryViewHolder, position: Int) {
+        val category = categories[position]
+        holder.categoryName.text = category.name
+        
+        holder.selectButton.setOnClickListener {
+            onCategorySelected(category)
         }
     }
+
+    override fun getItemCount(): Int = categories.size
 }

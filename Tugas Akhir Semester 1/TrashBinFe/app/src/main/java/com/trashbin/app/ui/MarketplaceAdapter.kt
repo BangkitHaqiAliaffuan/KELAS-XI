@@ -1,34 +1,40 @@
-package com.trashbin.app.ui.adapters
+package com.trashbin.app.ui
 
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
 import com.google.android.material.card.MaterialCardView
 import com.trashbin.app.R
 import com.trashbin.app.data.model.MarketplaceListing
 import com.trashbin.app.utils.CurrencyHelper
 
 class MarketplaceAdapter(
+    private val listings: List<MarketplaceListing>,
     private val onItemClick: (MarketplaceListing) -> Unit
-) : ListAdapter<MarketplaceListing, MarketplaceAdapter.ViewHolder>(DiffCallback()) {
+) : RecyclerView.Adapter<MarketplaceAdapter.MarketplaceViewHolder>() {
 
-    class DiffCallback : DiffUtil.ItemCallback<MarketplaceListing>() {
-        override fun areItemsTheSame(oldItem: MarketplaceListing, newItem: MarketplaceListing): Boolean {
-            return oldItem.id == newItem.id
-        }
-
-        override fun areContentsTheSame(oldItem: MarketplaceListing, newItem: MarketplaceListing): Boolean {
-            return oldItem == newItem
-        }
+    class MarketplaceViewHolder(itemView: View, 
+        private val ivThumbnail: ImageView, 
+        private val tvTitle: TextView, 
+        private val tvCategory: TextView, 
+        private val tvPrice: TextView, 
+        private val tvQuantity: TextView, 
+        private val tvLocation: TextView, 
+        private val tvStatus: TextView
+    ) : RecyclerView.ViewHolder(itemView) {
+        val thumbnail: ImageView = ivThumbnail
+        val title: TextView = tvTitle
+        val category: TextView = tvCategory
+        val price: TextView = tvPrice
+        val quantity: TextView = tvQuantity
+        val location: TextView = tvLocation
+        val status: TextView = tvStatus
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MarketplaceViewHolder {
         val cardView = MaterialCardView(parent.context).apply {
             val margin = (4 * parent.context.resources.displayMetrics.density).toInt()
             setCardBackgroundColor(parent.context.resources.getColor(R.color.material_dynamic_neutral0))
@@ -43,16 +49,14 @@ class MarketplaceAdapter(
 
         val linearLayout = LinearLayout(parent.context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(
+            setPadding((12 * parent.context.resources.displayMetrics.density).toInt(),
                 (12 * parent.context.resources.displayMetrics.density).toInt(),
                 (12 * parent.context.resources.displayMetrics.density).toInt(),
-                (12 * parent.context.resources.displayMetrics.density).toInt(),
-                (12 * parent.context.resources.displayMetrics.density).toInt()
-            )
+                (12 * parent.context.resources.displayMetrics.density).toInt())
         }
 
         val imageView = ImageView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be iv_thumbnail
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 (150 * parent.context.resources.displayMetrics.density).toInt()
@@ -63,7 +67,7 @@ class MarketplaceAdapter(
         }
 
         val title = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_title
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -77,7 +81,7 @@ class MarketplaceAdapter(
         }
 
         val category = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_category
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -89,7 +93,7 @@ class MarketplaceAdapter(
         }
 
         val price = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_price
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -112,13 +116,13 @@ class MarketplaceAdapter(
         }
 
         val quantity = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_quantity
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             textSize = 12f
         }
 
         val location = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_location
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 gravity = android.view.Gravity.END
             }
@@ -129,7 +133,7 @@ class MarketplaceAdapter(
         infoLayout.addView(location)
 
         val status = TextView(parent.context).apply {
-            id = View.generateViewId() // Add generated ID
+            id = View.generateViewId() // This will be tv_status
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -137,12 +141,10 @@ class MarketplaceAdapter(
                 setMargins(0, (8 * parent.context.resources.displayMetrics.density).toInt(), 0, 0)
             }
             // setBackgroundResource(R.drawable.bg_status_badge) // Assuming this drawable exists
-            setPadding(
-                (8 * parent.context.resources.displayMetrics.density).toInt(),
+            setPadding((8 * parent.context.resources.displayMetrics.density).toInt(),
                 (4 * parent.context.resources.displayMetrics.density).toInt(),
                 (8 * parent.context.resources.displayMetrics.density).toInt(),
-                (4 * parent.context.resources.displayMetrics.density).toInt()
-            )
+                (4 * parent.context.resources.displayMetrics.density).toInt())
             textSize = 12f
             setTextColor(parent.context.resources.getColor(R.color.white))
         }
@@ -154,67 +156,30 @@ class MarketplaceAdapter(
         linearLayout.addView(infoLayout)
         linearLayout.addView(status)
         cardView.addView(linearLayout)
-
-        return ViewHolder(cardView, imageView, title, category, price, quantity, location, status)
+        
+        return MarketplaceViewHolder(cardView, imageView, title, category, price, quantity, location, status)
     }
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position))
-    }
-
-    inner class ViewHolder(
-        itemView: View,
-        private val ivThumbnail: ImageView,
-        private val tvTitle: TextView,
-        private val tvCategory: TextView,
-        private val tvPrice: TextView,
-        private val tvQuantity: TextView,
-        private val tvLocation: TextView,
-        private val tvStatus: TextView
-    ) : RecyclerView.ViewHolder(itemView) {
-
-        fun bind(listing: MarketplaceListing) {
-            // Load first image as thumbnail
-            if (listing.photos.isNotEmpty()) {
-                Glide.with(itemView.context)
-                    .load(listing.photos[0])
-                    .placeholder(R.drawable.ic_image_placeholder)
-                    .into(ivThumbnail)
-            } else {
-                ivThumbnail.setImageResource(R.drawable.ic_image_placeholder)
-            }
-
-            tvTitle.text = listing.title
-            tvCategory.text = listing.category.name
-            // Calculate total price based on quantity and price per unit
-            val totalPrice = listing.pricePerUnit * listing.quantity
-            tvPrice.text = CurrencyHelper.formatRupiah(totalPrice)
-            tvQuantity.text = "Tersedia: ${listing.quantity}"
-            tvLocation.text = listing.location
-
-            // Set status badge color based on status
-            when (listing.condition) { // Using condition instead of status
-                "bersih" -> {
-                    tvStatus.text = "Bersih"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.green_500))
-                }
-                "perlu_dibersih" -> {
-                    tvStatus.text = "Perlu Dibersihkan"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.orange_500))
-                }
-                "campur" -> {
-                    tvStatus.text = "Campur"
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.gray_500))
-                }
-                else -> {
-                    tvStatus.text = listing.condition
-                    // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.gray_500))
-                }
-            }
-
-            itemView.setOnClickListener {
-                onItemClick(listing)
-            }
+    override fun onBindViewHolder(holder: MarketplaceViewHolder, position: Int) {
+        val listing = listings[position]
+        holder.title.text = listing.title
+        holder.category.text = listing.category.name
+        holder.price.text = CurrencyHelper.formatRupiah(listing.pricePerUnit * listing.quantity)
+        holder.quantity.text = "Tersedia: ${listing.quantity}"
+        holder.location.text = listing.location
+        holder.status.text = listing.condition
+        
+        // Set image if available
+        // if (listing.thumbnail != null) {
+        //     holder.thumbnail.setImageResource(listing.thumbnail)
+        // } else {
+        //     holder.thumbnail.setImageResource(R.drawable.default_thumbnail) // Use a default image
+        // }
+        
+        holder.itemView.setOnClickListener {
+            onItemClick(listing)
         }
     }
+
+    override fun getItemCount(): Int = listings.size
 }

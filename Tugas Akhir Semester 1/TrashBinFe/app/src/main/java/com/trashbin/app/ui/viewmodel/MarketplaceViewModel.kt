@@ -9,7 +9,7 @@ import com.trashbin.app.data.model.ApiResponse
 import com.trashbin.app.data.model.MarketplaceListing
 import com.trashbin.app.data.model.Order
 import com.trashbin.app.data.model.PaginatedListings
-import com.trashbin.app.utils.Result
+import com.trashbin.app.data.repository.Result
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody

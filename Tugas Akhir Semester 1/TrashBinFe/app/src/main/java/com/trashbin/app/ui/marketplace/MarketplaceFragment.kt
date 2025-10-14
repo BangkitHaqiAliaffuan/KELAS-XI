@@ -1,6 +1,7 @@
 package com.trashbin.app.ui.marketplace
 
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,42 +16,101 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.trashbin.app.R
 import com.trashbin.app.ui.adapters.MarketplaceAdapter
 import com.trashbin.app.ui.viewmodel.MarketplaceViewModel
-import com.trashbin.app.utils.Result
+import com.trashbin.app.data.repository.Result
 
 class MarketplaceFragment : Fragment() {
     private val viewModel: MarketplaceViewModel by activityViewModels()
     private lateinit var adapter: MarketplaceAdapter
     
-    private lateinit var recyclerView: RecyclerView
+    // UI Components
+    private lateinit var coordinatorLayout: androidx.coordinatorlayout.widget.CoordinatorLayout
+    private lateinit var appBarLayout: com.google.android.material.appbar.AppBarLayout
     private lateinit var searchView: SearchView
-    private lateinit var fabCreate: FloatingActionButton
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var fabCreate: FloatingActionButton
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_marketplace, container, false)
+    ): View {
+        // Create CoordinatorLayout as root
+        coordinatorLayout = androidx.coordinatorlayout.widget.CoordinatorLayout(requireContext())
+
+        // AppBarLayout with SearchView
+        appBarLayout = com.google.android.material.appbar.AppBarLayout(requireContext()).apply {
+            layoutParams = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.MATCH_PARENT,
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        searchView = SearchView(requireContext()).apply {
+            layoutParams = com.google.android.material.appbar.AppBarLayout.LayoutParams(
+                com.google.android.material.appbar.AppBarLayout.LayoutParams.MATCH_PARENT,
+                com.google.android.material.appbar.AppBarLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                // Add hint for search
+                queryHint = "Cari barang bekas..."
+            }
+        }
+
+        appBarLayout.addView(searchView)
+
+        // Create SwipeRefreshLayout
+        swipeRefresh = SwipeRefreshLayout(requireContext()).apply {
+            id = View.generateViewId()
+            layoutParams = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.MATCH_PARENT,
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.MATCH_PARENT
+            ).apply {
+                // Remove the behavior line for the abstract class
+            }
+        }
+
+        // Create RecyclerView
+        recyclerView = RecyclerView(requireContext()).apply {
+            id = View.generateViewId()
+            layoutManager = GridLayoutManager(requireContext(), 2)
+            setPadding((8 * resources.displayMetrics.density).toInt(), (8 * resources.displayMetrics.density).toInt(),
+                (8 * resources.displayMetrics.density).toInt(), (8 * resources.displayMetrics.density).toInt())
+        }
+
+        swipeRefresh.addView(recyclerView)
+
+        // Create FAB
+        fabCreate = FloatingActionButton(requireContext()).apply {
+            id = View.generateViewId()
+            setImageResource(R.drawable.ic_add)
+            contentDescription = "Buat listing baru"
+            val fabParams = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = Gravity.END or Gravity.BOTTOM
+                setMargins(0, 0, (16 * resources.displayMetrics.density).toInt(), 
+                    (16 * resources.displayMetrics.density).toInt())
+            }
+            layoutParams = fabParams
+        }
+
+        coordinatorLayout.addView(appBarLayout)
+        coordinatorLayout.addView(swipeRefresh)
+        coordinatorLayout.addView(fabCreate)
+
+        return coordinatorLayout
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        initViews(view)
         setupRecyclerView()
         observeViewModel()
         setupListeners()
         
         // Load initial listings
         viewModel.loadListings()
-    }
-    
-    private fun initViews(view: View) {
-        recyclerView = view.findViewById(R.id.recycler_view)
-        searchView = view.findViewById(R.id.search_view)
-        fabCreate = view.findViewById(R.id.fab_create)
-        swipeRefresh = view.findViewById(R.id.swipe_refresh)
     }
     
     private fun setupRecyclerView() {
@@ -62,7 +122,6 @@ class MarketplaceFragment : Fragment() {
         }
         
         recyclerView.adapter = adapter
-        recyclerView.layoutManager = GridLayoutManager(requireContext(), 2)
     }
     
     private fun observeViewModel() {
@@ -71,7 +130,7 @@ class MarketplaceFragment : Fragment() {
                 is Result.Loading -> swipeRefresh.isRefreshing = true
                 is Result.Success -> {
                     swipeRefresh.isRefreshing = false
-                    adapter.submitList(result.data.listings)
+                    adapter.submitList(result.data.data)
                 }
                 is Result.Error -> {
                     swipeRefresh.isRefreshing = false
