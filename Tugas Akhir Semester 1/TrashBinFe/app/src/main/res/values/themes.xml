@@ -26,4 +26,12 @@
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/gray_600</item>
     </style>
+    
+    <style name="BottomSheetDialogTheme" parent="Theme.Material3.DayNight">
+        <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
+    </style>
+    
+    <style name="BottomSheetStyle" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
 </resources>
