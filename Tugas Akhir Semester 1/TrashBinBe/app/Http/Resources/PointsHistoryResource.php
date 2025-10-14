@@ -20,7 +20,7 @@ class PointsHistoryResource extends JsonResource
             'type' => $this->type,
             'description' => $this->description,
             'reference_id' => $this->reference_id,
-            'created_at' => $this->created_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

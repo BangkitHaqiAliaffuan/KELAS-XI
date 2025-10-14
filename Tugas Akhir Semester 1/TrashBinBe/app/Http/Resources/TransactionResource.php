@@ -22,7 +22,7 @@ class TransactionResource extends JsonResource
             'amount' => $this->amount,
             'points_earned' => $this->points_earned,
             'description' => $this->description,
-            'created_at' => $this->created_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
         ];
     }
 }

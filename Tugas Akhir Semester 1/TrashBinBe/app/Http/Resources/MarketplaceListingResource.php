@@ -32,8 +32,8 @@ class MarketplaceListingResource extends JsonResource
             'photos' => $this->photos,
             'views_count' => $this->views_count,
             'expires_at' => $this->expires_at ? $this->expires_at->toISOString() : null,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

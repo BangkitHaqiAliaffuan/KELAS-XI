@@ -23,8 +23,8 @@ class WasteCategoryResource extends JsonResource
             'base_price_per_unit' => $this->base_price_per_unit,
             'icon_url' => $this->icon_url,
             'is_active' => $this->is_active,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

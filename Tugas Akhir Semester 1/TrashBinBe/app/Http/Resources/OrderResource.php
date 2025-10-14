@@ -27,8 +27,8 @@ class OrderResource extends JsonResource
             'notes' => $this->notes,
             'rating' => $this->rating,
             'review' => $this->review,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

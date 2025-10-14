@@ -26,8 +26,8 @@ class UserResource extends JsonResource
             'lng' => $this->lng,
             'points' => $this->points,
             'is_verified' => $this->is_verified,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

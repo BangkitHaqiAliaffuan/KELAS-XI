@@ -21,7 +21,7 @@ class PickupRequestResource extends JsonResource
             'pickup_address' => $this->pickup_address,
             'pickup_lat' => $this->pickup_lat,
             'pickup_lng' => $this->pickup_lng,
-            'scheduled_date' => $this->scheduled_date->toISOString(),
+            'scheduled_date' => $this->scheduled_date?->toISOString(),
             'status' => $this->status,
             'total_weight' => $this->total_weight,
             'total_price' => $this->total_price,
@@ -29,8 +29,8 @@ class PickupRequestResource extends JsonResource
             'rating' => $this->rating,
             'review' => $this->review,
             'items' => PickupItemResource::collection($this->whenLoaded('items')),
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }

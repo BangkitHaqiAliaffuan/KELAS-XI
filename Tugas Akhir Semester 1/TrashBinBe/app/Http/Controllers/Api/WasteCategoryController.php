@@ -15,9 +15,7 @@ class WasteCategoryController extends Controller
      */
     public function index()
     {
-        $categories = WasteCategory::where('is_active', true)
-            ->select('id', 'name', 'slug', 'description', 'unit', 'base_price_per_unit', 'icon_url')
-            ->get();
+        $categories = WasteCategory::where('is_active', true)->get();
 
         return response()->json([
             'data' => WasteCategoryResource::collection($categories)

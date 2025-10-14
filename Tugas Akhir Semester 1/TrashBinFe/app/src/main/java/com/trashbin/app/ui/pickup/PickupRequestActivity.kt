@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.trashbin.app.R
+import com.trashbin.app.data.api.TokenManager
 import com.trashbin.app.data.model.PickupItemRequest
 import com.trashbin.app.data.model.WasteCategory
 import com.trashbin.app.ui.adapters.PickupItemAdapter
@@ -56,13 +57,40 @@ class PickupRequestActivity : AppCompatActivity() {
         
         setupUI()
         setupRecyclerView()
-        setupListeners()
         setupObservers()
+        setupListeners()
         
         // Initialize UI state
         updateItemsReview()
         
+        // Check authentication before loading categories
+        val token = TokenManager.getToken()
+        android.util.Log.d("PickupRequestActivity", "=== AUTHENTICATION CHECK ===")
+        android.util.Log.d("PickupRequestActivity", "Token exists: ${token != null}")
+        android.util.Log.d("PickupRequestActivity", "Token not empty: ${!token.isNullOrEmpty()}")
+        if (token != null) {
+            android.util.Log.d("PickupRequestActivity", "Token length: ${token.length}")
+            android.util.Log.d("PickupRequestActivity", "Token: $token") // Log full token for Postman debugging
+            android.util.Log.d("PickupRequestActivity", "Token format: Bearer ${token.take(20)}...")
+        }
+        
+        // Check if user data is available
+        val userData = TokenManager.getInstance().getUser()
+        android.util.Log.d("PickupRequestActivity", "User data available: ${userData != null}")
+        if (userData != null) {
+            android.util.Log.d("PickupRequestActivity", "User ID: ${userData.id}, Name: ${userData.name}")
+        }
+        
+        if (token.isNullOrEmpty()) {
+            android.util.Log.e("PickupRequestActivity", "NO TOKEN AVAILABLE - redirecting to login")
+            Toast.makeText(this, "Anda harus login terlebih dahulu", Toast.LENGTH_LONG).show()
+            finish()
+            return
+        }
+        
         // Load categories
+        android.util.Log.d("PickupRequestActivity", "=== LOADING CATEGORIES ===")
+        android.util.Log.d("PickupRequestActivity", "Calling viewModel.loadCategories()...")
         viewModel.loadCategories()
     }
     
@@ -138,7 +166,15 @@ class PickupRequestActivity : AppCompatActivity() {
 
         // Category Spinner
         categorySpinner = Spinner(this).apply {
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2f).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
+            setPadding(
+                (12 * resources.displayMetrics.density).toInt(),
+                (8 * resources.displayMetrics.density).toInt(),
+                (12 * resources.displayMetrics.density).toInt(),
+                (8 * resources.displayMetrics.density).toInt()
+            )
         }
         addItemLayout.addView(categorySpinner)
 
@@ -375,8 +411,14 @@ class PickupRequestActivity : AppCompatActivity() {
     
     private fun setupObservers() {
         viewModel.categories.observe(this) { result ->
+            android.util.Log.d("PickupRequestActivity", "Categories result: $result")
             when (result) {
                 is Result.Success -> {
+                    android.util.Log.d("PickupRequestActivity", "Categories loaded: ${result.data.size} items")
+                    result.data.forEach { category ->
+                        android.util.Log.d("PickupRequestActivity", "Category: ${category.name} (ID: ${category.id})")
+                    }
+                    
                     categories.clear()
                     categories.addAll(result.data)
                     
@@ -391,11 +433,15 @@ class PickupRequestActivity : AppCompatActivity() {
                         updateItemsReview()
                     }
                     rvItems.adapter = adapter
+                    
+                    android.util.Log.d("PickupRequestActivity", "Spinner setup complete")
                 }
                 is Result.Error -> {
-                    Toast.makeText(this, "Failed to load categories: ${result.message}", Toast.LENGTH_SHORT).show()
+                    android.util.Log.e("PickupRequestActivity", "Failed to load categories: ${result.message}")
+                    Toast.makeText(this, "Failed to load categories: ${result.message}", Toast.LENGTH_LONG).show()
                 }
                 is Result.Loading -> {
+                    android.util.Log.d("PickupRequestActivity", "Loading categories...")
                     // Show loading if needed
                 }
             }
@@ -403,18 +449,36 @@ class PickupRequestActivity : AppCompatActivity() {
     }
     
     private fun setupCategorySpinner() {
-        val categoryNames = categories.map { it.name }
-        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categoryNames)
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        categorySpinner.adapter = adapter
+        android.util.Log.d("PickupRequestActivity", "Setting up spinner with ${categories.size} categories")
+        
+        if (categories.isEmpty()) {
+            android.util.Log.w("PickupRequestActivity", "No categories available for spinner")
+            return
+        }
+        
+        val categoryNames = mutableListOf<String>()
+        categoryNames.add("Pilih Kategori Sampah") // Add placeholder
+        categoryNames.addAll(categories.map { it.name })
+        
+        android.util.Log.d("PickupRequestActivity", "Spinner items: $categoryNames")
+        
+        val spinnerAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categoryNames)
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        
+        categorySpinner.adapter = spinnerAdapter
+        categorySpinner.setSelection(0) // Select placeholder by default
+        
+        android.util.Log.d("PickupRequestActivity", "Spinner adapter set successfully")
     }
     
     private fun addNewItem() {
         val selectedPosition = categorySpinner.selectedItemPosition
         val weightText = etWeight.text.toString().trim()
         
-        // Validation
-        if (selectedPosition < 0 || selectedPosition >= categories.size) {
+        android.util.Log.d("PickupRequestActivity", "Adding new item - Position: $selectedPosition, Weight: $weightText")
+        
+        // Validation - account for placeholder at position 0
+        if (selectedPosition <= 0 || selectedPosition > categories.size) {
             Toast.makeText(this, "Pilih kategori sampah", Toast.LENGTH_SHORT).show()
             return
         }
@@ -430,8 +494,10 @@ class PickupRequestActivity : AppCompatActivity() {
             return
         }
         
-        // Add item
-        val selectedCategory = categories[selectedPosition]
+        // Add item - subtract 1 from position because of placeholder
+        val selectedCategory = categories[selectedPosition - 1]
+        android.util.Log.d("PickupRequestActivity", "Selected category: ${selectedCategory.name} (ID: ${selectedCategory.id})")
+        
         val newItem = PickupItemRequest(
             categoryId = selectedCategory.id,
             estimatedWeight = weight,

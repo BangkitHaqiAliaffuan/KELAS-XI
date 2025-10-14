@@ -90,11 +90,17 @@ class AuthRepository(
     suspend fun getProfile(): Result<User> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.getProfile()
-            if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data?.let { user ->
-                    tokenManager.saveUser(user) // Update user data
-                    Result.Success(user)
-                } ?: Result.Error("Failed to get profile: No data returned")
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                // Check if success field exists and is true, OR if success field is null but data exists
+                if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
+                    responseBody?.data?.let { user ->
+                        tokenManager.saveUser(user) // Update user data
+                        Result.Success(user)
+                    } ?: Result.Error("Failed to get profile: No data returned")
+                } else {
+                    Result.Error("Failed to get profile: ${responseBody?.message}")
+                }
             } else {
                 Result.Error("Failed to get profile: ${response.body()?.message}")
             }
@@ -110,11 +116,17 @@ class AuthRepository(
     suspend fun updateProfile(userData: Map<String, Any>): Result<User> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.updateProfile(userData)
-            if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data?.let { user ->
-                    tokenManager.saveUser(user) // Update user data
-                    Result.Success(user)
-                } ?: Result.Error("Failed to update profile: No data returned")
+            if (response.isSuccessful) {
+                val responseBody = response.body()
+                // Check if success field exists and is true, OR if success field is null but data exists
+                if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
+                    responseBody?.data?.let { user ->
+                        tokenManager.saveUser(user) // Update user data
+                        Result.Success(user)
+                    } ?: Result.Error("Failed to update profile: No data returned")
+                } else {
+                    Result.Error("Failed to update profile: ${responseBody?.message}")
+                }
             } else {
                 Result.Error("Failed to update profile: ${response.body()?.message}")
             }

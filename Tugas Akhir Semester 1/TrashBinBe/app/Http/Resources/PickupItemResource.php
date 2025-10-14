@@ -22,8 +22,8 @@ class PickupItemResource extends JsonResource
             'photo_url' => $this->photo_url,
             'price_per_unit' => $this->price_per_unit,
             'subtotal' => $this->subtotal,
-            'created_at' => $this->created_at->toISOString(),
-            'updated_at' => $this->updated_at->toISOString(),
+            'created_at' => $this->created_at?->toISOString(),
+            'updated_at' => $this->updated_at?->toISOString(),
         ];
     }
 }
