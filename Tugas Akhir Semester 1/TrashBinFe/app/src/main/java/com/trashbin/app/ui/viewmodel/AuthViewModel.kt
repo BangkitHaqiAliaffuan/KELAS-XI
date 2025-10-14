@@ -1,5 +1,6 @@
 package com.trashbin.app.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -31,27 +32,31 @@ class AuthViewModel : ViewModel() {
     val profileState: LiveData<Result<*>> = _profileState
 
     fun login(email: String, password: String) {
+        Log.d("AuthViewModel", "login() called with email: $email")
         viewModelScope.launch {
             _isLoading.value = true
-            _loginState.value = Result.Loading
-            
             try {
+                Log.d("AuthViewModel", "Calling repository.login()")
                 val result = repository.login(email, password)
                 _isLoading.value = false
-                _loginState.value = result
                 
+                Log.d("AuthViewModel", "Repository result: $result")
                 when (result) {
                     is Result.Success -> {
-                        _loginResult.value = kotlin.Result.success(result.data as LoginResponse)
+                        Log.d("AuthViewModel", "Login successful, setting loginResult to success")
+                        _loginResult.value = kotlin.Result.success(result.data)
                     }
                     is Result.Error -> {
+                        Log.d("AuthViewModel", "Login failed: ${result.message}")
                         _loginResult.value = kotlin.Result.failure(Exception(result.message))
                     }
                     else -> {
+                        Log.d("AuthViewModel", "Unknown result type")
                         _loginResult.value = kotlin.Result.failure(Exception("Unknown error"))
                     }
                 }
             } catch (e: Exception) {
+                Log.e("AuthViewModel", "Exception during login", e)
                 _isLoading.value = false
                 _loginResult.value = kotlin.Result.failure(e)
             }
@@ -65,7 +70,6 @@ class AuthViewModel : ViewModel() {
         password: String,
         passwordConfirmation: String,
         role: String,
-        address: String?,
         lat: Double?,
         lng: Double?
     ) {

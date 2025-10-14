@@ -424,7 +424,7 @@ class RegisterActivity : AppCompatActivity() {
         // Format phone number untuk Indonesia
         val formattedPhone = formatPhoneNumber(phone)
         
-        viewModel.register(name, email, formattedPhone, password, confirmPassword, "user", "", 0.0, 0.0)
+        viewModel.register(name, email, formattedPhone, password, confirmPassword, "user", 0.0, 0.0)
     }
 
     private fun isValidPhoneNumber(phone: String): Boolean {

@@ -1,10 +1,11 @@
-package com.trashbin.app.ui.auth
+ package com.trashbin.app.ui.auth
 
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.InputType
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.widget.*
@@ -247,47 +248,29 @@ class LoginActivity : AppCompatActivity() {
         return (dp * resources.displayMetrics.density).toInt()
     }
 
-    private fun setupObservers() {
-        viewModel.loginState.observe(this) { result ->
-            when (result) {
-                is com.trashbin.app.data.repository.Result.Loading -> {
-                    btnLogin.isEnabled = false
-                    progressBar.visibility = View.VISIBLE
-                }
-                is com.trashbin.app.data.repository.Result.Success -> {
-                    btnLogin.isEnabled = true
-                    progressBar.visibility = View.GONE
-                    Toast.makeText(this, "Login successful!", Toast.LENGTH_SHORT).show()
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
-                }
-                is com.trashbin.app.data.repository.Result.Error -> {
-                    btnLogin.isEnabled = true
-                    progressBar.visibility = View.GONE
-                    showErrorMessage(result.message)
-                }
-            }
-        }
-    }
+
 
     private fun setupObservers() {
         viewModel.isLoading.observe(this) { isLoading ->
+            Log.d("LoginActivity", "Loading state changed: $isLoading")
             progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
             btnLogin.isEnabled = !isLoading
         }
 
         viewModel.loginResult.observe(this) { result ->
+            Log.d("LoginActivity", "Login result received: ${result.isSuccess}")
             if (result.isSuccess) {
+                Log.d("LoginActivity", "Login successful, starting redirect")
                 // Login berhasil, redirect ke MainActivity
                 showSuccessMessage("Login successful!") {
+                    Log.d("LoginActivity", "Success dialog callback triggered")
                     val intent = Intent(this, MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     finish()
                 }
             } else {
+                Log.d("LoginActivity", "Login failed: ${result.exceptionOrNull()?.message}")
                 // Login gagal, tampilkan error
                 showErrorMessage(result.exceptionOrNull()?.message ?: "Login failed")
             }
@@ -305,12 +288,15 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin() {
+        Log.d("LoginActivity", "performLogin() called")
         // Clear previous errors
         tilEmail.error = null
         tilPassword.error = null
         
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
+
+        Log.d("LoginActivity", "Email: $email, Password length: ${password.length}")
 
         // Validate inputs
         if (email.isEmpty()) {
@@ -328,6 +314,7 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
+        Log.d("LoginActivity", "Calling viewModel.login()")
         viewModel.login(email, password)
     }
 

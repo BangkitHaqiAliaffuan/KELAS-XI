@@ -39,14 +39,14 @@ interface ApiService {
         @Field("role") role: String,
         @Field("lat") lat: Double?,
         @Field("lng") lng: Double?
-    ): Response<ApiResponse<LoginResponse>>
+    ): Response<LoginResponse>
 
     @FormUrlEncoded
     @POST("auth/login")
     suspend fun login(
         @Field("email") email: String,
         @Field("password") password: String
-    ): Response<ApiResponse<LoginResponse>>
+    ): Response<LoginResponse>
 
     @GET("auth/me")
     suspend fun getProfile(): Response<ApiResponse<User>>

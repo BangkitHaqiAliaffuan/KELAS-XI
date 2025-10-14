@@ -31,19 +31,16 @@ class AuthRepository(
     ): Result<LoginResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
-            if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data?.let { loginResponse ->
-                    tokenManager.saveToken(loginResponse.token)
-                    tokenManager.saveUser(loginResponse.user)
-                    Result.Success(loginResponse)
-                } ?: Result.Error("Registration failed: No data returned")
+            if (response.isSuccessful && response.body() != null) {
+                val loginResponse = response.body()!!
+                tokenManager.saveToken(loginResponse.token)
+                tokenManager.saveUser(loginResponse.user)
+                Result.Success(loginResponse)
             } else {
                 // Handle error response from Laravel
-                val errorBody = response.errorBody()?.string()
-                val errorMessage = if (errorBody != null) {
-                    errorBody
-                } else {
-                    response.body()?.message ?: "Registration failed"
+                val errorMessage = when (response.code()) {
+                    422 -> "Validation failed"
+                    else -> "Registration failed"
                 }
                 Result.Error(errorMessage)
             }
@@ -62,14 +59,23 @@ class AuthRepository(
     suspend fun login(email: String, password: String): Result<LoginResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.login(email, password)
-            if (response.isSuccessful && response.body()?.success == true) {
-                response.body()?.data?.let { loginResponse ->
-                    tokenManager.saveToken(loginResponse.token)
-                    tokenManager.saveUser(loginResponse.user)
-                    Result.Success(loginResponse)
-                } ?: Result.Error("Login failed: No data returned")
+            android.util.Log.d("AuthRepository", "Response successful: ${response.isSuccessful}")
+            android.util.Log.d("AuthRepository", "Response code: ${response.code()}")
+            android.util.Log.d("AuthRepository", "Response body: ${response.body()}")
+            
+            if (response.isSuccessful && response.body() != null) {
+                val loginResponse = response.body()!!
+                android.util.Log.d("AuthRepository", "Login successful, saving token: ${loginResponse.token}")
+                tokenManager.saveToken(loginResponse.token)
+                tokenManager.saveUser(loginResponse.user)
+                Result.Success(loginResponse)
             } else {
-                val errorMessage = response.body()?.message ?: "Login failed"
+                val errorMessage = if (response.code() == 401) {
+                    "Invalid credentials"
+                } else {
+                    "Login failed"
+                }
+                android.util.Log.d("AuthRepository", "Login failed: $errorMessage")
                 Result.Error(errorMessage)
             }
         } catch (e: IOException) {
