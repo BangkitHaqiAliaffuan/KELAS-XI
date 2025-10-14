@@ -43,25 +43,27 @@ class MarketplaceListingController extends Controller
             $lng = $request->lng;
             $radius = $request->radius; // in km
 
-            $query->select(['*', 
+            $query->select([
+                '*',
                 DB::raw("(
                     6371 * acos(
-                        cos(radians(?)) * 
-                        cos(radians(lat)) * 
-                        cos(radians(lng) - radians(?)) + 
-                        sin(radians(?)) * 
+                        cos(radians(?)) *
+                        cos(radians(lat)) *
+                        cos(radians(lng) - radians(?)) +
+                        sin(radians(?)) *
                         sin(radians(lat))
                     )
-                ) AS distance"), [$lat, $lng, $lat])
+                ) AS distance"),
+                [$lat, $lng, $lat]
             ])
-            ->having('distance', '<', $radius);
+                ->having('distance', '<', $radius);
         }
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 

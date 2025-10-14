@@ -42,7 +42,7 @@ object DateHelper {
         return try {
             val date = inputFormat.parse(dateString)
             val now = Date()
-            val diff = now.time - date?.time ?: now.time
+            val diff = now.time - (date?.time ?: now.time)
 
             val days = TimeUnit.MILLISECONDS.toDays(diff)
             val hours = TimeUnit.MILLISECONDS.toHours(diff)

@@ -53,8 +53,8 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
+        // viewBinding disabled - menggunakan programmatic layout
     }
 }
 

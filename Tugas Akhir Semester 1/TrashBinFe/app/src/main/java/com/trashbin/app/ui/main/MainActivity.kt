@@ -3,38 +3,181 @@ package com.trashbin.app.ui.main
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
+import android.view.Gravity
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.navigation.findNavController
-import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.button.MaterialButton
 import com.trashbin.app.R
 import com.trashbin.app.data.api.TokenManager
-import com.trashbin.app.databinding.ActivityMainBinding
 import com.trashbin.app.ui.auth.LoginActivity
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    
+    // Views
+    private lateinit var tvWelcome: TextView
+    private lateinit var tvSubtitle: TextView
+    private lateinit var btnPickup: MaterialButton
+    private lateinit var btnMarketplace: MaterialButton
+    private lateinit var btnProfile: MaterialButton
+    private lateinit var btnLogout: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        setupBottomNavigation()
+        
+        createLayout()
+        setupClickListeners()
+        
+        // Check session on app start
+        checkSession()
+        
+        // Check required permissions
         checkPermissions()
+        
+        // Handle deep links
         handleDeepLink()
     }
-
-    private fun setupBottomNavigation() {
-        val navView: BottomNavigationView = binding.navView
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-
-        // Set up bottom navigation with NavController
-        navView.setupWithNavController(navController)
+    
+    private fun createLayout() {
+        // Main container
+        val mainLayout = LinearLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+            )
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.WHITE)
+            setPadding(dpToPx(24), dpToPx(48), dpToPx(24), dpToPx(24))
+        }
+        
+        // Welcome Section
+        tvWelcome = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dpToPx(8)
+            }
+            text = "Welcome to TrashBin"
+            textSize = 28f
+            setTypeface(null, Typeface.BOLD)
+            setTextColor(Color.BLACK)
+            gravity = Gravity.CENTER
+        }
+        
+        tvSubtitle = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                bottomMargin = dpToPx(48)
+            }
+            text = "Manage your waste efficiently"
+            textSize = 16f
+            setTextColor(Color.GRAY)
+            gravity = Gravity.CENTER
+        }
+        
+        // Menu Buttons
+        btnPickup = MaterialButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(60)
+            ).apply {
+                bottomMargin = dpToPx(16)
+            }
+            text = "🗑️ Request Pickup"
+            textSize = 16f
+            gravity = Gravity.CENTER
+        }
+        
+        btnMarketplace = MaterialButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(60)
+            ).apply {
+                bottomMargin = dpToPx(16)
+            }
+            text = "🛒 Marketplace"
+            textSize = 16f
+            gravity = Gravity.CENTER
+        }
+        
+        btnProfile = MaterialButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(60)
+            ).apply {
+                bottomMargin = dpToPx(16)
+            }
+            text = "👤 Profile"
+            textSize = 16f
+            gravity = Gravity.CENTER
+        }
+        
+        // Spacer
+        val spacer = View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                0,
+                1f
+            )
+        }
+        
+        btnLogout = MaterialButton(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                dpToPx(50)
+            )
+            text = "Logout"
+            textSize = 14f
+            setBackgroundColor(ContextCompat.getColor(this@MainActivity, R.color.gray_600))
+        }
+        
+        // Add views to main layout
+        mainLayout.addView(tvWelcome)
+        mainLayout.addView(tvSubtitle)
+        mainLayout.addView(btnPickup)
+        mainLayout.addView(btnMarketplace)
+        mainLayout.addView(btnProfile)
+        mainLayout.addView(spacer)
+        mainLayout.addView(btnLogout)
+        
+        setContentView(mainLayout)
+    }
+    
+    private fun setupClickListeners() {
+        btnPickup.setOnClickListener {
+            Toast.makeText(this, "Pickup feature coming soon", Toast.LENGTH_SHORT).show()
+        }
+        
+        btnMarketplace.setOnClickListener {
+            Toast.makeText(this, "Marketplace feature coming soon", Toast.LENGTH_SHORT).show()
+        }
+        
+        btnProfile.setOnClickListener {
+            Toast.makeText(this, "Profile feature coming soon", Toast.LENGTH_SHORT).show()
+        }
+        
+        btnLogout.setOnClickListener {
+            logout()
+        }
+    }
+    
+    private fun logout() {
+        TokenManager.getInstance().clearToken()
+        startActivity(Intent(this, LoginActivity::class.java))
+        finish()
+    }
+    
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
     }
 
     private fun checkPermissions() {
@@ -58,28 +201,17 @@ class MainActivity : AppCompatActivity() {
             when {
                 uri.path?.startsWith("/pickup/") == true -> {
                     val pickupId = uri.pathSegments.getOrNull(1)?.toIntOrNull()
-                    // Navigate to PickupDetailActivity with pickupId
+                    Toast.makeText(this, "Opening pickup: $pickupId", Toast.LENGTH_SHORT).show()
                 }
                 uri.path?.startsWith("/order/") == true -> {
                     val orderId = uri.pathSegments.getOrNull(1)?.toIntOrNull()
-                    // Navigate to OrderDetailActivity with orderId
+                    Toast.makeText(this, "Opening order: $orderId", Toast.LENGTH_SHORT).show()
                 }
                 uri.path?.startsWith("/listing/") == true -> {
                     val listingId = uri.pathSegments.getOrNull(1)?.toIntOrNull()
-                    // Navigate to ListingDetailActivity with listingId
+                    Toast.makeText(this, "Opening listing: $listingId", Toast.LENGTH_SHORT).show()
                 }
             }
-        }
-    }
-
-    override fun onBackPressed() {
-        val navController = findNavController(R.id.nav_host_fragment_activity_main)
-        if (navController.currentDestination?.id == R.id.homeFragment) {
-            // If on home fragment, allow back press to exit
-            super.onBackPressed()
-        } else {
-            // Otherwise navigate back to home
-            navController.navigate(R.id.homeFragment)
         }
     }
     

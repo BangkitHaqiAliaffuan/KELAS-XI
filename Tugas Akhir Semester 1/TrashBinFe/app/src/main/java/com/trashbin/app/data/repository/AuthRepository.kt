@@ -24,12 +24,13 @@ class AuthRepository(
         email: String,
         phone: String,
         password: String,
+        passwordConfirmation: String,
         role: String,
         lat: Double?,
         lng: Double?
     ): Result<LoginResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val response = apiService.register(name, email, phone, password, role, lat, lng)
+            val response = apiService.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
             if (response.isSuccessful && response.body()?.success == true) {
                 response.body()?.data?.let { loginResponse ->
                     tokenManager.saveToken(loginResponse.token)
@@ -37,13 +38,22 @@ class AuthRepository(
                     Result.Success(loginResponse)
                 } ?: Result.Error("Registration failed: No data returned")
             } else {
-                val errorMessage = response.body()?.message ?: "Registration failed"
+                // Handle error response from Laravel
+                val errorBody = response.errorBody()?.string()
+                val errorMessage = if (errorBody != null) {
+                    errorBody
+                } else {
+                    response.body()?.message ?: "Registration failed"
+                }
                 Result.Error(errorMessage)
             }
         } catch (e: IOException) {
             Result.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            // Parse error body dari HTTP exception untuk validasi errors
+            val errorBody = e.response()?.errorBody()?.string()
+            val errorMessage = errorBody ?: "Request failed: ${e.message()}"
+            Result.Error(errorMessage, e)
         } catch (e: Exception) {
             Result.Error("An unexpected error occurred", e)
         }

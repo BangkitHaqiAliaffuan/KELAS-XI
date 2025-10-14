@@ -35,6 +35,7 @@ interface ApiService {
         @Field("email") email: String,
         @Field("phone") phone: String,
         @Field("password") password: String,
+        @Field("password_confirmation") passwordConfirmation: String,
         @Field("role") role: String,
         @Field("lat") lat: Double?,
         @Field("lng") lng: Double?

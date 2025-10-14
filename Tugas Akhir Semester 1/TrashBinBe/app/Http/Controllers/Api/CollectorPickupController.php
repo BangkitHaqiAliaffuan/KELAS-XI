@@ -18,13 +18,13 @@ class CollectorPickupController extends Controller
     public function availablePickups(Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user->isCollector()) {
             return response()->json([
                 'message' => 'Access denied. Only collectors can access this resource.'
             ], 403);
         }
-        
+
         // Check if collector has valid location
         if (!$user->lat || !$user->lng) {
             return response()->json([
@@ -44,17 +44,17 @@ class CollectorPickupController extends Controller
             ->whereBetween('pickup_lat', [$lat - $latRange, $lat + $latRange])
             ->whereBetween('pickup_lng', [$lng - $lngRange, $lng + $lngRange])
             ->with(['items.wasteCategory', 'user:id,name,phone,address'])
-            ->select(['*', 
+            ->select(['*',
                 DB::raw("(
                     6371 * acos(
-                        cos(radians(?)) * 
-                        cos(radians(pickup_lat)) * 
-                        cos(radians(pickup_lng) - radians(?)) + 
-                        sin(radians(?)) * 
+                        cos(radians(?)) *
+                        cos(radians(pickup_lat)) *
+                        cos(radians(pickup_lng) - radians(?)) +
+                        sin(radians(?)) *
                         sin(radians(pickup_lat))
                     )
-                ) AS distance"), [$lat, $lng, $lat])
-            ])
+                ) AS distance"), [$lat, $lng, $lat]])
+
             ->having('distance', '<', $radius)
             ->orderBy('distance')
             ->get();
@@ -70,7 +70,7 @@ class CollectorPickupController extends Controller
     public function acceptPickup($id, Request $request)
     {
         $user = $request->user();
-        
+
         if (!$user->isCollector()) {
             return response()->json([
                 'message' => 'Access denied. Only collectors can accept pickups.'
@@ -165,7 +165,7 @@ class CollectorPickupController extends Controller
 
             foreach ($request->items as $itemData) {
                 $item = $pickup->items()->find($itemData['id']);
-                
+
                 if (!$item) {
                     throw new \Exception('Pickup item not found');
                 }

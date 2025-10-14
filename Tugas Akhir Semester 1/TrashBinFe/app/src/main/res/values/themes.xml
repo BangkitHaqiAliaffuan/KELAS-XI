@@ -21,4 +21,9 @@
         <item name="android:windowBackground">@drawable/splash_screen</item>
         <item name="android:statusBarColor">@color/green_500</item>
     </style>
+    
+    <style name="TextAppearance.App.TextInputLayout" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/gray_600</item>
+    </style>
 </resources>

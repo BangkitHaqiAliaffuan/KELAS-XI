@@ -36,6 +36,7 @@ class AuthViewModel : ViewModel() {
         email: String,
         phone: String,
         password: String,
+        passwordConfirmation: String,
         role: String,
         address: String?,
         lat: Double?,
@@ -43,7 +44,7 @@ class AuthViewModel : ViewModel() {
     ) {
         viewModelScope.launch {
             _registerState.value = Result.Loading
-            val result = repository.register(name, email, phone, password, role, lat, lng)
+            val result = repository.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
             _registerState.value = result
         }
     }

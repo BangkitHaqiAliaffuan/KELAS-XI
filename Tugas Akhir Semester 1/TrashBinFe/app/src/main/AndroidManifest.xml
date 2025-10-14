@@ -8,6 +8,11 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    
+    <!-- Feature declaration for camera permission to avoid Chrome OS incompatibility -->
+    <uses-feature 
+        android:name="android.hardware.camera"
+        android:required="false" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
@@ -52,70 +57,12 @@
             android:exported="false" />
             
         <activity
-            android:name=".ui.pickup.PickupRequestActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.pickup.PickupHistoryActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.pickup.PickupDetailActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.marketplace.ListingDetailActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.marketplace.CreateListingActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.marketplace.MyOrdersActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.marketplace.OrderDetailActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.profile.EditProfileActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.points.PointsHistoryActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.address.AddressManagementActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.address.AddressFormActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.settings.SettingsActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.collector.CollectorDashboardActivity"
-            android:exported="false" />
-            
-        <activity
-            android:name=".ui.collector.CollectorPickupDetailActivity"
+            android:name=".ui.maps.DriverStatusActivity"
             android:exported="false" />
 
 
 
-        <service
-            android:name=".services.TrashBinFirebaseMessagingService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
+
 
         <provider
             android:name="androidx.core.content.FileProvider"
