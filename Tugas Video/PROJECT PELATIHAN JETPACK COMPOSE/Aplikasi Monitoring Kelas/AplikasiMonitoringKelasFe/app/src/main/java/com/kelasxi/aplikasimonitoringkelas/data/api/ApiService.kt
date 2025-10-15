@@ -49,4 +49,81 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Body request: MonitoringRequest
     ): Response<MonitoringResponse>
+
+    // Assignments
+    @GET("assignments")
+    suspend fun getAssignments(
+        @Header("Authorization") token: String,
+        @Query("kelas") kelas: String? = null,
+        @Query("mata_pelajaran") mataPelajaran: String? = null,
+        @Query("tipe") tipe: String? = null
+    ): Response<AssignmentsResponse>
+
+    @GET("assignments/{id}")
+    suspend fun getAssignmentDetail(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<AssignmentResponse>
+
+    @Multipart
+    @POST("assignments")
+    suspend fun createAssignment(
+        @Header("Authorization") token: String,
+        @Part("kelas") kelas: okhttp3.RequestBody,
+        @Part("mata_pelajaran") mataPelajaran: okhttp3.RequestBody,
+        @Part("judul") judul: okhttp3.RequestBody,
+        @Part("deskripsi") deskripsi: okhttp3.RequestBody,
+        @Part("deadline") deadline: okhttp3.RequestBody,
+        @Part("tipe") tipe: okhttp3.RequestBody,
+        @Part("bobot") bobot: okhttp3.RequestBody,
+        @Part file: okhttp3.MultipartBody.Part?
+    ): Response<AssignmentResponse>
+
+    @Multipart
+    @POST("assignments/{id}/submit")
+    suspend fun submitAssignment(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Part("keterangan") keterangan: okhttp3.RequestBody?,
+        @Part file: okhttp3.MultipartBody.Part
+    ): Response<SubmissionResponse>
+
+    @GET("assignments/{id}/submissions")
+    suspend fun getAssignmentSubmissions(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<SubmissionsResponse>
+
+    // Grades
+    @GET("grades")
+    suspend fun getGrades(
+        @Header("Authorization") token: String,
+        @Query("mata_pelajaran") mataPelajaran: String? = null,
+        @Query("kelas") kelas: String? = null
+    ): Response<GradesResponse>
+
+    @GET("grades/siswa/{id}")
+    suspend fun getSiswaGrades(
+        @Header("Authorization") token: String,
+        @Path("id") siswaId: Int
+    ): Response<SiswaGradesResponse>
+
+    @FormUrlEncoded
+    @POST("grades")
+    suspend fun createGrade(
+        @Header("Authorization") token: String,
+        @Field("siswa_id") siswaId: Int,
+        @Field("assignment_id") assignmentId: Int,
+        @Field("nilai") nilai: Double,
+        @Field("catatan") catatan: String?
+    ): Response<GradeResponse>
+
+    @FormUrlEncoded
+    @PUT("grades/{id}")
+    suspend fun updateGrade(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Field("nilai") nilai: Double,
+        @Field("catatan") catatan: String?
+    ): Response<GradeResponse>
 }

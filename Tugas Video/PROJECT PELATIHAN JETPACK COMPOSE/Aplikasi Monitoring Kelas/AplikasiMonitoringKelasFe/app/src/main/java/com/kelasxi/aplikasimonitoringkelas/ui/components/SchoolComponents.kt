@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.AnimationDuration
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.Dimensions
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.Spacing
+import com.kelasxi.aplikasimonitoringkelas.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -201,6 +202,7 @@ private fun DropdownOption(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolTextField(
     value: String,
@@ -214,7 +216,10 @@ fun SchoolTextField(
     errorMessage: String? = null,
     keyboardOptions: androidx.compose.foundation.text.KeyboardOptions = androidx.compose.foundation.text.KeyboardOptions.Default,
     visualTransformation: androidx.compose.ui.text.input.VisualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+    supportingText: String? = null
 ) {
     Column(modifier = modifier) {
         OutlinedTextField(
@@ -223,14 +228,15 @@ fun SchoolTextField(
             label = { 
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium
                 ) 
             },
             placeholder = { 
                 Text(
                     text = placeholder,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = NeutralGray400
                 ) 
             },
             leadingIcon = leadingIcon?.let {
@@ -238,7 +244,8 @@ fun SchoolTextField(
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isError) SMKError else SMKPrimary,
+                        modifier = Modifier.size(Dimensions.iconSizeMedium)
                     )
                 }
             },
@@ -247,34 +254,48 @@ fun SchoolTextField(
                     Icon(
                         imageVector = it,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = if (isError) SMKError else NeutralGray500,
+                        modifier = Modifier.size(Dimensions.iconSizeMedium)
                     )
                 }
             },
+            supportingText = if (isError && errorMessage != null) {
+                {
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SMKError
+                    )
+                }
+            } else if (supportingText != null) {
+                {
+                    Text(
+                        text = supportingText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NeutralGray500
+                    )
+                }
+            } else null,
             isError = isError,
             keyboardOptions = keyboardOptions,
             visualTransformation = visualTransformation,
             singleLine = singleLine,
+            minLines = minLines,
+            maxLines = maxLines,
             shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                cursorColor = MaterialTheme.colorScheme.primary
+                focusedBorderColor = SMKPrimary,
+                unfocusedBorderColor = NeutralGray300,
+                errorBorderColor = SMKError,
+                focusedLabelColor = SMKPrimary,
+                unfocusedLabelColor = NeutralGray500,
+                cursorColor = SMKPrimary,
+                focusedTextColor = SMKOnSurface,
+                unfocusedTextColor = SMKOnSurface,
+                containerColor = SMKSurface
             ),
             modifier = Modifier.fillMaxWidth()
         )
-        
-        // Error message
-        if (isError && errorMessage != null) {
-            Spacer(modifier = Modifier.height(Spacing.xs))
-            Text(
-                text = errorMessage,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
     }
 }
 
@@ -289,46 +310,108 @@ fun SchoolButton(
     leadingIcon: ImageVector? = null,
     variant: ButtonVariant = ButtonVariant.Primary
 ) {
-    val colors = when (variant) {
-        ButtonVariant.Primary -> ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        ButtonVariant.Secondary -> ButtonDefaults.outlinedButtonColors(
-            contentColor = MaterialTheme.colorScheme.primary,
-            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-    
-    if (variant == ButtonVariant.Secondary) {
-        OutlinedButton(
-            onClick = onClick,
-            enabled = enabled && !loading,
-            colors = colors,
-            shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
-            modifier = modifier.height(Dimensions.buttonHeight)
-        ) {
-            ButtonContent(
-                text = text,
-                loading = loading,
-                leadingIcon = leadingIcon
-            )
+    when (variant) {
+        ButtonVariant.Primary -> {
+            Button(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SMKPrimary,
+                    contentColor = androidx.compose.ui.graphics.Color.White,
+                    disabledContainerColor = NeutralGray300,
+                    disabledContentColor = NeutralGray500
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
         }
-    } else {
-        Button(
-            onClick = onClick,
-            enabled = enabled && !loading,
-            colors = colors,
-            shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
-            modifier = modifier.height(Dimensions.buttonHeight)
-        ) {
-            ButtonContent(
-                text = text,
-                loading = loading,
-                leadingIcon = leadingIcon
-            )
+        
+        ButtonVariant.Secondary -> {
+            OutlinedButton(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = SMKPrimary,
+                    disabledContentColor = NeutralGray500
+                ),
+                border = ButtonDefaults.outlinedButtonBorder.copy(
+                    brush = null,
+                    width = 1.dp,
+                    pen = androidx.compose.ui.graphics.SolidColor(SMKPrimary)
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
+        }
+        
+        ButtonVariant.Success -> {
+            Button(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SMKSuccess,
+                    contentColor = androidx.compose.ui.graphics.Color.White,
+                    disabledContainerColor = NeutralGray300,
+                    disabledContentColor = NeutralGray500
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
+        }
+        
+        ButtonVariant.Warning -> {
+            Button(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SMKWarning,
+                    contentColor = androidx.compose.ui.graphics.Color.White,
+                    disabledContainerColor = NeutralGray300,
+                    disabledContentColor = NeutralGray500
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
+        }
+        
+        ButtonVariant.Danger -> {
+            Button(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = SMKError,
+                    contentColor = androidx.compose.ui.graphics.Color.White,
+                    disabledContainerColor = NeutralGray300,
+                    disabledContentColor = NeutralGray500
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
+        }
+        
+        ButtonVariant.Ghost -> {
+            TextButton(
+                onClick = onClick,
+                enabled = enabled && !loading,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = SMKPrimary,
+                    disabledContentColor = NeutralGray500
+                ),
+                shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
+                modifier = modifier.height(Dimensions.buttonHeight)
+            ) {
+                ButtonContent(text = text, loading = loading, leadingIcon = leadingIcon)
+            }
         }
     }
 }
@@ -367,8 +450,22 @@ private fun ButtonContent(
 }
 
 enum class ButtonVariant {
-    Primary,
-    Secondary
+    Primary,           // Solid dengan warna utama
+    Secondary,         // Outline dengan border
+    Success,           // Hijau untuk aksi positif  
+    Warning,           // Orange untuk peringatan
+    Danger,            // Merah untuk aksi berbahaya
+    Ghost              // Transparant untuk aksi subtle
+}
+
+// Enhanced Card Variants
+enum class CardVariant {
+    Default,           // Default white card
+    Primary,           // Primary color accent
+    Success,           // Success green accent
+    Warning,           // Warning orange accent
+    Danger,            // Danger red accent
+    Gradient           // Gradient background
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -377,9 +474,36 @@ fun SchoolCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     elevation: CardElevation = CardDefaults.cardElevation(defaultElevation = Dimensions.elevationSmall),
-    colors: CardColors = CardDefaults.cardColors(),
+    variant: CardVariant = CardVariant.Default,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val colors = when (variant) {
+        CardVariant.Default -> CardDefaults.cardColors(
+            containerColor = SMKSurface,
+            contentColor = SMKOnSurface
+        )
+        CardVariant.Primary -> CardDefaults.cardColors(
+            containerColor = SMKPrimaryContainer,
+            contentColor = SMKPrimary
+        )
+        CardVariant.Success -> CardDefaults.cardColors(
+            containerColor = SMKSuccessContainer,
+            contentColor = SMKSuccess
+        )
+        CardVariant.Warning -> CardDefaults.cardColors(
+            containerColor = SMKWarningContainer,
+            contentColor = SMKWarning
+        )
+        CardVariant.Danger -> CardDefaults.cardColors(
+            containerColor = SMKErrorContainer,
+            contentColor = SMKError
+        )
+        CardVariant.Gradient -> CardDefaults.cardColors(
+            containerColor = SMKSurface,
+            contentColor = SMKOnSurface
+        )
+    }
+    
     val clickableModifier = if (onClick != null) {
         modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
@@ -395,10 +519,30 @@ fun SchoolCard(
         colors = colors,
         shape = RoundedCornerShape(Dimensions.cardCornerRadius)
     ) {
-        Column(
-            modifier = Modifier.padding(Spacing.lg),
-            content = content
-        )
+        if (variant == CardVariant.Gradient) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(
+                                SMKPrimary.copy(alpha = 0.1f),
+                                SMKAccent.copy(alpha = 0.05f)
+                            )
+                        )
+                    )
+            ) {
+                Column(
+                    modifier = Modifier.padding(Spacing.lg),
+                    content = content
+                )
+            }
+        } else {
+            Column(
+                modifier = Modifier.padding(Spacing.lg),
+                content = content
+            )
+        }
     }
 }
 
@@ -501,7 +645,7 @@ fun SchoolTopBar(
             if (onNavigationClick != null) {
                 IconButton(onClick = onNavigationClick) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                        imageVector = Icons.Filled.ArrowBack,
                         contentDescription = "Kembali"
                     )
                 }
@@ -516,6 +660,201 @@ fun SchoolTopBar(
         ),
         modifier = modifier
     )
+}
+
+// Enhanced Status Badge Component
+@Composable
+fun SchoolStatusBadge(
+    text: String,
+    variant: BadgeVariant = BadgeVariant.Default,
+    modifier: Modifier = Modifier
+) {
+    val (backgroundColor, textColor) = when (variant) {
+        BadgeVariant.Default -> NeutralGray200 to NeutralGray700
+        BadgeVariant.Success -> SMKSuccessContainer to SMKSuccess
+        BadgeVariant.Warning -> SMKWarningContainer to SMKWarning
+        BadgeVariant.Danger -> SMKErrorContainer to SMKError
+        BadgeVariant.Info -> SMKInfoContainer to SMKInfo
+        BadgeVariant.Primary -> SMKPrimaryContainer to SMKPrimary
+    }
+    
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = backgroundColor
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = textColor,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+enum class BadgeVariant {
+    Default, Success, Warning, Danger, Info, Primary
+}
+
+// Enhanced Progress Indicator for Grades/Tasks
+@Composable
+fun SchoolProgressIndicator(
+    progress: Float,
+    label: String,
+    modifier: Modifier = Modifier,
+    showPercentage: Boolean = true
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = SMKOnSurface
+            )
+            if (showPercentage) {
+                Text(
+                    text = "${(progress * 100).toInt()}%",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = SMKPrimary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        Spacer(modifier = Modifier.height(Spacing.xs))
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp)),
+            color = SMKPrimary,
+            trackColor = SMKPrimaryContainer
+        )
+    }
+}
+
+// Enhanced Avatar Component with Initials
+@Composable
+fun SchoolAvatar(
+    name: String,
+    modifier: Modifier = Modifier,
+    size: AvatarSize = AvatarSize.Medium,
+    backgroundColor: androidx.compose.ui.graphics.Color = SMKPrimary
+) {
+    val initials = name.split(" ")
+        .take(2)
+        .joinToString("") { it.firstOrNull()?.uppercaseChar()?.toString() ?: "" }
+    
+    val avatarSize = when (size) {
+        AvatarSize.Small -> 32.dp
+        AvatarSize.Medium -> 40.dp
+        AvatarSize.Large -> 56.dp
+    }
+    
+    val textStyle = when (size) {
+        AvatarSize.Small -> MaterialTheme.typography.labelMedium
+        AvatarSize.Medium -> MaterialTheme.typography.titleMedium
+        AvatarSize.Large -> MaterialTheme.typography.titleLarge
+    }
+    
+    Box(
+        modifier = modifier
+            .size(avatarSize)
+            .background(
+                backgroundColor,
+                CircleShape
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = initials,
+            style = textStyle,
+            color = androidx.compose.ui.graphics.Color.White,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+enum class AvatarSize {
+    Small, Medium, Large
+}
+
+// Enhanced Subject Card with Color Coding
+@Composable
+fun SchoolSubjectCard(
+    subjectName: String,
+    teacherName: String,
+    time: String,
+    status: SubjectStatus = SubjectStatus.Scheduled,
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val (statusColor, statusText) = when (status) {
+        SubjectStatus.Scheduled -> SMKInfo to "Terjadwal"
+        SubjectStatus.Ongoing -> SMKSuccess to "Berlangsung"
+        SubjectStatus.Completed -> NeutralGray500 to "Selesai"
+        SubjectStatus.Cancelled -> SMKError to "Dibatalkan"
+    }
+    
+    SchoolCard(
+        modifier = modifier,
+        onClick = onClick,
+        variant = CardVariant.Default
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Status indicator line
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .height(48.dp)
+                    .background(statusColor, RoundedCornerShape(2.dp))
+            )
+            
+            Spacer(modifier = Modifier.width(Spacing.md))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = subjectName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = SMKOnSurface
+                )
+                Text(
+                    text = teacherName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NeutralGray600
+                )
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NeutralGray500
+                )
+            }
+            
+            SchoolStatusBadge(
+                text = statusText,
+                variant = when (status) {
+                    SubjectStatus.Scheduled -> BadgeVariant.Info
+                    SubjectStatus.Ongoing -> BadgeVariant.Success
+                    SubjectStatus.Completed -> BadgeVariant.Default
+                    SubjectStatus.Cancelled -> BadgeVariant.Danger
+                }
+            )
+        }
+    }
+}
+
+enum class SubjectStatus {
+    Scheduled, Ongoing, Completed, Cancelled
 }
 
 // Helper function untuk mendapatkan icon berdasarkan role

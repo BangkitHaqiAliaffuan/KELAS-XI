@@ -30,6 +30,11 @@ import com.kelasxi.aplikasimonitoringkelas.data.model.*
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.BuatTugasScreen
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.DaftarTugasGuruScreen
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.InputNilaiScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 class KurikulumActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +98,29 @@ fun KurikulumScreen() {
             composable("jadwal_pelajaran") {
                 KurikulumJadwalPage()
             }
+            composable("tugas") {
+                DaftarTugasGuruScreen(
+                    onNavigateToCreate = { navController.navigate("buat_tugas") },
+                    onNavigateToSubmissions = { assignmentId ->
+                        navController.navigate("input_nilai/$assignmentId")
+                    }
+                )
+            }
+            composable("buat_tugas") {
+                BuatTugasScreen(
+                    onNavigateBack = { navController.navigateUp() }
+                )
+            }
+            composable(
+                route = "input_nilai/{assignmentId}",
+                arguments = listOf(navArgument("assignmentId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val assignmentId = backStackEntry.arguments?.getInt("assignmentId") ?: 0
+                InputNilaiScreen(
+                    assignmentId = assignmentId,
+                    onNavigateBack = { navController.navigateUp() }
+                )
+            }
             composable("ganti_guru") {
                 GantiGuruPage()
             }
@@ -106,7 +134,8 @@ fun KurikulumScreen() {
 @Composable
 fun KurikulumBottomNavigation(navController: NavController) {
     val items = listOf(
-        Triple("jadwal_pelajaran", "Jadwal Pelajaran", Icons.Default.Schedule),
+        Triple("jadwal_pelajaran", "Jadwal", Icons.Default.Schedule),
+        Triple("tugas", "Tugas", Icons.Default.Assignment),
         Triple("ganti_guru", "Ganti Guru", Icons.Default.Person),
         Triple("list", "List", Icons.Default.List)
     )

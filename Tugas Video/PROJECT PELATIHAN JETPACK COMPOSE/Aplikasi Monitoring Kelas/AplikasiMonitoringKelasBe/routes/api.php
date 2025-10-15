@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\MonitoringController;
+use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\GradeController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +36,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // Monitoring - Bisa diakses semua role (untuk melihat)
     Route::get('/monitoring', [MonitoringController::class, 'index']);
     Route::post('/monitoring/store', [MonitoringController::class, 'store']);
+
+    // Assignments - Semua role bisa lihat
+    Route::get('/assignments', [AssignmentController::class, 'index']);
+    Route::get('/assignments/{id}', [AssignmentController::class, 'show']);
+
+    // Grades - Semua role bisa lihat (filtered by role in controller)
+    Route::get('/grades', [GradeController::class, 'index']);
+    Route::get('/grades/siswa/{id}', [GradeController::class, 'getSiswaGrades']);
 });
 
 // Routes untuk Admin only
@@ -54,6 +64,24 @@ Route::middleware(['auth:sanctum', 'role:guru,admin'])->group(function () {
             'data' => ['role' => 'guru']
         ]);
     });
+
+    // Assignment Management (Guru only)
+    Route::post('/assignments', [AssignmentController::class, 'store']);
+    Route::put('/assignments/{id}', [AssignmentController::class, 'update']);
+    Route::delete('/assignments/{id}', [AssignmentController::class, 'destroy']);
+    Route::get('/assignments/{id}/submissions', [AssignmentController::class, 'getSubmissions']);
+
+    // Grade Management (Guru only)
+    Route::post('/grades', [GradeController::class, 'store']);
+    Route::put('/grades/{id}', [GradeController::class, 'update']);
+    Route::delete('/grades/{id}', [GradeController::class, 'destroy']);
+    Route::get('/grades/kelas/{kelas}', [GradeController::class, 'getKelasGrades']);
+});
+
+// Routes untuk Siswa
+Route::middleware(['auth:sanctum', 'role:siswa,guru,admin'])->group(function () {
+    // Submit assignment
+    Route::post('/assignments/{id}/submit', [AssignmentController::class, 'submit']);
 });
 
 // Routes untuk semua role (Siswa, Guru, Admin)

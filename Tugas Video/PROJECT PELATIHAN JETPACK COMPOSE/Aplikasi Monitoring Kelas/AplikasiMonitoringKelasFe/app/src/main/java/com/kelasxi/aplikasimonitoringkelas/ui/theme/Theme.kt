@@ -11,48 +11,98 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
-private val SchoolDarkColorScheme = darkColorScheme(
-    primary = SchoolBlue80,
-    secondary = SchoolTeal80,
-    tertiary = SchoolGreen80,
-    background = NeutralGray90,
-    surface = NeutralGray80,
-    onPrimary = NeutralGray10,
-    onSecondary = NeutralGray10,
-    onTertiary = NeutralGray10,
-    onBackground = NeutralGray10,
-    onSurface = NeutralGray10,
-    primaryContainer = SchoolBlue40,
-    secondaryContainer = SchoolTeal40,
-    onPrimaryContainer = NeutralGray10,
-    onSecondaryContainer = NeutralGray10
+// SMKN 2 BUDURAN SIDOARJO - Dark Theme
+private val SMKNDarkColorScheme = darkColorScheme(
+    primary = SMKPrimaryLight,
+    onPrimary = NeutralGray900,
+    primaryContainer = SMKPrimary,
+    onPrimaryContainer = androidx.compose.ui.graphics.Color.White,
+    
+    secondary = SMKSecondaryLight,
+    onSecondary = NeutralGray900,
+    secondaryContainer = SMKSecondary,
+    onSecondaryContainer = androidx.compose.ui.graphics.Color.White,
+    
+    tertiary = SMKAccentLight,
+    onTertiary = NeutralGray900,
+    tertiaryContainer = SMKAccent,
+    onTertiaryContainer = androidx.compose.ui.graphics.Color.White,
+    
+    background = NeutralGray900,
+    onBackground = NeutralGray100,
+    surface = NeutralGray800,
+    onSurface = NeutralGray100,
+    surfaceVariant = NeutralGray700,
+    onSurfaceVariant = NeutralGray300,
+    
+    outline = NeutralGray500,
+    outlineVariant = NeutralGray600,
+    
+    error = SMKErrorLight,
+    onError = NeutralGray900,
+    errorContainer = SMKError,
+    onErrorContainer = androidx.compose.ui.graphics.Color.White
 )
 
-private val SchoolLightColorScheme = lightColorScheme(
-    primary = SchoolBlue40,
-    secondary = SchoolTeal40,
-    tertiary = SchoolGreen40,
-    background = NeutralGray10,
-    surface = androidx.compose.ui.graphics.Color.White,
+// SMKN 2 BUDURAN SIDOARJO - Light Theme (Primary)
+private val SMKNLightColorScheme = lightColorScheme(
+    primary = SMKPrimary,
     onPrimary = androidx.compose.ui.graphics.Color.White,
+    primaryContainer = SMKPrimaryContainer,
+    onPrimaryContainer = SMKPrimaryDark,
+    
+    secondary = SMKSecondary,
     onSecondary = androidx.compose.ui.graphics.Color.White,
+    secondaryContainer = SMKSecondaryContainer,
+    onSecondaryContainer = SMKSecondaryDark,
+    
+    tertiary = SMKAccent,
     onTertiary = androidx.compose.ui.graphics.Color.White,
-    onBackground = NeutralGray90,
-    onSurface = NeutralGray90,
-    primaryContainer = SchoolBlue80,
-    secondaryContainer = SchoolTeal80,
-    onPrimaryContainer = NeutralGray90,
-    onSecondaryContainer = NeutralGray90,
-    surfaceVariant = NeutralGray20,
-    onSurfaceVariant = NeutralGray80,
-    outline = NeutralGray80,
-    outlineVariant = SchoolTeal80
+    tertiaryContainer = SMKAccentContainer,
+    onTertiaryContainer = SMKAccentDark,
+    
+    background = SMKBackground,
+    onBackground = SMKOnSurface,
+    surface = SMKSurface,
+    onSurface = SMKOnSurface,
+    surfaceVariant = SMKSurfaceVariant,
+    onSurfaceVariant = SMKOnSurfaceVariant,
+    
+    outline = SMKOutline,
+    outlineVariant = SMKOutlineVariant,
+    
+    error = SMKError,
+    onError = androidx.compose.ui.graphics.Color.White,
+    errorContainer = SMKErrorContainer,
+    onErrorContainer = SMKError,
+    
+    // Status colors integration
+    inverseSurface = SMKOnSurface,
+    inverseOnSurface = SMKSurface,
+    inversePrimary = SMKPrimaryLight
 )
 
 // Legacy schemes for backward compatibility
-private val DarkColorScheme = SchoolDarkColorScheme
-private val LightColorScheme = SchoolLightColorScheme
+private val DarkColorScheme = SMKNDarkColorScheme
+private val LightColorScheme = SMKNLightColorScheme
 
+// Main color schemes
+private val SchoolDarkColorScheme = SMKNDarkColorScheme
+private val SchoolLightColorScheme = SMKNLightColorScheme
+
+/**
+ * SMKN 2 BUDURAN SIDOARJO - Main Theme
+ * 
+ * Professional education application theme with:
+ * - School branding colors extracted from logo
+ * - Consistent Material 3 design system
+ * - Enhanced typography for readability
+ * - Accessibility-compliant color contrast
+ * 
+ * @param darkTheme Enable dark mode (follows system by default)
+ * @param dynamicColor Use Material You dynamic colors (disabled for branding consistency)
+ * @param content Content to be themed
+ */
 @Composable
 fun AplikasiMonitoringKelasTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -66,13 +116,27 @@ fun AplikasiMonitoringKelasTheme(
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
 
-        darkTheme -> SchoolDarkColorScheme
-        else -> SchoolLightColorScheme
+        darkTheme -> SMKNDarkColorScheme
+        else -> SMKNLightColorScheme
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        content = content
+    )
+}
+
+/**
+ * Preview-friendly theme variant for development
+ */
+@Composable
+fun SMKNPreviewTheme(
+    content: @Composable () -> Unit
+) {
+    AplikasiMonitoringKelasTheme(
+        darkTheme = false,
+        dynamicColor = false,
         content = content
     )
 }

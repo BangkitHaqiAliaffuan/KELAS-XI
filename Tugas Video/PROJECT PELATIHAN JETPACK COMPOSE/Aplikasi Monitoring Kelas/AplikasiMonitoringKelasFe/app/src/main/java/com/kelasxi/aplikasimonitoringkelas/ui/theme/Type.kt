@@ -6,22 +6,29 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Custom typography system for school application
-// Using readable, professional fonts with proper hierarchy
+// SMKN 2 BUDURAN SIDOARJO - Typography System
+// Professional, readable typography hierarchy for education application
 val Typography = Typography(
     // Display styles - for hero text and main headers
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
-        fontSize = 57.sp,
-        lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp
+        fontSize = 48.sp,
+        lineHeight = 56.sp,
+        letterSpacing = (-0.5).sp
     ),
     displayMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
-        fontSize = 45.sp,
-        lineHeight = 52.sp,
+        fontSize = 40.sp,
+        lineHeight = 48.sp,
+        letterSpacing = (-0.25).sp
+    ),
+    displaySmall = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 36.sp,
+        lineHeight = 44.sp,
         letterSpacing = 0.sp
     ),
     
@@ -59,14 +66,14 @@ val Typography = Typography(
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
+        fontSize = 18.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.15.sp
     ),
     titleSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
+        fontSize = 16.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
     ),
@@ -77,7 +84,7 @@ val Typography = Typography(
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.15.sp
     ),
     bodyMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -97,7 +104,7 @@ val Typography = Typography(
     // Label styles - for buttons, chips, and form labels
     labelLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.1.sp
@@ -112,8 +119,55 @@ val Typography = Typography(
     labelSmall = TextStyle(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
+        fontSize = 10.sp,
+        lineHeight = 14.sp,
         letterSpacing = 0.5.sp
     )
 )
+
+// Extended Typography for School-specific use cases
+object SchoolTypography {
+    // Welcome text for login screen
+    val welcomeTitle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.25).sp
+    )
+    
+    val welcomeSubtitle = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp
+    )
+    
+    // School name display
+    val schoolName = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.sp
+    )
+    
+    // Status text
+    val statusText = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Medium,
+        fontSize = 13.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.25.sp
+    )
+    
+    // Navigation labels
+    val navigationLabel = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Medium,
+        fontSize = 12.sp,
+        lineHeight = 16.sp,
+        letterSpacing = 0.5.sp
+    )
+}

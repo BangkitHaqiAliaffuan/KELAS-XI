@@ -32,6 +32,11 @@ import com.kelasxi.aplikasimonitoringkelas.data.model.*
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.DaftarTugasSiswaScreen
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.DetailTugasScreen
+import com.kelasxi.aplikasimonitoringkelas.ui.screens.NilaiSiswaScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 
 class SiswaActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +100,28 @@ fun SiswaScreen() {
             composable("jadwal_pelajaran") {
                 JadwalPage(userRole = "Siswa")
             }
+            composable("tugas") {
+                DaftarTugasSiswaScreen(
+                    onNavigateToDetail = { assignmentId ->
+                        navController.navigate("detail_tugas/$assignmentId")
+                    }
+                )
+            }
+            composable("nilai") {
+                NilaiSiswaScreen(
+                    onNavigateBack = { navController.navigateUp() }
+                )
+            }
+            composable(
+                route = "detail_tugas/{assignmentId}",
+                arguments = listOf(navArgument("assignmentId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val assignmentId = backStackEntry.arguments?.getInt("assignmentId") ?: 0
+                DetailTugasScreen(
+                    assignmentId = assignmentId,
+                    onNavigateBack = { navController.navigateUp() }
+                )
+            }
             composable("entri") {
                 EntriPage()
             }
@@ -108,7 +135,9 @@ fun SiswaScreen() {
 @Composable
 fun SiswaBottomNavigation(navController: NavController) {
     val items = listOf(
-        Triple("jadwal_pelajaran", "Jadwal Pelajaran", Icons.Default.Schedule),
+        Triple("jadwal_pelajaran", "Jadwal", Icons.Default.Schedule),
+        Triple("tugas", "Tugas", Icons.Default.Assignment),
+        Triple("nilai", "Nilai", Icons.Default.Grade),
         Triple("entri", "Entri", Icons.Default.Add),
         Triple("list", "List", Icons.Default.List)
     )
