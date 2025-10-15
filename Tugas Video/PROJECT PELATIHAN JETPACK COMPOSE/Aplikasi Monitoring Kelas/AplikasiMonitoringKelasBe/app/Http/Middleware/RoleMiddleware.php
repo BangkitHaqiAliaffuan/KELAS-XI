@@ -24,11 +24,17 @@ class RoleMiddleware
         }
 
         $allowedRoles = explode(',', $roles);
+        $userRole = strtolower($request->user()->role); // Convert to lowercase for comparison
 
-        if (!in_array($request->user()->role, $allowedRoles)) {
+        // Convert all allowed roles to lowercase for case-insensitive comparison
+        $allowedRoles = array_map('strtolower', $allowedRoles);
+
+        if (!in_array($userRole, $allowedRoles)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Forbidden. Insufficient role permissions.'
+                'message' => 'Forbidden. Insufficient role permissions.',
+                'user_role' => $request->user()->role, // Debug info
+                'required_roles' => $roles // Debug info
             ], 403);
         }
 

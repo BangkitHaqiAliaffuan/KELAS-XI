@@ -88,9 +88,17 @@ class TeacherAttendanceController extends Controller
         $today = Carbon::today()->format('Y-m-d');
         $dayName = Carbon::today()->locale('id')->dayName;
 
-        // Get schedules for today
+        // Also try English day name for fallback
+        $dayNameEn = Carbon::today()->format('l');
+
+        // Get schedules for today (try both Indonesian and English)
         $schedules = Schedule::with(['guru'])
-            ->where('hari', $dayName)
+            ->where(function($query) use ($dayName, $dayNameEn) {
+                $query->where('hari', $dayName)
+                      ->orWhere('hari', $dayNameEn)
+                      ->orWhere('hari', ucfirst(strtolower($dayName)))
+                      ->orWhere('hari', ucfirst(strtolower($dayNameEn)));
+            })
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
@@ -114,6 +122,7 @@ class TeacherAttendanceController extends Controller
         return response()->json([
             'tanggal' => $today,
             'hari' => $dayName,
+            'hari_en' => $dayNameEn, // Debug info
             'total_schedules' => $result->count(),
             'sudah_dicatat' => $result->where('has_attendance', true)->count(),
             'belum_dicatat' => $result->where('has_attendance', false)->count(),

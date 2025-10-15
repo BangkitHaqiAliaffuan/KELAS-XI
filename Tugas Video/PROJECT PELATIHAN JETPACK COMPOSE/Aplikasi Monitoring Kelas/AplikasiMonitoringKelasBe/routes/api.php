@@ -27,9 +27,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Jadwal Pelajaran - Bisa diakses semua role
     Route::get('/jadwal', [ScheduleController::class, 'index']);
+
+    // Teacher Attendance - Bisa diakses semua role yang sudah login
+    Route::get('/teacher-attendance/today-schedules', [TeacherAttendanceController::class, 'todaySchedules']);
+    Route::get('/teacher-attendance/today', [TeacherAttendanceController::class, 'today']);
+    Route::get('/teacher-attendance/statistics', [TeacherAttendanceController::class, 'statistics']);
+    Route::get('/teacher-attendance', [TeacherAttendanceController::class, 'index']);
+    Route::post('/teacher-attendance', [TeacherAttendanceController::class, 'store']);
+    Route::get('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'show']);
+    Route::put('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'update']);
+    Route::delete('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'destroy']);
 });
 
-// Routes untuk SISWA - Hanya mencatat monitoring
+// Routes untuk SISWA - Mencatat monitoring
 Route::middleware(['auth:sanctum', 'role:siswa'])->group(function () {
     Route::post('/monitoring/store', [MonitoringController::class, 'store']);
     Route::get('/monitoring/my-reports', [MonitoringController::class, 'myReports']); // Laporan yang dibuat siswa
@@ -45,16 +55,6 @@ Route::middleware(['auth:sanctum', 'role:kurikulum'])->group(function () {
     Route::post('/guru-pengganti', [GuruPenggantiController::class, 'store']);
     Route::put('/guru-pengganti/{id}', [GuruPenggantiController::class, 'update']);
     Route::delete('/guru-pengganti/{id}', [GuruPenggantiController::class, 'destroy']);
-
-    // Teacher Attendance - Entry kehadiran guru
-    Route::get('/teacher-attendance/today-schedules', [TeacherAttendanceController::class, 'todaySchedules']);
-    Route::get('/teacher-attendance/today', [TeacherAttendanceController::class, 'today']);
-    Route::get('/teacher-attendance/statistics', [TeacherAttendanceController::class, 'statistics']);
-    Route::get('/teacher-attendance', [TeacherAttendanceController::class, 'index']);
-    Route::post('/teacher-attendance', [TeacherAttendanceController::class, 'store']);
-    Route::get('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'show']);
-    Route::put('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'update']);
-    Route::delete('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'destroy']);
 });
 
 // Routes untuk KEPALA SEKOLAH - Hanya cek kelas kosong (readonly)
@@ -62,13 +62,6 @@ Route::middleware(['auth:sanctum', 'role:kepala_sekolah'])->group(function () {
     Route::get('/monitoring', [MonitoringController::class, 'index']);
     Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
     Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']); // Hanya lihat
-
-    // Teacher Attendance - Readonly
-    Route::get('/teacher-attendance/today-schedules', [TeacherAttendanceController::class, 'todaySchedules']);
-    Route::get('/teacher-attendance/today', [TeacherAttendanceController::class, 'today']);
-    Route::get('/teacher-attendance/statistics', [TeacherAttendanceController::class, 'statistics']);
-    Route::get('/teacher-attendance', [TeacherAttendanceController::class, 'index']);
-    Route::get('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'show']);
 });
 
 // Routes untuk ADMIN - User Management

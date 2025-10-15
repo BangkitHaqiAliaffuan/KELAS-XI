@@ -170,15 +170,11 @@ fun SiswaScreen() {
             composable("jadwal_pelajaran") {
                 JadwalPage(userRole = "Siswa")
             }
-            // REMOVED: Tugas and Nilai routes - no longer needed for siswa
             composable("entri") {
                 EntriPage()
             }
             composable("list") {
                 ListPage()
-            }
-            composable("my_reports") {
-                MyReportsPage()
             }
         }
     }
@@ -189,8 +185,7 @@ fun SiswaBottomNavigation(navController: NavController) {
     val items = listOf(
         Triple("jadwal_pelajaran", "Jadwal", Icons.Default.Schedule),
         Triple("entri", "Entri Guru", Icons.Default.Add),
-        Triple("list", "Laporan", Icons.Default.List),
-        Triple("my_reports", "Laporan Saya", Icons.Default.Description)
+        Triple("list", "Laporan", Icons.Default.List)
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -825,11 +820,14 @@ fun EntriPage() {
                         repository.createTeacherAttendance(token, request)
                             .onSuccess {
                                 successMessage = "Kehadiran guru berhasil dicatat"
+                                // Tutup modal dan reset state
                                 showEntryDialog = false
                                 selectedSchedule = null
                             }
                             .onFailure { error ->
+                                // Tampilkan error dan tetap buka modal
                                 Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                                // Modal tidak ditutup agar user bisa coba lagi
                             }
                     }
                 }
@@ -984,13 +982,12 @@ fun TeacherAttendanceEntryCard(
             }
 
             if (!hasAttendance) {
-                SchoolButton(
-                    onClick = onEntryClick,
-                    text = "Catat",
-                    variant = ButtonVariant.Primary,
-                    size = ButtonSize.Small,
-                    leadingIcon = Icons.Default.Add
-                )
+                    SchoolButton(
+                        onClick = onEntryClick,
+                        text = "Catat",
+                        variant = ButtonVariant.Primary,
+                        leadingIcon = Icons.Default.Add
+                    )
             } else {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
@@ -1021,6 +1018,7 @@ fun TeacherAttendanceEntryDialog(
     }
     var selectedStatus by remember { mutableStateOf(existingAttendance?.status ?: "hadir") }
     var keterangan by remember { mutableStateOf(existingAttendance?.keterangan ?: "") }
+    var isSubmitting by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1079,20 +1077,22 @@ fun TeacherAttendanceEntryDialog(
         confirmButton = {
             SchoolButton(
                 onClick = {
-                    if (jamMasuk.isNotEmpty()) {
+                    if (jamMasuk.isNotEmpty() && !isSubmitting) {
+                        isSubmitting = true
                         onSubmit(jamMasuk, selectedStatus, keterangan.ifBlank { null })
                     }
                 },
-                text = "Simpan",
+                text = if (isSubmitting) "Menyimpan..." else "Simpan",
                 variant = ButtonVariant.Primary,
-                enabled = jamMasuk.isNotEmpty()
+                enabled = jamMasuk.isNotEmpty() && !isSubmitting
             )
         },
         dismissButton = {
             SchoolButton(
                 onClick = onDismiss,
                 text = "Batal",
-                variant = ButtonVariant.Secondary
+                variant = ButtonVariant.Secondary,
+                enabled = !isSubmitting
             )
         }
     )

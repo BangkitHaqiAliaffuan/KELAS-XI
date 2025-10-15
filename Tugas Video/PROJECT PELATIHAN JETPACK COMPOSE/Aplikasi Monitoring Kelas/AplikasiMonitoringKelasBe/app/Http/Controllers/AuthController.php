@@ -144,7 +144,8 @@ class AuthController extends Controller
             }
 
             // Pastikan user memiliki role yang valid
-            if (!in_array($user->role, ['admin', 'kurikulum', 'kepala_sekolah', 'siswa'])) {
+            $validRoles = ['admin', 'kurikulum', 'kepala_sekolah', 'siswa', 'guru'];
+            if (!in_array($user->role, $validRoles)) {
                 \Log::error('Login failed - Invalid user role', ['email' => $validated['email'], 'role' => $user->role]);
                 return response()->json([
                     'success' => false,
