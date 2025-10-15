@@ -23,8 +23,18 @@ data class User(
     val name: String,
     val email: String,
     val role: String,
+    val mata_pelajaran: String? = null,
+    val is_banned: Boolean = false,
     val created_at: String,
     val updated_at: String
+)
+
+data class CreateUserRequest(
+    val name: String,
+    val email: String,
+    val password: String,
+    val role: String,
+    val mata_pelajaran: String? = null
 )
 
 data class ApiResponse<T>(

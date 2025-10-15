@@ -6,9 +6,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -29,10 +31,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kelasxi.aplikasimonitoringkelas.data.api.RetrofitClient
 import com.kelasxi.aplikasimonitoringkelas.data.model.*
+import com.kelasxi.aplikasimonitoringkelas.data.repository.AppRepositoryNew
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
+import kotlinx.coroutines.launch
 
 class AdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -147,30 +152,34 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
     val context = LocalContext.current
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
     
-    val users by viewModel.users
-    val isLoading by viewModel.isLoading
-    val errorMessage by viewModel.errorMessage
-    val updateSuccess by viewModel.updateSuccess
+    var userList by remember { mutableStateOf<List<User>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // Function to load users
+    fun loadUsers() {
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                repository.getUsers(token)
+                    .onSuccess { response ->
+                        userList = response.data
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                        Toast.makeText(context, "Gagal memuat users: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                isLoading = false
+            }
+        }
+    }
     
     // Load users when page opens
     LaunchedEffect(Unit) {
-        token?.let { viewModel.loadUsers(it) }
-    }
-    
-    // Handle success and error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            viewModel.clearError()
-        }
-    }
-    
-    LaunchedEffect(updateSuccess) {
-        if (updateSuccess) {
-            Toast.makeText(context, "Role berhasil diupdate", Toast.LENGTH_SHORT).show()
-            viewModel.clearUpdateSuccess()
-        }
+        loadUsers()
     }
     
     Column(
@@ -194,11 +203,48 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
             }
         } else {
             LazyColumn {
-                items(users) { user ->
-                    UserCard(
+                items(userList) { user ->
+                    UserCardWithActions(
                         user = user,
-                        onRoleUpdate = { newRole: String ->
-                            token?.let { viewModel.updateUserRole(it, user.id, newRole) }
+                        onBanToggle = {
+                            if (token != null) {
+                                scope.launch {
+                                    isLoading = true
+                                    val result = if (user.is_banned) {
+                                        repository.unbanUser(token, user.id)
+                                    } else {
+                                        repository.banUser(token, user.id)
+                                    }
+                                    
+                                    result.onSuccess {
+                                        Toast.makeText(
+                                            context,
+                                            if (user.is_banned) "User berhasil di-unban" else "User berhasil di-ban",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        loadUsers() // Reload list
+                                    }.onFailure { error ->
+                                        Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                    isLoading = false
+                                }
+                            }
+                        },
+                        onDelete = {
+                            if (token != null) {
+                                scope.launch {
+                                    isLoading = true
+                                    repository.deleteUser(token, user.id)
+                                        .onSuccess {
+                                            Toast.makeText(context, "User berhasil dihapus", Toast.LENGTH_SHORT).show()
+                                            loadUsers() // Reload list
+                                        }
+                                        .onFailure { error ->
+                                            Toast.makeText(context, "Gagal menghapus: ${error.message}", Toast.LENGTH_LONG).show()
+                                        }
+                                    isLoading = false
+                                }
+                            }
                         }
                     )
                 }
@@ -207,6 +253,281 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserCardWithActions(
+    user: User,
+    onBanToggle: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showBanDialog by remember { mutableStateOf(false) }
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (user.is_banned) 
+                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)
+            else 
+                MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = user.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (user.is_banned) 
+                            MaterialTheme.colorScheme.onErrorContainer
+                        else 
+                            MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Email: ${user.email}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (user.is_banned) 
+                            MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.7f)
+                        else 
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    // Role Chip
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = when (user.role.lowercase()) {
+                            "admin", "kepala_sekolah" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            "kurikulum" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                            else -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
+                        }
+                    ) {
+                        Text(
+                            text = when (user.role) {
+                                "siswa" -> "Siswa"
+                                "kurikulum" -> "Kurikulum"
+                                "admin" -> "Admin"
+                                "kepala_sekolah" -> "Kepala Sekolah"
+                                else -> user.role
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = when (user.role.lowercase()) {
+                                "admin", "kepala_sekolah" -> MaterialTheme.colorScheme.primary
+                                "kurikulum" -> MaterialTheme.colorScheme.secondary
+                                else -> MaterialTheme.colorScheme.tertiary
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    
+                    // Banned Badge
+                    if (user.is_banned) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.2f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Block,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "BANNED",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Action Buttons Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Ban/Unban Button
+                if (user.role.lowercase() != "admin") {
+                    IconButton(
+                        onClick = { showBanDialog = true },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = if (user.is_banned) 
+                                MaterialTheme.colorScheme.primary 
+                            else 
+                                MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(
+                            imageVector = if (user.is_banned) Icons.Default.CheckCircle else Icons.Default.Block,
+                            contentDescription = if (user.is_banned) "Unban User" else "Ban User"
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    // Delete Button
+                    IconButton(
+                        onClick = { showDeleteDialog = true },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete User"
+                        )
+                    }
+                } else {
+                    // Show protected badge for admin
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Protected",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Ban/Unban Confirmation Dialog
+    if (showBanDialog) {
+        AlertDialog(
+            onDismissRequest = { showBanDialog = false },
+            icon = {
+                Icon(
+                    imageVector = if (user.is_banned) Icons.Default.CheckCircle else Icons.Default.Block,
+                    contentDescription = null,
+                    tint = if (user.is_banned) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                )
+            },
+            title = { 
+                Text(if (user.is_banned) "Unban User?" else "Ban User?") 
+            },
+            text = {
+                Text(
+                    if (user.is_banned)
+                        "Apakah Anda yakin ingin mengaktifkan kembali akses untuk ${user.name}? User akan dapat login kembali."
+                    else
+                        "Apakah Anda yakin ingin menonaktifkan akses untuk ${user.name}? User tidak akan dapat login."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onBanToggle()
+                        showBanDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (user.is_banned) 
+                            MaterialTheme.colorScheme.primary 
+                        else 
+                            MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(if (user.is_banned) "Unban" else "Ban")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showBanDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+    
+    // Delete Confirmation Dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = { Text("Hapus User?") },
+            text = {
+                Column {
+                    Text("Apakah Anda yakin ingin menghapus user berikut?")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Nama: ${user.name}\nEmail: ${user.email}",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "⚠️ Tindakan ini tidak dapat dibatalkan!",
+                        color = MaterialTheme.colorScheme.error,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+}
+
+// Legacy UserCard - kept for backward compatibility but not used
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserCard(user: User, onRoleUpdate: (String) -> Unit) {
@@ -441,7 +762,11 @@ fun MonitoringCard(monitoring: Monitoring) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
-            Text(text = "Guru: ${monitoring.guru.name}")
+            Text(text = "Guru: ${monitoring.guru.name}${
+                if (!monitoring.guru.mata_pelajaran.isNullOrEmpty()) 
+                    " (${monitoring.guru.mata_pelajaran})" 
+                else ""
+            }")
             Text(text = "Status: ${monitoring.status_hadir}")
             Text(text = "Tanggal: ${monitoring.tanggal}")
             Text(text = "Jam Laporan: ${monitoring.jam_laporan}")

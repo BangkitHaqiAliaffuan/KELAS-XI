@@ -134,8 +134,17 @@ class AuthController extends Controller
                 ], Response::HTTP_UNAUTHORIZED);
             }
 
+            // Cek apakah user di-ban
+            if ($user->is_banned) {
+                \Log::warning('Login failed - User is banned', ['email' => $validated['email']]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun Anda telah dinonaktifkan. Hubungi administrator.'
+                ], Response::HTTP_FORBIDDEN);
+            }
+
             // Pastikan user memiliki role yang valid
-            if (!in_array($user->role, ['admin', 'guru', 'siswa'])) {
+            if (!in_array($user->role, ['admin', 'kurikulum', 'kepala_sekolah', 'siswa'])) {
                 \Log::error('Login failed - Invalid user role', ['email' => $validated['email'], 'role' => $user->role]);
                 return response()->json([
                     'success' => false,
@@ -299,7 +308,7 @@ class AuthController extends Controller
     public function getAllUsers()
     {
         try {
-            $users = User::all();
+            $users = User::select('id', 'name', 'email', 'role', 'mata_pelajaran', 'is_banned', 'created_at', 'updated_at')->get();
 
             return response()->json([
                 'success' => true,
@@ -317,13 +326,57 @@ class AuthController extends Controller
     }
 
     /**
+     * Create new user (Admin only)
+     */
+    public function createUser(Request $request)
+    {
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|string|min:6',
+                'role' => 'required|in:admin,kurikulum,kepala_sekolah,siswa',
+                'mata_pelajaran' => 'nullable|string|max:255'
+            ]);
+
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'mata_pelajaran' => $request->mata_pelajaran,
+                'is_banned' => false
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil dibuat',
+                'data' => $user
+            ], Response::HTTP_CREATED);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data tidak valid',
+                'errors' => $e->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Update user role (Admin only)
      */
     public function updateUserRole(Request $request, $id)
     {
         try {
             $request->validate([
-                'role' => 'required|in:admin,guru,siswa'
+                'role' => 'required|in:admin,kurikulum,kepala_sekolah,siswa'
             ]);
 
             $user = User::findOrFail($id);
@@ -342,6 +395,98 @@ class AuthController extends Controller
                 'message' => 'Data tidak valid',
                 'errors' => $e->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Ban user (Admin only)
+     */
+    public function banUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            if ($user->role === 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat memban admin'
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            $user->is_banned = true;
+            $user->save();
+
+            // Revoke all tokens
+            $user->tokens()->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil di-ban',
+                'data' => $user
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Unban user (Admin only)
+     */
+    public function unbanUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+            $user->is_banned = false;
+            $user->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil di-unban',
+                'data' => $user
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Delete user (Admin only)
+     */
+    public function deleteUser($id)
+    {
+        try {
+            $user = User::findOrFail($id);
+
+            if ($user->role === 'admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus admin'
+                ], Response::HTTP_FORBIDDEN);
+            }
+
+            $user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'User berhasil dihapus'
+            ], Response::HTTP_OK);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

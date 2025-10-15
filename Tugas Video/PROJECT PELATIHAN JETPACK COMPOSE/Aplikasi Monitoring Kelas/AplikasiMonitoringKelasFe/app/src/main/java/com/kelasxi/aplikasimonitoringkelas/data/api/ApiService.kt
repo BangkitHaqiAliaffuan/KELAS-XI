@@ -11,7 +11,7 @@ interface ApiService {
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
     
     @POST("logout")
-    suspend fun logout(@Header("Authorization") token: String): Response<Any>
+    suspend fun logout(@Header("Authorization") token: String): Response<ApiResponse<Any>>
     
     @GET("user")
     suspend fun getUser(@Header("Authorization") token: String): Response<LoginResponse>
@@ -24,18 +24,79 @@ interface ApiService {
         @Query("kelas") kelas: String? = null
     ): Response<ScheduleResponse>
     
-    // Users Management (Admin Only)
+    // ==================== ADMIN: User Management ====================
+    
     @GET("users")
     suspend fun getUsers(@Header("Authorization") token: String): Response<UsersResponse>
+    
+    @POST("users")
+    suspend fun createUser(
+        @Header("Authorization") token: String,
+        @Body request: CreateUserRequest
+    ): Response<ApiResponse<User>>
     
     @PUT("users/{id}/role")
     suspend fun updateUserRole(
         @Header("Authorization") token: String,
         @Path("id") userId: Int,
         @Body request: UpdateRoleRequest
-    ): Response<LoginResponse>
+    ): Response<ApiResponse<User>>
     
-    // Monitoring
+    @PUT("users/{id}/ban")
+    suspend fun banUser(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int
+    ): Response<ApiResponse<User>>
+    
+    @PUT("users/{id}/unban")
+    suspend fun unbanUser(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int
+    ): Response<ApiResponse<User>>
+    
+    @DELETE("users/{id}")
+    suspend fun deleteUser(
+        @Header("Authorization") token: String,
+        @Path("id") userId: Int
+    ): Response<ApiResponse<Any>>
+    
+    // ==================== ADMIN: Jadwal Management ====================
+    
+    @POST("jadwal")
+    suspend fun createSchedule(
+        @Header("Authorization") token: String,
+        @Body request: ScheduleRequest
+    ): Response<ApiResponse<Schedule>>
+    
+    @PUT("jadwal/{id}")
+    suspend fun updateSchedule(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: ScheduleRequest
+    ): Response<ApiResponse<Schedule>>
+    
+    @DELETE("jadwal/{id}")
+    suspend fun deleteSchedule(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<ApiResponse<Any>>
+    
+    // ==================== SISWA: Monitoring ====================
+    
+    @POST("monitoring/store")
+    suspend fun storeMonitoring(
+        @Header("Authorization") token: String,
+        @Body request: MonitoringRequest
+    ): Response<MonitoringResponse>
+    
+    @GET("monitoring/my-reports")
+    suspend fun getMyReports(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null
+    ): Response<MonitoringListResponse>
+    
+    // ==================== KURIKULUM & KEPALA SEKOLAH: Monitoring ====================
+    
     @GET("monitoring")
     suspend fun getMonitoring(
         @Header("Authorization") token: String,
@@ -44,86 +105,37 @@ interface ApiService {
         @Query("guru_id") guruId: Int? = null
     ): Response<MonitoringListResponse>
     
-    @POST("monitoring/store")
-    suspend fun storeMonitoring(
+    @GET("monitoring/kelas-kosong")
+    suspend fun getKelasKosong(
         @Header("Authorization") token: String,
-        @Body request: MonitoringRequest
-    ): Response<MonitoringResponse>
-
-    // Assignments
-    @GET("assignments")
-    suspend fun getAssignments(
+        @Query("tanggal") tanggal: String? = null
+    ): Response<KelasKosongResponse>
+    
+    // ==================== KURIKULUM: Guru Pengganti ====================
+    
+    @GET("guru-pengganti")
+    suspend fun getGuruPengganti(
         @Header("Authorization") token: String,
-        @Query("kelas") kelas: String? = null,
-        @Query("mata_pelajaran") mataPelajaran: String? = null,
-        @Query("tipe") tipe: String? = null
-    ): Response<AssignmentsResponse>
-
-    @GET("assignments/{id}")
-    suspend fun getAssignmentDetail(
-        @Header("Authorization") token: String,
-        @Path("id") id: Int
-    ): Response<AssignmentResponse>
-
-    @Multipart
-    @POST("assignments")
-    suspend fun createAssignment(
-        @Header("Authorization") token: String,
-        @Part("kelas") kelas: okhttp3.RequestBody,
-        @Part("mata_pelajaran") mataPelajaran: okhttp3.RequestBody,
-        @Part("judul") judul: okhttp3.RequestBody,
-        @Part("deskripsi") deskripsi: okhttp3.RequestBody,
-        @Part("deadline") deadline: okhttp3.RequestBody,
-        @Part("tipe") tipe: okhttp3.RequestBody,
-        @Part("bobot") bobot: okhttp3.RequestBody,
-        @Part file: okhttp3.MultipartBody.Part?
-    ): Response<AssignmentResponse>
-
-    @Multipart
-    @POST("assignments/{id}/submit")
-    suspend fun submitAssignment(
-        @Header("Authorization") token: String,
-        @Path("id") id: Int,
-        @Part("keterangan") keterangan: okhttp3.RequestBody?,
-        @Part file: okhttp3.MultipartBody.Part
-    ): Response<SubmissionResponse>
-
-    @GET("assignments/{id}/submissions")
-    suspend fun getAssignmentSubmissions(
-        @Header("Authorization") token: String,
-        @Path("id") id: Int
-    ): Response<SubmissionsResponse>
-
-    // Grades
-    @GET("grades")
-    suspend fun getGrades(
-        @Header("Authorization") token: String,
-        @Query("mata_pelajaran") mataPelajaran: String? = null,
+        @Query("tanggal") tanggal: String? = null,
         @Query("kelas") kelas: String? = null
-    ): Response<GradesResponse>
-
-    @GET("grades/siswa/{id}")
-    suspend fun getSiswaGrades(
+    ): Response<GuruPenggantiResponse>
+    
+    @POST("guru-pengganti")
+    suspend fun createGuruPengganti(
         @Header("Authorization") token: String,
-        @Path("id") siswaId: Int
-    ): Response<SiswaGradesResponse>
-
-    @FormUrlEncoded
-    @POST("grades")
-    suspend fun createGrade(
-        @Header("Authorization") token: String,
-        @Field("siswa_id") siswaId: Int,
-        @Field("assignment_id") assignmentId: Int,
-        @Field("nilai") nilai: Double,
-        @Field("catatan") catatan: String?
-    ): Response<GradeResponse>
-
-    @FormUrlEncoded
-    @PUT("grades/{id}")
-    suspend fun updateGrade(
+        @Body request: GuruPenggantiRequest
+    ): Response<ApiResponse<GuruPengganti>>
+    
+    @PUT("guru-pengganti/{id}")
+    suspend fun updateGuruPengganti(
         @Header("Authorization") token: String,
         @Path("id") id: Int,
-        @Field("nilai") nilai: Double,
-        @Field("catatan") catatan: String?
-    ): Response<GradeResponse>
+        @Body request: GuruPenggantiRequest
+    ): Response<ApiResponse<GuruPengganti>>
+    
+    @DELETE("guru-pengganti/{id}")
+    suspend fun deleteGuruPengganti(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<ApiResponse<Any>>
 }

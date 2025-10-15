@@ -25,7 +25,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kelasxi.aplikasimonitoringkelas.data.api.RetrofitClient
+import com.kelasxi.aplikasimonitoringkelas.data.model.CreateUserRequest
 import com.kelasxi.aplikasimonitoringkelas.data.model.User
+import com.kelasxi.aplikasimonitoringkelas.data.repository.AppRepositoryNew
 import com.kelasxi.aplikasimonitoringkelas.ui.components.SchoolButton
 import com.kelasxi.aplikasimonitoringkelas.ui.components.SchoolCard
 import com.kelasxi.aplikasimonitoringkelas.ui.components.SchoolDropdownField
@@ -37,6 +40,7 @@ import com.kelasxi.aplikasimonitoringkelas.ui.theme.Dimensions
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.Spacing
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,44 +48,38 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
     val context = LocalContext.current
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
     
     var selectedRole by remember { mutableStateOf("") }
     var nama by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var mataPelajaran by remember { mutableStateOf("") }
     var userList by remember { mutableStateOf(listOf<User>()) }
     var isRoleDropdownExpanded by remember { mutableStateOf(false) }
     var emailError by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
     
     // Load the existing users list once
     LaunchedEffect(Unit) {
-        token?.let { viewModel.loadUsers(it) }
-    }
-    
-    // Listen to changes in the ViewModel users list
-    val usersFromViewModel by viewModel.users
-    val viewModelErrorMessage by viewModel.errorMessage
-    val updateSuccess by viewModel.updateSuccess
-    
-    // Handle error messages
-    LaunchedEffect(viewModelErrorMessage) {
-        viewModelErrorMessage?.let { message ->
-            errorMessage = message
-            viewModel.clearError()
+        token?.let { 
+            isLoading = true
+            repository.getUsers(it)
+                .onSuccess { response ->
+                    userList = response.data
+                }
+                .onFailure { error ->
+                    errorMessage = error.message
+                }
+            isLoading = false
         }
     }
     
-    // Handle success messages
-    LaunchedEffect(updateSuccess) {
-        if (updateSuccess) {
-            errorMessage = "User berhasil ditambahkan"
-            viewModel.clearUpdateSuccess()
-        }
-    }
-    
-    val roles = listOf("siswa", "guru", "admin", "kepala_sekolah")
+    // Updated roles list - removed "guru", added "kurikulum"
+    val roles = listOf("siswa", "kurikulum", "kepala_sekolah", "admin")
     
     Scaffold(
         topBar = {
@@ -110,7 +108,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
             SchoolDropdownField(
                 value = when (selectedRole) {
                     "siswa" -> "Siswa"
-                    "guru" -> "Guru"
+                    "kurikulum" -> "Kurikulum"
                     "admin" -> "Admin"
                     "kepala_sekolah" -> "Kepala Sekolah"
                     else -> selectedRole
@@ -118,7 +116,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                 onValueChange = { 
                     selectedRole = when (it) {
                         "Siswa" -> "siswa"
-                        "Guru" -> "guru"
+                        "Kurikulum" -> "kurikulum"
                         "Admin" -> "admin"
                         "Kepala Sekolah" -> "kepala_sekolah"
                         else -> it
@@ -127,7 +125,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                 options = roles.map { role ->
                     when (role) {
                         "siswa" -> "Siswa"
-                        "guru" -> "Guru"
+                        "kurikulum" -> "Kurikulum"
                         "admin" -> "Admin"
                         "kepala_sekolah" -> "Kepala Sekolah"
                         else -> role
@@ -186,6 +184,9 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth()
             )
+            
+            // Conditional field for Guru - Mata Pelajaran (NOT USED NOW - no more guru role)
+            // Mata pelajaran field removed as guru role is removed from system
         }
         
         // Action Buttons Card
@@ -195,8 +196,43 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                     if (selectedRole.isNotEmpty() && nama.isNotEmpty() && 
                         email.isNotEmpty() && password.isNotEmpty() && !emailError) {
                         if (token != null) {
-                            // This would be implemented with a create user API call
-                            errorMessage = "Fitur ini akan diimplementasikan - memerlukan endpoint API untuk menambah user"
+                            scope.launch {
+                                isLoading = true
+                                errorMessage = null
+                                successMessage = null
+                                
+                                val request = CreateUserRequest(
+                                    name = nama,
+                                    email = email,
+                                    password = password,
+                                    role = selectedRole
+                                )
+                                
+                                repository.createUser(token, request)
+                                    .onSuccess { response ->
+                                        successMessage = "User berhasil ditambahkan: ${response.data.name}"
+                                        // Clear form
+                                        selectedRole = ""
+                                        nama = ""
+                                        email = ""
+                                        password = ""
+                                        mataPelajaran = ""
+                                        
+                                        // Reload user list
+                                        repository.getUsers(token)
+                                            .onSuccess { usersResponse ->
+                                                userList = usersResponse.data
+                                            }
+                                            .onFailure { error ->
+                                                errorMessage = "Gagal memuat ulang daftar user: ${error.message}"
+                                            }
+                                    }
+                                    .onFailure { error ->
+                                        errorMessage = "Gagal menambahkan user: ${error.message}"
+                                    }
+                                
+                                isLoading = false
+                            }
                         } else {
                             errorMessage = "Token tidak ditemukan, harap login terlebih dahulu"
                         }
@@ -210,6 +246,38 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                 modifier = Modifier.fillMaxWidth()
             )
             
+            // Success Message
+            if (successMessage != null) {
+                Spacer(modifier = Modifier.height(Spacing.md))
+                
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer,
+                            RoundedCornerShape(Dimensions.surfaceCornerRadius)
+                        )
+                        .padding(Spacing.md),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    
+                    Spacer(modifier = Modifier.width(Spacing.sm))
+                    
+                    Text(
+                        text = successMessage!!,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+            
+            // Error Message
             if (errorMessage != null) {
                 Spacer(modifier = Modifier.height(Spacing.md))
                 
@@ -255,7 +323,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                     )
                     
                     Text(
-                        text = "${usersFromViewModel.size} pengguna",
+                        text = "${userList.size} pengguna",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -263,7 +331,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                 
                 Spacer(modifier = Modifier.height(Spacing.md))
                 
-                if (usersFromViewModel.isEmpty()) {
+                if (userList.isEmpty()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -291,7 +359,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(Spacing.sm)
                     ) {
-                        items(usersFromViewModel) { user ->
+                        items(userList) { user ->
                             UserCard(user = user)
                         }
                     }
@@ -356,6 +424,36 @@ fun UserCard(user: User) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
+                // Display mata_pelajaran for guru (legacy support)
+                if (user.role.lowercase() == "guru" && !user.mata_pelajaran.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                    
+                    Text(
+                        text = "📚 ${user.mata_pelajaran}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                
+                // Show banned status
+                if (user.is_banned) {
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                    
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                    ) {
+                        Text(
+                            text = "🚫 BANNED",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+                        )
+                    }
+                }
+                
                 Spacer(modifier = Modifier.height(Spacing.xs))
                 
                 // Role Chip
@@ -363,14 +461,14 @@ fun UserCard(user: User) {
                     shape = RoundedCornerShape(16.dp),
                     color = when (user.role.lowercase()) {
                         "admin", "kepala_sekolah" -> MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                        "guru" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
+                        "kurikulum" -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.1f)
                         else -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.1f)
                     }
                 ) {
                     Text(
                         text = when (user.role) {
                             "siswa" -> "Siswa"
-                            "guru" -> "Guru"
+                            "kurikulum" -> "Kurikulum"
                             "admin" -> "Admin"
                             "kepala_sekolah" -> "Kepala Sekolah"
                             else -> user.role
@@ -379,7 +477,7 @@ fun UserCard(user: User) {
                         fontWeight = FontWeight.Medium,
                         color = when (user.role.lowercase()) {
                             "admin", "kepala_sekolah" -> MaterialTheme.colorScheme.primary
-                            "guru" -> MaterialTheme.colorScheme.secondary
+                            "kurikulum" -> MaterialTheme.colorScheme.secondary
                             else -> MaterialTheme.colorScheme.tertiary
                         },
                         modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)

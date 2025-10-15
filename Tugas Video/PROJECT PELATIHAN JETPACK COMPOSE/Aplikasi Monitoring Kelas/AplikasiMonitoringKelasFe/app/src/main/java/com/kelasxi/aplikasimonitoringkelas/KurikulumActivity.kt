@@ -6,15 +6,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,15 +29,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kelasxi.aplikasimonitoringkelas.data.api.RetrofitClient
 import com.kelasxi.aplikasimonitoringkelas.data.model.*
+import com.kelasxi.aplikasimonitoringkelas.data.repository.AppRepositoryNew
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
-import com.kelasxi.aplikasimonitoringkelas.ui.screens.BuatTugasScreen
-import com.kelasxi.aplikasimonitoringkelas.ui.screens.DaftarTugasGuruScreen
-import com.kelasxi.aplikasimonitoringkelas.ui.screens.InputNilaiScreen
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import com.kelasxi.aplikasimonitoringkelas.ui.theme.*
+import com.kelasxi.aplikasimonitoringkelas.ui.components.*
+import kotlinx.coroutines.launch
 
 class KurikulumActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,11 +58,11 @@ fun KurikulumScreen() {
     val navController = rememberNavController()
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     
-    // Check if user is guru (should be "kurikulum" or "guru", based on role mapping)
+    // Check if user is kurikulum
     LaunchedEffect(Unit) {
         val userRole = sharedPrefManager.getUserRole()
-        if (userRole != "guru" && userRole != "kurikulum") {
-            Toast.makeText(context, "Akses ditolak. Anda bukan guru.", Toast.LENGTH_LONG).show()
+        if (userRole != "kurikulum") {
+            Toast.makeText(context, "Akses ditolak. Anda bukan kurikulum.", Toast.LENGTH_LONG).show()
             context.startActivity(Intent(context, MainActivity::class.java))
             if (context is ComponentActivity) {
                 context.finish()
@@ -69,19 +72,39 @@ fun KurikulumScreen() {
     
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Dashboard Guru - ${sharedPrefManager.getUserName() ?: "Guru"}") },
+            SchoolTopBar(
+                title = "Dashboard Kurikulum",
                 actions = {
-                    IconButton(
-                        onClick = {
-                            sharedPrefManager.logout()
-                            context.startActivity(Intent(context, MainActivity::class.java))
-                            if (context is ComponentActivity) {
-                                context.finish()
-                            }
-                        }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                     ) {
-                        Icon(Icons.Default.Logout, contentDescription = "Logout")
+                        SchoolAvatar(
+                            name = sharedPrefManager.getUserName() ?: "Kurikulum",
+                            size = AvatarSize.Small,
+                            backgroundColor = SMKPrimary
+                        )
+                        Text(
+                            text = sharedPrefManager.getUserName() ?: "Kurikulum",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = SMKOnSurface
+                        )
+                        IconButton(
+                            onClick = {
+                                sharedPrefManager.logout()
+                                context.startActivity(Intent(context, MainActivity::class.java))
+                                if (context is ComponentActivity) {
+                                    context.finish()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Logout,
+                                contentDescription = "Logout",
+                                tint = SMKPrimary
+                            )
+                        }
                     }
                 }
             )
@@ -92,40 +115,14 @@ fun KurikulumScreen() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "jadwal_pelajaran",
+            startDestination = "kelas_kosong",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("jadwal_pelajaran") {
-                KurikulumJadwalPage()
+            composable("kelas_kosong") {
+                KelasKosongPage()
             }
-            composable("tugas") {
-                DaftarTugasGuruScreen(
-                    onNavigateToCreate = { navController.navigate("buat_tugas") },
-                    onNavigateToSubmissions = { assignmentId ->
-                        navController.navigate("input_nilai/$assignmentId")
-                    }
-                )
-            }
-            composable("buat_tugas") {
-                BuatTugasScreen(
-                    onNavigateBack = { navController.navigateUp() }
-                )
-            }
-            composable(
-                route = "input_nilai/{assignmentId}",
-                arguments = listOf(navArgument("assignmentId") { type = NavType.IntType })
-            ) { backStackEntry ->
-                val assignmentId = backStackEntry.arguments?.getInt("assignmentId") ?: 0
-                InputNilaiScreen(
-                    assignmentId = assignmentId,
-                    onNavigateBack = { navController.navigateUp() }
-                )
-            }
-            composable("ganti_guru") {
-                GantiGuruPage()
-            }
-            composable("list") {
-                KurikulumListPage()
+            composable("guru_pengganti") {
+                GuruPenggantiPage()
             }
         }
     }
@@ -134,21 +131,42 @@ fun KurikulumScreen() {
 @Composable
 fun KurikulumBottomNavigation(navController: NavController) {
     val items = listOf(
-        Triple("jadwal_pelajaran", "Jadwal", Icons.Default.Schedule),
-        Triple("tugas", "Tugas", Icons.Default.Assignment),
-        Triple("ganti_guru", "Ganti Guru", Icons.Default.Person),
-        Triple("list", "List", Icons.Default.List)
+        Triple("kelas_kosong", "Kelas Kosong", Icons.Default.EventBusy),
+        Triple("guru_pengganti", "Guru Pengganti", Icons.Default.PersonAdd)
     )
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     
-    NavigationBar {
+    NavigationBar(
+        containerColor = SMKSurface,
+        contentColor = SMKPrimary,
+        tonalElevation = Elevation.small
+    ) {
         items.forEach { (route, label, icon) ->
             NavigationBarItem(
-                icon = { Icon(icon, contentDescription = label) },
-                label = { Text(label) },
+                icon = {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        modifier = Modifier.size(Dimensions.iconSizeMedium)
+                    )
+                },
+                label = {
+                    Text(
+                        text = label,
+                        style = SchoolTypography.navigationLabel,
+                        fontWeight = if (currentRoute == route) FontWeight.Bold else FontWeight.Medium
+                    )
+                },
                 selected = currentRoute == route,
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = SMKPrimary,
+                    selectedTextColor = SMKPrimary,
+                    unselectedIconColor = NeutralGray500,
+                    unselectedTextColor = NeutralGray500,
+                    indicatorColor = SMKPrimaryContainer
+                ),
                 onClick = {
                     navController.navigate(route) {
                         popUpTo(navController.graph.startDestinationId) {
@@ -163,428 +181,129 @@ fun KurikulumBottomNavigation(navController: NavController) {
     }
 }
 
-
-
-@Composable
-fun KurikulumJadwalPage() {
-    val context = LocalContext.current
-    val scheduleViewModel: ScheduleViewModel = viewModel()
-    val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
-    val token = sharedPrefManager.getToken()
-    
-    val schedules by scheduleViewModel.schedules
-    val isLoading by scheduleViewModel.isLoading
-    val errorMessage by scheduleViewModel.errorMessage
-    
-    // Load schedules when page opens
-    LaunchedEffect(Unit) {
-        token?.let { scheduleViewModel.loadSchedules(it) }
-    }
-    
-    // Handle error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            scheduleViewModel.clearError()
-        }
-    }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Jadwal Pelajaran - Kurikulum",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        when {
-            isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            errorMessage != null -> {
-                Text(
-                    text = "Error: $errorMessage",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-                
-                Button(
-                    onClick = { token?.let { scheduleViewModel.loadSchedules(it) } },
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text("Retry")
-                }
-            }
-            
-            schedules.isEmpty() -> {
-                Text(
-                    text = "Tidak ada jadwal tersedia",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-            
-            else -> {
-                LazyColumn {
-                    items(schedules) { schedule ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = schedule.mata_pelajaran,
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Hari: ${schedule.hari}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = "Waktu: ${schedule.jam_mulai} - ${schedule.jam_selesai}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                if (schedule.kelas.isNotEmpty()) {
-                                    Text(
-                                        text = "Kelas: ${schedule.kelas}",
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                                Text(
-                                    text = "Guru: ${schedule.guru.name}",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
+// Kelas Kosong Page - Shows empty classes
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GantiGuruPage() {
+fun KelasKosongPage() {
     val context = LocalContext.current
-    val usersViewModel: UsersViewModel = viewModel()
-    val scheduleViewModel: ScheduleViewModel = viewModel()
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
     
-    val users by usersViewModel.users
-    val schedules by scheduleViewModel.schedules
-    val isLoading by usersViewModel.isLoading
-    val errorMessage by usersViewModel.errorMessage
-    val updateSuccess by usersViewModel.updateSuccess
-
-    var selectedKelas by remember { mutableStateOf("") }
-    var selectedMataPelajaran by remember { mutableStateOf("") }
-    var selectedGuruBaru by remember { mutableStateOf("") }
-    var isKelasDropdownExpanded by remember { mutableStateOf(false) }
-    var isMataPelajaranDropdownExpanded by remember { mutableStateOf(false) }
-    var isGuruBaruDropdownExpanded by remember { mutableStateOf(false) }
+    var kelasKosongList by remember { mutableStateOf<List<KelasKosong>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     
-    // Fetch users and schedules
+    // Load kelas kosong
+    fun loadKelasKosong() {
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                repository.getKelasKosong(token)
+                    .onSuccess { response ->
+                        kelasKosongList = response.data
+                        errorMessage = null
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                        Toast.makeText(context, "Gagal memuat kelas kosong: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                isLoading = false
+            }
+        }
+    }
+    
     LaunchedEffect(Unit) {
-        token?.let { 
-            usersViewModel.loadUsers(it)
-            scheduleViewModel.loadSchedules(it)
-        }
+        loadKelasKosong()
     }
     
-    // Handle error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            usersViewModel.clearError()
-        }
-    }
-    
-    // Handle success messages
-    LaunchedEffect(updateSuccess) {
-        if (updateSuccess) {
-            Toast.makeText(context, "Role berhasil diupdate", Toast.LENGTH_SHORT).show()
-            usersViewModel.clearUpdateSuccess()
-        }
-    }
-    
-    // Get guru users and available subjects
-    val guruUsers = users.filter { it.role == "guru" }
-    val availableSubjects = schedules.map { it.mata_pelajaran }.distinct()
-    val availableClasses = schedules.map { it.kelas }.distinct().filter { it.isNotEmpty() }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Ganti Guru Pengampu",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        // Dropdown Kelas
-        ExposedDropdownMenuBox(
-            expanded = isKelasDropdownExpanded,
-            onExpandedChange = { isKelasDropdownExpanded = !isKelasDropdownExpanded }
-        ) {
-            OutlinedTextField(
-                value = selectedKelas,
-                onValueChange = { },
-                readOnly = true,
-                label = { Text("Kelas") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isKelasDropdownExpanded)
-                },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = isKelasDropdownExpanded,
-                onDismissRequest = { isKelasDropdownExpanded = false }
-            ) {
-                availableClasses.forEach { kelas ->
-                    DropdownMenuItem(
-                        text = { Text(kelas) },
-                        onClick = {
-                            selectedKelas = kelas
-                            isKelasDropdownExpanded = false
-                        }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background gradient
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            SMKPrimary.copy(alpha = 0.02f),
+                            SMKSurface,
+                            SMKAccent.copy(alpha = 0.01f)
+                        )
                     )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Dropdown Mata Pelajaran
-        ExposedDropdownMenuBox(
-            expanded = isMataPelajaranDropdownExpanded,
-            onExpandedChange = { isMataPelajaranDropdownExpanded = !isMataPelajaranDropdownExpanded }
-        ) {
-            OutlinedTextField(
-                value = selectedMataPelajaran,
-                onValueChange = { },
-                readOnly = true,
-                label = { Text("Mata Pelajaran") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isMataPelajaranDropdownExpanded)
-                },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = isMataPelajaranDropdownExpanded,
-                onDismissRequest = { isMataPelajaranDropdownExpanded = false }
-            ) {
-                availableSubjects.forEach { mataPelajaran ->
-                    DropdownMenuItem(
-                        text = { Text(mataPelajaran) },
-                        onClick = {
-                            selectedMataPelajaran = mataPelajaran
-                            isMataPelajaranDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // Dropdown Guru Baru
-        ExposedDropdownMenuBox(
-            expanded = isGuruBaruDropdownExpanded,
-            onExpandedChange = { isGuruBaruDropdownExpanded = !isGuruBaruDropdownExpanded }
-        ) {
-            OutlinedTextField(
-                value = selectedGuruBaru,
-                onValueChange = { },
-                readOnly = true,
-                label = { Text("Guru Pengganti") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = isGuruBaruDropdownExpanded)
-                },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
-            )
-            ExposedDropdownMenu(
-                expanded = isGuruBaruDropdownExpanded,
-                onDismissRequest = { isGuruBaruDropdownExpanded = false }
-            ) {
-                guruUsers.forEach { guru ->
-                    DropdownMenuItem(
-                        text = { Text(guru.name) },
-                        onClick = {
-                            selectedGuruBaru = guru.name
-                            isGuruBaruDropdownExpanded = false
-                        }
-                    )
-                }
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Button(
-            onClick = {
-                if (selectedKelas.isNotEmpty() && selectedMataPelajaran.isNotEmpty() && selectedGuruBaru.isNotEmpty()) {
-                    Toast.makeText(context, "Pergantian guru akan diimplementasikan di versi selanjutnya", Toast.LENGTH_SHORT).show()
-                    selectedKelas = ""
-                    selectedMataPelajaran = ""
-                    selectedGuruBaru = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = selectedKelas.isNotEmpty() && selectedMataPelajaran.isNotEmpty() && selectedGuruBaru.isNotEmpty() && !isLoading
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(20.dp))
-            } else {
-                Text("Simpan Pergantian")
-            }
-        }
-        
-        // Display error message if any
-        errorMessage?.let { error ->
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Error: $error",
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
-    }
-}
-
-@Composable
-fun KurikulumListPage() {
-    val context = LocalContext.current
-    val monitoringViewModel: MonitoringViewModel = viewModel()
-    val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
-    val token = sharedPrefManager.getToken()
-    
-    val monitoringData by monitoringViewModel.monitoringList
-    val isLoading by monitoringViewModel.isLoading
-    val errorMessage by monitoringViewModel.errorMessage
-    
-    // Fetch all monitoring data
-    LaunchedEffect(Unit) {
-        token?.let { monitoringViewModel.loadMonitoring(it) }
-    }
-    
-    // Handle error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            monitoringViewModel.clearError()
-        }
-    }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Data Monitoring Siswa",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        when {
-            isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            errorMessage != null -> {
-                Text(
-                    text = "Error: $errorMessage",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
+        )
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Spacing.lg)
+        ) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Kelas Kosong",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                    Text(
+                        text = "Daftar kelas yang tidak ada guru",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray600
+                    )
+                }
                 
-                Button(
-                    onClick = { token?.let { monitoringViewModel.loadMonitoring(it) } },
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                ) {
-                    Text("Retry")
-                }
-            }
-            
-            monitoringData.isEmpty() -> {
-                Text(
-                    text = "Belum ada data monitoring",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                Icon(
+                    imageVector = Icons.Default.EventBusy,
+                    contentDescription = null,
+                    tint = SMKPrimary,
+                    modifier = Modifier.size(Dimensions.iconSize)
                 )
             }
             
-            else -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(monitoringData) { monitoring ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp)
-                            ) {
-                                Text(
-                                    text = "Guru: ${monitoring.guru.name}",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = "Mata Pelajaran: ${monitoring.mata_pelajaran}",
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                                Text(
-                                    text = "Kelas: ${monitoring.kelas}",
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                                Text(
-                                    text = "Status: ${monitoring.status_hadir}",
-                                    fontSize = 14.sp,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                                monitoring.catatan?.let { catatan ->
-                                    Text(
-                                        text = "Catatan: $catatan",
-                                        fontSize = 14.sp,
-                                        modifier = Modifier.padding(top = 4.dp)
-                                    )
-                                }
-                                Text(
-                                    text = "Tanggal: ${monitoring.tanggal}",
-                                    fontSize = 12.sp,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
+            Spacer(modifier = Modifier.height(Spacing.xl))
+            
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = SMKPrimary)
+                    }
+                }
+                
+                errorMessage != null -> {
+                    SchoolEmptyState(
+                        title = "Terjadi Kesalahan",
+                        subtitle = errorMessage ?: "Tidak dapat memuat data",
+                        icon = Icons.Default.Error,
+                        actionText = "Coba Lagi",
+                        onActionClick = { loadKelasKosong() }
+                    )
+                }
+                
+                kelasKosongList.isEmpty() -> {
+                    SchoolEmptyState(
+                        title = "Semua Kelas Terisi",
+                        subtitle = "Tidak ada kelas yang kosong saat ini",
+                        icon = Icons.Default.CheckCircle,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                
+                else -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        items(kelasKosongList) { kelasKosong ->
+                            KelasKosongCard(kelasKosong = kelasKosong)
                         }
                     }
                 }
@@ -592,6 +311,460 @@ fun KurikulumListPage() {
         }
     }
 }
+
+@Composable
+fun KelasKosongCard(kelasKosong: KelasKosong) {
+    SchoolCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            // Header with warning badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = kelasKosong.mata_pelajaran,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                    Text(
+                        text = "Kelas ${kelasKosong.kelas}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = SMKSecondary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = ErrorRed.copy(alpha = 0.1f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = ErrorRed,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "KOSONG",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = ErrorRed
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.md))
+            
+            // Schedule info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = NeutralGray600,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = kelasKosong.hari,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray700
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = NeutralGray600,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = "${kelasKosong.jam_mulai} - ${kelasKosong.jam_selesai}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray700
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.sm))
+            
+            // Original teacher info
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = NeutralGray600,
+                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                )
+                Text(
+                    text = "Guru Seharusnya: ${kelasKosong.guru_asli}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NeutralGray700,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+// Guru Pengganti Page - CRUD untuk guru pengganti
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GuruPenggantiPage() {
+    val context = LocalContext.current
+    val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
+    val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
+    
+    var guruPenggantiList by remember { mutableStateOf<List<GuruPengganti>>(emptyList()) }
+    var kelasKosongList by remember { mutableStateOf<List<KelasKosong>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
+    
+    // Form states
+    var selectedKelasKosong by remember { mutableStateOf<KelasKosong?>(null) }
+    var selectedGuruPengganti by remember { mutableStateOf("") }
+    
+    // Load data
+    fun loadData() {
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                repository.getGuruPengganti(token)
+                    .onSuccess { response ->
+                        guruPenggantiList = response.data
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                    }
+                    
+                repository.getKelasKosong(token)
+                    .onSuccess { response ->
+                        kelasKosongList = response.data
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                    }
+                isLoading = false
+            }
+        }
+    }
+    
+    LaunchedEffect(Unit) {
+        loadData()
+    }
+    
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            SMKPrimary.copy(alpha = 0.02f),
+                            SMKSurface,
+                            SMKAccent.copy(alpha = 0.01f)
+                        )
+                    )
+                )
+        )
+        
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Spacing.lg)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Guru Pengganti",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                    Text(
+                        text = "Kelola penugasan guru pengganti",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray600
+                    )
+                }
+                
+                IconButton(
+                    onClick = { showCreateDialog = true },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = SMKPrimary,
+                        contentColor = SMKOnPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Tambah Guru Pengganti"
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.xl))
+            
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = SMKPrimary)
+                    }
+                }
+                
+                guruPenggantiList.isEmpty() -> {
+                    SchoolEmptyState(
+                        title = "Belum Ada Penugasan",
+                        subtitle = "Belum ada guru pengganti yang ditugaskan",
+                        icon = Icons.Default.PersonOff,
+                        actionText = "Tambah Guru Pengganti",
+                        onActionClick = { showCreateDialog = true }
+                    )
+                }
+                
+                else -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        items(guruPenggantiList) { guruPengganti ->
+                            GuruPenggantiCard(
+                                guruPengganti = guruPengganti,
+                                onDelete = {
+                                    if (token != null) {
+                                        scope.launch {
+                                            isLoading = true
+                                            repository.deleteGuruPengganti(token, guruPengganti.id)
+                                                .onSuccess {
+                                                    Toast.makeText(context, "Berhasil dihapus", Toast.LENGTH_SHORT).show()
+                                                    loadData()
+                                                }
+                                                .onFailure { error ->
+                                                    Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            isLoading = false
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Create Dialog
+    if (showCreateDialog) {
+        AlertDialog(
+            onDismissRequest = { showCreateDialog = false },
+            title = { Text("Tambah Guru Pengganti") },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    Text("Pilih kelas kosong dan guru pengganti")
+                    
+                    // TODO: Add proper dropdowns for kelas kosong and guru selection
+                    Text(
+                        text = "Fitur ini memerlukan UI dropdown yang lebih kompleks",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NeutralGray600
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showCreateDialog = false
+                        Toast.makeText(context, "Fitur akan dikembangkan lebih lanjut", Toast.LENGTH_SHORT).show()
+                    }
+                ) {
+                    Text("Tutup")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun GuruPenggantiCard(
+    guruPengganti: GuruPengganti,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    SchoolCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SwapHoriz,
+                            contentDescription = null,
+                            tint = SMKPrimary,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Pergantian Guru",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = SMKPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    
+                    // Original teacher
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonOff,
+                            contentDescription = null,
+                            tint = ErrorRed,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Dari: ${guruPengganti.guru_asli.name}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NeutralGray700
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                    
+                    // Substitute teacher
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Ke: ${guruPengganti.guru_pengganti.name}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SuccessGreen,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    
+                    // Date
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            tint = NeutralGray600,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = guruPengganti.tanggal,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600
+                        )
+                    }
+                }
+                
+                IconButton(
+                    onClick = { showDeleteDialog = true },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        contentColor = ErrorRed
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Hapus"
+                    )
+                }
+            }
+        }
+    }
+    
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = ErrorRed
+                )
+            },
+            title = { Text("Hapus Penugasan?") },
+            text = { Text("Apakah Anda yakin ingin menghapus penugasan guru pengganti ini?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ErrorRed
+                    )
+                ) {
+                    Text("Hapus")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Monitoring;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
@@ -84,6 +85,144 @@ class MonitoringController extends Controller
                 'success' => true,
                 'message' => 'Data monitoring berhasil diambil',
                 'data' => $monitoring
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Mengambil laporan monitoring yang dibuat siswa (untuk siswa)
+     */
+    public function myReports(Request $request)
+    {
+        try {
+            $query = Monitoring::with(['guru:id,name,email,mata_pelajaran'])
+                              ->where('pelapor_id', $request->user()->id);
+
+            // Filter berdasarkan tanggal
+            if ($request->has('tanggal') && $request->tanggal) {
+                $query->whereDate('tanggal', $request->tanggal);
+            }
+
+            $monitoring = $query->orderBy('created_at', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data laporan berhasil diambil',
+                'data' => $monitoring
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Mengecek kelas kosong berdasarkan jadwal hari ini
+     */
+    public function kelasKosong(Request $request)
+    {
+        try {
+            $tanggal = $request->tanggal ?? Carbon::today()->format('Y-m-d');
+            $hari = Carbon::parse($tanggal)->locale('id')->dayName;
+
+            // Mapping hari dari Carbon ke format database
+            $hariMapping = [
+                'Monday' => 'Senin',
+                'Tuesday' => 'Selasa',
+                'Wednesday' => 'Rabu',
+                'Thursday' => 'Kamis',
+                'Friday' => 'Jumat',
+                'Saturday' => 'Sabtu',
+                'Sunday' => 'Minggu'
+            ];
+
+            $hari = $hariMapping[Carbon::parse($tanggal)->format('l')] ?? 'Senin';
+
+            // Ambil semua jadwal untuk hari ini
+            $jadwalHariIni = Schedule::with(['guru:id,name,email,mata_pelajaran'])
+                ->where('hari', $hari)
+                ->get();
+
+            // Ambil monitoring untuk tanggal yang diminta
+            $monitoringHariIni = Monitoring::whereDate('tanggal', $tanggal)
+                ->where('status_hadir', '!=', 'Tidak Hadir')
+                ->get()
+                ->groupBy(function($item) {
+                    return $item->kelas . '_' . $item->mata_pelajaran . '_' . $item->guru_id;
+                });
+
+            $kelasKosong = [];
+
+            foreach ($jadwalHariIni as $jadwal) {
+                $key = $jadwal->kelas . '_' . $jadwal->mata_pelajaran . '_' . $jadwal->guru_id;
+
+                // Jika tidak ada monitoring atau guru tidak hadir, maka kelas kosong
+                if (!isset($monitoringHariIni[$key])) {
+                    $kelasKosong[] = [
+                        'jadwal_id' => $jadwal->id,
+                        'kelas' => $jadwal->kelas,
+                        'mata_pelajaran' => $jadwal->mata_pelajaran,
+                        'guru' => $jadwal->guru,
+                        'jam_mulai' => $jadwal->jam_mulai,
+                        'jam_selesai' => $jadwal->jam_selesai,
+                        'ruang' => $jadwal->ruang,
+                        'tanggal' => $tanggal,
+                        'hari' => $hari,
+                        'status' => 'Tidak Ada Laporan'
+                    ];
+                }
+            }
+
+            // Cek juga monitoring dengan status "Tidak Hadir"
+            $tidakHadir = Monitoring::with(['guru:id,name,email,mata_pelajaran'])
+                ->whereDate('tanggal', $tanggal)
+                ->where('status_hadir', 'Tidak Hadir')
+                ->get();
+
+            foreach ($tidakHadir as $monitoring) {
+                $jadwal = Schedule::where('kelas', $monitoring->kelas)
+                    ->where('mata_pelajaran', $monitoring->mata_pelajaran)
+                    ->where('guru_id', $monitoring->guru_id)
+                    ->where('hari', $hari)
+                    ->first();
+
+                $kelasKosong[] = [
+                    'jadwal_id' => $jadwal->id ?? null,
+                    'monitoring_id' => $monitoring->id,
+                    'kelas' => $monitoring->kelas,
+                    'mata_pelajaran' => $monitoring->mata_pelajaran,
+                    'guru' => $monitoring->guru,
+                    'jam_mulai' => $jadwal->jam_mulai ?? null,
+                    'jam_selesai' => $jadwal->jam_selesai ?? null,
+                    'ruang' => $jadwal->ruang ?? null,
+                    'tanggal' => $tanggal,
+                    'hari' => $hari,
+                    'status' => 'Tidak Hadir',
+                    'catatan' => $monitoring->catatan
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data kelas kosong berhasil diambil',
+                'data' => $kelasKosong,
+                'summary' => [
+                    'total_jadwal' => $jadwalHariIni->count(),
+                    'total_kelas_kosong' => count($kelasKosong),
+                    'tanggal' => $tanggal,
+                    'hari' => $hari
+                ]
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {

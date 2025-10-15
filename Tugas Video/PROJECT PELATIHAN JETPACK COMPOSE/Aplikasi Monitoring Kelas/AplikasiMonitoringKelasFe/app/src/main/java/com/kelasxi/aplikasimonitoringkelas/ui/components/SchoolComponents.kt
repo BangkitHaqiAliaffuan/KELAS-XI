@@ -7,9 +7,11 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material3.ripple
 import androidx.compose.material3.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -201,7 +204,7 @@ private fun DropdownOption(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SchoolTextField(
@@ -290,9 +293,14 @@ fun SchoolTextField(
                 focusedLabelColor = SMKPrimary,
                 unfocusedLabelColor = NeutralGray500,
                 cursorColor = SMKPrimary,
+                errorCursorColor = SMKError,
                 focusedTextColor = SMKOnSurface,
                 unfocusedTextColor = SMKOnSurface,
-                containerColor = SMKSurface
+                disabledTextColor = NeutralGray400,
+                errorTextColor = SMKError,
+                unfocusedContainerColor = SMKSurface,
+                focusedContainerColor = SMKSurface,
+                disabledContainerColor = NeutralGray200
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -336,10 +344,9 @@ fun SchoolButton(
                     contentColor = SMKPrimary,
                     disabledContentColor = NeutralGray500
                 ),
-                border = ButtonDefaults.outlinedButtonBorder.copy(
-                    brush = null,
+                border = BorderStroke(
                     width = 1.dp,
-                    pen = androidx.compose.ui.graphics.SolidColor(SMKPrimary)
+                    color = SMKPrimary
                 ),
                 shape = RoundedCornerShape(Dimensions.surfaceCornerRadius),
                 modifier = modifier.height(Dimensions.buttonHeight)

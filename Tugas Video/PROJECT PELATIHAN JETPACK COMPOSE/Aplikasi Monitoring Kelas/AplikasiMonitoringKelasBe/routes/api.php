@@ -5,18 +5,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\AssignmentController;
-use App\Http\Controllers\GradeController;
+use App\Http\Controllers\GuruPenggantiController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
 // Public routes
@@ -32,65 +26,49 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Jadwal Pelajaran - Bisa diakses semua role
     Route::get('/jadwal', [ScheduleController::class, 'index']);
-
-    // Monitoring - Bisa diakses semua role (untuk melihat)
-    Route::get('/monitoring', [MonitoringController::class, 'index']);
-    Route::post('/monitoring/store', [MonitoringController::class, 'store']);
-
-    // Assignments - Semua role bisa lihat
-    Route::get('/assignments', [AssignmentController::class, 'index']);
-    Route::get('/assignments/{id}', [AssignmentController::class, 'show']);
-
-    // Grades - Semua role bisa lihat (filtered by role in controller)
-    Route::get('/grades', [GradeController::class, 'index']);
-    Route::get('/grades/siswa/{id}', [GradeController::class, 'getSiswaGrades']);
 });
 
-// Routes untuk Admin only
+// Routes untuk SISWA - Hanya mencatat monitoring
+Route::middleware(['auth:sanctum', 'role:siswa'])->group(function () {
+    Route::post('/monitoring/store', [MonitoringController::class, 'store']);
+    Route::get('/monitoring/my-reports', [MonitoringController::class, 'myReports']); // Laporan yang dibuat siswa
+});
+
+// Routes untuk KURIKULUM - Cek kelas kosong & beri guru pengganti
+Route::middleware(['auth:sanctum', 'role:kurikulum'])->group(function () {
+    Route::get('/monitoring', [MonitoringController::class, 'index']);
+    Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
+
+    // Guru Pengganti Management
+    Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']);
+    Route::post('/guru-pengganti', [GuruPenggantiController::class, 'store']);
+    Route::put('/guru-pengganti/{id}', [GuruPenggantiController::class, 'update']);
+    Route::delete('/guru-pengganti/{id}', [GuruPenggantiController::class, 'destroy']);
+});
+
+// Routes untuk KEPALA SEKOLAH - Hanya cek kelas kosong (readonly)
+Route::middleware(['auth:sanctum', 'role:kepala_sekolah'])->group(function () {
+    Route::get('/monitoring', [MonitoringController::class, 'index']);
+    Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
+    Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']); // Hanya lihat
+});
+
+// Routes untuk ADMIN - User Management
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // User Management
     Route::get('/users', [AuthController::class, 'getAllUsers']);
+    Route::post('/users', [AuthController::class, 'createUser']);
     Route::put('/users/{id}/role', [AuthController::class, 'updateUserRole']);
+    Route::put('/users/{id}/ban', [AuthController::class, 'banUser']);
+    Route::put('/users/{id}/unban', [AuthController::class, 'unbanUser']);
+    Route::delete('/users/{id}', [AuthController::class, 'deleteUser']);
 
     // Admin bisa mengelola jadwal
     Route::post('/jadwal', [ScheduleController::class, 'store']);
+    Route::put('/jadwal/{id}', [ScheduleController::class, 'update']);
+    Route::delete('/jadwal/{id}', [ScheduleController::class, 'destroy']);
+
+    // Admin bisa lihat semua monitoring
+    Route::get('/monitoring', [MonitoringController::class, 'index']);
 });
 
-// Routes untuk Guru dan Admin
-Route::middleware(['auth:sanctum', 'role:guru,admin'])->group(function () {
-    Route::get('/guru/dashboard', function () {
-        return response()->json([
-            'success' => true,
-            'message' => 'Guru Dashboard',
-            'data' => ['role' => 'guru']
-        ]);
-    });
-
-    // Assignment Management (Guru only)
-    Route::post('/assignments', [AssignmentController::class, 'store']);
-    Route::put('/assignments/{id}', [AssignmentController::class, 'update']);
-    Route::delete('/assignments/{id}', [AssignmentController::class, 'destroy']);
-    Route::get('/assignments/{id}/submissions', [AssignmentController::class, 'getSubmissions']);
-
-    // Grade Management (Guru only)
-    Route::post('/grades', [GradeController::class, 'store']);
-    Route::put('/grades/{id}', [GradeController::class, 'update']);
-    Route::delete('/grades/{id}', [GradeController::class, 'destroy']);
-    Route::get('/grades/kelas/{kelas}', [GradeController::class, 'getKelasGrades']);
-});
-
-// Routes untuk Siswa
-Route::middleware(['auth:sanctum', 'role:siswa,guru,admin'])->group(function () {
-    // Submit assignment
-    Route::post('/assignments/{id}/submit', [AssignmentController::class, 'submit']);
-});
-
-// Routes untuk semua role (Siswa, Guru, Admin)
-Route::middleware(['auth:sanctum', 'role:siswa,guru,admin'])->group(function () {
-    Route::get('/siswa/dashboard', function () {
-        return response()->json([
-            'success' => true,
-            'message' => 'Siswa Dashboard',
-            'data' => ['role' => 'siswa']
-        ]);
-    });
-});

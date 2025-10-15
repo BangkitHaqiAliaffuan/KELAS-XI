@@ -506,7 +506,11 @@ fun KepsekListPage() {
                                 modifier = Modifier.padding(16.dp)
                             ) {
                                 Text(
-                                    text = "Guru: ${monitoring.guru.name}",
+                                    text = "Guru: ${monitoring.guru.name}${
+                                        if (!monitoring.guru.mata_pelajaran.isNullOrEmpty()) 
+                                            " (${monitoring.guru.mata_pelajaran})" 
+                                        else ""
+                                    }",
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -522,6 +526,11 @@ fun KepsekListPage() {
                                 )
                                 Text(
                                     text = "Status: ${monitoring.status_hadir}",
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                Text(
+                                    text = "Jam Laporan: ${monitoring.jam_laporan}",
                                     fontSize = 14.sp,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )

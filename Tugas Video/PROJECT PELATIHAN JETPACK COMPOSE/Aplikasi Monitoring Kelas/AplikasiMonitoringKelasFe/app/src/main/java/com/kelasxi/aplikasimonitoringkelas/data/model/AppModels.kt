@@ -21,10 +21,21 @@ data class Schedule(
     val guru: Guru
 )
 
+data class ScheduleRequest(
+    val hari: String,
+    val kelas: String,
+    val mata_pelajaran: String,
+    val guru_id: Int,
+    val jam_mulai: String,
+    val jam_selesai: String,
+    val ruang: String?
+)
+
 data class Guru(
     val id: Int,
     val name: String,
-    val email: String
+    val email: String,
+    val mata_pelajaran: String? = null
 )
 
 // Models untuk Users Management (Admin)
