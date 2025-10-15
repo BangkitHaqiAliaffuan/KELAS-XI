@@ -9,6 +9,10 @@ import com.kelasxi.aplikasimonitoringkelas.data.model.GradeStatistics
 import com.kelasxi.aplikasimonitoringkelas.data.repository.GradeRepository
 import kotlinx.coroutines.launch
 
+/**
+ * DEPRECATED: Grade/Nilai feature has been removed
+ * This ViewModel is kept for backward compatibility
+ */
 class GradeViewModel : ViewModel() {
     private val repository = GradeRepository(RetrofitClient.apiService)
 
@@ -19,7 +23,7 @@ class GradeViewModel : ViewModel() {
     val errorMessage = mutableStateOf<String?>(null)
     val successMessage = mutableStateOf<String?>(null)
 
-    // Load grades
+    // Load grades - Returns empty list (feature removed)
     fun loadGrades(
         token: String,
         mataPelajaran: String? = null,
@@ -29,7 +33,7 @@ class GradeViewModel : ViewModel() {
             isLoading.value = true
             errorMessage.value = null
 
-            val result = repository.getGrades(token, mataPelajaran, kelas)
+            val result = repository.getGrades(token)
             
             result.onSuccess { response ->
                 grades.value = response.data
@@ -41,17 +45,16 @@ class GradeViewModel : ViewModel() {
         }
     }
 
-    // Load grades for specific siswa
+    // Load grades for specific siswa - Returns empty list (feature removed)
     fun loadSiswaGrades(token: String, siswaId: Int) {
         viewModelScope.launch {
             isLoading.value = true
             errorMessage.value = null
 
-            val result = repository.getSiswaGrades(token, siswaId)
+            val result = repository.getSiswaGrades(token)
             
             result.onSuccess { response ->
-                grades.value = response.data.grades
-                statistics.value = response.data.statistics
+                grades.value = response.data
                 isLoading.value = false
             }.onFailure { exception ->
                 errorMessage.value = exception.message
@@ -60,25 +63,26 @@ class GradeViewModel : ViewModel() {
         }
     }
 
-    // Create grade (Guru only)
+    // Create grade - Does nothing (feature removed)
     fun createGrade(
         token: String,
         siswaId: Int,
-        assignmentId: Int,
+        mataPelajaran: String,
+        kelas: String,
+        kategori: String,
         nilai: Double,
-        catatan: String?
+        keterangan: String?
     ) {
         viewModelScope.launch {
             isSubmitting.value = true
             errorMessage.value = null
             successMessage.value = null
 
-            val result = repository.createGrade(token, siswaId, assignmentId, nilai, catatan)
+            val result = repository.createGrade(token, siswaId, mataPelajaran, kelas, kategori, nilai, keterangan)
             
             result.onSuccess { response ->
                 successMessage.value = "Nilai berhasil disimpan"
                 isSubmitting.value = false
-                // Reload grades
                 loadGrades(token)
             }.onFailure { exception ->
                 errorMessage.value = exception.message
@@ -87,24 +91,23 @@ class GradeViewModel : ViewModel() {
         }
     }
 
-    // Update grade (Guru only)
+    // Update grade - Does nothing (feature removed)
     fun updateGrade(
         token: String,
         gradeId: Int,
         nilai: Double,
-        catatan: String?
+        keterangan: String?
     ) {
         viewModelScope.launch {
             isSubmitting.value = true
             errorMessage.value = null
             successMessage.value = null
 
-            val result = repository.updateGrade(token, gradeId, nilai, catatan)
+            val result = repository.updateGrade(token, gradeId, nilai, keterangan)
             
-            result.onSuccess { response ->
+            result.onSuccess { _ ->
                 successMessage.value = "Nilai berhasil diupdate"
                 isSubmitting.value = false
-                // Reload grades
                 loadGrades(token)
             }.onFailure { exception ->
                 errorMessage.value = exception.message

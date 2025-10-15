@@ -94,7 +94,7 @@ fun KepalaSekolahScreen() {
                 KepsekJadwalPage()
             }
             composable("kelas_kosong") {
-                KelasKosongPage()
+                KepsekKelasKosongPage()
             }
             composable("list") {
                 KepsekListPage()
@@ -249,7 +249,7 @@ fun KepsekJadwalPage() {
 }
 
 @Composable
-fun KelasKosongPage() {
+fun KepsekKelasKosongPage() {
     val context = LocalContext.current
     val usersViewModel: UsersViewModel = viewModel()
     val scheduleViewModel: ScheduleViewModel = viewModel()

@@ -138,4 +138,63 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<ApiResponse<Any>>
+    
+    // ==================== KURIKULUM: Teacher Attendance ====================
+    
+    @GET("teacher-attendance/today-schedules")
+    suspend fun getTodaySchedules(
+        @Header("Authorization") token: String
+    ): Response<TodaySchedulesResponse>
+    
+    @GET("teacher-attendance/today")
+    suspend fun getTodayAttendance(
+        @Header("Authorization") token: String
+    ): Response<TodayAttendanceResponse>
+    
+    @GET("teacher-attendance/statistics")
+    suspend fun getAttendanceStatistics(
+        @Header("Authorization") token: String,
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null,
+        @Query("guru_id") guruId: Int? = null
+    ): Response<AttendanceStatistics>
+    
+    @GET("teacher-attendance")
+    suspend fun getTeacherAttendances(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null,
+        @Query("start_date") startDate: String? = null,
+        @Query("end_date") endDate: String? = null,
+        @Query("guru_id") guruId: Int? = null,
+        @Query("status") status: String? = null,
+        @Query("kelas") kelas: String? = null,
+        @Query("mata_pelajaran") mataPelajaran: String? = null,
+        @Query("page") page: Int? = null,
+        @Query("per_page") perPage: Int? = null
+    ): Response<PaginatedResponse<TeacherAttendance>>
+    
+    @POST("teacher-attendance")
+    suspend fun createTeacherAttendance(
+        @Header("Authorization") token: String,
+        @Body request: TeacherAttendanceRequest
+    ): Response<ApiResponse<TeacherAttendance>>
+    
+    @GET("teacher-attendance/{id}")
+    suspend fun getTeacherAttendance(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<TeacherAttendance>
+    
+    @PUT("teacher-attendance/{id}")
+    suspend fun updateTeacherAttendance(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: TeacherAttendanceUpdateRequest
+    ): Response<ApiResponse<TeacherAttendance>>
+    
+    @DELETE("teacher-attendance/{id}")
+    suspend fun deleteTeacherAttendance(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<ApiResponse<Any>>
 }

@@ -5,7 +5,7 @@ import com.kelasxi.aplikasimonitoringkelas.data.model.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class AppRepository(private val apiService: ApiService) {
+class AppRepositoryNew(private val apiService: ApiService) {
     
     // ==================== JADWAL PELAJARAN ====================
     
@@ -325,6 +325,154 @@ class AppRepository(private val apiService: ApiService) {
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Result.failure(Exception("Gagal menghapus guru pengganti: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    // ==================== TEACHER ATTENDANCE ====================
+    
+    suspend fun getTodaySchedules(token: String): Result<TodaySchedulesResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getTodaySchedules("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil jadwal hari ini: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getTodayAttendance(token: String): Result<TodayAttendanceResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getTodayAttendance("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil kehadiran hari ini: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getAttendanceStatistics(
+        token: String, 
+        startDate: String? = null, 
+        endDate: String? = null, 
+        guruId: Int? = null
+    ): Result<AttendanceStatistics> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getAttendanceStatistics("Bearer $token", startDate, endDate, guruId)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil statistik: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getTeacherAttendances(
+        token: String,
+        tanggal: String? = null,
+        startDate: String? = null,
+        endDate: String? = null,
+        guruId: Int? = null,
+        status: String? = null,
+        kelas: String? = null,
+        mataPelajaran: String? = null,
+        page: Int? = null,
+        perPage: Int? = null
+    ): Result<PaginatedResponse<TeacherAttendance>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getTeacherAttendances(
+                    "Bearer $token", tanggal, startDate, endDate, 
+                    guruId, status, kelas, mataPelajaran, page, perPage
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil data kehadiran: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun createTeacherAttendance(token: String, request: TeacherAttendanceRequest): Result<TeacherAttendance> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.createTeacherAttendance("Bearer $token", request)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success && apiResponse.data != null) {
+                        Result.success(apiResponse.data)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mencatat kehadiran: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun updateTeacherAttendance(token: String, id: Int, request: TeacherAttendanceUpdateRequest): Result<TeacherAttendance> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.updateTeacherAttendance("Bearer $token", id, request)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success && apiResponse.data != null) {
+                        Result.success(apiResponse.data)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal update kehadiran: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun deleteTeacherAttendance(token: String, id: Int): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.deleteTeacherAttendance("Bearer $token", id)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success) {
+                        Result.success(true)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal hapus kehadiran: ${response.code()} - $errorBody"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))

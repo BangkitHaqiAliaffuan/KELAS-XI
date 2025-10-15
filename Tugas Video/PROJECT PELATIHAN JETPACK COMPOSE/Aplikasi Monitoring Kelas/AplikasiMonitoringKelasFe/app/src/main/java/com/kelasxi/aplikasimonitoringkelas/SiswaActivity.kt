@@ -188,8 +188,8 @@ fun SiswaScreen() {
 fun SiswaBottomNavigation(navController: NavController) {
     val items = listOf(
         Triple("jadwal_pelajaran", "Jadwal", Icons.Default.Schedule),
-        Triple("entri", "Entri", Icons.Default.Add),
-        Triple("list", "List", Icons.Default.List),
+        Triple("entri", "Entri Guru", Icons.Default.Add),
+        Triple("list", "Laporan", Icons.Default.List),
         Triple("my_reports", "Laporan Saya", Icons.Default.Description)
     )
 
@@ -576,7 +576,7 @@ fun MyReportCard(monitoring: Monitoring) {
                 
                 // Keterangan
                 Text(
-                    text = monitoring.keterangan,
+                    text = monitoring.catatan ?: "Tidak ada catatan",
                     style = MaterialTheme.typography.bodyMedium,
                     color = NeutralGray700
                 )
@@ -586,7 +586,7 @@ fun MyReportCard(monitoring: Monitoring) {
                 // Status Badge
                 Surface(
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    color = when (monitoring.status.lowercase()) {
+                    color = when (monitoring.status_hadir.lowercase()) {
                         "hadir" -> SuccessGreen.copy(alpha = 0.1f)
                         "terlambat" -> WarningYellow.copy(alpha = 0.1f)
                         else -> ErrorRed.copy(alpha = 0.1f)
@@ -598,13 +598,13 @@ fun MyReportCard(monitoring: Monitoring) {
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
                     ) {
                         Icon(
-                            imageVector = when (monitoring.status.lowercase()) {
+                            imageVector = when (monitoring.status_hadir.lowercase()) {
                                 "hadir" -> Icons.Default.CheckCircle
                                 "terlambat" -> Icons.Default.Warning
                                 else -> Icons.Default.Cancel
                             },
                             contentDescription = null,
-                            tint = when (monitoring.status.lowercase()) {
+                            tint = when (monitoring.status_hadir.lowercase()) {
                                 "hadir" -> SuccessGreen
                                 "terlambat" -> WarningYellow
                                 else -> ErrorRed
@@ -612,10 +612,10 @@ fun MyReportCard(monitoring: Monitoring) {
                             modifier = Modifier.size(Dimensions.iconSizeSmall)
                         )
                         Text(
-                            text = monitoring.status,
+                            text = monitoring.status_hadir,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
-                            color = when (monitoring.status.lowercase()) {
+                            color = when (monitoring.status_hadir.lowercase()) {
                                 "hadir" -> SuccessGreen
                                 "terlambat" -> WarningYellow
                                 else -> ErrorRed
@@ -632,49 +632,52 @@ fun MyReportCard(monitoring: Monitoring) {
 @Composable
 fun EntriPage() {
     val context = LocalContext.current
-    val monitoringViewModel: MonitoringViewModel = viewModel()
-    val scheduleViewModel: ScheduleViewModel = viewModel()
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
 
-    var selectedMataPelajaran by remember { mutableStateOf("") }
-    var keterangan by remember { mutableStateOf("") }
-    var isMataPelajaranDropdownExpanded by remember { mutableStateOf(false) }
-    var isStatusDropdownExpanded by remember { mutableStateOf(false) }
-    var statusHadir by remember { mutableStateOf("Hadir") } // Default status
+    var todaySchedules by remember { mutableStateOf<List<TodayScheduleWithAttendance>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var successMessage by remember { mutableStateOf<String?>(null) }
+    var selectedSchedule by remember { mutableStateOf<TodayScheduleWithAttendance?>(null) }
+    var showEntryDialog by remember { mutableStateOf(false) }
 
-    val schedules by scheduleViewModel.schedules
-    val isLoading by monitoringViewModel.isSubmitting
-    val errorMessage by monitoringViewModel.errorMessage
-    val submitSuccess by monitoringViewModel.submitSuccess
-
-    // Fetch schedules for dropdown
+    // Load today's schedules
     LaunchedEffect(Unit) {
-        token?.let { scheduleViewModel.loadSchedules(it) }
-    }
-
-    // Handle error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            monitoringViewModel.clearError()
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                repository.getTodaySchedules(token)
+                    .onSuccess { response ->
+                        todaySchedules = response.data
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                        Toast.makeText(context, "Gagal memuat jadwal: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                isLoading = false
+            }
         }
     }
 
-    // Handle success messages
-    LaunchedEffect(submitSuccess) {
-        if (submitSuccess) {
-            Toast.makeText(context, "Monitoring berhasil disimpan!", Toast.LENGTH_SHORT)
-                .show()
-            monitoringViewModel.clearSubmitSuccess()
-            // Reset form
-            selectedMataPelajaran = ""
-            keterangan = ""
+    // Handle success message
+    LaunchedEffect(successMessage) {
+        successMessage?.let { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            successMessage = null
+            // Reload schedules
+            if (token != null) {
+                scope.launch {
+                    repository.getTodaySchedules(token)
+                        .onSuccess { response ->
+                            todaySchedules = response.data
+                        }
+                }
+            }
         }
     }
-
-    // Get available subjects from schedules
-    val mataPelajaranList = schedules.map { it.mata_pelajaran }.distinct()
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -697,7 +700,6 @@ fun EntriPage() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(Spacing.lg)
         ) {
             // Enhanced Header
@@ -717,13 +719,13 @@ fun EntriPage() {
                     )
                     Column {
                         Text(
-                            text = "Entri Monitoring Kehadiran",
+                            text = "Entri Kehadiran Guru",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = SMKOnSurface
                         )
                         Text(
-                            text = "Catat kehadiran Anda untuk mata pelajaran hari ini",
+                            text = "Catat kehadiran guru untuk setiap mata pelajaran hari ini",
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray600
                         )
@@ -733,149 +735,410 @@ fun EntriPage() {
 
             Spacer(modifier = Modifier.height(Spacing.xl))
 
-            // Form Card
-            SchoolCard(
-                variant = CardVariant.Default,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = "Informasi Kehadiran",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = SMKOnSurface
-                )
-
-                Spacer(modifier = Modifier.height(Spacing.lg))
-
-                // Dropdown Mata Pelajaran
-                SchoolDropdownField(
-                    value = selectedMataPelajaran,
-                    onValueChange = { selectedMataPelajaran = it },
-                    options = mataPelajaranList,
-                    label = "Mata Pelajaran",
-                    leadingIcon = Icons.Default.Book,
-                    placeholder = "Pilih mata pelajaran",
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-
-                Spacer(modifier = Modifier.height(Spacing.lg))
-
-                // Dropdown Status Kehadiran
-                SchoolDropdownField(
-                    value = statusHadir,
-                    onValueChange = { statusHadir = it },
-                    options = listOf("Hadir", "Terlambat", "Tidak Hadir"),
-                    label = "Status Kehadiran",
-                    leadingIcon = Icons.Default.Check,
-                    placeholder = "Pilih status kehadiran",
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-
-                Spacer(modifier = Modifier.height(Spacing.lg))
-
-                // Text Field Keterangan
-                SchoolTextField(
-                    value = keterangan,
-                    onValueChange = { keterangan = it },
-                    label = "Keterangan",
-                    placeholder = "Tambahkan keterangan (opsional)",
-                    leadingIcon = Icons.Default.Notes,
-                    singleLine = false,
-                    minLines = 3,
-                    maxLines = 5,
-                    supportingText = "Berikan keterangan tambahan jika diperlukan",
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-
-            Spacer(modifier = Modifier.height(Spacing.xl))
-
-            // Submit Button
-            SchoolButton(
-                onClick = {
-                    if (selectedMataPelajaran.isNotEmpty() && statusHadir.isNotEmpty()) {
-                        val userId = sharedPrefManager.getUserId()
-                        if (userId != null) {
-                            monitoringViewModel.submitMonitoring(
-                                token = token ?: "",
-                                guruId = userId, // Assuming user ID is used as guru ID for this user
-                                statusHadir = statusHadir,
-                                catatan = keterangan,
-                                kelas = "X RPL", // This should be dynamic in a real implementation
-                                mataPelajaran = selectedMataPelajaran
-                            )
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Error: User tidak ditemukan",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                },
-                text = "SIMPAN MONITORING",
-                loading = isLoading,
-                leadingIcon = Icons.Default.Save,
-                variant = ButtonVariant.Primary,
-                enabled = selectedMataPelajaran.isNotEmpty() && statusHadir.isNotEmpty() && !isLoading,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-
-            // Display error message if any
-            errorMessage?.let { error ->
-                Spacer(modifier = Modifier.height(Spacing.md))
-                SchoolCard(
-                    variant = CardVariant.Danger,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Error,
-                            contentDescription = null,
-                            tint = SMKError,
-                            modifier = Modifier.size(Dimensions.iconSizeSmall)
-                        )
-                        Text(
-                            text = error,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = SMKError
-                        )
+                        CircularProgressIndicator(color = SMKPrimary)
+                    }
+                }
+
+                errorMessage != null -> {
+                    SchoolEmptyState(
+                        title = "Terjadi Kesalahan",
+                        subtitle = errorMessage ?: "Tidak dapat memuat jadwal",
+                        icon = Icons.Default.Error,
+                        actionText = "Coba Lagi",
+                        onActionClick = {
+                            if (token != null) {
+                                scope.launch {
+                                    isLoading = true
+                                    repository.getTodaySchedules(token)
+                                        .onSuccess { response ->
+                                            todaySchedules = response.data
+                                            errorMessage = null
+                                        }
+                                        .onFailure { error ->
+                                            errorMessage = error.message
+                                        }
+                                    isLoading = false
+                                }
+                            }
+                        }
+                    )
+                }
+
+                todaySchedules.isEmpty() -> {
+                    SchoolEmptyState(
+                        title = "Belum Ada Jadwal",
+                        subtitle = "Tidak ada jadwal pelajaran untuk hari ini",
+                        icon = Icons.Default.EventBusy,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                else -> {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        items(todaySchedules) { scheduleItem ->
+                            TeacherAttendanceEntryCard(
+                                scheduleWithAttendance = scheduleItem,
+                                onEntryClick = {
+                                    selectedSchedule = scheduleItem
+                                    showEntryDialog = true
+                                }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
+    // Entry Dialog
+    if (showEntryDialog && selectedSchedule != null) {
+        TeacherAttendanceEntryDialog(
+            schedule = selectedSchedule!!.schedule,
+            existingAttendance = selectedSchedule!!.attendance,
+            onDismiss = {
+                showEntryDialog = false
+                selectedSchedule = null
+            },
+            onSubmit = { jamMasuk, status, keterangan ->
+                if (token != null) {
+                    scope.launch {
+                        val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                            .format(java.util.Date())
+                        
+                        val request = TeacherAttendanceRequest(
+                            scheduleId = selectedSchedule!!.schedule.id,
+                            guruId = selectedSchedule!!.schedule.guru.id,
+                            tanggal = currentDate,
+                            jamMasuk = jamMasuk,
+                            status = status,
+                            keterangan = keterangan
+                        )
+                        
+                        repository.createTeacherAttendance(token, request)
+                            .onSuccess {
+                                successMessage = "Kehadiran guru berhasil dicatat"
+                                showEntryDialog = false
+                                selectedSchedule = null
+                            }
+                            .onFailure { error ->
+                                Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                            }
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun TeacherAttendanceEntryCard(
+    scheduleWithAttendance: TodayScheduleWithAttendance,
+    onEntryClick: () -> Unit
+) {
+    val schedule = scheduleWithAttendance.schedule
+    val hasAttendance = scheduleWithAttendance.hasAttendance
+    val status = scheduleWithAttendance.status
+
+    SchoolCard(
+        modifier = Modifier.fillMaxWidth(),
+        variant = if (hasAttendance) CardVariant.Success else CardVariant.Default
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Subject and Time
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Book,
+                        contentDescription = null,
+                        tint = SMKPrimary,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = schedule.mata_pelajaran,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                // Teacher Name
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = NeutralGray600,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = schedule.guru.name,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray700
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                // Time and Class
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = SMKSecondary,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "${schedule.jam_mulai} - ${schedule.jam_selesai}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SMKSecondary
+                        )
+                    }
+                    
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Class,
+                            contentDescription = null,
+                            tint = NeutralGray600,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = schedule.kelas,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600
+                        )
+                    }
+                }
+
+                if (hasAttendance && scheduleWithAttendance.attendance != null) {
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    
+                    // Status Badge
+                    Surface(
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        color = when (status.lowercase()) {
+                            "hadir" -> SuccessGreen.copy(alpha = 0.1f)
+                            "telat" -> WarningYellow.copy(alpha = 0.1f)
+                            else -> ErrorRed.copy(alpha = 0.1f)
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        ) {
+                            Icon(
+                                imageVector = when (status.lowercase()) {
+                                    "hadir" -> Icons.Default.CheckCircle
+                                    "telat" -> Icons.Default.Warning
+                                    else -> Icons.Default.Cancel
+                                },
+                                contentDescription = null,
+                                tint = when (status.lowercase()) {
+                                    "hadir" -> SuccessGreen
+                                    "telat" -> WarningYellow
+                                    else -> ErrorRed
+                                },
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                            Text(
+                                text = "Dicatat: ${status.capitalize()} • ${scheduleWithAttendance.attendance.jamMasuk ?: "-"}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = when (status.lowercase()) {
+                                    "hadir" -> SuccessGreen
+                                    "telat" -> WarningYellow
+                                    else -> ErrorRed
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (!hasAttendance) {
+                SchoolButton(
+                    onClick = onEntryClick,
+                    text = "Catat",
+                    variant = ButtonVariant.Primary,
+                    size = ButtonSize.Small,
+                    leadingIcon = Icons.Default.Add
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = "Sudah dicatat",
+                    tint = SuccessGreen,
+                    modifier = Modifier.size(Dimensions.iconSize)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TeacherAttendanceEntryDialog(
+    schedule: Schedule,
+    existingAttendance: TeacherAttendance?,
+    onDismiss: () -> Unit,
+    onSubmit: (jamMasuk: String, status: String, keterangan: String?) -> Unit
+) {
+    var jamMasuk by remember {
+        mutableStateOf(
+            existingAttendance?.jamMasuk ?: java.text.SimpleDateFormat(
+                "HH:mm",
+                java.util.Locale.getDefault()
+            ).format(java.util.Date())
+        )
+    }
+    var selectedStatus by remember { mutableStateOf(existingAttendance?.status ?: "hadir") }
+    var keterangan by remember { mutableStateOf(existingAttendance?.keterangan ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(
+                    text = "Catat Kehadiran Guru",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${schedule.mata_pelajaran} - ${schedule.guru.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = NeutralGray600
+                )
+            }
+        },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(Spacing.md)
+            ) {
+                // Jam Masuk
+                SchoolTextField(
+                    value = jamMasuk,
+                    onValueChange = { jamMasuk = it },
+                    label = "Jam Masuk",
+                    placeholder = "HH:mm (contoh: 08:30)",
+                    leadingIcon = Icons.Default.Schedule,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Status Dropdown
+                SchoolDropdownField(
+                    value = selectedStatus.capitalize(),
+                    onValueChange = { selectedStatus = it.lowercase() },
+                    options = listOf("Hadir", "Telat", "Tidak Hadir"),
+                    label = "Status Kehadiran",
+                    leadingIcon = Icons.Default.Check,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Keterangan
+                SchoolTextField(
+                    value = keterangan,
+                    onValueChange = { keterangan = it },
+                    label = "Keterangan (Opsional)",
+                    placeholder = "Tambahkan keterangan jika diperlukan",
+                    leadingIcon = Icons.Default.Notes,
+                    singleLine = false,
+                    minLines = 2,
+                    maxLines = 4,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            SchoolButton(
+                onClick = {
+                    if (jamMasuk.isNotEmpty()) {
+                        onSubmit(jamMasuk, selectedStatus, keterangan.ifBlank { null })
+                    }
+                },
+                text = "Simpan",
+                variant = ButtonVariant.Primary,
+                enabled = jamMasuk.isNotEmpty()
+            )
+        },
+        dismissButton = {
+            SchoolButton(
+                onClick = onDismiss,
+                text = "Batal",
+                variant = ButtonVariant.Secondary
+            )
+        }
+    )
 }
 
 @Composable
 fun ListPage() {
     val context = LocalContext.current
-    val monitoringViewModel: MonitoringViewModel = viewModel()
     val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
     val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
 
-    val monitoringData by monitoringViewModel.monitoringList
-    val isLoading by monitoringViewModel.isLoading
-    val errorMessage by monitoringViewModel.errorMessage
+    var attendanceList by remember { mutableStateOf<List<TeacherAttendance>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var selectedFilter by remember { mutableStateOf("all") } // all, hadir, telat, tidak_hadir
+    var currentPage by remember { mutableStateOf(1) }
 
-    // Fetch user's monitoring data
-    LaunchedEffect(Unit) {
-        token?.let { monitoringViewModel.loadMonitoring(it) }
+    // Function to load attendance data
+    fun loadAttendanceData() {
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                val filterStatus = if (selectedFilter == "all") null else selectedFilter
+                repository.getTeacherAttendances(
+                    token = token,
+                    status = filterStatus,
+                    page = currentPage,
+                    perPage = 20
+                )
+                    .onSuccess { response ->
+                        attendanceList = response.data
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                        Toast.makeText(context, "Gagal memuat data: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                isLoading = false
+            }
+        }
     }
 
-    // Handle error messages
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { message ->
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            monitoringViewModel.clearError()
-        }
+    // Load data when page opens or filter changes
+    LaunchedEffect(selectedFilter) {
+        loadAttendanceData()
     }
 
     Box(
@@ -909,13 +1172,13 @@ fun ListPage() {
             ) {
                 Column {
                     Text(
-                        text = "Riwayat Monitoring",
+                        text = "Laporan Kehadiran Guru",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = SMKOnSurface
                     )
                     Text(
-                        text = "Lihat riwayat kehadiran Anda",
+                        text = "Riwayat kehadiran guru yang telah dicatat",
                         style = MaterialTheme.typography.bodyMedium,
                         color = NeutralGray600
                     )
@@ -926,6 +1189,83 @@ fun ListPage() {
                     contentDescription = null,
                     tint = SMKPrimary,
                     modifier = Modifier.size(Dimensions.iconSize)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.md))
+
+            // Filter Chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                FilterChip(
+                    selected = selectedFilter == "all",
+                    onClick = { selectedFilter = "all" },
+                    label = { Text("Semua") },
+                    leadingIcon = {
+                        if (selectedFilter == "all") {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                        }
+                    }
+                )
+                FilterChip(
+                    selected = selectedFilter == "hadir",
+                    onClick = { selectedFilter = "hadir" },
+                    label = { Text("Hadir") },
+                    leadingIcon = {
+                        if (selectedFilter == "hadir") {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = SuccessGreen.copy(alpha = 0.2f),
+                        selectedLabelColor = SuccessGreen
+                    )
+                )
+                FilterChip(
+                    selected = selectedFilter == "telat",
+                    onClick = { selectedFilter = "telat" },
+                    label = { Text("Telat") },
+                    leadingIcon = {
+                        if (selectedFilter == "telat") {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = WarningYellow.copy(alpha = 0.2f),
+                        selectedLabelColor = WarningYellow
+                    )
+                )
+                FilterChip(
+                    selected = selectedFilter == "tidak_hadir",
+                    onClick = { selectedFilter = "tidak_hadir" },
+                    label = { Text("Tidak Hadir") },
+                    leadingIcon = {
+                        if (selectedFilter == "tidak_hadir") {
+                            Icon(
+                                imageVector = Icons.Default.Cancel,
+                                contentDescription = null,
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = ErrorRed.copy(alpha = 0.2f),
+                        selectedLabelColor = ErrorRed
+                    )
                 )
             }
 
@@ -941,17 +1281,21 @@ fun ListPage() {
                 errorMessage != null -> {
                     SchoolEmptyState(
                         title = "Terjadi Kesalahan",
-                        subtitle = errorMessage ?: "Tidak dapat memuat riwayat monitoring",
+                        subtitle = errorMessage ?: "Tidak dapat memuat laporan kehadiran",
                         icon = Icons.Default.Error,
                         actionText = "Coba Lagi",
-                        onActionClick = { token?.let { monitoringViewModel.loadMonitoring(it) } }
+                        onActionClick = { loadAttendanceData() }
                     )
                 }
 
-                monitoringData.isEmpty() -> {
+                attendanceList.isEmpty() -> {
                     SchoolEmptyState(
-                        title = "Belum Ada Riwayat",
-                        subtitle = "Anda belum memiliki riwayat monitoring kehadiran",
+                        title = "Belum Ada Data",
+                        subtitle = if (selectedFilter != "all") {
+                            "Tidak ada data kehadiran dengan status ${selectedFilter.replace("_", " ")}"
+                        } else {
+                            "Belum ada data kehadiran guru yang dicatat"
+                        },
                         icon = Icons.Default.HistoryEdu,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -959,81 +1303,167 @@ fun ListPage() {
 
                 else -> {
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
                     ) {
-                        items(monitoringData) { monitoring ->
-                            SchoolCard(
-                                variant = CardVariant.Default,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = monitoring.mata_pelajaran
-                                                ?: "Mata Pelajaran",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = SMKOnSurface
-                                        )
-
-                                        Spacer(modifier = Modifier.height(Spacing.xs))
-                                        
-                                        // Display guru name and subject
-                                        Text(
-                                            text = "${monitoring.guru.name}${
-                                                if (!monitoring.guru.mata_pelajaran.isNullOrEmpty()) 
-                                                    " - ${monitoring.guru.mata_pelajaran}" 
-                                                else ""
-                                            }",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            fontWeight = FontWeight.Medium
-                                        )
-
-                                        Spacer(modifier = Modifier.height(Spacing.xs))
-
-                                        Text(
-                                            text = monitoring.kelas ?: "Kelas",
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = NeutralGray600
-                                        )
-
-                                        monitoring.catatan?.let { catatan ->
-                                            if (catatan.isNotEmpty()) {
-                                                Spacer(modifier = Modifier.height(Spacing.xs))
-                                                Text(
-                                                    text = catatan,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    color = NeutralGray500
-                                                )
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.height(Spacing.sm))
-
-                                        Text(
-                                            text = "${monitoring.tanggal ?: ""} • ${monitoring.jam_laporan}",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = NeutralGray400
-                                        )
-                                    }
-
-                                    SchoolStatusBadge(
-                                        text = monitoring.status_hadir ?: "Status",
-                                        variant = when (monitoring.status_hadir?.lowercase()) {
-                                            "hadir" -> BadgeVariant.Success
-                                            "terlambat" -> BadgeVariant.Warning
-                                            "tidak hadir" -> BadgeVariant.Danger
-                                            else -> BadgeVariant.Default
-                                        }
-                                    )
-                                }
-                            }
+                        items(attendanceList) { attendance ->
+                            TeacherAttendanceListCard(attendance = attendance)
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TeacherAttendanceListCard(attendance: TeacherAttendance) {
+    SchoolCard(
+        variant = CardVariant.Default,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                // Date and Time
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CalendarToday,
+                        contentDescription = null,
+                        tint = SMKPrimary,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = attendance.tanggal,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = SMKOnSurface
+                    )
+                    
+                    attendance.jamMasuk?.let { jamMasuk ->
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = SMKSecondary,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = jamMasuk,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = SMKSecondary
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.sm))
+                
+                // Mata Pelajaran and Class
+                attendance.schedule?.let { schedule ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Book,
+                            contentDescription = null,
+                            tint = NeutralGray600,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = schedule.mata_pelajaran,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = SMKOnSurface
+                        )
+                        Text(
+                            text = "• ${schedule.kelas}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NeutralGray600
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                }
+                
+                // Teacher Name
+                attendance.guru?.let { guru ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = NeutralGray600,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = guru.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NeutralGray700
+                        )
+                    }
+                }
+                
+                // Keterangan if available
+                attendance.keterangan?.let { keterangan ->
+                    if (keterangan.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(Spacing.sm))
+                        Text(
+                            text = keterangan,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600,
+                            fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.md))
+                
+                // Status Badge
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    color = when (attendance.status.lowercase()) {
+                        "hadir" -> SuccessGreen.copy(alpha = 0.1f)
+                        "telat" -> WarningYellow.copy(alpha = 0.1f)
+                        else -> ErrorRed.copy(alpha = 0.1f)
+                    }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = when (attendance.status.lowercase()) {
+                                "hadir" -> Icons.Default.CheckCircle
+                                "telat" -> Icons.Default.Warning
+                                else -> Icons.Default.Cancel
+                            },
+                            contentDescription = null,
+                            tint = when (attendance.status.lowercase()) {
+                                "hadir" -> SuccessGreen
+                                "telat" -> WarningYellow
+                                else -> ErrorRed
+                            },
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = attendance.status.capitalize(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = when (attendance.status.lowercase()) {
+                                "hadir" -> SuccessGreen
+                                "telat" -> WarningYellow
+                                else -> ErrorRed
+                            }
+                        )
                     }
                 }
             }

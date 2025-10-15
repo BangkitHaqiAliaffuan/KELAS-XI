@@ -51,7 +51,7 @@ class AppRepository(private val apiService: ApiService) {
         }
     }
     
-    suspend fun updateUserRole(token: String, userId: Int, role: String): Result<LoginResponse> {
+    suspend fun updateUserRole(token: String, userId: Int, role: String): Result<ApiResponse<User>> {
         return withContext(Dispatchers.IO) {
             try {
                 val response = apiService.updateUserRole("Bearer $token", userId, UpdateRoleRequest(role))

@@ -240,6 +240,15 @@ fun InputNilaiScreen(
                             return@Button
                         }
 
+                        // Feature deprecated: Assignment and Grade features have been removed from the system
+                        Toast.makeText(
+                            context,
+                            "Fitur penilaian tugas sudah tidak tersedia",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        showGradeDialog = false
+                        
+                        /* Original code - deprecated:
                         token?.let { tkn ->
                             selectedSubmission?.let { sub ->
                                 if (sub.grade != null) {
@@ -262,6 +271,7 @@ fun InputNilaiScreen(
                                 }
                             }
                         }
+                        */
                     },
                     enabled = !isSubmitting
                 ) {

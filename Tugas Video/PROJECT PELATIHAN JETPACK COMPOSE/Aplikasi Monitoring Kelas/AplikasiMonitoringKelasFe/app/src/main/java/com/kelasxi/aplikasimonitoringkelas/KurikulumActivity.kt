@@ -421,7 +421,7 @@ fun KelasKosongCard(kelasKosong: KelasKosong) {
                     modifier = Modifier.size(Dimensions.iconSizeSmall)
                 )
                 Text(
-                    text = "Guru Seharusnya: ${kelasKosong.guru_asli}",
+                    text = "Guru Seharusnya: ${kelasKosong.guru.name}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = NeutralGray700,
                     fontWeight = FontWeight.Medium
@@ -656,7 +656,7 @@ fun GuruPenggantiCard(
                     
                     Spacer(modifier = Modifier.height(Spacing.sm))
                     
-                    // Original teacher
+                                        // Original teacher
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -668,7 +668,7 @@ fun GuruPenggantiCard(
                             modifier = Modifier.size(Dimensions.iconSizeSmall)
                         )
                         Text(
-                            text = "Dari: ${guruPengganti.guru_asli.name}",
+                            text = "Dari: ${guruPengganti.guruAsli?.name ?: "Tidak ada data"}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray700
                         )
@@ -688,7 +688,7 @@ fun GuruPenggantiCard(
                             modifier = Modifier.size(Dimensions.iconSizeSmall)
                         )
                         Text(
-                            text = "Ke: ${guruPengganti.guru_pengganti.name}",
+                            text = "Ke: ${guruPengganti.guruPengganti.name}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = SuccessGreen,
                             fontWeight = FontWeight.SemiBold

@@ -98,3 +98,9 @@ val Pink80 = SchoolGreen80
 val Purple40 = SchoolBlue40
 val PurpleGrey40 = SchoolTeal40
 val Pink40 = SchoolGreen40
+
+// Legacy aliases for semantic colors (to maintain compatibility with existing code)
+val ErrorRed = SMKError
+val SuccessGreen = SMKSuccess
+val WarningYellow = SMKWarning
+val SMKOnPrimary = Color(0xFFFFFFFF)  // White color for text on primary color

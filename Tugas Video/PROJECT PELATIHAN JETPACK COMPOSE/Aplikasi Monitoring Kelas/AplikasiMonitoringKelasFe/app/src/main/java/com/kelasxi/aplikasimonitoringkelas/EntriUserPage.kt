@@ -210,7 +210,7 @@ fun EntriUserPage(viewModel: UsersViewModel = viewModel()) {
                                 
                                 repository.createUser(token, request)
                                     .onSuccess { response ->
-                                        successMessage = "User berhasil ditambahkan: ${response.data.name}"
+                                        successMessage = "User berhasil ditambahkan: ${response.name}"
                                         // Clear form
                                         selectedRole = ""
                                         nama = ""
