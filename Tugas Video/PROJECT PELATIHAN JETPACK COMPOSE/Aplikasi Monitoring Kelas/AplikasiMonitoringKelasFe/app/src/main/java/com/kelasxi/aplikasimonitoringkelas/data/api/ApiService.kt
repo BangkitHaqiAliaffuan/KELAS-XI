@@ -146,6 +146,12 @@ interface ApiService {
         @Header("Authorization") token: String
     ): Response<TodaySchedulesResponse>
     
+    @GET("teacher-attendance/all-schedules")
+    suspend fun getAllSchedules(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null
+    ): Response<TodaySchedulesResponse>
+    
     @GET("teacher-attendance/today")
     suspend fun getTodayAttendance(
         @Header("Authorization") token: String

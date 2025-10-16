@@ -350,6 +350,22 @@ class AppRepositoryNew(private val apiService: ApiService) {
         }
     }
     
+    suspend fun getAllSchedules(token: String, tanggal: String? = null): Result<TodaySchedulesResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getAllSchedules("Bearer $token", tanggal)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil semua jadwal: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
     suspend fun getTodayAttendance(token: String): Result<TodayAttendanceResponse> {
         return withContext(Dispatchers.IO) {
             try {

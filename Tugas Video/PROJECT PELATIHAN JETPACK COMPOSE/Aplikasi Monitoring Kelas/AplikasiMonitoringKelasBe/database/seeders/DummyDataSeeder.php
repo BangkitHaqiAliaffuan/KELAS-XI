@@ -15,64 +15,59 @@ class DummyDataSeeder extends Seeder
      */
     public function run(): void
     {
-        // Membuat users dummy
-        $admin = User::create([
-            'name' => 'Admin Sekolah',
-            'email' => 'admin@sekolah.com',
-            'password' => Hash::make('password123'),
-            'role' => 'admin'
-        ]);
 
         $guru1 = User::create([
-            'name' => 'Dr. Siti Nurhaliza',
-            'email' => 'siti.guru@sekolah.com',
+            'name' => 'Dr. borak Nurhaliza',
+            'email' => 'borak.guru@sekolah.com',
             'password' => Hash::make('password123'),
             'role' => 'guru'
         ]);
 
         $guru2 = User::create([
-            'name' => 'Bapak Ahmad Sudrajat',
-            'email' => 'ahmad.guru@sekolah.com',
+            'name' => 'Bapak ahmadsurajar Sudrajat',
+            'email' => 'ahmadsurajar.guru@sekolah.com',
             'password' => Hash::make('password123'),
             'role' => 'guru'
         ]);
 
         $siswa = User::create([
-            'name' => 'Andi Pratama',
-            'email' => 'andi.siswa@sekolah.com',
+            'name' => 'sumba Pratama',
+            'email' => 'sumba.siswa@sekolah.com',
             'password' => Hash::make('password123'),
             'role' => 'siswa'
         ]);
 
         // Membuat jadwal dummy
         Schedule::create([
-            'hari' => 'Senin',
+            'hari' => 'Jumat',
             'kelas' => 'X IPA 1',
             'mata_pelajaran' => 'Matematika',
             'guru_id' => $guru1->id,
-            'jam_mulai' => '07:30',
+            'jam_mulai' => '02:30',
             'jam_selesai' => '09:00',
             'ruang' => 'Lab Matematika'
         ]);
 
         Schedule::create([
-            'hari' => 'Senin',
+            'hari' => 'Sabtu',
             'kelas' => 'X IPA 1',
-            'mata_pelajaran' => 'Fisika',
-            'guru_id' => $guru2->id,
-            'jam_mulai' => '09:15',
-            'jam_selesai' => '10:45',
-            'ruang' => 'Lab Fisika'
+            'mata_pelajaran' => 'Matematika',
+            'guru_id' => $guru1->id,
+            'jam_mulai' => '02:35',
+            'jam_selesai' => '12:00',
+            'ruang' => 'Lab Matematika'
         ]);
 
         Schedule::create([
-            'hari' => 'Selasa',
-            'kelas' => 'XI IPS 2',
-            'mata_pelajaran' => 'Sejarah',
+            'hari' => 'Jumat',
+            'kelas' => 'X IPA 1',
+            'mata_pelajaran' => 'RPL',
             'guru_id' => $guru1->id,
-            'jam_mulai' => '10:30',
-            'jam_selesai' => '12:00',
-            'ruang' => 'Ruang 201'
+            'jam_mulai' => '02:59',
+            'jam_selesai' => '09:00',
+            'ruang' => 'Lab RPL'
         ]);
+
+
     }
 }

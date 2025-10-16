@@ -96,8 +96,9 @@ fun LoginScreen(modifier: Modifier = Modifier, viewModel: AuthViewModel = viewMo
             // Navigate berdasarkan role dari database
             val intent = when (user!!.role.lowercase()) {
                 "siswa" -> Intent(context, SiswaActivity::class.java)
-                "guru" -> Intent(context, KurikulumActivity::class.java) // Mapping guru ke kurikulum
+                "guru", "kurikulum" -> Intent(context, KurikulumActivity::class.java)
                 "admin" -> Intent(context, AdminActivity::class.java)
+                "kepala_sekolah" -> Intent(context, KepalaSekolahActivity::class.java)
                 else -> {
                     Toast.makeText(context, "Role tidak dikenali: ${user!!.role}", Toast.LENGTH_LONG).show()
                     null

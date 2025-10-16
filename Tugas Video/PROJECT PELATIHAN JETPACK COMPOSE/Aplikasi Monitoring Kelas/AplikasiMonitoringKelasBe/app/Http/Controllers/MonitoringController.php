@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Monitoring;
 use App\Models\Schedule;
+use App\Models\TeacherAttendance;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Carbon\Carbon;
@@ -128,13 +129,30 @@ class MonitoringController extends Controller
     }
 
     /**
-     * Mengecek kelas kosong berdasarkan jadwal hari ini
+     * Mengecek kelas kosong berdasarkan jadwal hari ini dan teacher attendance
      */
     public function kelasKosong(Request $request)
     {
         try {
-            $tanggal = $request->tanggal ?? Carbon::today()->format('Y-m-d');
-            $hari = Carbon::parse($tanggal)->locale('id')->dayName;
+            // Ambil tanggal dari request (dari device) atau gunakan tanggal hari ini dari server
+            // Jika client mengirim tanggal, gunakan tanggal tersebut
+            $tanggal = $request->input('tanggal');
+
+            // Jika tidak ada tanggal dari client, gunakan tanggal server dengan timezone Asia/Jakarta
+            if (!$tanggal) {
+                $tanggal = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            } else {
+                // Validasi format tanggal
+                try {
+                    $tanggal = Carbon::parse($tanggal)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Format tanggal tidak valid. Gunakan format YYYY-MM-DD',
+                        'error' => $e->getMessage()
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+            }
 
             // Mapping hari dari Carbon ke format database
             $hariMapping = [
@@ -154,23 +172,24 @@ class MonitoringController extends Controller
                 ->where('hari', $hari)
                 ->get();
 
-            // Ambil monitoring untuk tanggal yang diminta
-            $monitoringHariIni = Monitoring::whereDate('tanggal', $tanggal)
-                ->where('status_hadir', '!=', 'Tidak Hadir')
+            // Ambil teacher attendance untuk tanggal yang diminta dengan status tidak_hadir
+            $teacherAttendanceTidakHadir = TeacherAttendance::with(['schedule', 'guru:id,name,email,mata_pelajaran'])
+                ->whereDate('tanggal', $tanggal)
+                ->where('status', 'tidak_hadir')
                 ->get()
-                ->groupBy(function($item) {
-                    return $item->kelas . '_' . $item->mata_pelajaran . '_' . $item->guru_id;
-                });
+                ->keyBy('schedule_id');
 
             $kelasKosong = [];
 
+            // Cek setiap jadwal apakah guru tidak hadir
             foreach ($jadwalHariIni as $jadwal) {
-                $key = $jadwal->kelas . '_' . $jadwal->mata_pelajaran . '_' . $jadwal->guru_id;
+                // Jika ada teacher attendance dengan status tidak_hadir untuk jadwal ini
+                if (isset($teacherAttendanceTidakHadir[$jadwal->id])) {
+                    $attendance = $teacherAttendanceTidakHadir[$jadwal->id];
 
-                // Jika tidak ada monitoring atau guru tidak hadir, maka kelas kosong
-                if (!isset($monitoringHariIni[$key])) {
                     $kelasKosong[] = [
                         'jadwal_id' => $jadwal->id,
+                        'attendance_id' => $attendance->id,
                         'kelas' => $jadwal->kelas,
                         'mata_pelajaran' => $jadwal->mata_pelajaran,
                         'guru' => $jadwal->guru,
@@ -179,38 +198,10 @@ class MonitoringController extends Controller
                         'ruang' => $jadwal->ruang,
                         'tanggal' => $tanggal,
                         'hari' => $hari,
-                        'status' => 'Tidak Ada Laporan'
+                        'status' => 'Tidak Hadir',
+                        'keterangan' => $attendance->keterangan
                     ];
                 }
-            }
-
-            // Cek juga monitoring dengan status "Tidak Hadir"
-            $tidakHadir = Monitoring::with(['guru:id,name,email,mata_pelajaran'])
-                ->whereDate('tanggal', $tanggal)
-                ->where('status_hadir', 'Tidak Hadir')
-                ->get();
-
-            foreach ($tidakHadir as $monitoring) {
-                $jadwal = Schedule::where('kelas', $monitoring->kelas)
-                    ->where('mata_pelajaran', $monitoring->mata_pelajaran)
-                    ->where('guru_id', $monitoring->guru_id)
-                    ->where('hari', $hari)
-                    ->first();
-
-                $kelasKosong[] = [
-                    'jadwal_id' => $jadwal->id ?? null,
-                    'monitoring_id' => $monitoring->id,
-                    'kelas' => $monitoring->kelas,
-                    'mata_pelajaran' => $monitoring->mata_pelajaran,
-                    'guru' => $monitoring->guru,
-                    'jam_mulai' => $jadwal->jam_mulai ?? null,
-                    'jam_selesai' => $jadwal->jam_selesai ?? null,
-                    'ruang' => $jadwal->ruang ?? null,
-                    'tanggal' => $tanggal,
-                    'hari' => $hari,
-                    'status' => 'Tidak Hadir',
-                    'catatan' => $monitoring->catatan
-                ];
             }
 
             return response()->json([

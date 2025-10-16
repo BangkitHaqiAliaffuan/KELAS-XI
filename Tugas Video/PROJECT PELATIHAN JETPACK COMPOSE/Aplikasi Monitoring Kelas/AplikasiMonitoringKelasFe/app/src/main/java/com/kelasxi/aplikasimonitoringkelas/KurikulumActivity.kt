@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,6 +39,10 @@ import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
 import com.kelasxi.aplikasimonitoringkelas.ui.theme.*
 import com.kelasxi.aplikasimonitoringkelas.ui.components.*
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class KurikulumActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +53,41 @@ class KurikulumActivity : ComponentActivity() {
                 KurikulumScreen()
             }
         }
+    }
+}
+
+// Helper functions for formatting
+private fun formatDate(dateString: String): String {
+    return try {
+        val date = LocalDate.parse(dateString)
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale("id", "ID"))
+        date.format(formatter)
+    } catch (e: Exception) {
+        dateString
+    }
+}
+
+private fun formatTime(timeString: String?): String {
+    return try {
+        if (timeString == null) return "-"
+        // Handle different time formats
+        val time = when {
+            timeString.contains("T") -> {
+                // ISO 8601 format: 2025-10-16T02:30:00.000000Z
+                timeString.substringAfter("T").substringBefore(".")
+            }
+            timeString.length > 5 -> {
+                // Format: HH:MM:SS
+                timeString.substring(0, 5)
+            }
+            else -> timeString
+        }
+        
+        // Parse and format to HH:mm
+        val parsed = LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm:ss"))
+        parsed.format(DateTimeFormatter.ofPattern("HH:mm"))
+    } catch (e: Exception) {
+        timeString ?: "-"
     }
 }
 
@@ -200,7 +240,9 @@ fun KelasKosongPage() {
         if (token != null) {
             scope.launch {
                 isLoading = true
-                repository.getKelasKosong(token)
+                // Get current date from device
+                val currentDate = java.time.LocalDate.now().toString() // Format: YYYY-MM-DD
+                repository.getKelasKosong(token, currentDate)
                     .onSuccess { response ->
                         kelasKosongList = response.data
                         errorMessage = null
@@ -370,8 +412,10 @@ fun KelasKosongCard(kelasKosong: KelasKosong) {
             // Schedule info
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg),
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                // Hari
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -385,10 +429,12 @@ fun KelasKosongCard(kelasKosong: KelasKosong) {
                     Text(
                         text = kelasKosong.hari,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = NeutralGray700
+                        color = NeutralGray700,
+                        fontWeight = FontWeight.Medium
                     )
                 }
                 
+                // Jam
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
@@ -400,11 +446,31 @@ fun KelasKosongCard(kelasKosong: KelasKosong) {
                         modifier = Modifier.size(Dimensions.iconSizeSmall)
                     )
                     Text(
-                        text = "${kelasKosong.jam_mulai} - ${kelasKosong.jam_selesai}",
+                        text = "${formatTime(kelasKosong.jam_mulai)} - ${formatTime(kelasKosong.jam_selesai)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = NeutralGray700
                     )
                 }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.sm))
+            
+            // Tanggal
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = null,
+                    tint = NeutralGray600,
+                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                )
+                Text(
+                    text = formatDate(kelasKosong.tanggal),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = NeutralGray600
+                )
             }
             
             Spacer(modifier = Modifier.height(Spacing.sm))
@@ -427,6 +493,30 @@ fun KelasKosongCard(kelasKosong: KelasKosong) {
                     fontWeight = FontWeight.Medium
                 )
             }
+            
+            // Keterangan if available
+            kelasKosong.keterangan?.let { keterangan ->
+                if (keterangan.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SMKInfo,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = keterangan,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600,
+                            fontWeight = FontWeight.Normal
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -443,19 +533,26 @@ fun GuruPenggantiPage() {
     
     var guruPenggantiList by remember { mutableStateOf<List<GuruPengganti>>(emptyList()) }
     var kelasKosongList by remember { mutableStateOf<List<KelasKosong>>(emptyList()) }
+    var guruList by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     
     // Form states
     var selectedKelasKosong by remember { mutableStateOf<KelasKosong?>(null) }
-    var selectedGuruPengganti by remember { mutableStateOf("") }
+    var selectedGuruPengganti by remember { mutableStateOf<User?>(null) }
+    var expandedKelasKosong by remember { mutableStateOf(false) }
+    var expandedGuruPengganti by remember { mutableStateOf(false) }
+    var keterangan by remember { mutableStateOf("") }
     
     // Load data
     fun loadData() {
         if (token != null) {
             scope.launch {
                 isLoading = true
+                // Get current date from device
+                val currentDate = java.time.LocalDate.now().toString() // Format: YYYY-MM-DD
+                
                 repository.getGuruPengganti(token)
                     .onSuccess { response ->
                         guruPenggantiList = response.data
@@ -464,13 +561,24 @@ fun GuruPenggantiPage() {
                         errorMessage = error.message
                     }
                     
-                repository.getKelasKosong(token)
+                repository.getKelasKosong(token, currentDate)
                     .onSuccess { response ->
                         kelasKosongList = response.data
                     }
                     .onFailure { error ->
                         errorMessage = error.message
                     }
+                
+                // Load daftar guru
+                repository.getUsers(token)
+                    .onSuccess { response ->
+                        // Filter hanya guru
+                        guruList = response.data.filter { it.role == "guru" }
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                    }
+                    
                 isLoading = false
             }
         }
@@ -588,34 +696,346 @@ fun GuruPenggantiPage() {
     
     // Create Dialog
     if (showCreateDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            title = { Text("Tambah Guru Pengganti") },
-            text = {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(Spacing.md)
-                ) {
-                    Text("Pilih kelas kosong dan guru pengganti")
-                    
-                    // TODO: Add proper dropdowns for kelas kosong and guru selection
-                    Text(
-                        text = "Fitur ini memerlukan UI dropdown yang lebih kompleks",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = NeutralGray600
-                    )
-                }
+        TambahGuruPenggantiDialog(
+            kelasKosongList = kelasKosongList,
+            guruList = guruList,
+            onDismiss = { 
+                showCreateDialog = false
+                selectedKelasKosong = null
+                selectedGuruPengganti = null
+                keterangan = ""
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showCreateDialog = false
-                        Toast.makeText(context, "Fitur akan dikembangkan lebih lanjut", Toast.LENGTH_SHORT).show()
+            onSubmit = { kelasKosong, guru, keteranganInput ->
+                if (token != null) {
+                    scope.launch {
+                        isLoading = true
+                        
+                        val request = GuruPenggantiRequest(
+                            guru_pengganti_id = guru.id,
+                            guru_asli_id = kelasKosong.guru.id,
+                            kelas = kelasKosong.kelas,
+                            mata_pelajaran = kelasKosong.mata_pelajaran,
+                            tanggal = kelasKosong.tanggal,
+                            jam_mulai = formatTime(kelasKosong.jam_mulai),
+                            jam_selesai = formatTime(kelasKosong.jam_selesai),
+                            ruang = kelasKosong.ruang,
+                            keterangan = keteranganInput.ifBlank { null }
+                        )
+                        
+                        repository.createGuruPengganti(token, request)
+                            .onSuccess {
+                                Toast.makeText(context, "Guru pengganti berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                                showCreateDialog = false
+                                selectedKelasKosong = null
+                                selectedGuruPengganti = null
+                                keterangan = ""
+                                loadData()
+                            }
+                            .onFailure { error ->
+                                Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                            }
+                        
+                        isLoading = false
                     }
-                ) {
-                    Text("Tutup")
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TambahGuruPenggantiDialog(
+    kelasKosongList: List<KelasKosong>,
+    guruList: List<User>,
+    onDismiss: () -> Unit,
+    onSubmit: (KelasKosong, User, String) -> Unit
+) {
+    var selectedKelasKosong by remember { mutableStateOf<KelasKosong?>(null) }
+    var selectedGuruPengganti by remember { mutableStateOf<User?>(null) }
+    var expandedKelasKosong by remember { mutableStateOf(false) }
+    var expandedGuruPengganti by remember { mutableStateOf(false) }
+    var keterangan by remember { mutableStateOf("") }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.fillMaxWidth(0.95f)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = SMKSurface,
+            tonalElevation = Elevation.medium
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(Spacing.xl)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Tambah Guru Pengganti",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = SMKOnSurface
+                        )
+                        Text(
+                            text = "Tugaskan guru pengganti untuk kelas kosong",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600
+                        )
+                    }
+                    
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Tutup",
+                            tint = NeutralGray600
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.lg))
+                
+                // Dropdown Kelas Kosong
+                Text(
+                    text = "Pilih Kelas Kosong",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SMKOnSurface
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                
+                ExposedDropdownMenuBox(
+                    expanded = expandedKelasKosong,
+                    onExpandedChange = { expandedKelasKosong = !expandedKelasKosong }
+                ) {
+                    OutlinedTextField(
+                        value = selectedKelasKosong?.let { 
+                            "${it.kelas} - ${it.mata_pelajaran} (${it.hari}, ${formatTime(it.jam_mulai)})"
+                        } ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Pilih kelas yang kosong", color = NeutralGray500) },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (expandedKelasKosong) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = SMKPrimary
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SMKPrimary,
+                            unfocusedBorderColor = SMKOutline,
+                            focusedContainerColor = SMKSurface,
+                            unfocusedContainerColor = SMKSurface
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = expandedKelasKosong,
+                        onDismissRequest = { expandedKelasKosong = false }
+                    ) {
+                        if (kelasKosongList.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("Tidak ada kelas kosong") },
+                                onClick = { },
+                                enabled = false
+                            )
+                        } else {
+                            kelasKosongList.forEach { kelasKosong ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = "${kelasKosong.kelas} - ${kelasKosong.mata_pelajaran}",
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = SMKOnSurface
+                                            )
+                                            Text(
+                                                text = "${kelasKosong.hari}, ${formatTime(kelasKosong.jam_mulai)} - ${formatTime(kelasKosong.jam_selesai)}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = NeutralGray600
+                                            )
+                                            Text(
+                                                text = "Guru asli: ${kelasKosong.guru.name}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = ErrorRed
+                                            )
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedKelasKosong = kelasKosong
+                                        expandedKelasKosong = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.md))
+                
+                // Dropdown Guru Pengganti
+                Text(
+                    text = "Pilih Guru Pengganti",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SMKOnSurface
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                
+                ExposedDropdownMenuBox(
+                    expanded = expandedGuruPengganti,
+                    onExpandedChange = { expandedGuruPengganti = !expandedGuruPengganti }
+                ) {
+                    OutlinedTextField(
+                        value = selectedGuruPengganti?.let { 
+                            "${it.name} (${it.mata_pelajaran ?: "Semua Mapel"})"
+                        } ?: "",
+                        onValueChange = {},
+                        readOnly = true,
+                        placeholder = { Text("Pilih guru pengganti", color = NeutralGray500) },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (expandedGuruPengganti) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                tint = SMKPrimary
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SMKPrimary,
+                            unfocusedBorderColor = SMKOutline,
+                            focusedContainerColor = SMKSurface,
+                            unfocusedContainerColor = SMKSurface
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = expandedGuruPengganti,
+                        onDismissRequest = { expandedGuruPengganti = false }
+                    ) {
+                        if (guruList.isEmpty()) {
+                            DropdownMenuItem(
+                                text = { Text("Tidak ada guru tersedia") },
+                                onClick = { },
+                                enabled = false
+                            )
+                        } else {
+                            guruList.forEach { guru ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Column {
+                                            Text(
+                                                text = guru.name,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = SMKOnSurface
+                                            )
+                                            guru.mata_pelajaran?.let {
+                                                Text(
+                                                    text = "Mata Pelajaran: $it",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = NeutralGray600
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        selectedGuruPengganti = guru
+                                        expandedGuruPengganti = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(Spacing.md))
+                
+                // Keterangan
+                Text(
+                    text = "Keterangan (Opsional)",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = SMKOnSurface
+                )
+                Spacer(modifier = Modifier.height(Spacing.xs))
+                
+                OutlinedTextField(
+                    value = keterangan,
+                    onValueChange = { keterangan = it },
+                    placeholder = { Text("Masukkan keterangan...", color = NeutralGray500) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 5,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SMKPrimary,
+                        unfocusedBorderColor = SMKOutline,
+                        focusedContainerColor = SMKSurface,
+                        unfocusedContainerColor = SMKSurface
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+                
+                Spacer(modifier = Modifier.height(Spacing.xl))
+                
+                // Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = SMKPrimary
+                        ),
+                        border = BorderStroke(1.dp, SMKPrimary)
+                    ) {
+                        Text("Batal", fontWeight = FontWeight.SemiBold)
+                    }
+                    
+                    Button(
+                        onClick = {
+                            if (selectedKelasKosong != null && selectedGuruPengganti != null) {
+                                onSubmit(selectedKelasKosong!!, selectedGuruPengganti!!, keterangan)
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = selectedKelasKosong != null && selectedGuruPengganti != null,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SMKPrimary,
+                            contentColor = SMKOnPrimary,
+                            disabledContainerColor = NeutralGray300,
+                            disabledContentColor = NeutralGray500
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Spacer(modifier = Modifier.width(Spacing.xs))
+                        Text("Simpan", fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -709,7 +1129,7 @@ fun GuruPenggantiCard(
                             modifier = Modifier.size(Dimensions.iconSizeSmall)
                         )
                         Text(
-                            text = guruPengganti.tanggal,
+                            text = formatDate(guruPengganti.tanggal),
                             style = MaterialTheme.typography.bodySmall,
                             color = NeutralGray600
                         )

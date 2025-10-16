@@ -1,5 +1,6 @@
 package com.kelasxi.aplikasimonitoringkelas.data.model
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
 
 data class TeacherAttendance(
@@ -10,12 +11,11 @@ data class TeacherAttendance(
     @SerializedName("jam_masuk") val jamMasuk: String?,
     @SerializedName("status") val status: String, // hadir, telat, tidak_hadir
     @SerializedName("keterangan") val keterangan: String?,
-    @SerializedName("created_by") val createdBy: Int?,
+    @SerializedName("created_by") val createdBy: User?, // Changed from Int? to User? to match API response
     @SerializedName("created_at") val createdAt: String?,
     @SerializedName("updated_at") val updatedAt: String?,
     @SerializedName("schedule") val schedule: Schedule?,
-    @SerializedName("guru") val guru: User?,
-    @SerializedName("created_by_user") val createdByUser: User?
+    @SerializedName("guru") val guru: User?
 )
 
 data class TodayScheduleWithAttendance(

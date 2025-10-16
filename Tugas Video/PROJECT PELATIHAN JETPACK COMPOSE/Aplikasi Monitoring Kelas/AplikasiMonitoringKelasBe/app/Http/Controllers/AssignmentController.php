@@ -34,8 +34,8 @@ class AssignmentController extends Controller
                 $query->where('tipe', $request->tipe);
             }
 
-            // Filter for specific guru
-            if ($request->user()->role === 'guru') {
+            // Filter for specific guru or kurikulum
+            if (in_array($request->user()->role, ['guru', 'kurikulum'])) {
                 $query->where('guru_id', $request->user()->id);
             }
 
@@ -86,8 +86,8 @@ class AssignmentController extends Controller
                 $assignment->submission = $submission;
             }
 
-            // Jika guru, tambahkan statistik submission
-            if ($request->user()->role === 'guru') {
+            // Jika guru atau kurikulum, tambahkan statistik submission
+            if (in_array($request->user()->role, ['guru', 'kurikulum'])) {
                 $assignment->total_submissions = AssignmentSubmission::where('assignment_id', $id)->count();
                 $assignment->graded_count = AssignmentSubmission::where('assignment_id', $id)
                     ->where('status', 'graded')->count();

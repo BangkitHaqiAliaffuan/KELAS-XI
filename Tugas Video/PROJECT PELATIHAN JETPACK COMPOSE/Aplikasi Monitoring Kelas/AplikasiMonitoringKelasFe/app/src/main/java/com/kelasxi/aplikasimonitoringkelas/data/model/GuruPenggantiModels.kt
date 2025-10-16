@@ -47,7 +47,7 @@ data class KelasKosongResponse(
 
 data class KelasKosong(
     val jadwal_id: Int?,
-    val monitoring_id: Int?,
+    val attendance_id: Int?, // ID dari teacher_attendance
     val kelas: String,
     val mata_pelajaran: String,
     val guru: Guru,
@@ -56,8 +56,8 @@ data class KelasKosong(
     val ruang: String?,
     val tanggal: String,
     val hari: String,
-    val status: String, // "Tidak Ada Laporan" or "Tidak Hadir"
-    val catatan: String?
+    val status: String, // "Tidak Hadir"
+    val keterangan: String? // Keterangan dari teacher attendance
 )
 
 data class KelasKosongSummary(

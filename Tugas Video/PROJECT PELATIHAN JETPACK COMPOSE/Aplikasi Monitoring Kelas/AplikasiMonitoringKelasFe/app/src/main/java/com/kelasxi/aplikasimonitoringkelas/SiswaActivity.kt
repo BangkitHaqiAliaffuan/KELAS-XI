@@ -52,6 +52,60 @@ private fun getCurrentDay(): String {
     return days[calendar.get(java.util.Calendar.DAY_OF_WEEK) - 1]
 }
 
+private fun formatDateToIndonesian(dateString: String): String {
+    try {
+        // Parse ISO 8601 format: 2025-10-15T00:00:00.000000Z
+        val inputFormat = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", java.util.Locale.getDefault())
+        inputFormat.timeZone = java.util.TimeZone.getTimeZone("UTC")
+        val date = inputFormat.parse(dateString)
+        
+        // Format to Indonesian date format
+        val calendar = java.util.Calendar.getInstance()
+        calendar.time = date
+        
+        val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+        val month = calendar.get(java.util.Calendar.MONTH)
+        val year = calendar.get(java.util.Calendar.YEAR)
+        
+        val monthNames = arrayOf(
+            "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+            "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+        )
+        
+        return "$day ${monthNames[month]} $year"
+    } catch (e: Exception) {
+        // Fallback: try to parse simple date format
+        try {
+            val fallbackFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val date = fallbackFormat.parse(dateString)
+            val calendar = java.util.Calendar.getInstance()
+            calendar.time = date
+            
+            val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
+            val month = calendar.get(java.util.Calendar.MONTH)
+            val year = calendar.get(java.util.Calendar.YEAR)
+            
+            val monthNames = arrayOf(
+                "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+            )
+            
+            return "$day ${monthNames[month]} $year"
+        } catch (e2: Exception) {
+            return dateString
+        }
+    }
+}
+
+private fun formatStatusDisplay(status: String): String {
+    return when (status.lowercase()) {
+        "hadir" -> "Hadir"
+        "telat" -> "Telat"
+        "tidak_hadir" -> "Tidak Hadir"
+        else -> status.capitalize()
+    }
+}
+
 private fun getSubjectStatus(schedule: Schedule): SubjectStatus {
     // Simple logic to determine subject status
     val currentTime = java.util.Calendar.getInstance()
@@ -125,7 +179,7 @@ fun SiswaScreen() {
                     ) {
                         SchoolAvatar(
                             name = sharedPrefManager.getUserName() ?: "Siswa",
-                            size = AvatarSize.Small,
+                            size = AvatarSize.Medium,
                             backgroundColor = SMKPrimary
                         )
                         Text(
@@ -644,7 +698,10 @@ fun EntriPage() {
         if (token != null) {
             scope.launch {
                 isLoading = true
-                repository.getTodaySchedules(token)
+                // Gunakan getAllSchedules untuk mendapatkan semua jadwal
+                val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                    .format(java.util.Date())
+                repository.getAllSchedules(token, currentDate)
                     .onSuccess { response ->
                         todaySchedules = response.data
                     }
@@ -665,7 +722,9 @@ fun EntriPage() {
             // Reload schedules
             if (token != null) {
                 scope.launch {
-                    repository.getTodaySchedules(token)
+                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                        .format(java.util.Date())
+                    repository.getAllSchedules(token, currentDate)
                         .onSuccess { response ->
                             todaySchedules = response.data
                         }
@@ -720,7 +779,7 @@ fun EntriPage() {
                             color = SMKOnSurface
                         )
                         Text(
-                            text = "Catat kehadiran guru untuk setiap mata pelajaran hari ini",
+                            text = "Catat kehadiran guru untuk semua jadwal pelajaran",
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray600
                         )
@@ -750,7 +809,9 @@ fun EntriPage() {
                             if (token != null) {
                                 scope.launch {
                                     isLoading = true
-                                    repository.getTodaySchedules(token)
+                                    val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                        .format(java.util.Date())
+                                    repository.getAllSchedules(token, currentDate)
                                         .onSuccess { response ->
                                             todaySchedules = response.data
                                             errorMessage = null
@@ -768,7 +829,7 @@ fun EntriPage() {
                 todaySchedules.isEmpty() -> {
                     SchoolEmptyState(
                         title = "Belum Ada Jadwal",
-                        subtitle = "Tidak ada jadwal pelajaran untuk hari ini",
+                        subtitle = "Tidak ada jadwal pelajaran yang tersedia",
                         icon = Icons.Default.EventBusy,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -778,14 +839,56 @@ fun EntriPage() {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(Spacing.md)
                     ) {
-                        items(todaySchedules) { scheduleItem ->
-                            TeacherAttendanceEntryCard(
-                                scheduleWithAttendance = scheduleItem,
-                                onEntryClick = {
-                                    selectedSchedule = scheduleItem
-                                    showEntryDialog = true
+                        // Group schedules by day
+                        val groupedSchedules = todaySchedules.groupBy { it.schedule.hari }
+                        val sortedDays = listOf("Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu")
+                        
+                        sortedDays.forEach { day ->
+                            groupedSchedules[day]?.let { schedulesForDay ->
+                                // Day header
+                                item {
+                                    Surface(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        color = SMKPrimary.copy(alpha = 0.1f),
+                                        shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(Spacing.md),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CalendarToday,
+                                                contentDescription = null,
+                                                tint = SMKPrimary,
+                                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                                            )
+                                            Text(
+                                                text = day,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = SMKPrimary
+                                            )
+                                            Text(
+                                                text = "(${schedulesForDay.size} jadwal)",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = NeutralGray600
+                                            )
+                                        }
+                                    }
                                 }
-                            )
+                                
+                                // Schedules for this day
+                                items(schedulesForDay) { scheduleItem ->
+                                    TeacherAttendanceEntryCard(
+                                        scheduleWithAttendance = scheduleItem,
+                                        onEntryClick = {
+                                            selectedSchedule = scheduleItem
+                                            showEntryDialog = true
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -1052,8 +1155,20 @@ fun TeacherAttendanceEntryDialog(
 
                 // Status Dropdown
                 SchoolDropdownField(
-                    value = selectedStatus.capitalize(),
-                    onValueChange = { selectedStatus = it.lowercase() },
+                    value = when (selectedStatus) {
+                        "hadir" -> "Hadir"
+                        "telat" -> "Telat"
+                        "tidak_hadir" -> "Tidak Hadir"
+                        else -> selectedStatus.capitalize()
+                    },
+                    onValueChange = { 
+                        selectedStatus = when (it) {
+                            "Hadir" -> "hadir"
+                            "Telat" -> "telat"
+                            "Tidak Hadir" -> "tidak_hadir"
+                            else -> it.lowercase()
+                        }
+                    },
                     options = listOf("Hadir", "Telat", "Tidak Hadir"),
                     label = "Status Kehadiran",
                     leadingIcon = Icons.Default.Check,
@@ -1327,37 +1442,50 @@ fun TeacherAttendanceListCard(attendance: TeacherAttendance) {
             verticalAlignment = Alignment.Top
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                // Date and Time
+                // Date and Time in a more organized layout
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        tint = SMKPrimary,
-                        modifier = Modifier.size(Dimensions.iconSizeSmall)
-                    )
-                    Text(
-                        text = attendance.tanggal,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = SMKOnSurface
-                    )
-                    
-                    attendance.jamMasuk?.let { jamMasuk ->
+                    // Date
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.Schedule,
+                            imageVector = Icons.Default.CalendarToday,
                             contentDescription = null,
-                            tint = SMKSecondary,
+                            tint = SMKPrimary,
                             modifier = Modifier.size(Dimensions.iconSizeSmall)
                         )
                         Text(
-                            text = jamMasuk,
+                            text = formatDateToIndonesian(attendance.tanggal),
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = SMKSecondary
+                            fontWeight = FontWeight.SemiBold,
+                            color = SMKOnSurface
                         )
+                    }
+                    
+                    // Time
+                    attendance.jamMasuk?.let { jamMasuk ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = SMKSecondary,
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                            Text(
+                                text = jamMasuk,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = SMKSecondary
+                            )
+                        }
                     }
                 }
                 
@@ -1407,6 +1535,28 @@ fun TeacherAttendanceListCard(attendance: TeacherAttendance) {
                             text = guru.name,
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray700
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(Spacing.xs))
+                }
+                
+                // Created By (who recorded the attendance)
+                attendance.createdBy?.let { creator ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Edit,
+                            contentDescription = null,
+                            tint = SMKSecondary,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Dicatat oleh: ${creator.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600
                         )
                     }
                 }

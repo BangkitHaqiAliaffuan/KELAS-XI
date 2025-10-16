@@ -131,6 +131,54 @@ class TeacherAttendanceController extends Controller
     }
 
     /**
+     * Get all schedules with attendance status (for all days)
+     */
+    public function allSchedules(Request $request)
+    {
+        $today = Carbon::today()->format('Y-m-d');
+
+        // Get parameter for date filtering (optional)
+        $tanggal = $request->get('tanggal', $today);
+
+        // Get all schedules
+        $schedules = Schedule::with(['guru'])
+            ->orderBy('hari', 'asc')
+            ->orderBy('jam_mulai', 'asc')
+            ->get();
+
+        // Get attendances for the specified date
+        $attendances = TeacherAttendance::where('tanggal', $tanggal)
+            ->get()
+            ->keyBy('schedule_id');
+
+        // Merge schedule with attendance data
+        $result = $schedules->map(function($schedule) use ($attendances) {
+            $attendance = $attendances->get($schedule->id);
+
+            return [
+                'schedule' => $schedule,
+                'attendance' => $attendance,
+                'has_attendance' => $attendance !== null,
+                'status' => $attendance ? $attendance->status : 'belum_dicatat'
+            ];
+        });
+
+        // Group by day
+        $groupedByDay = $result->groupBy(function($item) {
+            return $item['schedule']->hari;
+        });
+
+        return response()->json([
+            'tanggal' => $tanggal,
+            'total_schedules' => $result->count(),
+            'sudah_dicatat' => $result->where('has_attendance', true)->count(),
+            'belum_dicatat' => $result->where('has_attendance', false)->count(),
+            'data' => $result,
+            'grouped_by_day' => $groupedByDay
+        ]);
+    }
+
+    /**
      * Store a newly created attendance
      */
     public function store(Request $request)

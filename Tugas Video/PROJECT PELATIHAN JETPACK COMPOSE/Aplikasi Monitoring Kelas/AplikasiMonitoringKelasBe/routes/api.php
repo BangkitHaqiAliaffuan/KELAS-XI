@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Teacher Attendance - Bisa diakses semua role yang sudah login
     Route::get('/teacher-attendance/today-schedules', [TeacherAttendanceController::class, 'todaySchedules']);
+    Route::get('/teacher-attendance/all-schedules', [TeacherAttendanceController::class, 'allSchedules']);
     Route::get('/teacher-attendance/today', [TeacherAttendanceController::class, 'today']);
     Route::get('/teacher-attendance/statistics', [TeacherAttendanceController::class, 'statistics']);
     Route::get('/teacher-attendance', [TeacherAttendanceController::class, 'index']);
@@ -45,23 +46,18 @@ Route::middleware(['auth:sanctum', 'role:siswa'])->group(function () {
     Route::get('/monitoring/my-reports', [MonitoringController::class, 'myReports']); // Laporan yang dibuat siswa
 });
 
-// Routes untuk KURIKULUM - Cek kelas kosong & beri guru pengganti
-Route::middleware(['auth:sanctum', 'role:kurikulum'])->group(function () {
+// Routes untuk KURIKULUM, GURU, dan KEPALA SEKOLAH - Cek kelas kosong & lihat guru pengganti
+Route::middleware(['auth:sanctum', 'role:kurikulum,guru,kepala_sekolah'])->group(function () {
     Route::get('/monitoring', [MonitoringController::class, 'index']);
     Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
-
-    // Guru Pengganti Management
     Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']);
+});
+
+// Routes khusus untuk KURIKULUM dan GURU - Kelola guru pengganti (create, update, delete)
+Route::middleware(['auth:sanctum', 'role:kurikulum,guru'])->group(function () {
     Route::post('/guru-pengganti', [GuruPenggantiController::class, 'store']);
     Route::put('/guru-pengganti/{id}', [GuruPenggantiController::class, 'update']);
     Route::delete('/guru-pengganti/{id}', [GuruPenggantiController::class, 'destroy']);
-});
-
-// Routes untuk KEPALA SEKOLAH - Hanya cek kelas kosong (readonly)
-Route::middleware(['auth:sanctum', 'role:kepala_sekolah'])->group(function () {
-    Route::get('/monitoring', [MonitoringController::class, 'index']);
-    Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
-    Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']); // Hanya lihat
 });
 
 // Routes untuk ADMIN - User Management

@@ -24,8 +24,8 @@ class GradeController extends Controller
                 $query->where('siswa_id', $request->user()->id);
             }
 
-            // Guru hanya bisa lihat nilai yang dia buat
-            if ($request->user()->role === 'guru') {
+            // Guru atau kurikulum hanya bisa lihat nilai yang dia buat
+            if (in_array($request->user()->role, ['guru', 'kurikulum'])) {
                 $query->where('guru_id', $request->user()->id);
             }
 

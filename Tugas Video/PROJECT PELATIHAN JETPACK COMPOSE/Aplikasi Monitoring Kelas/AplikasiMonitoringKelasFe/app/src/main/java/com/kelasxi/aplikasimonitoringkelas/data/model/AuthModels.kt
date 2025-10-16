@@ -1,5 +1,7 @@
 package com.kelasxi.aplikasimonitoringkelas.data.model
 
+import com.google.gson.annotations.JsonAdapter
+
 data class LoginRequest(
     val email: String,
     val password: String
@@ -24,6 +26,7 @@ data class User(
     val email: String,
     val role: String,
     val mata_pelajaran: String? = null,
+    @JsonAdapter(BooleanTypeAdapter::class)
     val is_banned: Boolean = false,
     val created_at: String,
     val updated_at: String
