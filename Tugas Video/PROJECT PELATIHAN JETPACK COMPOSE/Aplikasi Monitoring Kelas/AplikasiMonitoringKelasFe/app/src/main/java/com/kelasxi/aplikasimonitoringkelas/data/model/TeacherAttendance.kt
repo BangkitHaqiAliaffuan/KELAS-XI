@@ -1,7 +1,9 @@
 package com.kelasxi.aplikasimonitoringkelas.data.model
 
+import com.google.gson.*
 import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
+import java.lang.reflect.Type
 
 data class TeacherAttendance(
     @SerializedName("id") val id: Int,
@@ -11,12 +13,36 @@ data class TeacherAttendance(
     @SerializedName("jam_masuk") val jamMasuk: String?,
     @SerializedName("status") val status: String, // hadir, telat, tidak_hadir
     @SerializedName("keterangan") val keterangan: String?,
-    @SerializedName("created_by") val createdBy: User?, // Changed from Int? to User? to match API response
+    @JsonAdapter(UserOrIdDeserializer::class)
+    @SerializedName("created_by") val createdBy: User?, // Can be User object or just an ID
     @SerializedName("created_at") val createdAt: String?,
     @SerializedName("updated_at") val updatedAt: String?,
     @SerializedName("schedule") val schedule: Schedule?,
     @SerializedName("guru") val guru: User?
 )
+
+// Custom deserializer to handle both User object and integer ID
+class UserOrIdDeserializer : JsonDeserializer<User?> {
+    override fun deserialize(
+        json: JsonElement?,
+        typeOfT: Type?,
+        context: JsonDeserializationContext?
+    ): User? {
+        return when {
+            json == null || json.isJsonNull -> null
+            json.isJsonPrimitive && json.asJsonPrimitive.isNumber -> {
+                // If it's just a number (ID), return null for now
+                // Backend should always return full User object
+                null
+            }
+            json.isJsonObject -> {
+                // If it's an object, deserialize it as User
+                context?.deserialize(json, User::class.java)
+            }
+            else -> null
+        }
+    }
+}
 
 data class TodayScheduleWithAttendance(
     @SerializedName("schedule") val schedule: Schedule,

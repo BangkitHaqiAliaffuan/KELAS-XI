@@ -653,7 +653,7 @@ fun GuruPenggantiPage() {
                     }
                 }
                 
-                guruPenggantiList.isEmpty() -> {
+                teacherReplacementList.isEmpty() -> {
                     SchoolEmptyState(
                         title = "Belum Ada Penugasan",
                         subtitle = "Belum ada guru pengganti yang ditugaskan",

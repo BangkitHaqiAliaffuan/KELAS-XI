@@ -102,8 +102,9 @@ class TeacherAttendanceController extends Controller
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
-        // Get attendances for today
-        $attendances = TeacherAttendance::where('tanggal', $today)
+        // Get attendances for today with relationships
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'createdBy', 'guruAsli'])
+            ->where('tanggal', $today)
             ->get()
             ->keyBy('schedule_id');
 
@@ -146,8 +147,9 @@ class TeacherAttendanceController extends Controller
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
-        // Get attendances for the specified date
-        $attendances = TeacherAttendance::where('tanggal', $tanggal)
+        // Get attendances for the specified date with relationships
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'createdBy', 'guruAsli'])
+            ->where('tanggal', $tanggal)
             ->get()
             ->keyBy('schedule_id');
 
