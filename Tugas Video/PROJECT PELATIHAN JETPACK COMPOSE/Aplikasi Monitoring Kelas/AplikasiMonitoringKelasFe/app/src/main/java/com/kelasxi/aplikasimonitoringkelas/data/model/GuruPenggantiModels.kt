@@ -1,6 +1,36 @@
 package com.kelasxi.aplikasimonitoringkelas.data.model
 
-// Models untuk Guru Pengganti
+// Models untuk Teacher Replacement (Guru Pengganti) - Updated System
+data class TeacherReplacementResponse(
+    val success: Boolean,
+    val message: String,
+    val data: List<TeacherReplacement>
+)
+
+data class TeacherReplacement(
+    val id: Int,
+    val schedule_id: Int,
+    val guru_pengganti: Guru,
+    val guru_asli: Guru?,
+    val kelas: String,
+    val mata_pelajaran: String,
+    val tanggal: String,
+    val jam_mulai: String,
+    val jam_selesai: String,
+    val ruang: String?,
+    val keterangan: String?,
+    val assigned_by: User?,
+    val created_at: String,
+    val updated_at: String
+)
+
+data class AssignReplacementRequest(
+    val attendance_id: Int,
+    val guru_pengganti_id: Int,
+    val keterangan: String?
+)
+
+// Models untuk Guru Pengganti (OLD - Keep for backward compatibility)
 data class GuruPenggantiResponse(
     val success: Boolean,
     val message: String,

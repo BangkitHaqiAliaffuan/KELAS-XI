@@ -12,11 +12,13 @@ class TeacherAttendance extends Model
     protected $fillable = [
         'schedule_id',
         'guru_id',
+        'guru_asli_id',
         'tanggal',
         'jam_masuk',
         'status',
         'keterangan',
-        'created_by'
+        'created_by',
+        'assigned_by'
     ];
 
     protected $casts = [
@@ -34,8 +36,18 @@ class TeacherAttendance extends Model
         return $this->belongsTo(User::class, 'guru_id');
     }
 
+    public function guruAsli()
+    {
+        return $this->belongsTo(User::class, 'guru_asli_id');
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function assignedBy()
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }

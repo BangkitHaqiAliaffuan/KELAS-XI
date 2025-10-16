@@ -531,7 +531,7 @@ fun GuruPenggantiPage() {
     val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
     val scope = rememberCoroutineScope()
     
-    var guruPenggantiList by remember { mutableStateOf<List<GuruPengganti>>(emptyList()) }
+    var teacherReplacementList by remember { mutableStateOf<List<TeacherReplacement>>(emptyList()) }
     var kelasKosongList by remember { mutableStateOf<List<KelasKosong>>(emptyList()) }
     var guruList by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
@@ -553,9 +553,10 @@ fun GuruPenggantiPage() {
                 // Get current date from device
                 val currentDate = java.time.LocalDate.now().toString() // Format: YYYY-MM-DD
                 
-                repository.getGuruPengganti(token)
+                // Load teacher replacements (penggantian yang sudah dilakukan)
+                repository.getTeacherReplacements(token)
                     .onSuccess { response ->
-                        guruPenggantiList = response.data
+                        teacherReplacementList = response.data
                     }
                     .onFailure { error ->
                         errorMessage = error.message
@@ -570,10 +571,9 @@ fun GuruPenggantiPage() {
                     }
                 
                 // Load daftar guru
-                repository.getUsers(token)
+                repository.getGuruList(token)
                     .onSuccess { response ->
-                        // Filter hanya guru
-                        guruList = response.data.filter { it.role == "guru" }
+                        guruList = response.data
                     }
                     .onFailure { error ->
                         errorMessage = error.message
@@ -667,16 +667,16 @@ fun GuruPenggantiPage() {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(Spacing.md)
                     ) {
-                        items(guruPenggantiList) { guruPengganti ->
-                            GuruPenggantiCard(
-                                guruPengganti = guruPengganti,
-                                onDelete = {
+                        items(teacherReplacementList) { replacement ->
+                            TeacherReplacementCard(
+                                replacement = replacement,
+                                onCancel = {
                                     if (token != null) {
                                         scope.launch {
                                             isLoading = true
-                                            repository.deleteGuruPengganti(token, guruPengganti.id)
+                                            repository.cancelReplacement(token, replacement.id)
                                                 .onSuccess {
-                                                    Toast.makeText(context, "Berhasil dihapus", Toast.LENGTH_SHORT).show()
+                                                    Toast.makeText(context, "Penggantian dibatalkan", Toast.LENGTH_SHORT).show()
                                                     loadData()
                                                 }
                                                 .onFailure { error ->
@@ -710,21 +710,15 @@ fun GuruPenggantiPage() {
                     scope.launch {
                         isLoading = true
                         
-                        val request = GuruPenggantiRequest(
+                        val request = AssignReplacementRequest(
+                            attendance_id = kelasKosong.attendance_id ?: 0,
                             guru_pengganti_id = guru.id,
-                            guru_asli_id = kelasKosong.guru.id,
-                            kelas = kelasKosong.kelas,
-                            mata_pelajaran = kelasKosong.mata_pelajaran,
-                            tanggal = kelasKosong.tanggal,
-                            jam_mulai = formatTime(kelasKosong.jam_mulai),
-                            jam_selesai = formatTime(kelasKosong.jam_selesai),
-                            ruang = kelasKosong.ruang,
                             keterangan = keteranganInput.ifBlank { null }
                         )
                         
-                        repository.createGuruPengganti(token, request)
+                        repository.assignReplacement(token, request)
                             .onSuccess {
-                                Toast.makeText(context, "Guru pengganti berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "Guru pengganti berhasil ditugaskan", Toast.LENGTH_SHORT).show()
                                 showCreateDialog = false
                                 selectedKelasKosong = null
                                 selectedGuruPengganti = null
@@ -1034,6 +1028,193 @@ fun TambahGuruPenggantiDialog(
                         Text("Simpan", fontWeight = FontWeight.Bold)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TeacherReplacementCard(
+    replacement: TeacherReplacement,
+    onCancel: () -> Unit
+) {
+    SchoolCard(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(Spacing.md)
+        ) {
+            // Header with class and subject
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = replacement.mata_pelajaran,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                    Text(
+                        text = "Kelas ${replacement.kelas}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray700
+                    )
+                }
+                
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = SuccessGreen.copy(alpha = 0.1f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "DIGANTI",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = SuccessGreen
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.md))
+            
+            // Guru Asli (yang tidak hadir)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PersonOff,
+                    contentDescription = null,
+                    tint = ErrorRed,
+                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                )
+                Text(
+                    text = "Guru Asli: ${replacement.guru_asli?.name ?: "Tidak ada data"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = ErrorRed,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.xs))
+            
+            // Guru Pengganti
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = SuccessGreen,
+                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                )
+                Text(
+                    text = "Guru Pengganti: ${replacement.guru_pengganti.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SuccessGreen,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.md))
+            
+            // Schedule info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.lg)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = NeutralGray600,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = formatDate(replacement.tanggal),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NeutralGray600
+                    )
+                }
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = NeutralGray600,
+                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                    )
+                    Text(
+                        text = "${formatTime(replacement.jam_mulai)} - ${formatTime(replacement.jam_selesai)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NeutralGray600
+                    )
+                }
+            }
+            
+            // Keterangan if available
+            replacement.keterangan?.let { keterangan ->
+                if (keterangan.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(Spacing.sm))
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = SMKInfo,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = keterangan,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray600
+                        )
+                    }
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(Spacing.md))
+            
+            // Cancel button
+            OutlinedButton(
+                onClick = onCancel,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = ErrorRed
+                ),
+                border = BorderStroke(1.dp, ErrorRed)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = null,
+                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                )
+                Spacer(modifier = Modifier.width(Spacing.xs))
+                Text("Batalkan Penggantian", fontWeight = FontWeight.SemiBold)
             }
         }
     }

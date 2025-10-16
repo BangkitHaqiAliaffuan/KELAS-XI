@@ -327,6 +327,33 @@ class AuthController extends Controller
     }
 
     /**
+     * Get list of guru (Kurikulum & Guru role)
+     */
+    public function getGuruList()
+    {
+        try {
+            $guru = User::select('id', 'name', 'email', 'role', 'mata_pelajaran', 'created_at')
+                ->where('role', 'guru')
+                ->where('is_banned', false)
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data guru berhasil diambil',
+                'data' => $guru
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
      * Create new user (Admin only)
      */
     public function createUser(Request $request)

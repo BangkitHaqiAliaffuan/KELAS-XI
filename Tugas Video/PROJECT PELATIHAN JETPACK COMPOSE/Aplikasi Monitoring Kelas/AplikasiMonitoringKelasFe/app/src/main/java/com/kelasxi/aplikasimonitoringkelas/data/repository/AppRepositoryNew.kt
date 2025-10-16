@@ -53,6 +53,27 @@ class AppRepositoryNew(private val apiService: ApiService) {
         }
     }
     
+    suspend fun getGuruList(token: String): Result<UsersResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getGuruList("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    val usersResponse = response.body()!!
+                    if (usersResponse.success) {
+                        Result.success(usersResponse)
+                    } else {
+                        Result.failure(Exception(usersResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil data guru: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
     suspend fun createUser(token: String, request: CreateUserRequest): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
@@ -325,6 +346,71 @@ class AppRepositoryNew(private val apiService: ApiService) {
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Result.failure(Exception("Gagal menghapus guru pengganti: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    // ==================== TEACHER REPLACEMENT ====================
+    
+    suspend fun getTeacherReplacements(token: String, tanggal: String? = null): Result<TeacherReplacementResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getTeacherReplacements("Bearer $token", tanggal)
+                if (response.isSuccessful && response.body() != null) {
+                    val replacementResponse = response.body()!!
+                    if (replacementResponse.success) {
+                        Result.success(replacementResponse)
+                    } else {
+                        Result.failure(Exception(replacementResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil data penggantian guru: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun assignReplacement(token: String, request: AssignReplacementRequest): Result<TeacherReplacement> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.assignReplacement("Bearer $token", request)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success && apiResponse.data != null) {
+                        Result.success(apiResponse.data)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal menugaskan guru pengganti: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun cancelReplacement(token: String, id: Int): Result<Boolean> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.cancelReplacement("Bearer $token", id)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success) {
+                        Result.success(true)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal membatalkan penggantian: ${response.code()} - $errorBody"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))

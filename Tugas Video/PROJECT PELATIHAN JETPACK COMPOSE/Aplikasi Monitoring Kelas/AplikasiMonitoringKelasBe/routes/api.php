@@ -7,6 +7,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\GuruPenggantiController;
 use App\Http\Controllers\TeacherAttendanceController;
+use App\Http\Controllers\TeacherReplacementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +52,9 @@ Route::middleware(['auth:sanctum', 'role:kurikulum,guru,kepala_sekolah'])->group
     Route::get('/monitoring', [MonitoringController::class, 'index']);
     Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
     Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']);
+
+    // Teacher Replacement - Lihat penggantian guru
+    Route::get('/teacher-replacement', [TeacherReplacementController::class, 'index']);
 });
 
 // Routes khusus untuk KURIKULUM dan GURU - Kelola guru pengganti (create, update, delete)
@@ -58,9 +62,14 @@ Route::middleware(['auth:sanctum', 'role:kurikulum,guru'])->group(function () {
     Route::post('/guru-pengganti', [GuruPenggantiController::class, 'store']);
     Route::put('/guru-pengganti/{id}', [GuruPenggantiController::class, 'update']);
     Route::delete('/guru-pengganti/{id}', [GuruPenggantiController::class, 'destroy']);
-});
 
-// Routes untuk ADMIN - User Management
+    // Kurikulum dan Guru bisa melihat daftar guru untuk keperluan penugasan
+    Route::get('/users/guru', [AuthController::class, 'getGuruList']);
+
+    // Teacher Replacement - Tugaskan dan batalkan guru pengganti
+    Route::post('/teacher-replacement/assign', [TeacherReplacementController::class, 'assignReplacement']);
+    Route::post('/teacher-replacement/{id}/cancel', [TeacherReplacementController::class, 'cancelReplacement']);
+});// Routes untuk ADMIN - User Management
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     // User Management
     Route::get('/users', [AuthController::class, 'getAllUsers']);

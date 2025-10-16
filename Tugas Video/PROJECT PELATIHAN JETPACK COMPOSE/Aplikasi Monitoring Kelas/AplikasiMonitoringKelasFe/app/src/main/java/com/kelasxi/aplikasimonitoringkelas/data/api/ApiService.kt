@@ -29,6 +29,9 @@ interface ApiService {
     @GET("users")
     suspend fun getUsers(@Header("Authorization") token: String): Response<UsersResponse>
     
+    @GET("users/guru")
+    suspend fun getGuruList(@Header("Authorization") token: String): Response<UsersResponse>
+    
     @POST("users")
     suspend fun createUser(
         @Header("Authorization") token: String,
@@ -135,6 +138,26 @@ interface ApiService {
     
     @DELETE("guru-pengganti/{id}")
     suspend fun deleteGuruPengganti(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int
+    ): Response<ApiResponse<Any>>
+    
+    // ==================== KURIKULUM: Teacher Replacement (New System) ====================
+    
+    @GET("teacher-replacement")
+    suspend fun getTeacherReplacements(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null
+    ): Response<TeacherReplacementResponse>
+    
+    @POST("teacher-replacement/assign")
+    suspend fun assignReplacement(
+        @Header("Authorization") token: String,
+        @Body request: AssignReplacementRequest
+    ): Response<ApiResponse<TeacherReplacement>>
+    
+    @POST("teacher-replacement/{id}/cancel")
+    suspend fun cancelReplacement(
         @Header("Authorization") token: String,
         @Path("id") id: Int
     ): Response<ApiResponse<Any>>
