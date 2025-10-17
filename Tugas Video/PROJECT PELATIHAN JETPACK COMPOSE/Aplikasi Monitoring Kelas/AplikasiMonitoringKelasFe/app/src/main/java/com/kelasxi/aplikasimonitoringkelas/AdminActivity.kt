@@ -38,6 +38,7 @@ import com.kelasxi.aplikasimonitoringkelas.ui.theme.AplikasiMonitoringKelasTheme
 import com.kelasxi.aplikasimonitoringkelas.utils.SharedPrefManager
 import com.kelasxi.aplikasimonitoringkelas.viewmodel.*
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.VisualTransformation
 
 class AdminActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,6 +159,7 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
     var userList by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showCreateDialog by remember { mutableStateOf(false) }
     
     // Function to load users
     fun loadUsers() {
@@ -182,29 +184,51 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
         loadUsers()
     }
     
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Text(
-            text = "Manajemen Users",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-        
-        if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                CircularProgressIndicator()
+                Text(
+                    text = "Manajemen Users",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                
+                // Tombol Tambah User
+                IconButton(
+                    onClick = { showCreateDialog = true },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Tambah User"
+                    )
+                }
             }
-        } else {
-            LazyColumn {
-                items(userList) { user ->
-                    UserCardWithActions(
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            if (isLoading) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn {
+                    items(userList) { user ->
+                        UserCardWithActions(
                         user = user,
                         onBanToggle = {
                             if (token != null) {
@@ -247,6 +271,352 @@ fun UsersListPage(viewModel: UsersViewModel = viewModel()) {
                             }
                         }
                     )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateUserDialog(
+    onDismiss: () -> Unit,
+    onUserCreated: () -> Unit
+) {
+    val context = LocalContext.current
+    val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
+    val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
+    
+    var name by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf("siswa") }
+    var mataPelajaran by remember { mutableStateOf("") }
+    var expandedRole by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    
+    val roleList = listOf(
+        "siswa" to "Siswa",
+        "guru" to "Guru",
+        "kurikulum" to "Kurikulum",
+        "kepala_sekolah" to "Kepala Sekolah",
+        "admin" to "Admin"
+    )
+    
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        modifier = Modifier.fillMaxWidth(0.95f)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Tambah User Baru",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Isi data user yang akan ditambahkan",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    
+                    if (!isLoading) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Tutup",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(20.dp))
+                
+                // Form Fields
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nama Lengkap") },
+                    placeholder = { Text("Masukkan nama lengkap") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Person, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
+                    placeholder = { Text("contoh@email.com") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Email, contentDescription = null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    placeholder = { Text("Min. 6 karakter") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Lock, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Sembunyikan password" else "Tampilkan password"
+                            )
+                        }
+                    },
+                    visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text("Konfirmasi Password") },
+                    placeholder = { Text("Ulangi password") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Lock, contentDescription = null)
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (confirmPasswordVisible) "Sembunyikan password" else "Tampilkan password"
+                            )
+                        }
+                    },
+                    visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !isLoading,
+                    singleLine = true,
+                    isError = confirmPassword.isNotEmpty() && password != confirmPassword
+                )
+                
+                if (confirmPassword.isNotEmpty() && password != confirmPassword) {
+                    Text(
+                        text = "Password tidak cocok",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(12.dp))
+                
+                // Role Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = expandedRole,
+                    onExpandedChange = { if (!isLoading) expandedRole = !expandedRole }
+                ) {
+                    OutlinedTextField(
+                        value = roleList.find { it.first == selectedRole }?.second ?: "Pilih Role",
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Role") },
+                        leadingIcon = {
+                            Icon(Icons.Default.AdminPanelSettings, contentDescription = null)
+                        },
+                        trailingIcon = {
+                            Icon(
+                                imageVector = if (expandedRole) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                                contentDescription = null
+                            )
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        enabled = !isLoading
+                    )
+                    
+                    ExposedDropdownMenu(
+                        expanded = expandedRole,
+                        onDismissRequest = { expandedRole = false }
+                    ) {
+                        roleList.forEach { (value, label) ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = when (value) {
+                                                "admin", "kepala_sekolah" -> Icons.Default.AdminPanelSettings
+                                                "kurikulum" -> Icons.Default.School
+                                                "guru" -> Icons.Default.Person
+                                                else -> Icons.Default.PersonOutline
+                                            },
+                                            contentDescription = null,
+                                            tint = when (value) {
+                                                "admin", "kepala_sekolah" -> MaterialTheme.colorScheme.primary
+                                                "kurikulum" -> MaterialTheme.colorScheme.secondary
+                                                else -> MaterialTheme.colorScheme.tertiary
+                                            }
+                                        )
+                                        Text(label)
+                                    }
+                                },
+                                onClick = {
+                                    selectedRole = value
+                                    expandedRole = false
+                                    // Reset mata pelajaran jika bukan guru
+                                    if (value != "guru") {
+                                        mataPelajaran = ""
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                // Mata Pelajaran field (only for guru)
+                if (selectedRole == "guru") {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    OutlinedTextField(
+                        value = mataPelajaran,
+                        onValueChange = { mataPelajaran = it },
+                        label = { Text("Mata Pelajaran") },
+                        placeholder = { Text("Contoh: Matematika") },
+                        leadingIcon = {
+                            Icon(Icons.Default.Book, contentDescription = null)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isLoading,
+                        singleLine = true
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Action Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        enabled = !isLoading
+                    ) {
+                        Text("Batal")
+                    }
+                    
+                    Button(
+                        onClick = {
+                            // Validasi
+                            when {
+                                name.isBlank() -> {
+                                    Toast.makeText(context, "Nama tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                                }
+                                email.isBlank() -> {
+                                    Toast.makeText(context, "Email tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                                }
+                                !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                                    Toast.makeText(context, "Format email tidak valid", Toast.LENGTH_SHORT).show()
+                                }
+                                password.isBlank() -> {
+                                    Toast.makeText(context, "Password tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                                }
+                                password.length < 6 -> {
+                                    Toast.makeText(context, "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+                                }
+                                password != confirmPassword -> {
+                                    Toast.makeText(context, "Password tidak cocok", Toast.LENGTH_SHORT).show()
+                                }
+                                selectedRole == "guru" && mataPelajaran.isBlank() -> {
+                                    Toast.makeText(context, "Mata pelajaran harus diisi untuk guru", Toast.LENGTH_SHORT).show()
+                                }
+                                else -> {
+                                    // Submit
+                                    if (token != null) {
+                                        scope.launch {
+                                            isLoading = true
+                                            val request = CreateUserRequest(
+                                                name = name.trim(),
+                                                email = email.trim().lowercase(),
+                                                password = password,
+                                                role = selectedRole,
+                                                mata_pelajaran = if (selectedRole == "guru") mataPelajaran.trim() else null
+                                            )
+                                            
+                                            repository.createUser(token, request)
+                                                .onSuccess {
+                                                    Toast.makeText(context, "User berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                                                    onUserCreated()
+                                                }
+                                                .onFailure { error ->
+                                                    Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            isLoading = false
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier.weight(1f),
+                        enabled = !isLoading && name.isNotBlank() && email.isNotBlank() && 
+                                 password.isNotBlank() && password == confirmPassword &&
+                                 (selectedRole != "guru" || mataPelajaran.isNotBlank())
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Simpan")
+                        }
+                    }
                 }
             }
         }
@@ -1089,6 +1459,17 @@ fun EntriJadwalPage() {
                 }
             }
         }
+    }
+    
+    // Dialog untuk Tambah User Baru
+    if (showCreateDialog) {
+        CreateUserDialog(
+            onDismiss = { showCreateDialog = false },
+            onUserCreated = {
+                showCreateDialog = false
+                loadUsers() // Reload list setelah berhasil menambah user
+            }
+        )
     }
 }
 
