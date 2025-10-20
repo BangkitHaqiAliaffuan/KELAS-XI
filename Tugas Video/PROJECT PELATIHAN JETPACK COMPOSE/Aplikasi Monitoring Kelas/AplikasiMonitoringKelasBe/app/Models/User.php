@@ -47,6 +47,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_banned' => 'boolean',
         ];
+    }
+
+    /**
+     * Check if user is banned
+     *
+     * @return bool
+     */
+    public function isBanned(): bool
+    {
+        return $this->is_banned ?? false;
+    }
+
+    /**
+     * Check if user can login (not banned)
+     *
+     * @return bool
+     */
+    public function canLogin(): bool
+    {
+        return !$this->isBanned();
     }
 }
