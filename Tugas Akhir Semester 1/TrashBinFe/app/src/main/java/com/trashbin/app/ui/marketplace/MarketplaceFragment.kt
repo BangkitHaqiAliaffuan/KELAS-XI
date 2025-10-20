@@ -127,14 +127,24 @@ class MarketplaceFragment : Fragment() {
     private fun observeViewModel() {
         viewModel.listings.observe(viewLifecycleOwner) { result ->
             when (result) {
-                is Result.Loading -> swipeRefresh.isRefreshing = true
+                is Result.Loading -> {
+                    swipeRefresh.isRefreshing = true
+                }
                 is Result.Success -> {
                     swipeRefresh.isRefreshing = false
-                    adapter.submitList(result.data.data)
+                    val listings = result.data.data
+                    android.util.Log.d("MarketplaceFragment", "Data received: ${listings.size} items")
+                    adapter.submitList(listings)
+                    if (listings.isEmpty()) {
+                        Toast.makeText(requireContext(), "Tidak ada data listing", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Berhasil memuat ${listings.size} listing", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 is Result.Error -> {
                     swipeRefresh.isRefreshing = false
-                    Toast.makeText(requireContext(), result.message, Toast.LENGTH_SHORT).show()
+                    android.util.Log.e("MarketplaceFragment", "Error: ${result.message}")
+                    Toast.makeText(requireContext(), "Error: ${result.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }

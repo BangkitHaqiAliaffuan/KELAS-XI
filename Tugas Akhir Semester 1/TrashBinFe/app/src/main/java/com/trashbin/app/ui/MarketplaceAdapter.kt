@@ -164,10 +164,15 @@ class MarketplaceAdapter(
         val listing = listings[position]
         holder.title.text = listing.title
         holder.category.text = listing.category.name
-        holder.price.text = CurrencyHelper.formatRupiah(listing.pricePerUnit * listing.quantity)
-        holder.quantity.text = "Tersedia: ${listing.quantity}"
+        holder.price.text = CurrencyHelper.formatRupiah(listing.totalPrice)
+        holder.quantity.text = "Tersedia: ${listing.quantity} ${listing.unit}"
         holder.location.text = listing.location
-        holder.status.text = listing.condition
+        holder.status.text = when (listing.condition) {
+            "clean" -> "Bersih"
+            "needs_cleaning" -> "Perlu Dibersihkan"
+            "mixed" -> "Campur"
+            else -> listing.condition
+        }
         
         // Set image if available
         // if (listing.thumbnail != null) {

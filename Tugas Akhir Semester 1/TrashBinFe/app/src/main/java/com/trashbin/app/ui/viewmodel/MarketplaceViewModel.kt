@@ -47,13 +47,21 @@ class MarketplaceViewModel : ViewModel() {
                 val response = apiService.getListings(
                     categoryId, condition, minPrice, maxPrice, lat, lng, radius, search, null
                 )
-                if (response.isSuccessful && response.body()?.success == true) {
-                    _listings.value = Result.Success(response.body()!!.data!!)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        _listings.value = Result.Success(body.data)
+                    } else if (body?.data != null) {
+                        // Handle case where success field is missing but data exists
+                        _listings.value = Result.Success(body.data)
+                    } else {
+                        _listings.value = Result.Error(body?.message ?: "Error loading listings")
+                    }
                 } else {
-                    _listings.value = Result.Error(response.message() ?: "Error")
+                    _listings.value = Result.Error(response.message() ?: "Error loading listings")
                 }
             } catch (e: Exception) {
-                _listings.value = Result.Error(e.message ?: "Error")
+                _listings.value = Result.Error(e.message ?: "An error occurred")
             }
         }
     }

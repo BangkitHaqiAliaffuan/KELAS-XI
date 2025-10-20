@@ -30,19 +30,24 @@ class MarketplaceAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val cardView = MaterialCardView(parent.context).apply {
-            val margin = (4 * parent.context.resources.displayMetrics.density).toInt()
+            val margin = (8 * parent.context.resources.displayMetrics.density).toInt()
             setCardBackgroundColor(parent.context.resources.getColor(R.color.material_dynamic_neutral0))
             radius = 8 * parent.context.resources.displayMetrics.density
             cardElevation = 4 * parent.context.resources.displayMetrics.density
-            setPadding(margin, margin, margin, margin)
             layoutParams = RecyclerView.LayoutParams(
                 RecyclerView.LayoutParams.MATCH_PARENT,
                 RecyclerView.LayoutParams.WRAP_CONTENT
-            )
+            ).apply {
+                setMargins(margin, margin, margin, margin)
+            }
         }
 
         val linearLayout = LinearLayout(parent.context).apply {
             orientation = LinearLayout.VERTICAL
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             setPadding(
                 (12 * parent.context.resources.displayMetrics.density).toInt(),
                 (12 * parent.context.resources.displayMetrics.density).toInt(),
@@ -186,23 +191,22 @@ class MarketplaceAdapter(
 
             tvTitle.text = listing.title
             tvCategory.text = listing.category.name
-            // Calculate total price based on quantity and price per unit
-            val totalPrice = listing.pricePerUnit * listing.quantity
-            tvPrice.text = CurrencyHelper.formatRupiah(totalPrice)
-            tvQuantity.text = "Tersedia: ${listing.quantity}"
+            // Use total price from API response
+            tvPrice.text = CurrencyHelper.formatRupiah(listing.totalPrice)
+            tvQuantity.text = "Tersedia: ${listing.quantity} ${listing.unit}"
             tvLocation.text = listing.location
 
-            // Set status badge color based on status
-            when (listing.condition) { // Using condition instead of status
-                "bersih" -> {
+            // Set status badge color based on condition
+            when (listing.condition) {
+                "clean" -> {
                     tvStatus.text = "Bersih"
                     // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.green_500))
                 }
-                "perlu_dibersih" -> {
+                "needs_cleaning" -> {
                     tvStatus.text = "Perlu Dibersihkan"
                     // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.orange_500))
                 }
-                "campur" -> {
+                "mixed" -> {
                     tvStatus.text = "Campur"
                     // tvStatus.setBackgroundColor(itemView.context.getColor(R.color.gray_500))
                 }

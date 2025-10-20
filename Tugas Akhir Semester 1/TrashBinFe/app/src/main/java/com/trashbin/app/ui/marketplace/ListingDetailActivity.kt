@@ -335,29 +335,18 @@ class ListingDetailActivity : AppCompatActivity() {
                 categoryId = 1,
                 title = "Kertas Bekas",
                 description = "Kertas bekas yang bisa didaur ulang",
-                quantity = 5,
+                quantity = 5.0,
+                unit = "kg",
                 pricePerUnit = 2000.0,
+                totalPrice = 10000.0,
                 condition = "clean",
                 location = "Jakarta, Indonesia",
-                lat = -6.200000,
-                lng = 106.816666,
+                lat = "-6.200000",
+                lng = "106.816666",
+                status = "available",
                 photos = listOf("https://example.com/photo.jpg"),  // Placeholder
                 views = 10,
-                isActive = true,
-                seller = com.trashbin.app.data.model.User(
-                    id = 1,
-                    name = "Contoh Penjual",
-                    email = "seller@example.com",
-                    phone = null,
-                    role = "user",
-                    avatar = null,
-                    address = "Jakarta",
-                    lat = -6.200000,
-                    lng = 106.816666,
-                    points = 0,
-                    isVerified = true,
-                    rating = 4.5
-                ),
+                expiresAt = null,
                 category = com.trashbin.app.data.model.WasteCategory(
                     id = 1,
                     name = "Kertas",
@@ -365,6 +354,12 @@ class ListingDetailActivity : AppCompatActivity() {
                     unit = "kg",
                     basePricePerUnit = 2000.0,
                     iconUrl = null
+                ),
+                seller = com.trashbin.app.data.model.SellerInfo(
+                    id = 1,
+                    name = "Contoh Penjual",
+                    avatar = null,
+                    points = 100
                 ),
                 createdAt = "2023-01-01 00:00:00",
                 updatedAt = "2023-01-01 00:00:00"
@@ -385,9 +380,9 @@ class ListingDetailActivity : AppCompatActivity() {
             
             // Bind text data
             tvTitle.text = listing.title
-            tvPrice.text = CurrencyHelper.formatRupiah(listing.quantity * listing.pricePerUnit)
+            tvPrice.text = CurrencyHelper.formatRupiah(listing.totalPrice)
             tvSellerName.text = listing.seller.name
-            tvSellerRating.text = "⭐ ${listing.seller.rating ?: 0.0}"
+            tvSellerRating.text = "⭐ ${listing.seller.points}" // Changed from rating to points
             tvCategory.text = listing.category.name
             tvCondition.text = when (listing.condition) {
                 "clean" -> "Bersih"
@@ -395,11 +390,12 @@ class ListingDetailActivity : AppCompatActivity() {
                 "mixed" -> "Campur"
                 else -> listing.condition
             }
-            tvQuantity.text = "${listing.quantity.toInt()}"
-            tvStatus.text = if (listing.isActive) {
-                "Tersedia"
-            } else {
-                "Tidak Tersedia"
+            tvQuantity.text = "${listing.quantity} ${listing.unit}"
+            tvStatus.text = when (listing.status) {
+                "available" -> "Tersedia"
+                "sold" -> "Terjual"
+                "expired" -> "Kadaluarsa"
+                else -> listing.status
             }
             tvLocation.text = listing.location
             tvDescription.text = listing.description
@@ -431,12 +427,13 @@ class ListingDetailActivity : AppCompatActivity() {
             val dialog = builder.create()
             
             btnOrder.setOnClickListener {
-                val quantity = etQuantity.text.toString().toIntOrNull()
-                if (quantity != null && quantity > 0 && quantity <= listing.quantity.toInt()) {
+                val quantityStr = etQuantity.text.toString()
+                val quantity = quantityStr.toDoubleOrNull()
+                if (quantity != null && quantity > 0 && quantity <= listing.quantity) {
                     // TODO: Create order with API call
                     viewModel.createOrder(
                         listing.id,
-                        quantity,
+                        quantity.toInt(), // Convert to int for API
                         "Alamat pengiriman",  // This should come from user input
                         "Catatan pesanan"     // This should come from user input
                     )
