@@ -139,22 +139,38 @@ class MarketplaceListingController extends Controller
      */
     public function show($id, Request $request)
     {
-        $listing = MarketplaceListing::where('id', $id)
-            ->with(['wasteCategory', 'seller:id,name,avatar,phone,points'])
-            ->firstOrFail();
+        try {
+            $listing = MarketplaceListing::where('id', $id)
+                ->with(['wasteCategory', 'seller:id,name,avatar,phone,points'])
+                ->first();
 
-        if ($listing->status !== 'available' || $listing->expires_at < now()) {
+            if (!$listing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Listing tidak ditemukan'
+                ], 404);
+            }
+
+            if ($listing->status !== 'available' || $listing->expires_at < now()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Listing tidak tersedia'
+                ], 404);
+            }
+
+            // Increment view count
+            $listing->increment('views_count');
+
             return response()->json([
-                'message' => 'Listing not available'
-            ], 404);
+                'success' => true,
+                'data' => $listing
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Increment view count
-        $listing->increment('views_count');
-
-        return response()->json([
-            'data' => $listing
-        ]);
     }
 
     /**

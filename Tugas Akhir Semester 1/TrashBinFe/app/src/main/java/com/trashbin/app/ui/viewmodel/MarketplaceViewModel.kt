@@ -30,6 +30,9 @@ class MarketplaceViewModel : ViewModel() {
     
     private val _orders = MutableLiveData<Result<List<Order>>>()
     val orders: LiveData<Result<List<Order>>> = _orders
+    
+    private val _listingDetail = MutableLiveData<Result<MarketplaceListing>>()
+    val listingDetail: LiveData<Result<MarketplaceListing>> = _listingDetail
 
     fun loadListings(
         categoryId: Int? = null,
@@ -101,25 +104,39 @@ class MarketplaceViewModel : ViewModel() {
         }
     }
     
-    fun createOrder(listingId: Int, quantity: Int, shippingAddress: String, notes: String?) {
+    fun createOrder(listingId: Int, quantity: Double, shippingAddress: String, notes: String?) {
         viewModelScope.launch {
             _createOrderState.value = Result.Loading
             try {
-                val request = mutableMapOf<String, Any>(
-                    "listing_id" to listingId,
-                    "quantity" to quantity,
-                    "shipping_address" to shippingAddress
+                val request = com.trashbin.app.data.model.CreateOrderRequest(
+                    listingId = listingId,
+                    quantity = quantity,
+                    shippingAddress = shippingAddress,
+                    notes = notes
                 )
-                notes?.let { request["notes"] = it }
+                
+                android.util.Log.d("MarketplaceViewModel", "Creating order: listingId=$listingId, quantity=$quantity, address=$shippingAddress")
                 
                 val response = apiService.createOrder(request)
-                if (response.isSuccessful && response.body()?.success == true) {
-                    _createOrderState.value = Result.Success(response.body()!!.data!!)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        android.util.Log.d("MarketplaceViewModel", "Order created successfully: ${body.data.id}")
+                        _createOrderState.value = Result.Success(body.data)
+                    } else if (body?.data != null) {
+                        _createOrderState.value = Result.Success(body.data)
+                    } else {
+                        android.util.Log.e("MarketplaceViewModel", "Order creation failed: ${body?.message}")
+                        _createOrderState.value = Result.Error(body?.message ?: "Error creating order")
+                    }
                 } else {
-                    _createOrderState.value = Result.Error(response.message() ?: "Error creating order")
+                    val errorBody = response.errorBody()?.string()
+                    android.util.Log.e("MarketplaceViewModel", "Order creation failed: ${response.code()} - $errorBody")
+                    _createOrderState.value = Result.Error("Error: ${response.code()} - ${response.message()}")
                 }
             } catch (e: Exception) {
-                _createOrderState.value = Result.Error(e.message ?: "Error")
+                android.util.Log.e("MarketplaceViewModel", "Exception creating order", e)
+                _createOrderState.value = Result.Error(e.message ?: "An error occurred")
             }
         }
     }
@@ -136,6 +153,31 @@ class MarketplaceViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 _orders.value = Result.Error(e.message ?: "Error")
+            }
+        }
+    }
+    
+    fun loadListingDetail(listingId: Int) {
+        viewModelScope.launch {
+            _listingDetail.value = Result.Loading
+            try {
+                val response = apiService.getListingDetail(listingId)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        _listingDetail.value = Result.Success(body.data)
+                    } else if (body?.data != null) {
+                        // Handle case where success field is missing but data exists
+                        _listingDetail.value = Result.Success(body.data)
+                    } else {
+                        _listingDetail.value = Result.Error(body?.message ?: "Error loading listing detail")
+                    }
+                } else {
+                    _listingDetail.value = Result.Error("Server error: ${response.code()}")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MarketplaceViewModel", "Error loading listing detail", e)
+                _listingDetail.value = Result.Error(e.message ?: "An error occurred")
             }
         }
     }

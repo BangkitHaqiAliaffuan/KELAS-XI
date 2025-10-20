@@ -21,6 +21,14 @@ import com.trashbin.app.ui.viewmodel.MarketplaceViewModel
 import com.trashbin.app.utils.CurrencyHelper
 
 data class Quadruple<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
+data class OrderDialogComponents(
+    val dialogView: View,
+    val etQuantity: EditText,
+    val etShippingAddress: EditText,
+    val etNotes: EditText,
+    val btnOrder: Button,
+    val btnCancel: Button
+)
 
 class ListingDetailActivity : AppCompatActivity() {
     private lateinit var coordinatorLayout: CoordinatorLayout
@@ -52,6 +60,8 @@ class ListingDetailActivity : AppCompatActivity() {
         setupUI()
         loadListingDetail()
         setupListeners()
+        observeOrderCreation()
+        observeListingDetail()
     }
     
     private fun setupUI() {
@@ -89,6 +99,10 @@ class ListingDetailActivity : AppCompatActivity() {
                 CollapsingToolbarLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 collapseMode = CollapsingToolbarLayout.LayoutParams.COLLAPSE_MODE_PIN
+            }
+            setNavigationIcon(R.drawable.ic_arrow_back)
+            setNavigationOnClickListener {
+                finish()
             }
         }
         collapsingToolbarLayout.addView(toolbar)
@@ -323,59 +337,29 @@ class ListingDetailActivity : AppCompatActivity() {
     }
     
     private fun loadListingDetail() {
-        // This is a placeholder - in a real app, you would load the listing detail from the API
-        // For now, I'll create a mock listing based on the passed ID
         val listingId = intent.extras?.getInt("listing_id", -1) ?: -1
+        android.util.Log.d("ListingDetailActivity", "Loading listing with ID: $listingId")
         if (listingId != -1) {
-            // TODO: Load actual listing from API
-            // For now, I'll create a mock listing
-            listing = MarketplaceListing(
-                id = listingId,
-                sellerId = 1,
-                categoryId = 1,
-                title = "Kertas Bekas",
-                description = "Kertas bekas yang bisa didaur ulang",
-                quantity = 5.0,
-                unit = "kg",
-                pricePerUnit = 2000.0,
-                totalPrice = 10000.0,
-                condition = "clean",
-                location = "Jakarta, Indonesia",
-                lat = "-6.200000",
-                lng = "106.816666",
-                status = "available",
-                photos = listOf("https://example.com/photo.jpg"),  // Placeholder
-                views = 10,
-                expiresAt = null,
-                category = com.trashbin.app.data.model.WasteCategory(
-                    id = 1,
-                    name = "Kertas",
-                    slug = "kertas",
-                    unit = "kg",
-                    basePricePerUnit = 2000.0,
-                    iconUrl = null
-                ),
-                seller = com.trashbin.app.data.model.SellerInfo(
-                    id = 1,
-                    name = "Contoh Penjual",
-                    avatar = null,
-                    points = 100
-                ),
-                createdAt = "2023-01-01 00:00:00",
-                updatedAt = "2023-01-01 00:00:00"
-            )
-            
-            bindListingData()
+            // Load actual listing from API
+            viewModel.loadListingDetail(listingId)
         } else {
-            Toast.makeText(this, "Listing tidak ditemukan", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Listing ID tidak ditemukan", Toast.LENGTH_SHORT).show()
             finish()
         }
     }
     
     private fun bindListingData() {
         listing?.let { listing ->
+            android.util.Log.d("ListingDetailActivity", "Binding data for: ${listing.title}")
+            
             // Set up photo pager
-            val photoAdapter = PhotoPagerAdapter(listing.photos)
+            val photos = if (listing.photos.isNotEmpty()) {
+                listing.photos
+            } else {
+                // Provide a placeholder if no photos
+                listOf("https://via.placeholder.com/400x300?text=No+Image")
+            }
+            val photoAdapter = PhotoPagerAdapter(photos)
             viewPager.adapter = photoAdapter
             
             // Bind text data
@@ -404,11 +388,13 @@ class ListingDetailActivity : AppCompatActivity() {
             listing.seller.avatar?.let { avatarUrl ->
                 Glide.with(this)
                     .load(avatarUrl)
-                    .placeholder(R.drawable.ic_user)
+                    .placeholder(R.drawable.ic_person)
                     .into(ivSellerAvatar)
             } ?: run {
-                ivSellerAvatar.setImageResource(R.drawable.ic_user)
+                ivSellerAvatar.setImageResource(R.drawable.ic_person)
             }
+            
+            android.util.Log.d("ListingDetailActivity", "Data binding completed")
         }
     }
     
@@ -418,34 +404,82 @@ class ListingDetailActivity : AppCompatActivity() {
         }
     }
     
+    private fun observeListingDetail() {
+        viewModel.listingDetail.observe(this) { result ->
+            when (result) {
+                is com.trashbin.app.data.repository.Result.Loading -> {
+                    android.util.Log.d("ListingDetailActivity", "Loading listing detail...")
+                    // Show loading if needed
+                }
+                is com.trashbin.app.data.repository.Result.Success -> {
+                    android.util.Log.d("ListingDetailActivity", "Listing loaded successfully: ${result.data.title}")
+                    listing = result.data
+                    bindListingData()
+                }
+                is com.trashbin.app.data.repository.Result.Error -> {
+                    android.util.Log.e("ListingDetailActivity", "Error loading listing: ${result.message}")
+                    Toast.makeText(this, "Gagal memuat detail listing: ${result.message}", Toast.LENGTH_LONG).show()
+                    finish() // Close the activity if we can't load the listing
+                }
+            }
+        }
+    }
+    
+    private fun observeOrderCreation() {
+        viewModel.createOrderState.observe(this) { result ->
+            when (result) {
+                is com.trashbin.app.data.repository.Result.Loading -> {
+                    // Show loading if needed
+                }
+                is com.trashbin.app.data.repository.Result.Success -> {
+                    Toast.makeText(this, "Order berhasil dibuat", Toast.LENGTH_SHORT).show()
+                }
+                is com.trashbin.app.data.repository.Result.Error -> {
+                    Toast.makeText(this, "Gagal membuat order: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+    
     private fun showOrderDialog() {
         listing?.let { listing ->
             val builder = AlertDialog.Builder(this)
-            val (dialogView, etQuantity, btnOrder, btnCancel) = createOrderDialogView()
-            builder.setView(dialogView)
+            val orderDialogComponents = createOrderDialogView()
+            builder.setView(orderDialogComponents.dialogView)
             
             val dialog = builder.create()
             
-            btnOrder.setOnClickListener {
-                val quantityStr = etQuantity.text.toString()
+            orderDialogComponents.btnOrder.setOnClickListener {
+                val quantityStr = orderDialogComponents.etQuantity.text.toString()
                 val quantity = quantityStr.toDoubleOrNull()
-                if (quantity != null && quantity > 0 && quantity <= listing.quantity) {
-                    // TODO: Create order with API call
+                val shippingAddress = orderDialogComponents.etShippingAddress.text.toString().trim()
+                val notes = orderDialogComponents.etNotes.text.toString().trim().takeIf { it.isNotEmpty() }
+                
+                android.util.Log.d("ListingDetailActivity", "Order attempt - quantity: $quantity, address: $shippingAddress")
+                
+                if (quantity != null && quantity > 0 && quantity <= listing.quantity && shippingAddress.isNotEmpty()) {
+                    // Create order with API call - success will be handled by observer
                     viewModel.createOrder(
                         listing.id,
-                        quantity.toInt(), // Convert to int for API
-                        "Alamat pengiriman",  // This should come from user input
-                        "Catatan pesanan"     // This should come from user input
+                        quantity,  // Send as Double, not Int
+                        shippingAddress,
+                        notes
                     )
-                    
-                    Toast.makeText(this, "Order berhasil dibuat", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
                 } else {
-                    Toast.makeText(this, "Jumlah tidak valid", Toast.LENGTH_SHORT).show()
+                    if (shippingAddress.isEmpty()) {
+                        Toast.makeText(this, "Alamat pengiriman harus diisi", Toast.LENGTH_SHORT).show()
+                    } else if (quantity == null || quantity <= 0) {
+                        Toast.makeText(this, "Jumlah harus lebih dari 0", Toast.LENGTH_SHORT).show()
+                    } else if (quantity > listing.quantity) {
+                        Toast.makeText(this, "Jumlah melebihi stok tersedia (${listing.quantity})", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(this, "Data tidak valid", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             
-            btnCancel.setOnClickListener {
+            orderDialogComponents.btnCancel.setOnClickListener {
                 dialog.dismiss()
             }
             
@@ -455,7 +489,7 @@ class ListingDetailActivity : AppCompatActivity() {
         }
     }
     
-    private fun createOrderDialogView(): Quadruple<View, EditText, Button, Button> {
+    private fun createOrderDialogView(): OrderDialogComponents {
         val dialogLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
@@ -486,6 +520,30 @@ class ListingDetailActivity : AppCompatActivity() {
         quantityInputLayout.addView(etQuantity)
         dialogLayout.addView(quantityInputLayout)
 
+        val shippingAddressInputLayout = com.google.android.material.textfield.TextInputLayout(this).apply {
+            hint = "Alamat Pengiriman"
+            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+        }
+        val etShippingAddress = com.google.android.material.textfield.TextInputEditText(this).apply {
+            id = View.generateViewId()
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            hint = "Masukkan alamat pengiriman"
+        }
+        shippingAddressInputLayout.addView(etShippingAddress)
+        dialogLayout.addView(shippingAddressInputLayout)
+
+        val notesInputLayout = com.google.android.material.textfield.TextInputLayout(this).apply {
+            hint = "Catatan (Opsional)"
+            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+        }
+        val etNotes = com.google.android.material.textfield.TextInputEditText(this).apply {
+            id = View.generateViewId()
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+            hint = "Catatan tambahan untuk penjual"
+        }
+        notesInputLayout.addView(etNotes)
+        dialogLayout.addView(notesInputLayout)
+
         val buttonLayout = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(0, (16 * resources.displayMetrics.density).toInt(), 0, 0)
@@ -511,6 +569,6 @@ class ListingDetailActivity : AppCompatActivity() {
 
         dialogLayout.addView(buttonLayout)
 
-        return Quadruple(dialogLayout, etQuantity, btnOrder, btnCancel)
+        return OrderDialogComponents(dialogLayout, etQuantity, etShippingAddress, etNotes, btnOrder, btnCancel)
     }
 }

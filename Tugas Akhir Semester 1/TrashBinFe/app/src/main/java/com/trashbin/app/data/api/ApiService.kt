@@ -1,6 +1,7 @@
 package com.trashbin.app.data.api
 
 import com.trashbin.app.data.model.ApiResponse
+import com.trashbin.app.data.model.CreateOrderRequest
 import com.trashbin.app.data.model.LoginResponse
 import com.trashbin.app.data.model.User
 import com.trashbin.app.data.model.WasteCategory
@@ -163,7 +164,7 @@ interface ApiService {
     // Orders
     @POST("marketplace/orders")
     suspend fun createOrder(
-        @Body orderData: Map<String, Any>
+        @Body orderData: CreateOrderRequest
     ): Response<ApiResponse<Order>>
 
     @GET("marketplace/orders")

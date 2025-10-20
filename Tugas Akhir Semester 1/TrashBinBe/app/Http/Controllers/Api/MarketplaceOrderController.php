@@ -37,15 +37,24 @@ class MarketplaceOrderController extends Controller
      */
     public function store(Request $request)
     {
+        // Add logging to see what's happening
+        \Log::info('Order creation request received', [
+            'data' => $request->all(),
+            'user_id' => $request->user()->id ?? 'unauthenticated',
+            'headers' => $request->headers->all()
+        ]);
+
         $validator = Validator::make($request->all(), [
             'listing_id' => 'required|exists:marketplace_listings,id',
             'quantity' => 'required|numeric|min:0.01',
-            'shipping_address' => 'required_if:delivery_method,shipping|string',
+            'shipping_address' => 'required|string|max:500',  // For marketplace, shipping address is always required
             'notes' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
+            \Log::warning('Order validation failed', ['errors' => $validator->errors()->toArray()]);
             return response()->json([
+                'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -54,54 +63,88 @@ class MarketplaceOrderController extends Controller
         $listing = MarketplaceListing::where('id', $request->listing_id)
             ->where('status', 'available')
             ->where('expires_at', '>', now())
-            ->firstOrFail();
+            ->first();
+
+        if (!$listing) {
+            \Log::warning('Listing not found or not available', ['listing_id' => $request->listing_id]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Listing tidak ditemukan atau tidak tersedia'
+            ], 404);
+        }
 
         if ($listing->quantity < $request->quantity) {
+            \Log::warning('Insufficient quantity available', [
+                'listing_id' => $request->listing_id,
+                'requested' => $request->quantity,
+                'available' => $listing->quantity
+            ]);
             return response()->json([
-                'message' => 'Insufficient quantity available'
+                'success' => false,
+                'message' => 'Stok tidak mencukupi. Tersedia: ' . $listing->quantity . ' ' . $listing->unit
             ], 400);
         }
 
         DB::beginTransaction();
 
         try {
+            // Calculate total price
+            $totalPrice = $request->quantity * $listing->price_per_unit;
+
             // Create the order
             $order = Order::create([
                 'listing_id' => $request->listing_id,
                 'buyer_id' => $request->user()->id,
                 'seller_id' => $listing->seller_id,
                 'quantity' => $request->quantity,
-                'total_price' => $request->quantity * $listing->price_per_unit,
+                'total_price' => $totalPrice,
                 'shipping_address' => $request->shipping_address,
-                'notes' => $request->notes,
+                'notes' => $request->notes ?? null,
                 'status' => 'pending',
                 'payment_status' => 'unpaid',
             ]);
 
-            // Update listing quantity and mark as reserved
+            \Log::info('Order created successfully', ['order_id' => $order->id]);
+
+            // Update listing quantity and mark as reserved if needed
             $newQuantity = $listing->quantity - $request->quantity;
+            $listingUpdate = [
+                'quantity' => $newQuantity
+            ];
+
             if ($newQuantity <= 0) {
-                $listing->update([
-                    'quantity' => 0,
-                    'status' => 'reserved'
-                ]);
-            } else {
-                $listing->update([
-                    'quantity' => $newQuantity
-                ]);
+                $listingUpdate['status'] = 'reserved';
             }
 
+            $listing->update($listingUpdate);
+
+            \Log::info('Listing updated', [
+                'listing_id' => $listing->id,
+                'new_quantity' => $newQuantity,
+                'status' => $listingUpdate['status'] ?? $listing->status
+            ]);
+
+            // Load relationships for response
             $order->load(['listing', 'buyer', 'seller']);
 
             DB::commit();
 
+            \Log::info('Order creation transaction completed successfully', ['order_id' => $order->id]);
+
             return response()->json([
+                'success' => true,
                 'message' => 'Order created successfully',
                 'data' => $order
             ], 201);
         } catch (\Exception $e) {
             DB::rollback();
+            \Log::error('Order creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
+                'success' => false,
                 'message' => 'Failed to create order',
                 'error' => $e->getMessage()
             ], 500);
@@ -232,7 +275,7 @@ class MarketplaceOrderController extends Controller
             // Return quantity back to listing
             $listing = $order->listing;
             $listing->increment('quantity', $order->quantity);
-            
+
             // If listing was fully reserved, change back to available
             if ($listing->status === 'reserved' && $listing->quantity > 0) {
                 $listing->update(['status' => 'available']);
