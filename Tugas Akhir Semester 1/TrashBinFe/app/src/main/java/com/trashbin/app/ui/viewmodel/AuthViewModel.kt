@@ -13,11 +13,10 @@ import com.trashbin.app.data.repository.AuthRepository
 import com.trashbin.app.data.repository.Result
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-    private val repository = AuthRepository(RetrofitClient.apiService, TokenManager.getInstance())
+class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
-    private val _loginState = MutableLiveData<Result<*>>()
-    val loginState: LiveData<Result<*>> = _loginState
+    private val _loginState = MutableLiveData<Result<LoginResponse>>()
+    val loginState: LiveData<Result<LoginResponse>> = _loginState
 
     private val _loginResult = MutableLiveData<kotlin.Result<LoginResponse>>()
     val loginResult: LiveData<kotlin.Result<LoginResponse>> = _loginResult
@@ -25,11 +24,21 @@ class AuthViewModel : ViewModel() {
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _registerState = MutableLiveData<Result<*>>()
-    val registerState: LiveData<Result<*>> = _registerState
+    private val _registerState = MutableLiveData<Result<LoginResponse>>()
+    val registerState: LiveData<Result<LoginResponse>> = _registerState
 
-    private val _profileState = MutableLiveData<Result<*>>()
-    val profileState: LiveData<Result<*>> = _profileState
+    private val _profileState = MutableLiveData<Result<User>>()
+    val profileState: LiveData<Result<User>> = _profileState
+
+    companion object {
+        @JvmStatic
+        fun create(): AuthViewModel {
+            val apiService = com.trashbin.app.data.api.RetrofitClient.apiService
+            val tokenManager = com.trashbin.app.data.api.TokenManager.getInstance()
+            val repository = com.trashbin.app.data.repository.AuthRepository(apiService, tokenManager)
+            return AuthViewModel(repository)
+        }
+    }
 
     fun login(email: String, password: String) {
         Log.d("AuthViewModel", "login() called with email: $email")

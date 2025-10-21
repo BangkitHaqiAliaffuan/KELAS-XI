@@ -16,6 +16,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.trashbin.app.R
+import com.trashbin.app.data.api.RetrofitClient
+import com.trashbin.app.data.api.TokenManager
+import com.trashbin.app.data.repository.AuthRepository
 import com.trashbin.app.ui.main.MainActivity
 import com.trashbin.app.ui.viewmodel.AuthViewModel
 import org.json.JSONObject
@@ -44,7 +47,11 @@ class RegisterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         
         createLayout()
-        viewModel = ViewModelProvider(this)[AuthViewModel::class.java]
+        val apiService = RetrofitClient.apiService
+        val tokenManager = TokenManager.getInstance()
+        val repository = AuthRepository(apiService, tokenManager)
+        val factory = com.trashbin.app.ui.viewmodel.AuthViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
 
         setupObservers()
         setupClickListeners()

@@ -16,19 +16,49 @@ class MarketplaceOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $asBuyer = Order::where('buyer_id', $request->user()->id)
-            ->with(['listing:id,title,price_per_unit,photos,seller_id', 'listing.seller:id,name,avatar', 'seller:id,name,avatar'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        \Log::info('Fetching orders', [
+            'user_id' => $request->user()->id,
+            'role' => $request->query('role'),
+            'status' => $request->query('status')
+        ]);
 
-        $asSeller = Order::where('seller_id', $request->user()->id)
-            ->with(['listing:id,title,price_per_unit,photos,buyer_id', 'listing.buyer:id,name,avatar', 'buyer:id,name,avatar'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $role = $request->query('role', 'buyer'); // Default to buyer
+        $status = $request->query('status');
+
+        $query = Order::with([
+            'listing' => function($q) {
+                $q->select('id', 'title', 'price_per_unit', 'photos', 'seller_id', 'unit');
+            },
+            'buyer:id,name,avatar,email,phone',
+            'seller:id,name,avatar,email,phone'
+        ]);
+
+        // Filter by role
+        if ($role === 'buyer') {
+            $query->where('buyer_id', $request->user()->id);
+        } elseif ($role === 'seller') {
+            $query->where('seller_id', $request->user()->id);
+        } else {
+            // If no role specified or invalid, return both
+            $query->where(function($q) use ($request) {
+                $q->where('buyer_id', $request->user()->id)
+                  ->orWhere('seller_id', $request->user()->id);
+            });
+        }
+
+        // Filter by status if provided
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        \Log::info('Orders fetched successfully', ['count' => $orders->count()]);
 
         return response()->json([
-            'as_buyer' => $asBuyer,
-            'as_seller' => $asSeller
+            'success' => true,
+            'message' => 'Orders retrieved successfully',
+            'data' => $orders
         ]);
     }
 
@@ -187,6 +217,7 @@ class MarketplaceOrderController extends Controller
         $order->load(['listing', 'buyer', 'seller']);
 
         return response()->json([
+            'success' => true,
             'message' => 'Order confirmed successfully',
             'data' => $order
         ]);
@@ -203,13 +234,14 @@ class MarketplaceOrderController extends Controller
             ->firstOrFail();
 
         $order->update([
-            'status' => 'shipping'
+            'status' => 'shipped'
         ]);
 
         $order->refresh();
         $order->load(['listing', 'buyer', 'seller']);
 
         return response()->json([
+            'success' => true,
             'message' => 'Order shipped successfully',
             'data' => $order
         ]);
@@ -239,6 +271,7 @@ class MarketplaceOrderController extends Controller
         $order->load(['listing', 'buyer', 'seller']);
 
         return response()->json([
+            'success' => true,
             'message' => 'Order completed successfully',
             'data' => $order
         ]);

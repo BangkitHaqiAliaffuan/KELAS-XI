@@ -10,12 +10,12 @@ import com.trashbin.app.data.model.PickupItemRequest
 import com.trashbin.app.data.model.PickupRequest
 import com.trashbin.app.data.model.PickupResponse
 import com.trashbin.app.data.model.WasteCategory
+import com.trashbin.app.data.repository.PickupRepository
 import com.trashbin.app.data.repository.Result
 import kotlinx.coroutines.launch
 
-class PickupViewModel : ViewModel() {
-    private val apiService = RetrofitClient.apiService
-
+class PickupViewModel(private val repository: PickupRepository) : ViewModel() {
+    
     private val _categories = MutableLiveData<Result<List<WasteCategory>>>()
     val categories: LiveData<Result<List<WasteCategory>>> = _categories
 
@@ -26,39 +26,27 @@ class PickupViewModel : ViewModel() {
 
     private val _pickups = MutableLiveData<Result<List<PickupResponse>>>()
     val pickups: LiveData<Result<List<PickupResponse>>> = _pickups
+    
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean> = _isLoading
+    
+    private val _pickupAction = MutableLiveData<Result<PickupResponse>>()
+    val pickupAction: LiveData<Result<PickupResponse>> = _pickupAction
 
     fun loadCategories() {
         viewModelScope.launch {
+            _isLoading.value = true
             android.util.Log.d("PickupViewModel", "Loading categories...")
             _categories.value = Result.Loading
             try {
-                val response = apiService.getWasteCategories()
-                android.util.Log.d("PickupViewModel", "Categories API response: ${response.code()}")
-                android.util.Log.d("PickupViewModel", "Response body: ${response.body()}")
-                
-                if (response.isSuccessful) {
-                    val responseBody = response.body()
-                    // Check if success field exists and is true, OR if success field is null but data exists
-                    if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
-                        val data = responseBody.data!!
-                        android.util.Log.d("PickupViewModel", "Categories loaded successfully: ${data.size} items")
-                        data.forEach { category ->
-                            android.util.Log.d("PickupViewModel", "Category: ${category.name} - ${category.id}")
-                        }
-                        _categories.value = Result.Success(data)
-                    } else {
-                        val errorMsg = responseBody?.message ?: response.message() ?: "Error loading categories"
-                        android.util.Log.e("PickupViewModel", "Categories API error: $errorMsg")
-                        _categories.value = Result.Error(errorMsg)
-                    }
-                } else {
-                    val errorMsg = response.body()?.message ?: response.message() ?: "Error loading categories"
-                    android.util.Log.e("PickupViewModel", "Categories API error: $errorMsg")
-                    _categories.value = Result.Error(errorMsg)
-                }
+                val response = repository.getWasteCategories()
+                android.util.Log.d("PickupViewModel", "Categories loaded: ${if(response.isSuccess) (response as Result.Success).data.size else 0} items")
+                _categories.value = response
             } catch (e: Exception) {
                 android.util.Log.e("PickupViewModel", "Exception loading categories", e)
                 _categories.value = Result.Error(e.message ?: "Network error")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
@@ -79,6 +67,7 @@ class PickupViewModel : ViewModel() {
 
     fun createPickup(address: String, lat: Double, lng: Double, date: String, notes: String?) {
         viewModelScope.launch {
+            _isLoading.value = true
             _createState.value = Result.Loading
             try {
                 val items = selectedItems.value ?: mutableListOf()
@@ -87,49 +76,50 @@ class PickupViewModel : ViewModel() {
                 android.util.Log.d("PickupViewModel", "Items: $items")
                 
                 val request = PickupRequest(address, lat, lng, date, items, notes)
-                val response = apiService.createPickup(request)
+                val result = repository.createPickup(request)
+                _createState.value = result
                 
-                android.util.Log.d("PickupViewModel", "Response: ${response.code()}")
-                android.util.Log.d("PickupViewModel", "Response body: ${response.body()}")
-                
-                if (response.isSuccessful) {
-                    val responseBody = response.body()
-                    // Check if success field exists and is true, OR if success field is null but data exists
-                    if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
-                        _createState.value = Result.Success(responseBody!!.data!!)
-                    } else {
-                        val errorMessage = responseBody?.message ?: response.message() ?: "Error creating pickup"
-                        _createState.value = Result.Error(errorMessage)
-                    }
-                } else {
-                    val errorMessage = response.body()?.message ?: response.message() ?: "Error creating pickup"
-                    _createState.value = Result.Error(errorMessage)
+                if (result.isSuccess) {
+                    android.util.Log.d("PickupViewModel", "Pickup created successfully")
                 }
             } catch (e: Exception) {
                 android.util.Log.e("PickupViewModel", "Error creating pickup", e)
                 _createState.value = Result.Error(e.message ?: "Error")
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
     fun loadPickups(status: String? = null) {
         viewModelScope.launch {
+            _isLoading.value = true
             _pickups.value = Result.Loading
             try {
-                val response = apiService.getPickups(status, null)
-                if (response.isSuccessful) {
-                    val responseBody = response.body()
-                    // Check if success field exists and is true, OR if success field is null but data exists
-                    if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
-                        _pickups.value = Result.Success(responseBody!!.data!!)
-                    } else {
-                        _pickups.value = Result.Error(responseBody?.message ?: response.message() ?: "Error")
-                    }
-                } else {
-                    _pickups.value = Result.Error(response.message() ?: "Error")
+                val result = repository.getPickupHistory(status, null)
+                _pickups.value = result
+                
+                if (result.isSuccess) {
+                    android.util.Log.d("PickupViewModel", "Pickups loaded: ${if(result.isSuccess) (result as Result.Success).data.size else 0} items")
                 }
             } catch (e: Exception) {
                 _pickups.value = Result.Error(e.message ?: "Error")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+    
+    fun cancelPickup(id: Int, reason: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = repository.cancelPickup(id)
+                _pickupAction.value = result
+            } catch (e: Exception) {
+                _pickupAction.value = Result.Error(e.message ?: "Error cancelling pickup")
+            } finally {
+                _isLoading.value = false
             }
         }
     }

@@ -17,12 +17,26 @@ class PickupController extends Controller
      */
     public function index(Request $request)
     {
-        $pickups = PickupRequest::where('user_id', $request->user()->id)
-            ->with(['items.wasteCategory', 'collector:id,name,avatar,phone'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        \Log::info('Fetching pickups', [
+            'user_id' => $request->user()->id,
+            'status' => $request->query('status')
+        ]);
+
+        $query = PickupRequest::where('user_id', $request->user()->id)
+            ->with(['items.wasteCategory', 'collector:id,name,avatar,phone,email']);
+
+        // Filter by status if provided
+        if ($request->has('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $pickups = $query->orderBy('created_at', 'desc')->get();
+
+        \Log::info('Pickups fetched successfully', ['count' => $pickups->count()]);
 
         return response()->json([
+            'success' => true,
+            'message' => 'Pickups retrieved successfully',
             'data' => $pickups
         ]);
     }
@@ -68,7 +82,7 @@ class PickupController extends Controller
 
             foreach ($request->items as $item) {
                 $wasteCategory = WasteCategory::findOrFail($item['category_id']);
-                
+
                 $pickupItem = PickupItem::create([
                     'pickup_request_id' => $pickup->id,
                     'waste_category_id' => $item['category_id'],
@@ -109,10 +123,12 @@ class PickupController extends Controller
     {
         $pickup = PickupRequest::where('id', $id)
             ->where('user_id', $request->user()->id)
-            ->with(['items.wasteCategory', 'user:id,name,phone', 'collector:id,name,phone,avatar'])
+            ->with(['items.wasteCategory', 'user:id,name,phone,email', 'collector:id,name,phone,avatar,email'])
             ->firstOrFail();
 
         return response()->json([
+            'success' => true,
+            'message' => 'Pickup retrieved successfully',
             'data' => $pickup
         ]);
     }
@@ -122,21 +138,39 @@ class PickupController extends Controller
      */
     public function cancel($id, Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'cancellation_reason' => 'required|string|max:500'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         $pickup = PickupRequest::where('id', $id)
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
         if ($pickup->status !== 'pending') {
             return response()->json([
+                'success' => false,
                 'message' => 'Cannot cancel pickup request that is not pending'
             ], 400);
         }
 
         $pickup->update([
-            'status' => 'cancelled'
+            'status' => 'cancelled',
+            'notes' => ($pickup->notes ? $pickup->notes . "\n\n" : '') . "Cancelled: " . $request->cancellation_reason
         ]);
 
+        $pickup->refresh();
+        $pickup->load(['items.wasteCategory', 'user', 'collector']);
+
         return response()->json([
+            'success' => true,
             'message' => 'Pickup request cancelled successfully',
             'data' => $pickup
         ]);

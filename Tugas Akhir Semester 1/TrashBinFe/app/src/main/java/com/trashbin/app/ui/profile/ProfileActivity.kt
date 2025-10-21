@@ -2,15 +2,21 @@ package com.trashbin.app.ui.profile
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.bumptech.glide.Glide
 import com.google.android.material.button.MaterialButton
 import com.trashbin.app.R
+import com.trashbin.app.data.api.RetrofitClient
 import com.trashbin.app.data.api.TokenManager
 import com.trashbin.app.data.model.User
+import com.trashbin.app.data.repository.AuthRepository
 import com.trashbin.app.ui.auth.LoginActivity
+import com.trashbin.app.ui.viewmodel.AuthViewModel
+import com.trashbin.app.ui.viewmodel.AuthViewModelFactory
 
 class ProfileActivity : AppCompatActivity() {
     
@@ -25,18 +31,36 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var tvPoints: TextView
     private lateinit var tvRating: TextView
     private lateinit var btnEditProfile: MaterialButton
-    private lateinit var btnMyListings: MaterialButton
     private lateinit var btnMyOrders: MaterialButton
     private lateinit var btnMyPickups: MaterialButton
     private lateinit var btnLogout: MaterialButton
+    private lateinit var progressBar: ProgressBar
     
+    private lateinit var authViewModel: AuthViewModel
     private var currentUser: User? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Check if user is logged in
+        if (!TokenManager.isLoggedIn()) {
+            redirectToLogin()
+            return
+        }
+        
+        setupViewModel()
         setupUI()
-        loadUserData()
         setupListeners()
+        observeViewModel()
+        loadUserData()
+    }
+    
+    private fun setupViewModel() {
+        val apiService = RetrofitClient.apiService
+        val tokenManager = TokenManager.getInstance()
+        val repository = AuthRepository(apiService, tokenManager)
+        val factory = AuthViewModelFactory(repository)
+        authViewModel = ViewModelProvider(this, factory)[AuthViewModel::class.java]
     }
     
     private fun setupUI() {
@@ -51,6 +75,19 @@ class ProfileActivity : AppCompatActivity() {
                 (16 * resources.displayMetrics.density).toInt()
             )
         }
+        
+        // Progress Bar
+        progressBar = ProgressBar(this).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                gravity = android.view.Gravity.CENTER_HORIZONTAL
+                bottomMargin = (16 * resources.displayMetrics.density).toInt()
+            }
+            visibility = View.GONE
+        }
+        mainLayout.addView(progressBar)
         
         // Title
         val titleText = TextView(this).apply {
@@ -71,7 +108,7 @@ class ProfileActivity : AppCompatActivity() {
             }
             scaleType = ImageView.ScaleType.CENTER_CROP
             // Add circular background or use placeholder
-            setImageResource(R.drawable.ic_user) // Assuming this drawable exists
+            setImageResource(R.drawable.ic_person) // Updated to use correct drawable
         }
         mainLayout.addView(ivProfile)
         
@@ -194,19 +231,8 @@ class ProfileActivity : AppCompatActivity() {
         }
         mainLayout.addView(btnEditProfile)
         
-        btnMyListings = MaterialButton(this).apply {
-            text = "My Listings"
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                (50 * resources.displayMetrics.density).toInt()
-            ).apply {
-                bottomMargin = (12 * resources.displayMetrics.density).toInt()
-            }
-        }
-        mainLayout.addView(btnMyListings)
-        
         btnMyOrders = MaterialButton(this).apply {
-            text = "My Orders"
+            text = "📦 My Orders"
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 (50 * resources.displayMetrics.density).toInt()
@@ -217,7 +243,7 @@ class ProfileActivity : AppCompatActivity() {
         mainLayout.addView(btnMyOrders)
         
         btnMyPickups = MaterialButton(this).apply {
-            text = "My Pickups"
+            text = "🗑️ My Pickups"
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 (50 * resources.displayMetrics.density).toInt()
@@ -238,28 +264,74 @@ class ProfileActivity : AppCompatActivity() {
         mainLayout.addView(btnLogout)
     }
     
-    private fun loadUserData() {
-        // Get user from TokenManager (assuming it stores user data)
-        currentUser = TokenManager.getInstance().getUser()
-        
-        currentUser?.let { user ->
-            tvName.text = user.name
-            tvEmail.text = user.email
-            tvPhone.text = user.phone ?: "No phone number"
-            tvAddress.text = user.address ?: "No address"
-            tvPoints.text = user.points.toString()
-            tvRating.text = "⭐ ${user.rating ?: 0.0}"
-            
-            // Load profile picture if available
-            user.avatar?.let { avatarUrl ->
-                Glide.with(this)
-                    .load(avatarUrl)
-                    .placeholder(R.drawable.ic_user)
-                    .into(ivProfile)
+    private fun observeViewModel() {
+        authViewModel.profileState.observe(this) { result ->
+            when (result) {
+                is com.trashbin.app.data.repository.Result.Success -> {
+                    val user = result.data
+                    Log.d("ProfileActivity", "Profile loaded successfully: ${user.name}")
+                    currentUser = user
+                    displayUserData(user)
+                    progressBar.visibility = View.GONE
+                }
+                is com.trashbin.app.data.repository.Result.Error -> {
+                    Log.e("ProfileActivity", "Failed to load profile", Exception(result.message, result.exception))
+                    progressBar.visibility = View.GONE
+                    
+                    // Check if it's an authentication error
+                    if (result.message.contains("401") || 
+                        result.message.contains("Unauthorized") ||
+                        result.message.contains("Unauthenticated")) {
+                        Toast.makeText(this, "Sesi Anda telah berakhir. Silakan login kembali.", Toast.LENGTH_LONG).show()
+                        redirectToLogin()
+                    } else {
+                        Toast.makeText(this, "Gagal memuat profil: ${result.message}", Toast.LENGTH_LONG).show()
+                        // Try to load from cache
+                        loadCachedUserData()
+                    }
+                }
+                is com.trashbin.app.data.repository.Result.Loading -> {
+                    progressBar.visibility = View.VISIBLE
+                }
             }
-        } ?: run {
-            // If no user data, redirect to login
-            logout()
+        }
+    }
+    
+    private fun loadUserData() {
+        Log.d("ProfileActivity", "Loading user profile from API...")
+        progressBar.visibility = View.VISIBLE
+        
+        // Try to load from cache first
+        loadCachedUserData()
+        
+        // Then fetch fresh data from API
+        authViewModel.getProfile()
+    }
+    
+    private fun loadCachedUserData() {
+        val cachedUser = TokenManager.getInstance().getUser()
+        cachedUser?.let { user ->
+            Log.d("ProfileActivity", "Loaded cached user data: ${user.name}")
+            currentUser = user
+            displayUserData(user)
+        }
+    }
+    
+    private fun displayUserData(user: User) {
+        tvName.text = user.name
+        tvEmail.text = user.email
+        tvPhone.text = user.phone ?: "No phone number"
+        tvAddress.text = user.address ?: "No address"
+        tvPoints.text = user.points.toString()
+        tvRating.text = "⭐ ${user.rating ?: 0.0}"
+        
+        // Load profile picture if available
+        user.avatar?.let { avatarUrl ->
+            Glide.with(this)
+                .load(avatarUrl)
+                .placeholder(R.drawable.ic_person)
+                .error(R.drawable.ic_person)
+                .into(ivProfile)
         }
     }
     
@@ -268,16 +340,14 @@ class ProfileActivity : AppCompatActivity() {
             Toast.makeText(this, "Edit profile feature coming soon", Toast.LENGTH_SHORT).show()
         }
         
-        btnMyListings.setOnClickListener {
-            Toast.makeText(this, "My listings feature coming soon", Toast.LENGTH_SHORT).show()
-        }
-        
         btnMyOrders.setOnClickListener {
-            Toast.makeText(this, "My orders feature coming soon", Toast.LENGTH_SHORT).show()
+            Log.d("ProfileActivity", "Opening My Orders")
+            startActivity(Intent(this, com.trashbin.app.ui.orders.MyOrdersActivity::class.java))
         }
         
         btnMyPickups.setOnClickListener {
-            Toast.makeText(this, "My pickups feature coming soon", Toast.LENGTH_SHORT).show()
+            Log.d("ProfileActivity", "Opening My Pickups")
+            startActivity(Intent(this, com.trashbin.app.ui.pickups.MyPickupsActivity::class.java))
         }
         
         btnLogout.setOnClickListener {
@@ -286,7 +356,12 @@ class ProfileActivity : AppCompatActivity() {
     }
     
     private fun logout() {
+        Log.d("ProfileActivity", "Logging out user...")
         TokenManager.getInstance().clearToken()
+        redirectToLogin()
+    }
+    
+    private fun redirectToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)

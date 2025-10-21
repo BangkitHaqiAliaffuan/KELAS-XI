@@ -110,7 +110,9 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return response()->json([
-            'user' => new UserResource($request->user())
+            'success' => true,
+            'message' => 'Profile retrieved successfully',
+            'data' => new UserResource($request->user())
         ]);
     }
 
@@ -147,8 +149,9 @@ class AuthController extends Controller
         }
 
         return response()->json([
+            'success' => true,
             'message' => 'Profile updated successfully',
-            'user' => new UserResource($user)
+            'data' => new UserResource($user)
         ]);
     }
 }
