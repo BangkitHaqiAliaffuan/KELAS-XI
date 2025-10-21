@@ -8,15 +8,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.trashbin.app.data.model.Order
 import com.trashbin.app.data.repository.OrderRepository
+import com.trashbin.app.data.repository.RepositoryResult
 import kotlinx.coroutines.launch
 
 class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
 
-    private val _orders = MutableLiveData<Result<List<Order>>>()
-    val orders: LiveData<Result<List<Order>>> = _orders
+    private val _orders = MutableLiveData<RepositoryResult<List<Order>>>()
+    val orders: LiveData<RepositoryResult<List<Order>>> = _orders
 
-    private val _orderAction = MutableLiveData<Result<Order>>()
-    val orderAction: LiveData<Result<Order>> = _orderAction
+    private val _orderAction = MutableLiveData<RepositoryResult<Order>>()
+    val orderAction: LiveData<RepositoryResult<Order>> = _orderAction
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
@@ -29,10 +30,18 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
             try {
                 val result = repository.getMyOrders(role, status)
                 _orders.value = result
-                Log.d("OrderViewModel", "Orders loaded: ${result.getOrNull()?.size ?: 0} items")
+                when (result) {
+                    is RepositoryResult.Success -> {
+                        Log.d("OrderViewModel", "Orders loaded: ${result.data.size} items")
+                    }
+                    is RepositoryResult.Error -> {
+                        Log.e("OrderViewModel", "Error from repository: ${result.message}")
+                    }
+                    else -> {}
+                }
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error loading orders", e)
-                _orders.value = Result.failure(e)
+                _orders.value = RepositoryResult.Error(e.message ?: "Error occurred")
             } finally {
                 _isLoading.value = false
             }
@@ -48,12 +57,18 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
                 val result = repository.confirmOrder(orderId)
                 _orderAction.value = result
                 
-                if (result.isSuccess) {
-                    Log.d("OrderViewModel", "Order confirmed successfully")
+                when (result) {
+                    is RepositoryResult.Success -> {
+                        Log.d("OrderViewModel", "Order confirmed successfully")
+                    }
+                    is RepositoryResult.Error -> {
+                        Log.e("OrderViewModel", "Error confirming order: ${result.message}")
+                    }
+                    else -> {}
                 }
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error confirming order", e)
-                _orderAction.value = Result.failure(e)
+                _orderAction.value = RepositoryResult.Error(e.message ?: "Error occurred")
             } finally {
                 _isLoading.value = false
             }
@@ -69,12 +84,18 @@ class OrderViewModel(private val repository: OrderRepository) : ViewModel() {
                 val result = repository.completeOrder(orderId)
                 _orderAction.value = result
                 
-                if (result.isSuccess) {
-                    Log.d("OrderViewModel", "Order completed successfully")
+                when (result) {
+                    is RepositoryResult.Success -> {
+                        Log.d("OrderViewModel", "Order completed successfully")
+                    }
+                    is RepositoryResult.Error -> {
+                        Log.e("OrderViewModel", "Error completing order: ${result.message}")
+                    }
+                    else -> {}
                 }
             } catch (e: Exception) {
                 Log.e("OrderViewModel", "Error completing order", e)
-                _orderAction.value = Result.failure(e)
+                _orderAction.value = RepositoryResult.Error(e.message ?: "Error occurred")
             } finally {
                 _isLoading.value = false
             }

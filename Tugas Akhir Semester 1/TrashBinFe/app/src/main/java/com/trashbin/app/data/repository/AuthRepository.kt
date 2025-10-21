@@ -9,10 +9,10 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
 
-sealed class Result<out T> {
-    data class Success<T>(val data: T) : Result<T>()
-    data class Error(val message: String, val exception: Exception? = null) : Result<Nothing>()
-    object Loading : Result<Nothing>()
+sealed class RepositoryResult<out T> {
+    data class Success<T>(val data: T) : RepositoryResult<T>()
+    data class Error(val message: String, val exception: Exception? = null) : RepositoryResult<Nothing>()
+    object Loading : RepositoryResult<Nothing>()
 }
 
 class AuthRepository(
@@ -28,35 +28,35 @@ class AuthRepository(
         role: String,
         lat: Double?,
         lng: Double?
-    ): Result<LoginResponse> = withContext(Dispatchers.IO) {
+    ): RepositoryResult<LoginResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
             if (response.isSuccessful && response.body() != null) {
                 val loginResponse = response.body()!!
                 tokenManager.saveToken(loginResponse.token)
                 tokenManager.saveUser(loginResponse.user)
-                Result.Success(loginResponse)
+                RepositoryResult.Success(loginResponse)
             } else {
                 // Handle error response from Laravel
                 val errorMessage = when (response.code()) {
                     422 -> "Validation failed"
                     else -> "Registration failed"
                 }
-                Result.Error(errorMessage)
+                RepositoryResult.Error(errorMessage)
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
             // Parse error body dari HTTP exception untuk validasi errors
             val errorBody = e.response()?.errorBody()?.string()
             val errorMessage = errorBody ?: "Request failed: ${e.message()}"
-            Result.Error(errorMessage, e)
+            RepositoryResult.Error(errorMessage, e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun login(email: String, password: String): Result<LoginResponse> = withContext(Dispatchers.IO) {
+    suspend fun login(email: String, password: String): RepositoryResult<LoginResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.login(email, password)
             android.util.Log.d("AuthRepository", "Response successful: ${response.isSuccessful}")
@@ -68,7 +68,7 @@ class AuthRepository(
                 android.util.Log.d("AuthRepository", "Login successful, saving token: ${loginResponse.token}")
                 tokenManager.saveToken(loginResponse.token)
                 tokenManager.saveUser(loginResponse.user)
-                Result.Success(loginResponse)
+                RepositoryResult.Success(loginResponse)
             } else {
                 val errorMessage = if (response.code() == 401) {
                     "Invalid credentials"
@@ -76,18 +76,18 @@ class AuthRepository(
                     "Login failed"
                 }
                 android.util.Log.d("AuthRepository", "Login failed: $errorMessage")
-                Result.Error(errorMessage)
+                RepositoryResult.Error(errorMessage)
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun getProfile(): Result<User> = withContext(Dispatchers.IO) {
+    suspend fun getProfile(): RepositoryResult<User> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.getProfile()
             if (response.isSuccessful) {
@@ -96,24 +96,24 @@ class AuthRepository(
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { user ->
                         tokenManager.saveUser(user) // Update user data
-                        Result.Success(user)
-                    } ?: Result.Error("Failed to get profile: No data returned")
+                        RepositoryResult.Success(user)
+                    } ?: RepositoryResult.Error("Failed to get profile: No data returned")
                 } else {
-                    Result.Error("Failed to get profile: ${responseBody?.message}")
+                    RepositoryResult.Error("Failed to get profile: ${responseBody?.message}")
                 }
             } else {
-                Result.Error("Failed to get profile: ${response.body()?.message}")
+                RepositoryResult.Error("Failed to get profile: ${response.body()?.message}")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun updateProfile(userData: Map<String, Any>): Result<User> = withContext(Dispatchers.IO) {
+    suspend fun updateProfile(userData: Map<String, Any>): RepositoryResult<User> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.updateProfile(userData)
             if (response.isSuccessful) {
@@ -122,20 +122,20 @@ class AuthRepository(
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { user ->
                         tokenManager.saveUser(user) // Update user data
-                        Result.Success(user)
-                    } ?: Result.Error("Failed to update profile: No data returned")
+                        RepositoryResult.Success(user)
+                    } ?: RepositoryResult.Error("Failed to update profile: No data returned")
                 } else {
-                    Result.Error("Failed to update profile: ${responseBody?.message}")
+                    RepositoryResult.Error("Failed to update profile: ${responseBody?.message}")
                 }
             } else {
-                Result.Error("Failed to update profile: ${response.body()?.message}")
+                RepositoryResult.Error("Failed to update profile: ${response.body()?.message}")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 

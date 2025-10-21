@@ -15,7 +15,7 @@ import com.trashbin.app.R
 import com.trashbin.app.data.api.RetrofitClient
 import com.trashbin.app.data.model.PickupResponse
 import com.trashbin.app.data.repository.PickupRepository
-import com.trashbin.app.data.repository.Result
+import com.trashbin.app.data.repository.RepositoryResult
 import com.trashbin.app.ui.viewmodel.PickupViewModel
 import com.trashbin.app.ui.viewmodel.PickupViewModelFactory
 import java.text.NumberFormat
@@ -206,15 +206,15 @@ class MyPickupsActivity : AppCompatActivity() {
 
         viewModel.pickups.observe(this) { result ->
             when (result) {
-                is com.trashbin.app.data.repository.Result.Loading -> {
+                is RepositoryResult.Loading -> {
                     // Tidak perlu tindakan khusus di sini karena isLoading sudah menangani
                 }
-                is com.trashbin.app.data.repository.Result.Success -> {
+                is RepositoryResult.Success -> {
                     val pickups = result.data
                     Log.d("MyPickupsActivity", "Pickups loaded: ${pickups.size}")
                     displayPickups(pickups)
                 }
-                is com.trashbin.app.data.repository.Result.Error -> {
+                is RepositoryResult.Error -> {
                     Log.e("MyPickupsActivity", "Error loading pickups", Exception(result.message))
                     Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
                     showEmptyView()
@@ -224,11 +224,11 @@ class MyPickupsActivity : AppCompatActivity() {
 
         viewModel.pickupAction.observe(this) { result ->
             when (result) {
-                is com.trashbin.app.data.repository.Result.Success -> {
+                is RepositoryResult.Success -> {
                     Toast.makeText(this, "Pickup cancelled successfully", Toast.LENGTH_SHORT).show()
                     loadPickups() // Reload pickups
                 }
-                is com.trashbin.app.data.repository.Result.Error -> {
+                is RepositoryResult.Error -> {
                     Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
                 }
                 else -> {}
@@ -338,7 +338,7 @@ class PickupsAdapter(
     private val onAction: (PickupResponse, String) -> Unit
 ) : RecyclerView.Adapter<PickupsAdapter.PickupViewHolder>() {
 
-    class PickupViewHolder(val view: LinearLayout) : RecyclerView.ViewHolder(view)
+    class PickupViewHolder(itemView: LinearLayout) : RecyclerView.ViewHolder(itemView)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PickupViewHolder {
         val context = parent.context
@@ -361,11 +361,12 @@ class PickupsAdapter(
 
     override fun onBindViewHolder(holder: PickupViewHolder, position: Int) {
         val pickup = pickups[position]
-        val context = holder.view.context
+        val context = holder.itemView.context
+        val holderLayout = holder.itemView as LinearLayout
         val dp = { value: Int -> (value * context.resources.displayMetrics.density).toInt() }
         val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-        holder.view.removeAllViews()
+        holderLayout.removeAllViews()
 
         // Pickup ID and Status
         val headerLayout = LinearLayout(context).apply {
@@ -394,10 +395,10 @@ class PickupsAdapter(
             setTextColor(Color.WHITE)
         })
 
-        holder.view.addView(headerLayout)
+        holderLayout.addView(headerLayout)
 
         // Scheduled date
-        holder.view.addView(TextView(context).apply {
+        holderLayout.addView(TextView(context).apply {
             text = "📅 ${dateFormat.format(Date(pickup.scheduledDate))}"
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(
@@ -409,7 +410,7 @@ class PickupsAdapter(
         })
 
         // Address
-        holder.view.addView(TextView(context).apply {
+        holderLayout.addView(TextView(context).apply {
             text = "📍 ${pickup.address}"
             textSize = 12f
             setTextColor(Color.GRAY)
@@ -423,7 +424,7 @@ class PickupsAdapter(
         })
 
         // Items count
-        holder.view.addView(TextView(context).apply {
+        holderLayout.addView(TextView(context).apply {
             text = "Items: ${pickup.items.size}"
             textSize = 12f
             setTextColor(Color.GRAY)
@@ -437,7 +438,7 @@ class PickupsAdapter(
 
         // Collector info (if assigned)
         if (pickup.collector != null) {
-            holder.view.addView(TextView(context).apply {
+            holderLayout.addView(TextView(context).apply {
                 text = "👤 Collector: ${pickup.collector.name}"
                 textSize = 12f
                 setTextColor(context.resources.getColor(R.color.primary))
@@ -484,9 +485,9 @@ class PickupsAdapter(
             })
         }
 
-        holder.view.addView(buttonLayout)
+        holderLayout.addView(buttonLayout)
 
-        holder.view.setOnClickListener {
+        holderLayout.setOnClickListener {
             onAction(pickup, "view_detail")
         }
     }

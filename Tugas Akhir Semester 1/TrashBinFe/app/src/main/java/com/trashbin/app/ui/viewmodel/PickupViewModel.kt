@@ -11,7 +11,7 @@ import com.trashbin.app.data.model.PickupRequest
 import com.trashbin.app.data.model.PickupResponse
 import com.trashbin.app.data.model.WasteCategory
 import com.trashbin.app.data.repository.PickupRepository
-import com.trashbin.app.data.repository.Result
+import com.trashbin.app.data.repository.RepositoryResult
 import kotlinx.coroutines.launch
 
 class PickupViewModel(private val repository: PickupRepository) : ViewModel() {

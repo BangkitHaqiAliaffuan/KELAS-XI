@@ -17,7 +17,7 @@ class PickupRepository(
     private var cacheTimestamp: Long = 0
     private val CACHE_DURATION = TimeUnit.HOURS.toMillis(1) // 1 hour cache
 
-    suspend fun createPickup(pickupRequest: PickupRequest): Result<PickupResponse> = withContext(Dispatchers.IO) {
+    suspend fun createPickup(pickupRequest: PickupRequest): RepositoryResult<PickupResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.createPickup(pickupRequest)
             if (response.isSuccessful) {
@@ -25,24 +25,24 @@ class PickupRepository(
                 // Check if success field exists and is true, OR if success field is null but data exists
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { pickup ->
-                        Result.Success(pickup)
-                    } ?: Result.Error("Failed to create pickup: No data returned")
+                        RepositoryResult.Success(pickup)
+                    } ?: RepositoryResult.Error("Failed to create pickup: No data returned")
                 } else {
-                    Result.Error(responseBody?.message ?: "Failed to create pickup")
+                    RepositoryResult.Error(responseBody?.message ?: "Failed to create pickup")
                 }
             } else {
-                Result.Error(response.body()?.message ?: "Failed to create pickup")
+                RepositoryResult.Error(response.body()?.message ?: "Failed to create pickup")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun getPickupHistory(status: String? = null, page: Int? = null): Result<List<PickupResponse>> = withContext(Dispatchers.IO) {
+    suspend fun getPickupHistory(status: String? = null, page: Int? = null): RepositoryResult<List<PickupResponse>> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.getPickups(status, page)
             if (response.isSuccessful) {
@@ -50,24 +50,24 @@ class PickupRepository(
                 // Check if success field exists and is true, OR if success field is null but data exists
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { pickups ->
-                        Result.Success(pickups)
-                    } ?: Result.Error("Failed to get pickup history: No data returned")
+                        RepositoryResult.Success(pickups)
+                    } ?: RepositoryResult.Error("Failed to get pickup history: No data returned")
                 } else {
-                    Result.Error(responseBody?.message ?: "Failed to get pickup history")
+                    RepositoryResult.Error(responseBody?.message ?: "Failed to get pickup history")
                 }
             } else {
-                Result.Error(response.body()?.message ?: "Failed to get pickup history")
+                RepositoryResult.Error(response.body()?.message ?: "Failed to get pickup history")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun getPickupDetail(id: Int): Result<PickupResponse> = withContext(Dispatchers.IO) {
+    suspend fun getPickupDetail(id: Int): RepositoryResult<PickupResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.getPickupDetail(id)
             if (response.isSuccessful) {
@@ -75,24 +75,24 @@ class PickupRepository(
                 // Check if success field exists and is true, OR if success field is null but data exists
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { pickup ->
-                        Result.Success(pickup)
-                    } ?: Result.Error("Failed to get pickup detail: No data returned")
+                        RepositoryResult.Success(pickup)
+                    } ?: RepositoryResult.Error("Failed to get pickup detail: No data returned")
                 } else {
-                    Result.Error(responseBody?.message ?: "Failed to get pickup detail")
+                    RepositoryResult.Error(responseBody?.message ?: "Failed to get pickup detail")
                 }
             } else {
-                Result.Error(response.body()?.message ?: "Failed to get pickup detail")
+                RepositoryResult.Error(response.body()?.message ?: "Failed to get pickup detail")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun cancelPickup(id: Int): Result<PickupResponse> = withContext(Dispatchers.IO) {
+    suspend fun cancelPickup(id: Int): RepositoryResult<PickupResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
             val response = apiService.cancelPickup(id, mapOf("reason" to "User cancelled"))
             if (response.isSuccessful) {
@@ -100,27 +100,27 @@ class PickupRepository(
                 // Check if success field exists and is true, OR if success field is null but data exists
                 if (responseBody?.success == true || (responseBody?.success == null && responseBody?.data != null)) {
                     responseBody?.data?.let { pickup ->
-                        Result.Success(pickup)
-                    } ?: Result.Error("Failed to cancel pickup: No data returned")
+                        RepositoryResult.Success(pickup)
+                    } ?: RepositoryResult.Error("Failed to cancel pickup: No data returned")
                 } else {
-                    Result.Error(responseBody?.message ?: "Failed to cancel pickup")
+                    RepositoryResult.Error(responseBody?.message ?: "Failed to cancel pickup")
                 }
             } else {
-                Result.Error(response.body()?.message ?: "Failed to cancel pickup")
+                RepositoryResult.Error(response.body()?.message ?: "Failed to cancel pickup")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 
-    suspend fun getWasteCategories(): Result<List<WasteCategory>> = withContext(Dispatchers.IO) {
+    suspend fun getWasteCategories(): RepositoryResult<List<WasteCategory>> = withContext(Dispatchers.IO) {
         // Check if we have a valid cache
         if (wasteCategoriesCache != null && (System.currentTimeMillis() - cacheTimestamp) < CACHE_DURATION) {
-            return@withContext Result.Success(wasteCategoriesCache!!)
+            return@withContext RepositoryResult.Success(wasteCategoriesCache!!)
         }
 
         return@withContext try {
@@ -132,20 +132,20 @@ class PickupRepository(
                     responseBody?.data?.let { categories ->
                         wasteCategoriesCache = categories
                         cacheTimestamp = System.currentTimeMillis()
-                        Result.Success(categories)
-                    } ?: Result.Error("Failed to get waste categories: No data returned")
+                        RepositoryResult.Success(categories)
+                    } ?: RepositoryResult.Error("Failed to get waste categories: No data returned")
                 } else {
-                    Result.Error(responseBody?.message ?: "Failed to get waste categories")
+                    RepositoryResult.Error(responseBody?.message ?: "Failed to get waste categories")
                 }
             } else {
-                Result.Error(response.body()?.message ?: "Failed to get waste categories")
+                RepositoryResult.Error(response.body()?.message ?: "Failed to get waste categories")
             }
         } catch (e: IOException) {
-            Result.Error("Network error occurred", e)
+            RepositoryResult.Error("Network error occurred", e)
         } catch (e: HttpException) {
-            Result.Error("Request failed: ${e.message()}", e)
+            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            Result.Error("An unexpected error occurred", e)
+            RepositoryResult.Error("An unexpected error occurred", e)
         }
     }
 }
