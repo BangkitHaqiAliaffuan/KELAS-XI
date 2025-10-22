@@ -265,32 +265,34 @@ class ProfileActivity : AppCompatActivity() {
     }
     
     private fun observeViewModel() {
-        authViewModel.profileState.observe(this) { result ->
+        authViewModel.profileResult.observe(this) { result ->
+            progressBar.visibility = View.GONE
+            
             when (result) {
-                is com.trashbin.app.data.repository.Result.Success -> {
+                is com.trashbin.app.data.repository.RepositoryResult.Success -> {
                     val user = result.data
                     Log.d("ProfileActivity", "Profile loaded successfully: ${user.name}")
                     currentUser = user
                     displayUserData(user)
-                    progressBar.visibility = View.GONE
                 }
-                is com.trashbin.app.data.repository.Result.Error -> {
-                    Log.e("ProfileActivity", "Failed to load profile", Exception(result.message, result.exception))
-                    progressBar.visibility = View.GONE
+                is com.trashbin.app.data.repository.RepositoryResult.Error -> {
+                    Log.e("ProfileActivity", "Failed to load profile", Exception(result.message))
                     
                     // Check if it's an authentication error
-                    if (result.message.contains("401") || 
-                        result.message.contains("Unauthorized") ||
-                        result.message.contains("Unauthenticated")) {
+                    val errorMessage = result.message
+                    if (errorMessage?.contains("401") == true || 
+                        errorMessage?.contains("Unauthorized") == true ||
+                        errorMessage?.contains("Unauthenticated") == true) {
                         Toast.makeText(this, "Sesi Anda telah berakhir. Silakan login kembali.", Toast.LENGTH_LONG).show()
                         redirectToLogin()
                     } else {
-                        Toast.makeText(this, "Gagal memuat profil: ${result.message}", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, "Gagal memuat profil: $errorMessage", Toast.LENGTH_LONG).show()
                         // Try to load from cache
                         loadCachedUserData()
                     }
                 }
-                is com.trashbin.app.data.repository.Result.Loading -> {
+                is com.trashbin.app.data.repository.RepositoryResult.Loading -> {
+                    // Handle loading state if needed
                     progressBar.visibility = View.VISIBLE
                 }
             }

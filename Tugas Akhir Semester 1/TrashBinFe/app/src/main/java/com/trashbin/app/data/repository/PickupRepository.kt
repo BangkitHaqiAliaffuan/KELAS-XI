@@ -92,9 +92,10 @@ class PickupRepository(
         }
     }
 
-    suspend fun cancelPickup(id: Int): RepositoryResult<PickupResponse> = withContext(Dispatchers.IO) {
+    suspend fun cancelPickup(id: Int, reason: String? = null): RepositoryResult<PickupResponse> = withContext(Dispatchers.IO) {
         return@withContext try {
-            val response = apiService.cancelPickup(id, mapOf("reason" to "User cancelled"))
+            val reasonParam = reason ?: "User cancelled"
+            val response = apiService.cancelPickup(id, mapOf("reason" to reasonParam))
             if (response.isSuccessful) {
                 val responseBody = response.body()
                 // Check if success field exists and is true, OR if success field is null but data exists

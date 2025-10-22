@@ -333,11 +333,11 @@ class RegisterActivity : AppCompatActivity() {
     private fun setupObservers() {
         viewModel.registerState.observe(this) { result ->
             when (result) {
-                is com.trashbin.app.data.repository.Result.Loading -> {
+                is com.trashbin.app.data.repository.RepositoryResult.Loading -> {
                     btnRegister.isEnabled = false
                     progressBar.visibility = View.VISIBLE
                 }
-                is com.trashbin.app.data.repository.Result.Success -> {
+                is com.trashbin.app.data.repository.RepositoryResult.Success -> {
                     btnRegister.isEnabled = true
                     progressBar.visibility = View.GONE
                     Toast.makeText(this, "Registration successful!", Toast.LENGTH_SHORT).show()
@@ -348,7 +348,7 @@ class RegisterActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }
-                is com.trashbin.app.data.repository.Result.Error -> {
+                is com.trashbin.app.data.repository.RepositoryResult.Error -> {
                     btnRegister.isEnabled = true
                     progressBar.visibility = View.GONE
                     

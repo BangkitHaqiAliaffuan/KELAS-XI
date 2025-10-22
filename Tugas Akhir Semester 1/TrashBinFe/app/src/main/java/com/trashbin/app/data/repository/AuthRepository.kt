@@ -8,12 +8,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.io.IOException
-
-sealed class RepositoryResult<out T> {
-    data class Success<T>(val data: T) : RepositoryResult<T>()
-    data class Error(val message: String, val exception: Exception? = null) : RepositoryResult<Nothing>()
-    object Loading : RepositoryResult<Nothing>()
-}
+import com.trashbin.app.data.repository.RepositoryResult
 
 class AuthRepository(
     private val apiService: ApiService,
@@ -42,17 +37,10 @@ class AuthRepository(
                     422 -> "Validation failed"
                     else -> "Registration failed"
                 }
-                RepositoryResult.Error(errorMessage)
+                RepositoryResult.Error(errorMessage, null)
             }
-        } catch (e: IOException) {
-            RepositoryResult.Error("Network error occurred", e)
-        } catch (e: HttpException) {
-            // Parse error body dari HTTP exception untuk validasi errors
-            val errorBody = e.response()?.errorBody()?.string()
-            val errorMessage = errorBody ?: "Request failed: ${e.message()}"
-            RepositoryResult.Error(errorMessage, e)
         } catch (e: Exception) {
-            RepositoryResult.Error("An unexpected error occurred", e)
+            RepositoryResult.Error(e.message ?: "Registration error", e)
         }
     }
 
@@ -76,14 +64,10 @@ class AuthRepository(
                     "Login failed"
                 }
                 android.util.Log.d("AuthRepository", "Login failed: $errorMessage")
-                RepositoryResult.Error(errorMessage)
+                RepositoryResult.Error(errorMessage, null)
             }
-        } catch (e: IOException) {
-            RepositoryResult.Error("Network error occurred", e)
-        } catch (e: HttpException) {
-            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            RepositoryResult.Error("An unexpected error occurred", e)
+            RepositoryResult.Error(e.message ?: "Login error", e)
         }
     }
 
@@ -97,19 +81,15 @@ class AuthRepository(
                     responseBody?.data?.let { user ->
                         tokenManager.saveUser(user) // Update user data
                         RepositoryResult.Success(user)
-                    } ?: RepositoryResult.Error("Failed to get profile: No data returned")
+                    } ?: RepositoryResult.Error("Failed to get profile: No data returned", null)
                 } else {
-                    RepositoryResult.Error("Failed to get profile: ${responseBody?.message}")
+                    RepositoryResult.Error("Failed to get profile: ${responseBody?.message}", null)
                 }
             } else {
-                RepositoryResult.Error("Failed to get profile: ${response.body()?.message}")
+                RepositoryResult.Error("Failed to get profile: ${response.body()?.message}", null)
             }
-        } catch (e: IOException) {
-            RepositoryResult.Error("Network error occurred", e)
-        } catch (e: HttpException) {
-            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            RepositoryResult.Error("An unexpected error occurred", e)
+            RepositoryResult.Error(e.message ?: "Profile fetch error", e)
         }
     }
 
@@ -123,19 +103,15 @@ class AuthRepository(
                     responseBody?.data?.let { user ->
                         tokenManager.saveUser(user) // Update user data
                         RepositoryResult.Success(user)
-                    } ?: RepositoryResult.Error("Failed to update profile: No data returned")
+                    } ?: RepositoryResult.Error("Failed to update profile: No data returned", null)
                 } else {
-                    RepositoryResult.Error("Failed to update profile: ${responseBody?.message}")
+                    RepositoryResult.Error("Failed to update profile: ${responseBody?.message}", null)
                 }
             } else {
-                RepositoryResult.Error("Failed to update profile: ${response.body()?.message}")
+                RepositoryResult.Error("Failed to update profile: ${response.body()?.message}", null)
             }
-        } catch (e: IOException) {
-            RepositoryResult.Error("Network error occurred", e)
-        } catch (e: HttpException) {
-            RepositoryResult.Error("Request failed: ${e.message()}", e)
         } catch (e: Exception) {
-            RepositoryResult.Error("An unexpected error occurred", e)
+            RepositoryResult.Error(e.message ?: "Profile update error", e)
         }
     }
 

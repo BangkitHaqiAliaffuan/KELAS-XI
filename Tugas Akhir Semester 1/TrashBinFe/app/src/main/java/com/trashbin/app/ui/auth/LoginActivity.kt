@@ -265,21 +265,26 @@ class LoginActivity : AppCompatActivity() {
         }
 
         viewModel.loginResult.observe(this) { result ->
-            Log.d("LoginActivity", "Login result received: ${result.isSuccess}")
-            if (result.isSuccess) {
-                Log.d("LoginActivity", "Login successful, starting redirect")
-                // Login berhasil, redirect ke MainActivity
-                showSuccessMessage("Login successful!") {
-                    Log.d("LoginActivity", "Success dialog callback triggered")
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                    startActivity(intent)
-                    finish()
+            when (result) {
+                is com.trashbin.app.data.repository.RepositoryResult.Success -> {
+                    Log.d("LoginActivity", "Login successful, starting redirect")
+                    // Login berhasil, redirect ke MainActivity
+                    showSuccessMessage("Login successful!") {
+                        Log.d("LoginActivity", "Success dialog callback triggered")
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    }
                 }
-            } else {
-                Log.d("LoginActivity", "Login failed: ${result.exceptionOrNull()?.message}")
-                // Login gagal, tampilkan error
-                showErrorMessage(result.exceptionOrNull()?.message ?: "Login failed")
+                is com.trashbin.app.data.repository.RepositoryResult.Error -> {
+                    Log.d("LoginActivity", "Login failed: ${result.message}")
+                    // Login gagal, tampilkan error
+                    showErrorMessage(result.message ?: "Login failed")
+                }
+                is com.trashbin.app.data.repository.RepositoryResult.Loading -> {
+                    // Handle loading if needed
+                }
             }
         }
     }

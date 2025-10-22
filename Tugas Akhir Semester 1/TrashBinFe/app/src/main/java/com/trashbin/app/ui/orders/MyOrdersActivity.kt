@@ -205,29 +205,37 @@ class MyOrdersActivity : AppCompatActivity() {
         }
 
         viewModel.orders.observe(this) { result ->
-            result.fold(
-                onSuccess = { orders ->
+            when (result) {
+                is com.trashbin.app.data.repository.RepositoryResult.Success -> {
+                    val orders = result.data
                     Log.d("MyOrdersActivity", "Orders loaded: ${orders.size}")
                     displayOrders(orders)
-                },
-                onFailure = { error ->
-                    Log.e("MyOrdersActivity", "Error loading orders", error)
-                    Toast.makeText(this, "Error: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+                is com.trashbin.app.data.repository.RepositoryResult.Error -> {
+                    Log.e("MyOrdersActivity", "Error loading orders", Exception(result.message))
+                    Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
                     showEmptyView()
                 }
-            )
+                is com.trashbin.app.data.repository.RepositoryResult.Loading -> {
+                    // Handle loading state if needed
+                }
+            }
         }
 
         viewModel.orderAction.observe(this) { result ->
-            result.fold(
-                onSuccess = { order ->
+            when (result) {
+                is com.trashbin.app.data.repository.RepositoryResult.Success -> {
+                    val order = result.data
                     Toast.makeText(this, "Order updated successfully", Toast.LENGTH_SHORT).show()
                     loadOrders() // Reload orders
-                },
-                onFailure = { error ->
-                    Toast.makeText(this, "Error: ${error.message}", Toast.LENGTH_LONG).show()
                 }
-            )
+                is com.trashbin.app.data.repository.RepositoryResult.Error -> {
+                    Toast.makeText(this, "Error: ${result.message}", Toast.LENGTH_LONG).show()
+                }
+                is com.trashbin.app.data.repository.RepositoryResult.Loading -> {
+                    // Handle loading state if needed
+                }
+            }
         }
     }
 

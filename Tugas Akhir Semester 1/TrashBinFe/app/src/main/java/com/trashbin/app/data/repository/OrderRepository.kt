@@ -31,16 +31,16 @@ class OrderRepository(private val apiService: ApiService) {
                     } else {
                         val error = body.message ?: "Failed to fetch orders"
                         Log.e("OrderRepository", "API error: $error")
-                        RepositoryResult.Error(error)
+                        RepositoryResult.Error(error, null)
                     }
                 } else {
                     Log.e("OrderRepository", "Response body is null")
-                    RepositoryResult.Error("Empty response")
+                    RepositoryResult.Error("Empty response", null)
                 }
             } else {
                 val errorMsg = "HTTP ${response.code()}: ${response.message()}"
                 Log.e("OrderRepository", errorMsg)
-                RepositoryResult.Error(errorMsg)
+                RepositoryResult.Error(errorMsg, null)
             }
         } catch (e: Exception) {
             Log.e("OrderRepository", "Exception fetching orders", e)

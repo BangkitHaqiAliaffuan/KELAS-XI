@@ -340,16 +340,16 @@ class PickupsAdapter(
 
     class PickupViewHolder(itemView: LinearLayout) : RecyclerView.ViewHolder(itemView)
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PickupViewHolder {
+    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): PickupViewHolder {
         val context = parent.context
         val dp = { value: Int -> (value * context.resources.displayMetrics.density).toInt() }
 
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(16), dp(12), dp(16), dp(12))
-            layoutParams = RecyclerView.LayoutParams(
-                RecyclerView.LayoutParams.MATCH_PARENT,
-                RecyclerView.LayoutParams.WRAP_CONTENT
+            layoutParams = androidx.recyclerview.widget.RecyclerView.LayoutParams(
+                androidx.recyclerview.widget.RecyclerView.LayoutParams.MATCH_PARENT,
+                androidx.recyclerview.widget.RecyclerView.LayoutParams.WRAP_CONTENT
             ).apply {
                 bottomMargin = dp(8)
             }

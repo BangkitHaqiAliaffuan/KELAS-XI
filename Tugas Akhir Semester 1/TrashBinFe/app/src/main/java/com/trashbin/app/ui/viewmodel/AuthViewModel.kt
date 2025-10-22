@@ -10,25 +10,25 @@ import com.trashbin.app.data.api.TokenManager
 import com.trashbin.app.data.model.LoginResponse
 import com.trashbin.app.data.model.User
 import com.trashbin.app.data.repository.AuthRepository
-import com.trashbin.app.data.repository.Result
+import com.trashbin.app.data.repository.RepositoryResult
 import kotlinx.coroutines.launch
 
 class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
 
-    private val _loginState = MutableLiveData<Result<LoginResponse>>()
-    val loginState: LiveData<Result<LoginResponse>> = _loginState
-
-    private val _loginResult = MutableLiveData<kotlin.Result<LoginResponse>>()
-    val loginResult: LiveData<kotlin.Result<LoginResponse>> = _loginResult
+    private val _loginResult = MutableLiveData<RepositoryResult<LoginResponse>>()
+    val loginResult: LiveData<RepositoryResult<LoginResponse>> = _loginResult
 
     private val _isLoading = MutableLiveData<Boolean>()
     val isLoading: LiveData<Boolean> = _isLoading
 
-    private val _registerState = MutableLiveData<Result<LoginResponse>>()
-    val registerState: LiveData<Result<LoginResponse>> = _registerState
+    private val _registerResult = MutableLiveData<RepositoryResult<LoginResponse>>()
+    val registerResult: LiveData<RepositoryResult<LoginResponse>> = _registerResult
 
-    private val _profileState = MutableLiveData<Result<User>>()
-    val profileState: LiveData<Result<User>> = _profileState
+    private val _profileResult = MutableLiveData<RepositoryResult<User>>()
+    val profileResult: LiveData<RepositoryResult<User>> = _profileResult
+    
+    // Alias for registerResult to match what RegisterActivity expects
+    val registerState: LiveData<RepositoryResult<LoginResponse>> = _registerResult
 
     companion object {
         @JvmStatic
@@ -50,24 +50,11 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 _isLoading.value = false
                 
                 Log.d("AuthViewModel", "Repository result: $result")
-                when (result) {
-                    is Result.Success -> {
-                        Log.d("AuthViewModel", "Login successful, setting loginResult to success")
-                        _loginResult.value = kotlin.Result.success(result.data)
-                    }
-                    is Result.Error -> {
-                        Log.d("AuthViewModel", "Login failed: ${result.message}")
-                        _loginResult.value = kotlin.Result.failure(Exception(result.message))
-                    }
-                    else -> {
-                        Log.d("AuthViewModel", "Unknown result type")
-                        _loginResult.value = kotlin.Result.failure(Exception("Unknown error"))
-                    }
-                }
+                _loginResult.value = result
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Exception during login", e)
                 _isLoading.value = false
-                _loginResult.value = kotlin.Result.failure(e)
+                _loginResult.value = RepositoryResult.Error(e.message ?: "Login error", e)
             }
         }
     }
@@ -83,17 +70,29 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         lng: Double?
     ) {
         viewModelScope.launch {
-            _registerState.value = Result.Loading
-            val result = repository.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
-            _registerState.value = result
+            _isLoading.value = true
+            try {
+                val result = repository.register(name, email, phone, password, passwordConfirmation, role, lat, lng)
+                _isLoading.value = false
+                _registerResult.value = result
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _registerResult.value = RepositoryResult.Error(e.message ?: "Registration error", e)
+            }
         }
     }
 
     fun getProfile() {
         viewModelScope.launch {
-            _profileState.value = Result.Loading
-            val result = repository.getProfile()
-            _profileState.value = result
+            _isLoading.value = true
+            try {
+                val result = repository.getProfile()
+                _isLoading.value = false
+                _profileResult.value = result
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _profileResult.value = RepositoryResult.Error(e.message ?: "Profile fetch error", e)
+            }
         }
     }
 

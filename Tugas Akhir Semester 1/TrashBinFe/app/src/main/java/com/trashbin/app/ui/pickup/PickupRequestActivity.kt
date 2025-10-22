@@ -18,7 +18,7 @@ import com.trashbin.app.data.model.WasteCategory
 import com.trashbin.app.ui.adapters.PickupItemAdapter
 import com.trashbin.app.ui.viewmodel.PickupViewModel
 import com.trashbin.app.utils.CurrencyHelper
-import com.trashbin.app.data.repository.Result
+import com.trashbin.app.data.repository.RepositoryResult
 import java.util.*
 
 class PickupRequestActivity : AppCompatActivity() {
@@ -381,16 +381,17 @@ class PickupRequestActivity : AppCompatActivity() {
         // Observe result
         viewModel.createState.observe(this) { result ->
             when (result) {
-                is Result.Loading -> showLoading(true)
-                is Result.Success -> {
+                is RepositoryResult.Loading -> showLoading(true)
+                is RepositoryResult.Success -> {
                     showLoading(false)
                     Toast.makeText(this, "Permintaan penjemputan berhasil dibuat", Toast.LENGTH_SHORT).show()
                     finish()
                 }
-                is Result.Error -> {
+                is RepositoryResult.Error -> {
                     showLoading(false)
                     Toast.makeText(this, result.message, Toast.LENGTH_SHORT).show()
                 }
+                else -> {} // Handle any other cases if needed
             }
         }
     }
@@ -413,7 +414,7 @@ class PickupRequestActivity : AppCompatActivity() {
         viewModel.categories.observe(this) { result ->
             android.util.Log.d("PickupRequestActivity", "Categories result: $result")
             when (result) {
-                is Result.Success -> {
+                is RepositoryResult.Success -> {
                     android.util.Log.d("PickupRequestActivity", "Categories loaded: ${result.data.size} items")
                     result.data.forEach { category ->
                         android.util.Log.d("PickupRequestActivity", "Category: ${category.name} (ID: ${category.id})")
@@ -436,14 +437,15 @@ class PickupRequestActivity : AppCompatActivity() {
                     
                     android.util.Log.d("PickupRequestActivity", "Spinner setup complete")
                 }
-                is Result.Error -> {
+                is RepositoryResult.Error -> {
                     android.util.Log.e("PickupRequestActivity", "Failed to load categories: ${result.message}")
                     Toast.makeText(this, "Failed to load categories: ${result.message}", Toast.LENGTH_LONG).show()
                 }
-                is Result.Loading -> {
+                is RepositoryResult.Loading -> {
                     android.util.Log.d("PickupRequestActivity", "Loading categories...")
                     // Show loading if needed
                 }
+                else -> {} // Handle any other cases if needed
             }
         }
     }
