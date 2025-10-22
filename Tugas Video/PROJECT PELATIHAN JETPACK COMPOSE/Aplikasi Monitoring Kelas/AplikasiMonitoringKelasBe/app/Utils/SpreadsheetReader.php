@@ -28,7 +28,12 @@ class SpreadsheetReader
         if ($extension === 'csv') {
             return self::parseCsv($filePath, $rules);
         } elseif ($extension === 'xlsx' || $extension === 'xls') {
-            return self::parseXlsx($filePath, $rules);
+            try {
+                return self::parseXlsx($filePath, $rules);
+            } catch (Exception $e) {
+                // If XLSX parsing fails, throw a more informative error
+                throw new Exception($e->getMessage());
+            }
         } else {
             throw new Exception('Unsupported file type: ' . $extension);
         }
@@ -55,7 +60,7 @@ class SpreadsheetReader
      */
     protected static function parseXlsx(string $filePath, array $rules = []): array
     {
-        // Check if we can handle XLSX files
+        // Check if we can handle XLSX files with PhpOffice\PhpSpreadsheet
         if (class_exists('\\PhpOffice\\PhpSpreadsheet\\IOFactory')) {
             // Use PhpOffice\PhpSpreadsheet to read XLSX files
             $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
@@ -120,8 +125,13 @@ class SpreadsheetReader
             
             return [];
         } else {
-            // If PhpOffice\PhpSpreadsheet is not available, throw an exception
-            throw new Exception('XLSX support requires PhpOffice\PhpSpreadsheet package. Please install it with: composer require phpoffice/phpspreadsheet');
+            // Try to use our simple XLSX reader
+            try {
+                return \App\Utils\SimpleXlsxReader::parse($filePath);
+            } catch (Exception $e) {
+                // If our simple reader fails, throw a more informative exception
+                throw new Exception('XLSX support requires PhpOffice\PhpSpreadsheet package. Please install it with: composer require phpoffice/phpspreadsheet. Alternatively, convert your file to CSV format.');
+            }
         }
     }
 }

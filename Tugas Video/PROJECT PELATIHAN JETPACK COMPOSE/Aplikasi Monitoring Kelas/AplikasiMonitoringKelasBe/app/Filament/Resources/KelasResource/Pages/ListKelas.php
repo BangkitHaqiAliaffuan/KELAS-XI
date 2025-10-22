@@ -31,8 +31,17 @@ class ListKelas extends ListRecords
                 ])
                 ->action(function (array $data) {
                     try {
+                        // Get the uploaded file from the data array
+                        $uploadedFile = $data['upload'];
+                        
+                        // Check if it's a valid uploaded file
+                        if (!$uploadedFile || !($uploadedFile instanceof \Illuminate\Http\UploadedFile)) {
+                            throw new \Exception('Invalid file upload. Please make sure you\'ve selected a valid file.');
+                        }
+                        
+                        // Import the data
                         $importer = new KelasImport();
-                        $result = $importer->import($data['upload']);
+                        $result = $importer->import($uploadedFile);
 
                         if (count($result['errors']) > 0) {
                             Notification::make()
