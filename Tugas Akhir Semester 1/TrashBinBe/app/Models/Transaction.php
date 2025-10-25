@@ -22,6 +22,7 @@ class Transaction extends Model
         'amount',
         'points_earned',
         'description',
+        'payment_method',
     ];
 
     /**
@@ -32,6 +33,7 @@ class Transaction extends Model
     protected $casts = [
         'amount' => 'decimal:2',
         'points_earned' => 'integer',
+        'payment_method' => 'string',
     ];
 
     /**
