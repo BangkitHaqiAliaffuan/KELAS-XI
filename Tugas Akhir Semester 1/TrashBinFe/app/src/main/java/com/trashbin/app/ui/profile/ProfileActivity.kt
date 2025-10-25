@@ -30,6 +30,7 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var tvAddress: TextView
     private lateinit var tvPoints: TextView
     private lateinit var tvRating: TextView
+    private lateinit var tvTrashpay: TextView
     private lateinit var btnEditProfile: MaterialButton
     private lateinit var btnMyOrders: MaterialButton
     private lateinit var btnMyPickups: MaterialButton
@@ -38,6 +39,8 @@ class ProfileActivity : AppCompatActivity() {
     
     private lateinit var authViewModel: AuthViewModel
     private var currentUser: User? = null
+    
+    // Reference to TrashPay TextView (created inline in the layout)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -193,6 +196,30 @@ class ProfileActivity : AppCompatActivity() {
         
         statsLayout.addView(pointsLayout)
         
+        // TrashPay Balance
+        val trashpayLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        
+        val trashpayLabel = TextView(this).apply {
+            text = "TrashPay"
+            textSize = 12f
+            setTextColor(resources.getColor(R.color.gray_600))
+            gravity = android.view.Gravity.CENTER
+        }
+        trashpayLayout.addView(trashpayLabel)
+        
+        tvTrashpay = TextView(this).apply {
+            text = "Rp 0"
+            textSize = 18f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            gravity = android.view.Gravity.CENTER
+        }
+        trashpayLayout.addView(tvTrashpay)
+        
+        statsLayout.addView(trashpayLayout)
+        
         // Rating
         val ratingLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -325,6 +352,7 @@ class ProfileActivity : AppCompatActivity() {
         tvPhone.text = user.phone ?: "No phone number"
         tvAddress.text = user.address ?: "No address"
         tvPoints.text = user.points.toString()
+        tvTrashpay.text = "Rp ${String.format("%.2f", user.trashpayAmount)}"
         tvRating.text = "⭐ ${user.rating ?: 0.0}"
         
         // Load profile picture if available

@@ -25,6 +25,7 @@ class UserResource extends JsonResource
             'lat' => $this->lat,
             'lng' => $this->lng,
             'points' => $this->points,
+            'trashpay_amount' => $this->trashpay_amount,
             'is_verified' => $this->is_verified,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

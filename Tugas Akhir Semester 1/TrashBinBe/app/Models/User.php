@@ -28,6 +28,7 @@ class User extends Authenticatable
         'lat',
         'lng',
         'points',
+        'trashpay_amount',
         'is_verified',
         'fcm_token',
     ];
@@ -55,6 +56,7 @@ class User extends Authenticatable
             'lat' => 'decimal:8',
             'lng' => 'decimal:8',
             'points' => 'integer',
+            'trashpay_amount' => 'decimal:2',
             'is_verified' => 'boolean',
         ];
     }

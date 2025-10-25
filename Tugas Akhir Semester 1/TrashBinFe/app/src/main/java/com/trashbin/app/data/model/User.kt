@@ -13,6 +13,7 @@ data class User(
     @SerializedName("lat") val lat: Double?,
     @SerializedName("lng") val lng: Double?,
     @SerializedName("points") val points: Int,
+    @SerializedName("trashpay_amount") val trashpayAmount: Double = 0.0,
     @SerializedName("is_verified") val isVerified: Boolean,
     @SerializedName("rating") val rating: Double?
 )
