@@ -1,11 +1,12 @@
 package com.trashbin.app.ui.pickup
 
 import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import android.view.Gravity
 import android.os.Bundle
 import android.view.View
 import android.widget.*
-import androidx.activity.viewModels
+import androidx.lifecycle.ViewModelProvider
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -17,12 +18,13 @@ import com.trashbin.app.data.model.PickupItemRequest
 import com.trashbin.app.data.model.WasteCategory
 import com.trashbin.app.ui.adapters.PickupItemAdapter
 import com.trashbin.app.ui.viewmodel.PickupViewModel
+import com.trashbin.app.ui.viewmodel.PickupViewModelFactory
 import com.trashbin.app.utils.CurrencyHelper
 import com.trashbin.app.data.repository.RepositoryResult
 import java.util.*
 
 class PickupRequestActivity : AppCompatActivity() {
-    private val viewModel: PickupViewModel by viewModels()
+    private lateinit var viewModel: PickupViewModel
     
     // UI Components
     private lateinit var scrollView: ScrollView
@@ -32,7 +34,10 @@ class PickupRequestActivity : AppCompatActivity() {
     private lateinit var btnPickLocation: Button
     private lateinit var scheduleLabel: TextView
     private lateinit var scheduledDateInputLayout: TextInputLayout
+    private lateinit var scheduledTimeInputLayout: TextInputLayout
     private lateinit var etScheduledDate: TextInputEditText
+    private lateinit var etScheduledTime: TextInputEditText
+    private lateinit var btnPickupNow: Button
     private lateinit var itemsLabel: TextView
     private lateinit var categorySpinner: Spinner
     private lateinit var etWeight: TextInputEditText
@@ -54,6 +59,12 @@ class PickupRequestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Setup the ViewModel with factory
+        val apiService = com.trashbin.app.data.api.RetrofitClient.apiService
+        val repository = com.trashbin.app.data.repository.PickupRepository(apiService)
+        val factory = PickupViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, factory)[PickupViewModel::class.java]
         
         setupUI()
         setupRecyclerView()
@@ -133,21 +144,58 @@ class PickupRequestActivity : AppCompatActivity() {
         }
         mainLayout.addView(scheduleLabel)
 
+        // Date and Time Input Layout
+        val dateTimeLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+        }
+
         // Scheduled Date Input
         scheduledDateInputLayout = TextInputLayout(this).apply {
-            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
         }
         etScheduledDate = TextInputEditText(this).apply {
             id = View.generateViewId()
             isClickable = false
             isFocusable = false
             isFocusableInTouchMode = false
-            hint = "Pilih Tanggal"
+            hint = "Tanggal"
             setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_calendar, 0)
             inputType = android.text.InputType.TYPE_NULL
         }
         scheduledDateInputLayout.addView(etScheduledDate)
-        mainLayout.addView(scheduledDateInputLayout)
+
+        // Scheduled Time Input
+        scheduledTimeInputLayout = TextInputLayout(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = (8 * resources.displayMetrics.density).toInt()
+            }
+        }
+        etScheduledTime = TextInputEditText(this).apply {
+            id = View.generateViewId()
+            isClickable = false
+            isFocusable = false
+            isFocusableInTouchMode = false
+            hint = "Waktu"
+            setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_info, 0) // Use available drawable
+            inputType = android.text.InputType.TYPE_NULL
+        }
+        scheduledTimeInputLayout.addView(etScheduledTime)
+
+        dateTimeLayout.addView(scheduledDateInputLayout)
+        dateTimeLayout.addView(scheduledTimeInputLayout)
+        mainLayout.addView(dateTimeLayout)
+
+        // Pickup Now Button
+        btnPickupNow = Button(this).apply {
+            text = "Jemput Sekarang"
+            setPadding(0, (8 * resources.displayMetrics.density).toInt(), 0, 0)
+            setBackgroundColor(resources.getColor(R.color.primary)) // Use the app's primary color
+            setTextColor(resources.getColor(android.R.color.white))
+        }
+        mainLayout.addView(btnPickupNow)
 
         // Items Label
         itemsLabel = TextView(this).apply {
@@ -302,6 +350,14 @@ class PickupRequestActivity : AppCompatActivity() {
             showDatePicker()
         }
         
+        etScheduledTime.setOnClickListener {
+            showTimePicker()
+        }
+        
+        btnPickupNow.setOnClickListener {
+            setPickupNow()
+        }
+        
         btnPickLocation.setOnClickListener {
             // Open map for location selection
             Toast.makeText(this, "Fitur pilih lokasi dari peta akan diimplementasikan", Toast.LENGTH_SHORT).show()
@@ -334,12 +390,45 @@ class PickupRequestActivity : AppCompatActivity() {
             },
             year, month, day
         ).apply {
-            // Set minimum date to tomorrow
-            val tomorrow = Calendar.getInstance()
-            tomorrow.add(Calendar.DAY_OF_MONTH, 1)
-            datePicker.minDate = tomorrow.timeInMillis
+            // Set minimum date to today (allowing for "pickup now" feature)
+            datePicker.minDate = calendar.timeInMillis
         }
         datePickerDialog.show()
+    }
+    
+    private fun showTimePicker() {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        val timePickerDialog = TimePickerDialog(
+            this,
+            { _, selectedHour, selectedMinute ->
+                val formattedHour = String.format("%02d", selectedHour)
+                val formattedMinute = String.format("%02d", selectedMinute)
+                etScheduledTime.setText("${formattedHour}:${formattedMinute}")
+            },
+            hour, minute, true
+        )
+        timePickerDialog.show()
+    }
+    
+    private fun setPickupNow() {
+        val now = Calendar.getInstance()
+        val year = now.get(Calendar.YEAR)
+        val month = now.get(Calendar.MONTH) + 1 // Month starts from 0
+        val day = now.get(Calendar.DAY_OF_MONTH)
+        val hour = now.get(Calendar.HOUR_OF_DAY)
+        val minute = now.get(Calendar.MINUTE)
+        
+        selectedDate = now
+        etScheduledDate.setText("${day}/${month}/${year}")
+        
+        val formattedHour = String.format("%02d", hour)
+        val formattedMinute = String.format("%02d", minute)
+        etScheduledTime.setText("${formattedHour}:${formattedMinute}")
+        
+        Toast.makeText(this, "Jadwal diatur ke waktu sekarang", Toast.LENGTH_SHORT).show()
     }
     
     private fun validateInput(): Boolean {
@@ -350,6 +439,12 @@ class PickupRequestActivity : AppCompatActivity() {
         
         if (selectedDate == null) {
             Toast.makeText(this, "Pilih tanggal penjemputan", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        
+        val timeText = etScheduledTime.text.toString().trim()
+        if (timeText.isEmpty()) {
+            Toast.makeText(this, "Pilih waktu penjemputan", Toast.LENGTH_SHORT).show()
             return false
         }
         
@@ -368,15 +463,31 @@ class PickupRequestActivity : AppCompatActivity() {
         // Show loading
         showLoading(true)
         
-        // Convert Calendar to string format
-        val dateFormatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
-        val dateString = dateFormatter.format(selectedDate!!.time)
+        // Get selected date and time
+        val dateText = etScheduledDate.text.toString()
+        val timeText = etScheduledTime.text.toString()
+        
+        // Validate that both date and time are selected
+        if (dateText.isEmpty() || timeText.isEmpty()) {
+            Toast.makeText(this, "Pilih tanggal dan waktu penjemputan", Toast.LENGTH_SHORT).show()
+            showLoading(false)
+            return
+        }
+        
+        // Format the datetime string for the API (format: "yyyy-MM-dd HH:mm:ss")
+        val datetimeString = formatDateTimeForApi(dateText, timeText)
+        
+        if (datetimeString.isEmpty()) {
+            Toast.makeText(this, "Format tanggal/waktu tidak valid", Toast.LENGTH_SHORT).show()
+            showLoading(false)
+            return
+        }
         
         // Set items in ViewModel
         viewModel.selectedItems.value = pickupItems.toMutableList()
         
         // Create pickup request (need coordinates - using default for now)
-        viewModel.createPickup(address, -6.200000, 106.816666, dateString, notes)
+        viewModel.createPickup(address, -6.200000, 106.816666, datetimeString, notes)
         
         // Observe result
         viewModel.createState.observe(this) { result ->
@@ -393,6 +504,23 @@ class PickupRequestActivity : AppCompatActivity() {
                 }
                 else -> {} // Handle any other cases if needed
             }
+        }
+    }
+    
+    private fun formatDateTimeForApi(dateText: String, timeText: String): String {
+        try {
+            // Parse the date format from dd/MM/yyyy to yyyy-MM-dd
+            val dateInputFormat = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault())
+            val dateOutputFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+            val date = dateInputFormat.parse(dateText)
+            
+            val formattedDate = if (date != null) dateOutputFormat.format(date) else return ""
+            
+            // Combine date with time (assuming time is in HH:mm format)
+            return "$formattedDate $timeText:00"
+        } catch (e: Exception) {
+            android.util.Log.e("PickupRequestActivity", "Error formatting datetime: ${e.message}")
+            return ""
         }
     }
     

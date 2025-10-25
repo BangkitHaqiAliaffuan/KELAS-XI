@@ -28,7 +28,6 @@ class MarketplaceFragment : Fragment() {
     private lateinit var searchView: SearchView
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var recyclerView: RecyclerView
-    private lateinit var fabCreate: FloatingActionButton
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -79,25 +78,8 @@ class MarketplaceFragment : Fragment() {
 
         swipeRefresh.addView(recyclerView)
 
-        // Create FAB
-        fabCreate = FloatingActionButton(requireContext()).apply {
-            id = View.generateViewId()
-            setImageResource(R.drawable.ic_add)
-            contentDescription = "Buat listing baru"
-            val fabParams = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
-                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT,
-                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = Gravity.END or Gravity.BOTTOM
-                setMargins(0, 0, (16 * resources.displayMetrics.density).toInt(), 
-                    (16 * resources.displayMetrics.density).toInt())
-            }
-            layoutParams = fabParams
-        }
-
         coordinatorLayout.addView(appBarLayout)
         coordinatorLayout.addView(swipeRefresh)
-        coordinatorLayout.addView(fabCreate)
 
         return coordinatorLayout
     }
@@ -168,11 +150,6 @@ class MarketplaceFragment : Fragment() {
                 return false
             }
         })
-        
-        fabCreate.setOnClickListener {
-            val intent = android.content.Intent(requireContext(), CreateListingActivity::class.java)
-            requireContext().startActivity(intent)
-        }
         
         swipeRefresh.setOnRefreshListener {
             viewModel.loadListings()

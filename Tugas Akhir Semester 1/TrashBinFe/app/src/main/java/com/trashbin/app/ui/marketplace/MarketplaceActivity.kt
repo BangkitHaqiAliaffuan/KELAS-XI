@@ -22,7 +22,6 @@ class MarketplaceActivity : AppCompatActivity() {
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyView: TextView
-    private lateinit var fabCreate: FloatingActionButton
     private lateinit var adapter: MarketplaceAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,32 +96,8 @@ class MarketplaceActivity : AppCompatActivity() {
             )
         }
         
-        // Create listing FAB
-        val fabLayout = androidx.coordinatorlayout.widget.CoordinatorLayout(this).apply {
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-        
-        fabCreate = FloatingActionButton(this).apply {
-            setImageResource(R.drawable.ic_add) // Assuming this drawable exists
-            contentDescription = "Buat listing baru"
-            layoutParams = androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams(
-                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT,
-                androidx.coordinatorlayout.widget.CoordinatorLayout.LayoutParams.WRAP_CONTENT
-            ).apply {
-                gravity = android.view.Gravity.END or android.view.Gravity.BOTTOM
-                setMargins(0, 0, (16 * resources.displayMetrics.density).toInt(), 
-                    (16 * resources.displayMetrics.density).toInt())
-            }
-        }
-        
-        fabLayout.addView(mainLayout)
-        fabLayout.addView(emptyView)
-        fabLayout.addView(fabCreate)
-        
-        setContentView(fabLayout)
+        mainLayout.addView(emptyView)
+        setContentView(mainLayout)
     }
     
     private fun setupRecyclerView() {
@@ -166,10 +141,6 @@ class MarketplaceActivity : AppCompatActivity() {
     private fun setupListeners() {
         swipeRefresh.setOnRefreshListener {
             viewModel.loadListings()
-        }
-        
-        fabCreate.setOnClickListener {
-            startActivity(Intent(this, CreateListingActivity::class.java))
         }
     }
     

@@ -79,8 +79,21 @@
             android:windowSoftInputMode="adjustResize" />
             
         <activity
+            android:name=".ui.orders.MyOrdersActivity"
+            android:exported="false" />
+            
+        <activity
+            android:name=".ui.pickups.MyPickupsActivity"
+            android:exported="false" />
+            
+        <activity
             android:name=".ui.profile.ProfileActivity"
             android:exported="false" />
+            
+        <activity
+            android:name=".ui.profile.EditProfileActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
 
 
 

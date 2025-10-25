@@ -339,7 +339,8 @@ class ProfileActivity : AppCompatActivity() {
     
     private fun setupListeners() {
         btnEditProfile.setOnClickListener {
-            Toast.makeText(this, "Edit profile feature coming soon", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, EditProfileActivity::class.java)
+            startActivity(intent)
         }
         
         btnMyOrders.setOnClickListener {

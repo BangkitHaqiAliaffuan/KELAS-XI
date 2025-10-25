@@ -96,6 +96,20 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
         }
     }
 
+    fun updateProfile(userData: Map<String, Any>) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val result = repository.updateProfile(userData)
+                _isLoading.value = false
+                _profileResult.value = result
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _profileResult.value = RepositoryResult.Error(e.message ?: "Profile update error", e)
+            }
+        }
+    }
+
     fun logout() {
         repository.logout()
     }

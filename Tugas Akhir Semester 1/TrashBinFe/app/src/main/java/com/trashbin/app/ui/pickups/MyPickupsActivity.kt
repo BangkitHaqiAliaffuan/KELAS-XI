@@ -297,8 +297,17 @@ class MyPickupsActivity : AppCompatActivity() {
     }
 
     private fun buildPickupDetailMessage(pickup: PickupResponse): String {
-        val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
         val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+
+        var scheduledDateStr = "N/A"
+        try {
+            val scheduledDate = inputFormat.parse(pickup.scheduledDate)
+            scheduledDateStr = if (scheduledDate != null) outputFormat.format(scheduledDate) else "N/A"
+        } catch (e: Exception) {
+            Log.e("MyPickupsActivity", "Error parsing scheduled date: ${pickup.scheduledDate}", e)
+        }
 
         val itemsInfo = pickup.items.joinToString("\n") { item ->
             "- ${item.category.name}: ${item.estimatedWeight} kg" +
@@ -312,7 +321,7 @@ class MyPickupsActivity : AppCompatActivity() {
             ${pickup.address}
             
             Scheduled Date:
-            ${dateFormat.format(Date(pickup.scheduledDate))}
+            $scheduledDateStr
             
             Items:
             $itemsInfo
@@ -364,7 +373,16 @@ class PickupsAdapter(
         val context = holder.itemView.context
         val holderLayout = holder.itemView as LinearLayout
         val dp = { value: Int -> (value * context.resources.displayMetrics.density).toInt() }
-        val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+
+        var scheduledDateStr = "N/A"
+        try {
+            val scheduledDate = inputFormat.parse(pickup.scheduledDate)
+            scheduledDateStr = if (scheduledDate != null) outputFormat.format(scheduledDate) else "N/A"
+        } catch (e: Exception) {
+            Log.e("MyPickupsActivity", "Error parsing scheduled date in adapter: ${pickup.scheduledDate}", e)
+        }
 
         holderLayout.removeAllViews()
 
@@ -399,7 +417,7 @@ class PickupsAdapter(
 
         // Scheduled date
         holderLayout.addView(TextView(context).apply {
-            text = "📅 ${dateFormat.format(Date(pickup.scheduledDate))}"
+            text = "📅 $scheduledDateStr"
             textSize = 14f
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,

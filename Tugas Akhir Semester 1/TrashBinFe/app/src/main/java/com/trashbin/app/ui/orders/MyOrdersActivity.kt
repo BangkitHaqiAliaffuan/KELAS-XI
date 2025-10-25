@@ -279,8 +279,17 @@ class MyOrdersActivity : AppCompatActivity() {
     }
 
     private fun buildOrderDetailMessage(order: Order): String {
-        val dateFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
+        val inputFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
         val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+        
+        var orderDateStr = "N/A"
+        try {
+            val orderDate = inputFormat.parse(order.createdAt)
+            orderDateStr = if (orderDate != null) outputFormat.format(orderDate) else "N/A"
+        } catch (e: Exception) {
+            Log.e("MyOrdersActivity", "Error parsing order date: ${order.createdAt}", e)
+        }
 
         return """
             Order ID: #${order.id}
@@ -298,7 +307,7 @@ class MyOrdersActivity : AppCompatActivity() {
             Seller: ${order.seller.name}
             Phone: ${order.seller.phone}
             
-            Order Date: ${dateFormat.format(Date(order.createdAt))}
+            Order Date: $orderDateStr
         """.trimIndent()
     }
 
