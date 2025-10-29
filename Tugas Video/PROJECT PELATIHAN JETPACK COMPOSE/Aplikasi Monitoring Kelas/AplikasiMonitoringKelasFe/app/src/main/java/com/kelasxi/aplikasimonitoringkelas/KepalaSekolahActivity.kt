@@ -1147,14 +1147,15 @@ fun KepalaSekolahAbsensiGuruPage() {
     var teacherAttendanceList by remember { mutableStateOf<List<TeacherAttendance>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var selectedDate by remember { mutableStateOf(java.time.LocalDate.now().toString()) }
+    var selectedDate by remember { mutableStateOf<String?>(null) } // Make date optional
     
     // Load teacher attendance data
-    fun loadTeacherAttendance() {
+    fun loadTeacherAttendance(date: String? = null) {
         if (token != null) {
             scope.launch {
                 isLoading = true
-                repository.getTeacherAttendances(token, tanggal = selectedDate)
+                // Fetch all records if no date is selected, otherwise filter by date
+                repository.getTeacherAttendances(token, tanggal = date)
                     .onSuccess { response ->
                         teacherAttendanceList = response.data
                         errorMessage = null
@@ -1169,7 +1170,7 @@ fun KepalaSekolahAbsensiGuruPage() {
         }
     }
     
-    LaunchedEffect(selectedDate) {
+    LaunchedEffect(Unit) { // Load all records by default on initial load
         loadTeacherAttendance()
     }
     
@@ -1179,33 +1180,63 @@ fun KepalaSekolahAbsensiGuruPage() {
             .background(SMKBackground)
             .padding(Spacing.md)
     ) {
-        // Date selector
-        Row(
+        // Date filter section
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = Spacing.md),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+                .padding(bottom = Spacing.md)
         ) {
             Text(
-                text = "Tanggal: $selectedDate",
+                text = if (selectedDate != null) "Filter Tanggal: $selectedDate" else "Semua Tanggal",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = SMKOnSurface
             )
             
-            IconButton(
-                onClick = {
-                    // In a full implementation, you would show a date picker
-                    // For now, we'll just use the current date
-                    selectedDate = java.time.LocalDate.now().toString()
-                }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Pilih Tanggal",
-                    tint = SMKPrimary
-                )
+                Button(
+                    onClick = {
+                        selectedDate = java.time.LocalDate.now().toString()
+                        loadTeacherAttendance(selectedDate)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedDate == java.time.LocalDate.now().toString()) SMKPrimary else SMKSurface,
+                        contentColor = if (selectedDate == java.time.LocalDate.now().toString()) SMKOnPrimary else SMKOnSurface
+                    ),
+                    border = BorderStroke(if (selectedDate == java.time.LocalDate.now().toString()) 0.dp else 1.dp, SMKPrimary)
+                ) {
+                    Text(text = "Hari Ini")
+                }
+                
+                IconButton(
+                    onClick = {
+                        // In a full implementation, you would show a date picker
+                        // For now, we'll just use the current date when clicked
+                        selectedDate = java.time.LocalDate.now().toString()
+                        loadTeacherAttendance(selectedDate)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DateRange,
+                        contentDescription = "Pilih Tanggal",
+                        tint = SMKPrimary
+                    )
+                }
+                
+                OutlinedButton(
+                    onClick = {
+                        selectedDate = null
+                        loadTeacherAttendance(null) // Load all records
+                    },
+                    enabled = selectedDate != null
+                ) {
+                    Text(text = "Hapus Filter")
+                }
             }
         }
         
@@ -1260,7 +1291,7 @@ fun KepalaSekolahAbsensiGuruPage() {
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            text = "Tidak ada data absensi untuk tanggal ini",
+                            text = if (selectedDate != null) "Tidak ada data absensi untuk tanggal ini" else "Tidak ada data absensi",
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray600
                         )
