@@ -447,7 +447,7 @@ fun KepalaSekolahGuruPenggantiPage() {
                                 )
                             }
                         } else null,
-                        colors = FilterChipDefaults.colors(
+                        colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = SMKPrimary,
                             selectedLabelColor = SMKOnPrimary,
                             containerColor = NeutralGray100,
