@@ -462,8 +462,8 @@ fun KepalaSekolahGuruPenggantiPage() {
         val filteredList = if (selectedStatusFilter != null && selectedStatusFilter != "Semua") {
             teacherReplacementList.filter { replacement ->
                 when (selectedStatusFilter) {
-                    "Diganti" -> replacement.status == "diganti" || replacement.status == "Diganti"
-                    "Dibatalkan" -> replacement.status == "dibatalkan" || replacement.status == "Dibatalkan"
+                    "Diganti" -> replacement.keterangan?.lowercase() !in listOf("dibatalkan", "cancelled", "canceled")
+                    "Dibatalkan" -> replacement.keterangan?.lowercase() in listOf("dibatalkan", "cancelled", "canceled")
                     else -> true
                 }
             }
@@ -878,22 +878,22 @@ fun KepalaSekolahTeacherReplacementCard(
                     modifier = Modifier
                         .padding(Spacing.xs),
                     shape = RoundedCornerShape(8.dp),
-                    color = when (replacement.status?.lowercase()) {
-                        "diganti" -> Color(0xFF4CAF50)
-                        "dibatalkan" -> Color(0xFFEF5350)
-                        else -> NeutralGray300
+                    color = when (replacement.keterangan?.lowercase()) {
+                        // Using keterangan field to infer status, or default to Diganti if not cancelled
+                        // If there's a cancellation note, we can consider it cancelled
+                        "dibatalkan", "cancelled", "canceled" -> Color(0xFFEF5350)
+                        else -> Color(0xFF4CAF50) // Assume it's replaced if not cancelled
                     },
                     shadowElevation = 2.dp
                 ) {
                     Text(
-                        text = replacement.status?.uppercase() ?: "UNKNOWN",
+                        text = when (replacement.keterangan?.lowercase()) {
+                            "dibatalkan", "cancelled", "canceled" -> "DIBATALKAN"
+                            else -> "DIGANTI"
+                        },
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = when (replacement.status?.lowercase()) {
-                            "diganti" -> Color.White
-                            "dibatalkan" -> Color.White
-                            else -> SMKOnSurface
-                        },
+                        color = Color.White,
                         modifier = Modifier.padding(
                             horizontal = Spacing.md,
                             vertical = Spacing.sm
