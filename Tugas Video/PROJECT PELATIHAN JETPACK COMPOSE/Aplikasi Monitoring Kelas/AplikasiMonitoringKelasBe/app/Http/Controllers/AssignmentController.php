@@ -340,7 +340,7 @@ class AssignmentController extends Controller
             $assignment = Assignment::findOrFail($id);
 
             // Check if guru owns this assignment
-            if ($assignment->guru_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            if ($assignment->guru_id !== $request->user()->id && $request->user()->role !== 'admin' && $request->user()->role !== 'kepala_sekolah') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view submissions'

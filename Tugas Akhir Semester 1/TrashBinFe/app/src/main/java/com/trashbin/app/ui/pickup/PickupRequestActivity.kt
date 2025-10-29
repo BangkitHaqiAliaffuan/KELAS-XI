@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.ViewModelProvider
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,6 +18,7 @@ import com.trashbin.app.data.api.TokenManager
 import com.trashbin.app.data.model.PickupItemRequest
 import com.trashbin.app.data.model.WasteCategory
 import com.trashbin.app.ui.adapters.PickupItemAdapter
+import com.trashbin.app.ui.camera.AICameraActivity
 import com.trashbin.app.ui.viewmodel.PickupViewModel
 import com.trashbin.app.ui.viewmodel.PickupViewModelFactory
 import com.trashbin.app.utils.CurrencyHelper
@@ -42,6 +44,7 @@ class PickupRequestActivity : AppCompatActivity() {
     private lateinit var categorySpinner: Spinner
     private lateinit var etWeight: TextInputEditText
     private lateinit var btnAddItem: Button
+    private lateinit var btnVerify: Button
     private lateinit var itemsReviewLayout: LinearLayout
     private lateinit var tvItemsReview: TextView
     private lateinit var rvItems: RecyclerView
@@ -56,6 +59,14 @@ class PickupRequestActivity : AppCompatActivity() {
     private val pickupItems = mutableListOf<PickupItemRequest>()
     private val categories = mutableListOf<WasteCategory>()
     private var selectedDate: Calendar? = null
+    
+    private val cameraLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == AICameraActivity.RESULT_SUCCESS) {
+            Toast.makeText(this, "Verifikasi berhasil! Sampah sesuai kategori.", Toast.LENGTH_SHORT).show()
+        } else if (result.resultCode == AICameraActivity.RESULT_FAILED) {
+            Toast.makeText(this, "Peringatan: Jenis sampah tidak sesuai kategori yang dipilih. Harap periksa kembali.", Toast.LENGTH_LONG).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -237,6 +248,15 @@ class PickupRequestActivity : AppCompatActivity() {
         }
         addItemLayout.addView(etWeight)
 
+        // Verification Button (AI Camera)
+        val btnVerify = Button(this).apply {
+            text = "Verifikasi"
+            layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                marginEnd = (8 * resources.displayMetrics.density).toInt()
+            }
+        }
+        addItemLayout.addView(btnVerify)
+
         // Add Item Button
         btnAddItem = Button(this).apply {
             text = "Tambah"
@@ -367,11 +387,35 @@ class PickupRequestActivity : AppCompatActivity() {
             addNewItem()
         }
         
+        btnVerify.setOnClickListener {
+            verifyWasteCategory()
+        }
+        
         btnSubmit.setOnClickListener {
             if (validateInput()) {
                 createPickupRequest()
             }
         }
+    }
+    
+    private fun verifyWasteCategory() {
+        val selectedPosition = categorySpinner.selectedItemPosition
+        
+        // Validation - account for placeholder at position 0
+        if (selectedPosition <= 0 || selectedPosition > categories.size) {
+            Toast.makeText(this, "Pilih kategori sampah terlebih dahulu", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        // Get selected category
+        val selectedCategory = categories[selectedPosition - 1]
+        
+        // Launch AI Camera Activity with selected category
+        val intent = Intent(this, AICameraActivity::class.java).apply {
+            putExtra(AICameraActivity.EXTRA_SELECTED_CATEGORY, selectedCategory.id.toString())
+            putExtra(AICameraActivity.EXTRA_CATEGORY_NAME, selectedCategory.name)
+        }
+        cameraLauncher.launch(intent)
     }
     
     private fun showDatePicker() {

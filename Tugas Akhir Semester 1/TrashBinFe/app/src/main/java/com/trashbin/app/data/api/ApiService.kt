@@ -204,4 +204,11 @@ interface ApiService {
     suspend fun getPointsHistory(
         @Query("page") page: Int? = null
     ): Response<ApiResponse<List<PointsHistory>>>
+    
+    // Waste Classification (AI)
+    @Multipart
+    @POST("waste/classify")
+    suspend fun classifyWaste(
+        @Part image: MultipartBody.Part
+    ): Response<ApiResponse<ClassificationResult>>
 }

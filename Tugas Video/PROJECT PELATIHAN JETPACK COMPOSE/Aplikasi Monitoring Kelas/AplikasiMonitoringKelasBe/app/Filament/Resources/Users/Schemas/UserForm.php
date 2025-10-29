@@ -25,7 +25,7 @@ class UserForm
                     ->password()
                     ->required(),
                 Select::make('role')
-                    ->options(['admin' => 'Admin', 'guru' => 'Guru', 'siswa' => 'Siswa', 'kurikulum' => 'Kurikulum'])
+                    ->options(['admin' => 'Admin', 'guru' => 'Guru', 'siswa' => 'Siswa', 'kurikulum' => 'Kurikulum', 'kepala_sekolah' => 'Kepala Sekolah'])
                     ->default('siswa')
                     ->required(),
                 TextInput::make('mata_pelajaran')

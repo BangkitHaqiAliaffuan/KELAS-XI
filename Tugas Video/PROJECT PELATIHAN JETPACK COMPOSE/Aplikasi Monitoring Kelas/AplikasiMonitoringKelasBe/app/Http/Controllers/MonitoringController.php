@@ -224,4 +224,138 @@ class MonitoringController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * Mengambil semua laporan kehadiran guru (khusus untuk kepala sekolah dan admin)
+     */
+    public function getAllEmptyClassReports(Request $request)
+    {
+        try {
+            // Get all teacher attendances (all statuses)
+            $query = \App\Models\TeacherAttendance::with(['guru:id,name,email,mata_pelajaran', 'schedule:id,kelas,mata_pelajaran,ruang,hari,jam_mulai,jam_selesai']);
+
+            // Filter berdasarkan tanggal
+            if ($request->has('tanggal') && $request->tanggal) {
+                $query->whereDate('tanggal', $request->tanggal);
+            }
+
+            // Filter berdasarkan kelas melalui schedule
+            if ($request->has('kelas') && $request->kelas) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->where('kelas', $request->kelas);
+                });
+            }
+
+            // Filter berdasarkan guru_id
+            if ($request->has('guru_id') && $request->guru_id) {
+                $query->where('guru_id', $request->guru_id);
+            }
+
+            // Filter berdasarkan status (opsional)
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            $attendances = $query->orderBy('tanggal', 'desc')
+                                ->orderBy('jam_masuk', 'desc')
+                                ->get();
+
+            // Format the data to match the expected monitoring response structure
+            $formattedData = $attendances->map(function($attendance) {
+                return [
+                    'id' => $attendance->id,
+                    'guru_id' => $attendance->guru_id,
+                    'guru' => $attendance->guru,
+                    'pelapor_id' => $attendance->created_by,
+                    'pelapor' => $attendance->createdBy, // Using createdBy from the relationship
+                    'status_hadir' => $attendance->status,
+                    'catatan' => $attendance->keterangan,
+                    'kelas' => $attendance->schedule->kelas ?? 'N/A',
+                    'mata_pelajaran' => $attendance->schedule->mata_pelajaran ?? 'N/A',
+                    'tanggal' => $attendance->tanggal,
+                    'jam_laporan' => $attendance->jam_masuk,
+                    'created_at' => $attendance->created_at,
+                    'updated_at' => $attendance->updated_at
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data laporan kehadiran guru berhasil diambil',
+                'data' => $formattedData
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    /**
+     * Mengambil laporan kelas kosong (hanya status tidak hadir) dari siswa (khusus untuk kepala sekolah dan admin)
+     */
+    public function getEmptyClassOnly(Request $request)
+    {
+        try {
+            // Get teacher attendances with status 'tidak_hadir' only (empty classes)
+            $query = \App\Models\TeacherAttendance::with(['guru:id,name,email,mata_pelajaran', 'schedule:id,kelas,mata_pelajaran,ruang,hari,jam_mulai,jam_selesai'])
+                              ->where('status', 'tidak_hadir');
+
+            // Filter berdasarkan tanggal
+            if ($request->has('tanggal') && $request->tanggal) {
+                $query->whereDate('tanggal', $request->tanggal);
+            }
+
+            // Filter berdasarkan kelas melalui schedule
+            if ($request->has('kelas') && $request->kelas) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->where('kelas', $request->kelas);
+                });
+            }
+
+            // Filter berdasarkan guru_id
+            if ($request->has('guru_id') && $request->guru_id) {
+                $query->where('guru_id', $request->guru_id);
+            }
+
+            $attendances = $query->orderBy('tanggal', 'desc')
+                                ->orderBy('jam_masuk', 'desc')
+                                ->get();
+
+            // Format the data to match the expected monitoring response structure
+            $formattedData = $attendances->map(function($attendance) {
+                return [
+                    'id' => $attendance->id,
+                    'guru_id' => $attendance->guru_id,
+                    'guru' => $attendance->guru,
+                    'pelapor_id' => $attendance->created_by,
+                    'pelapor' => $attendance->createdBy, // Using createdBy from the relationship
+                    'status_hadir' => $attendance->status,
+                    'catatan' => $attendance->keterangan,
+                    'kelas' => $attendance->schedule->kelas ?? 'N/A',
+                    'mata_pelajaran' => $attendance->schedule->mata_pelajaran ?? 'N/A',
+                    'tanggal' => $attendance->tanggal,
+                    'jam_laporan' => $attendance->jam_masuk,
+                    'created_at' => $attendance->created_at,
+                    'updated_at' => $attendance->updated_at
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data laporan kelas kosong berhasil diambil',
+                'data' => $formattedData
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

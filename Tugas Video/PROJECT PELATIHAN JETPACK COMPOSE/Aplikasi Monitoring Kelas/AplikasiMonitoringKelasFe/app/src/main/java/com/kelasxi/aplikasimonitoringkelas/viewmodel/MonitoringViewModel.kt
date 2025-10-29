@@ -79,4 +79,38 @@ class MonitoringViewModel : ViewModel() {
     fun clearSubmitSuccess() {
         submitSuccess.value = false
     }
+    
+    fun loadEmptyClassReports(token: String, tanggal: String? = null, kelas: String? = null, guruId: Int? = null) {
+        viewModelScope.launch {
+            isLoading.value = true
+            errorMessage.value = null
+            
+            repository.getEmptyClassReports(token, tanggal, kelas, guruId)
+                .onSuccess { response ->
+                    monitoringList.value = response.data
+                }
+                .onFailure { error ->
+                    errorMessage.value = error.message
+                }
+            
+            isLoading.value = false
+        }
+    }
+    
+    fun loadEmptyClassesOnly(token: String, tanggal: String? = null, kelas: String? = null, guruId: Int? = null) {
+        viewModelScope.launch {
+            isLoading.value = true
+            errorMessage.value = null
+            
+            repository.getEmptyClassesOnly(token, tanggal, kelas, guruId)
+                .onSuccess { response ->
+                    monitoringList.value = response.data
+                }
+                .onFailure { error ->
+                    errorMessage.value = error.message
+                }
+            
+            isLoading.value = false
+        }
+    }
 }

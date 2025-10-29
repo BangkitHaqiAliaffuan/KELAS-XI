@@ -79,6 +79,10 @@
             android:windowSoftInputMode="adjustResize" />
             
         <activity
+            android:name=".ui.camera.AICameraActivity"
+            android:exported="false" />
+            
+        <activity
             android:name=".ui.orders.MyOrdersActivity"
             android:exported="false" />
             

@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\MarketplaceListingController;
 use App\Http\Controllers\Api\MarketplaceOrderController;
 use App\Http\Controllers\Api\PointsController;
 use App\Http\Controllers\Api\RewardsController;
+use App\Http\Controllers\Api\WasteClassificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,4 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/points/history', [PointsController::class, 'history']);
     Route::get('/rewards', [RewardsController::class, 'index']);
     Route::post('/rewards/{id}/redeem', [RewardsController::class, 'redeem']);
+    
+    // Waste Classification (AI)
+    Route::post('/waste/classify', [WasteClassificationController::class, 'classifyWaste']);
 });

@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Schedule;
+use App\Models\Teacher;
 use Illuminate\Support\Facades\Hash;
 
 class DummyDataSeeder extends Seeder
@@ -15,7 +16,6 @@ class DummyDataSeeder extends Seeder
      */
     public function run(): void
     {
-
         $guru1 = User::create([
             'name' => 'Dr. borak Nurhaliza',
             'email' => 'borak.guru@sekolah.com',
@@ -35,6 +35,21 @@ class DummyDataSeeder extends Seeder
             'email' => 'sumba.siswa@sekolah.com',
             'password' => Hash::make('password123'),
             'role' => 'siswa'
+        ]);
+
+        // Create corresponding teacher records in the teachers table
+        Teacher::create([
+            'name' => 'Dr. borak Nurhaliza',
+            'email' => 'borak.guru@sekolah.com',
+            'password' => Hash::make('password123'),
+            'mata_pelajaran' => null
+        ]);
+
+        Teacher::create([
+            'name' => 'Bapak ahmadsurajar Sudrajat',
+            'email' => 'ahmadsurajar.guru@sekolah.com',
+            'password' => Hash::make('password123'),
+            'mata_pelajaran' => null
         ]);
 
         // Membuat jadwal dummy

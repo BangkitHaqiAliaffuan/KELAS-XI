@@ -33,11 +33,15 @@ class TeacherAttendance extends Model
 
     public function guru()
     {
+        // The relationship still points to User model for backward compatibility
+        // In a complete migration to teachers table, this would reference Teacher model
         return $this->belongsTo(User::class, 'guru_id');
     }
 
     public function guruAsli()
     {
+        // The relationship still points to User model for backward compatibility
+        // In a complete migration to teachers table, this would reference Teacher model
         return $this->belongsTo(User::class, 'guru_asli_id');
     }
 

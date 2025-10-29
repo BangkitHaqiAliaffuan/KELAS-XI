@@ -111,8 +111,8 @@ class GradeController extends Controller
     public function getKelasgrades($kelas, Request $request)
     {
         try {
-            // Only guru and admin can view class grades
-            if (!in_array($request->user()->role, ['guru', 'admin'])) {
+            // Only guru, admin, and kepala_sekolah can view class grades
+            if (!in_array($request->user()->role, ['guru', 'admin', 'kepala_sekolah'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to view class grades'
@@ -174,7 +174,7 @@ class GradeController extends Controller
 
             // Check if assignment belongs to this guru
             $assignment = Assignment::findOrFail($request->assignment_id);
-            if ($assignment->guru_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            if ($assignment->guru_id !== $request->user()->id && $request->user()->role !== 'admin' && $request->user()->role !== 'kepala_sekolah') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to grade this assignment'
@@ -240,7 +240,7 @@ class GradeController extends Controller
             $grade = Grade::findOrFail($id);
 
             // Check if guru owns this grade
-            if ($grade->guru_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            if ($grade->guru_id !== $request->user()->id && $request->user()->role !== 'admin' && $request->user()->role !== 'kepala_sekolah') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to update this grade'
@@ -286,7 +286,7 @@ class GradeController extends Controller
             $grade = Grade::findOrFail($id);
 
             // Check if guru owns this grade
-            if ($grade->guru_id !== $request->user()->id && $request->user()->role !== 'admin') {
+            if ($grade->guru_id !== $request->user()->id && $request->user()->role !== 'admin' && $request->user()->role !== 'kepala_sekolah') {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized to delete this grade'

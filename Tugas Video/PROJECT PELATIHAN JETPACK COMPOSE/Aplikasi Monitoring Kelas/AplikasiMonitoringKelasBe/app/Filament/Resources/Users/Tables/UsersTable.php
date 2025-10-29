@@ -39,7 +39,14 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                \Filament\Tables\Filters\SelectFilter::make('role')
+                    ->options([
+                        'admin' => 'Admin',
+                        'guru' => 'Guru',
+                        'siswa' => 'Siswa',
+                        'kurikulum' => 'Kurikulum',
+                        'kepala_sekolah' => 'Kepala Sekolah'
+                    ])
             ])
             ->recordActions([
                 ViewAction::make(),

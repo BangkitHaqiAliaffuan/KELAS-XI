@@ -32,6 +32,9 @@ interface ApiService {
     @GET("users/guru")
     suspend fun getGuruList(@Header("Authorization") token: String): Response<UsersResponse>
     
+    @GET("teachers")  // New endpoint for fetching from teachers table
+    suspend fun getTeachers(@Header("Authorization") token: String): Response<UsersResponse>
+    
     @POST("users")
     suspend fun createUser(
         @Header("Authorization") token: String,
@@ -102,6 +105,22 @@ interface ApiService {
     
     @GET("monitoring")
     suspend fun getMonitoring(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null,
+        @Query("kelas") kelas: String? = null,
+        @Query("guru_id") guruId: Int? = null
+    ): Response<MonitoringListResponse>
+    
+    @GET("monitoring/empty-class-reports")
+    suspend fun getEmptyClassReports(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null,
+        @Query("kelas") kelas: String? = null,
+        @Query("guru_id") guruId: Int? = null
+    ): Response<MonitoringListResponse>
+    
+    @GET("monitoring/empty-classes-only")
+    suspend fun getEmptyClassesOnly(
         @Header("Authorization") token: String,
         @Query("tanggal") tanggal: String? = null,
         @Query("kelas") kelas: String? = null,

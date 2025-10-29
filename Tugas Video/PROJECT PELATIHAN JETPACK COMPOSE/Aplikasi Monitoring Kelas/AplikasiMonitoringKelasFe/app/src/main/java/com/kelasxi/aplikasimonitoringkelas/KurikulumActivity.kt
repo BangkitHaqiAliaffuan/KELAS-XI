@@ -533,7 +533,7 @@ fun GuruPenggantiPage() {
     
     var teacherReplacementList by remember { mutableStateOf<List<TeacherReplacement>>(emptyList()) }
     var kelasKosongList by remember { mutableStateOf<List<KelasKosong>>(emptyList()) }
-    var guruList by remember { mutableStateOf<List<User>>(emptyList()) }
+    var guruList by remember { mutableStateOf<List<User>>(emptyList()) }  // Changed back to guruList for compatibility
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -548,6 +548,7 @@ fun GuruPenggantiPage() {
     // Load data
     fun loadData() {
         if (token != null) {
+            println("DEBUG: Starting loadData function")
             scope.launch {
                 isLoading = true
                 // Get current date from device
@@ -557,29 +558,39 @@ fun GuruPenggantiPage() {
                 repository.getTeacherReplacements(token)
                     .onSuccess { response ->
                         teacherReplacementList = response.data
+                        println("DEBUG: Loaded ${response.data.size} teacher replacements")
                     }
                     .onFailure { error ->
                         errorMessage = error.message
+                        println("DEBUG: Failed to load teacher replacements - ${error.message}")
                     }
                     
                 repository.getKelasKosong(token, currentDate)
                     .onSuccess { response ->
                         kelasKosongList = response.data
+                        println("DEBUG: Loaded ${response.data.size} kelas kosong")
                     }
                     .onFailure { error ->
                         errorMessage = error.message
+                        println("DEBUG: Failed to load kelas kosong - ${error.message}")
                     }
                 
-                // Load daftar guru
-                repository.getGuruList(token)
+                // Load daftar guru from teachers table
+                repository.getTeachers(token)
                     .onSuccess { response ->
-                        guruList = response.data
+                        guruList = response.data  // Updated to use teachers table
+                        println("DEBUG: Successfully loaded ${response.data.size} teachers, updating state")
+                        response.data.forEach { teacher ->
+                            println("DEBUG: Teacher - ID: ${teacher.id}, Name: ${teacher.name}, Subject: ${teacher.mata_pelajaran}")
+                        }
                     }
                     .onFailure { error ->
                         errorMessage = error.message
+                        println("DEBUG: Failed to load teachers - ${error.message}")
                     }
                     
                 isLoading = false
+                println("DEBUG: Finished loadData function, isLoading = false")
             }
         }
     }
@@ -698,7 +709,7 @@ fun GuruPenggantiPage() {
     if (showCreateDialog) {
         TambahGuruPenggantiDialog(
             kelasKosongList = kelasKosongList,
-            guruList = guruList,
+            guruList = guruList,  // Changed back to guruList for compatibility
             onDismiss = { 
                 showCreateDialog = false
                 selectedKelasKosong = null
@@ -741,7 +752,7 @@ fun GuruPenggantiPage() {
 @Composable
 fun TambahGuruPenggantiDialog(
     kelasKosongList: List<KelasKosong>,
-    guruList: List<User>,
+    guruList: List<User>,  // Keeping original parameter name for compatibility
     onDismiss: () -> Unit,
     onSubmit: (KelasKosong, User, String) -> Unit
 ) {
@@ -922,23 +933,26 @@ fun TambahGuruPenggantiDialog(
                         expanded = expandedGuruPengganti,
                         onDismissRequest = { expandedGuruPengganti = false }
                     ) {
+                        println("DEBUG: Rendering dropdown with ${guruList.size} teachers")
                         if (guruList.isEmpty()) {
+                            println("DEBUG: guruList is empty, showing 'Tidak ada guru tersedia'")
                             DropdownMenuItem(
                                 text = { Text("Tidak ada guru tersedia") },
                                 onClick = { },
                                 enabled = false
                             )
                         } else {
-                            guruList.forEach { guru ->
+                            println("DEBUG: guruList has ${guruList.size} teachers, rendering options")
+                            guruList.forEach { teacher ->
                                 DropdownMenuItem(
                                     text = {
                                         Column {
                                             Text(
-                                                text = guru.name,
+                                                text = teacher.name,
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = SMKOnSurface
                                             )
-                                            guru.mata_pelajaran?.let {
+                                            teacher.mata_pelajaran?.let {
                                                 Text(
                                                     text = "Mata Pelajaran: $it",
                                                     style = MaterialTheme.typography.bodySmall,
@@ -948,8 +962,9 @@ fun TambahGuruPenggantiDialog(
                                         }
                                     },
                                     onClick = {
-                                        selectedGuruPengganti = guru
+                                        selectedGuruPengganti = teacher
                                         expandedGuruPengganti = false
+                                        println("DEBUG: Selected teacher: ${teacher.name}")
                                     }
                                 )
                             }

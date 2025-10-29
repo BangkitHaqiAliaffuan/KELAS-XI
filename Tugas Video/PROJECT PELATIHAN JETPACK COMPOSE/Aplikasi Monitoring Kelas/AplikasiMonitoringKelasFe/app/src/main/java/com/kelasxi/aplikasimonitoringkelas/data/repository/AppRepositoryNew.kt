@@ -74,6 +74,28 @@ class AppRepositoryNew(private val apiService: ApiService) {
         }
     }
     
+    // New method to fetch from teachers table
+    suspend fun getTeachers(token: String): Result<UsersResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getTeachers("Bearer $token")
+                if (response.isSuccessful && response.body() != null) {
+                    val usersResponse = response.body()!!
+                    if (usersResponse.success) {
+                        Result.success(usersResponse)
+                    } else {
+                        Result.failure(Exception(usersResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil data guru dari tabel teachers: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
     suspend fun createUser(token: String, request: CreateUserRequest): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
@@ -239,6 +261,48 @@ class AppRepositoryNew(private val apiService: ApiService) {
                 } else {
                     val errorBody = response.errorBody()?.string()
                     Result.failure(Exception("Gagal mengambil data monitoring: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getEmptyClassReports(token: String, tanggal: String? = null, kelas: String? = null, guruId: Int? = null): Result<MonitoringListResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getEmptyClassReports("Bearer $token", tanggal, kelas, guruId)
+                if (response.isSuccessful && response.body() != null) {
+                    val monitoringResponse = response.body()!!
+                    if (monitoringResponse.success) {
+                        Result.success(monitoringResponse)
+                    } else {
+                        Result.failure(Exception(monitoringResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil laporan kelas kosong: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getEmptyClassesOnly(token: String, tanggal: String? = null, kelas: String? = null, guruId: Int? = null): Result<MonitoringListResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getEmptyClassesOnly("Bearer $token", tanggal, kelas, guruId)
+                if (response.isSuccessful && response.body() != null) {
+                    val monitoringResponse = response.body()!!
+                    if (monitoringResponse.success) {
+                        Result.success(monitoringResponse)
+                    } else {
+                        Result.failure(Exception(monitoringResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal mengambil data kelas kosong: ${response.code()} - $errorBody"))
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
