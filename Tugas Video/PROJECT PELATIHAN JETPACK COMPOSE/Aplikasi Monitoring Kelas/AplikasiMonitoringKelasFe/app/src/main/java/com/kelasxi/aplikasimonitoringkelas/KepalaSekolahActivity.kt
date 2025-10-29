@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -229,7 +230,7 @@ fun KepalaSekolahBottomNavigation(navController: NavController) {
     }
 }
 
-// Kelas Kosong Page - Shows empty classes
+// Kelas Kosong Page - Shows empty classes from teacher_attendances
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KepalaSekolahKelasKosongPage() {
@@ -243,7 +244,7 @@ fun KepalaSekolahKelasKosongPage() {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Load kelas kosong
+    // Load kelas kosong - this gets classes that don't have teachers present based on teacher_attendances
     fun loadKelasKosong() {
         if (token != null) {
             scope.launch {
@@ -252,6 +253,7 @@ fun KepalaSekolahKelasKosongPage() {
                 // Get current date from device
                 val currentDate = java.time.LocalDate.now().toString() // Format: YYYY-MM-DD
                 try {
+                    // Fetch empty classes based on teacher attendance records
                     repository.getKelasKosong(token, currentDate)
                         .onSuccess { response ->
                             kelasKosongList = response.data ?: emptyList()
@@ -1128,6 +1130,289 @@ fun KepalaSekolahTeacherReplacementCard(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold
                 )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun KepalaSekolahAbsensiGuruPage() {
+    val context = LocalContext.current
+    val sharedPrefManager = remember { SharedPrefManager.getInstance(context) }
+    val token = sharedPrefManager.getToken()
+    val repository = remember { AppRepositoryNew(RetrofitClient.apiService) }
+    val scope = rememberCoroutineScope()
+    
+    var teacherAttendanceList by remember { mutableStateOf<List<TeacherAttendance>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var selectedDate by remember { mutableStateOf(java.time.LocalDate.now().toString()) }
+    
+    // Load teacher attendance data
+    fun loadTeacherAttendance() {
+        if (token != null) {
+            scope.launch {
+                isLoading = true
+                repository.getTeacherAttendances(token, tanggal = selectedDate)
+                    .onSuccess { response ->
+                        teacherAttendanceList = response.data
+                        errorMessage = null
+                    }
+                    .onFailure { error ->
+                        errorMessage = error.message
+                        teacherAttendanceList = emptyList()
+                        Toast.makeText(context, "Gagal memuat data absensi: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
+                isLoading = false
+            }
+        }
+    }
+    
+    LaunchedEffect(selectedDate) {
+        loadTeacherAttendance()
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(SMKBackground)
+            .padding(Spacing.md)
+    ) {
+        // Date selector
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = Spacing.md),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Tanggal: $selectedDate",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = SMKOnSurface
+            )
+            
+            IconButton(
+                onClick = {
+                    // In a full implementation, you would show a date picker
+                    // For now, we'll just use the current date
+                    selectedDate = java.time.LocalDate.now().toString()
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DateRange,
+                    contentDescription = "Pilih Tanggal",
+                    tint = SMKPrimary
+                )
+            }
+        }
+        
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = SMKPrimary)
+                }
+            }
+            
+            errorMessage != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        Icon(
+                            Icons.Default.Error,
+                            contentDescription = null,
+                            tint = SMKError,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "Error: $errorMessage",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SMKError,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+            
+            teacherAttendanceList.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                    ) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = null,
+                            tint = NeutralGray400,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Text(
+                            text = "Tidak ada data absensi untuk tanggal ini",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NeutralGray600
+                        )
+                    }
+                }
+            }
+            
+            else -> {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(Spacing.md)
+                ) {
+                    items(teacherAttendanceList) { attendance ->
+                        KepalaSekolahTeacherAttendanceCard(attendance = attendance)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun KepalaSekolahTeacherAttendanceCard(attendance: TeacherAttendance) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Spacing.xs),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = SMKSurface,
+            contentColor = SMKOnSurface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(Spacing.md),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+        ) {
+            // Header with teacher name and class
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = attendance.guru?.name ?: "Guru Tidak Diketahui",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = SMKOnSurface
+                    )
+                    Text(
+                        text = attendance.schedule?.kelas ?: attendance.schedule?.mata_pelajaran ?: "Kelas/Mapel Tidak Diketahui",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = NeutralGray700
+                    )
+                }
+                
+                // Status badge
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = when (attendance.status?.lowercase()) {
+                        "hadir" -> SuccessGreen
+                        "telat" -> WarningYellow
+                        "tidak_hadir" -> ErrorRed
+                        else -> NeutralGray300
+                    }
+                ) {
+                    Text(
+                        text = attendance.status?.uppercase() ?: "STATUS",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.padding(horizontal = Spacing.md, vertical = Spacing.xs)
+                    )
+                }
+            }
+            
+            Divider(
+                color = NeutralGray200,
+                thickness = 1.dp,
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Schedule and time info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = when (attendance.status?.lowercase()) {
+                            "hadir" -> Color(0xFFE8F5E8)
+                            "telat" -> Color(0xFFFFF3E0)
+                            "tidak_hadir" -> Color(0xFFFCE4EC)
+                            else -> NeutralGray50
+                        },
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(Spacing.md),
+                verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Icon(
+                        Icons.Default.Schedule,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = SMKPrimary
+                    )
+                    Column {
+                        Text(
+                            text = "Jam Jadwal: ${formatTime(attendance.schedule?.jam_mulai)} - ${formatTime(attendance.schedule?.jam_selesai)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray700
+                        )
+                        if (attendance.jamMasuk != null) {
+                            Text(
+                                text = "Jam Masuk: ${formatTime(attendance.jamMasuk)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = when (attendance.status?.lowercase()) {
+                                    "hadir" -> SuccessGreen
+                                    "telat" -> WarningYellow
+                                    else -> ErrorRed
+                                }
+                            )
+                        }
+                    }
+                }
+                
+                // Keterangan if available
+                if (!attendance.keterangan.isNullOrEmpty()) {
+                    Row(
+                        verticalAlignment = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    ) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = SMKInfo
+                        )
+                        Text(
+                            text = "Keterangan: ${attendance.keterangan}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray700
+                        )
+                    }
+                }
             }
         }
     }
