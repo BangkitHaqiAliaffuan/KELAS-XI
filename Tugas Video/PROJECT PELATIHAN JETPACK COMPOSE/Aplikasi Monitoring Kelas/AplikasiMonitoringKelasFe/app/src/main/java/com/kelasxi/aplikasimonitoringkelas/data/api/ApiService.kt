@@ -133,6 +133,14 @@ interface ApiService {
         @Query("tanggal") tanggal: String? = null
     ): Response<KelasKosongResponse>
     
+    @GET("monitoring/kelas-kosong-attendance")
+    suspend fun getKelasKosongFromAttendance(
+        @Header("Authorization") token: String,
+        @Query("tanggal") tanggal: String? = null,
+        @Query("kelas") kelas: String? = null,
+        @Query("guru_id") guruId: Int? = null
+    ): Response<KelasKosongResponse>
+    
     // ==================== KURIKULUM: Guru Pengganti ====================
     
     @GET("guru-pengganti")
