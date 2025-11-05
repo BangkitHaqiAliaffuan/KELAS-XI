@@ -1,0 +1,141 @@
+[33m59fe05d1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Tugas PPKN
+[33m0a8bd7a7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Waiting For Acc
+[33mee8b301a[m Fixed Error: KepalaSekolahActivity.kt
+[33md09c350d[m Fixing Errors: KepalaSekolahActivity.kt
+[33m05af78ff[m Fixing Errors: Colors
+[33md746969c[m Fixing Errors: Gradlew Error
+[33m87716eee[m Fixing Errors: Unresolved Reference
+[33m2d7e25a7[m Fixing Errors: Duplicate function
+[33mbbe0a046[m Creating Features: Payment
+[33ma68eaa6a[m Modifying Database: Transaction Table
+[33mba356950[m Fixed Errors: Profile Activity Errors
+[33mcb859279[m Done
+[33mb2264391[m Fixing Errors: Fixing Imports
+[33m09558380[m Fixing Errors: Imports Excel Error
+[33m7a40edb3[m Creating Features: Import Data From Excel
+[33mcb24f569[m Fixed Errors: Filament
+[33m32bf9ae2[m Fixing Errors: Filament Errors
+[33m126b5f6a[m Fixing Errors: Adapter Errors
+[33m5d429575[m Fixed Errors: ProfileActivity.kt
+[33m6918a57e[m Fixed Errors: ListingDetailActivity
+[33mc102d4b6[m Fixing Errors: Integration Errors
+[33mc2d01b3b[m Creating Figma Function
+[33mc34bc347[m Fixed Errors: AdminActivity.kt Structure
+[33m5f436e6c[m Creating Features: Add New Users In Admin
+[33mb16dac00[m Fixed Errors: Guru Pengganti Backend
+[33mda204d44[m Deleting Log Files
+[33m64c7ab75[m Fixing Errors: Guru Pengganti Backend
+[33md15225d3[m Creating Features: Guru Pengganti
+[33m5d873f4a[m Fixed Errors: Role's error
+[33m2374107f[m Creating Features: Entry Teacher Attendance
+[33m1ca41fd5[m Fixing Errors: Kotlin Import Errors
+[33m4274c943[m Enchancing Design And Creating Grade And Assignment Screens
+[33m206c1daf[m Fixing Errors: Adjusting Request Pickup With Api Response
+[33m3d964bec[m Fixing Errors: Activity Crash
+[33m79cd7f6a[m Selesai
+[33m6e2c31cf[m Fixed Error: Login doesn't redirect
+[33mdaeff6d7[m Fixing Auth Errors
+[33mde6e34da[m Managing Api Leaks
+[33m9df1f88d[m Fixing Auth Errors
+[33m8c1dbe02[m Fixing Major Errors: Missing Assets
+[33m7d9c9454[m Managing Api
+[33me28a307b[m Managing Filament Function
+[33mf0ab74a6[m Managing Search Navbar Function
+[33m7721afbf[m Managing Api Errors
+[33m726cdde7[m Enchancing Design
+[33ma7415136[m Managing Auth Function
+[33m14f87c48[m Creating MultiActivity
+[33m68554ebd[m Creating Login Activity
+[33ma52b1adc[m Creating Recipe Detail Page
+[33mbfa8d6fa[m Managing Home Page
+[33m1bea9cf7[m Debugging
+[33me0e3608c[m Initializating New Project
+[33m75b32878[m Selesai
+[33m1b861eea[m Creating Transaction Page
+[33m771d09b8[m Managing Admin Page
+[33m2165dd15[m Creating Dashboard UI/UX
+[33m1f7efed6[m Selesai
+[33mb72da845[m Selesai
+[33md27cfd9f[m Fixing minor errors
+[33m72cbce2f[m Tailwind error
+[33m54201843[m Selesai
+[33mf1e88143[m Selesai
+[33m5e2bf992[m Selesai
+[33mad0f0cfb[m Selesai
+[33m1b5a3728[m Selesai
+[33m1e2ade65[m Selesai
+[33m69f7e1ea[m Managing Api Leaks
+[33mcd0baf1a[m Selesai
+[33mbc8651f7[m Selesai
+[33mcd56b66e[m Managing Feed Styling Error
+[33m1927fdcc[m Managing api leaks
+[33m53b09623[m Selesai
+[33mba4b9479[m Fixing .gitignore
+[33m3b2aef71[m Adding file to .gitignore
+[33m4d5296f8[m Managing Api Leaks
+[33md5d999a3[m Done min
+[33mf1f542d5[m Done
+[33m005f4733[m Vite Error
+[33mb7463576[m Creating Portofolio Section
+[33m1256ca47[m Portofolio Section
+[33m849c77d6[m Test UI/UX
+[33m59af3db5[m Creating UI/UX Intro Components
+[33m4cfc6ec2[m Api Limit
+[33mccdac16f[m Deleting Api Leaks
+[33m1accae72[m Creating UI/UX
+[33mcb48e547[m Done
+[33m5aecb8ca[m Creating Function
+[33m7b6cd876[m Creating UI/UX
+[33m7f5c4809[m Done
+[33mb8b8361d[m Api Integration
+[33mde7c0218[m Deleting Api Leaks
+[33mb2ab0e77[m Creating UI/UX
+[33m6adfa9d5[m Mantaining Readability
+[33m369397a9[m Done
+[33mdee08699[m Managing Function
+[33m9c3e065e[m Done
+[33m6f0f4071[m Creating UI/UX
+[33m78b97ac5[m initializating ev-web
+[33m3761855c[m Done
+[33mecee3210[m Done
+[33m9e1a312b[m Adding CSS
+[33mf3a126fe[m Creating HTML Structure
+[33m3dca6feb[m Managing Order Function
+[33mb46d1c0b[m Done
+[33m01ad5070[m Firebase Integration
+[33m09a5fef2[m Enchancing UI/UX
+[33mc9a03810[m Creating UI/UX
+[33m2cb0ed4a[m Managing response function
+[33m5f0cd984[m Debugging navbar issue
+[33maa64157d[m Creating Chat Design
+[33m1fc6e2f3[m Enchancing UI/UX
+[33mf7a09db2[m Slicing UI/UX
+[33m9cb1f46e[m Slicing UI/UX
+[33me65d8b47[m Done
+[33m77caae30[m Enchancing UI/UX
+[33mdcbd5167[m Managing Api Leak
+[33md22a8790[m Selesai
+[33mbc15b132[m Creating UI/UX
+[33ma29c876e[m Creating UI/UX
+[33mcb8951b7[m Selesai
+[33m3acb4504[m Youtube Api Integration
+[33m122dbea7[m Youtube Api Integration
+[33m1fb975d6[m Managing Video Detail Page
+[33m05da7f2a[m Creating Video Detail Page
+[33m20d0d4d8[m Selesai
+[33m0466fa3c[m Managing Student Dashboard
+[33m99525739[m Tes
+[33m97359b7e[m Creating Payment System Debug
+[33me8568274[m Fix Api Leak
+[33mf4196b74[m Managing Educator Access
+[33mea145eee[m Setup Backend
+[33md465c422[m Selesai
+[33m6fe3040d[m managing media query
+[33m9018904d[m managing media query
+[33m9e4c692b[m Managing Media Query
+[33m5695d9eb[m Hapus Api Key
+[33m04d97a21[m selasai
+[33m692b8192[m Selesai
+[33m09ee1203[m Episode 1
+[33m048a0974[m Selesai
+[33m05d80cc8[m Selesai

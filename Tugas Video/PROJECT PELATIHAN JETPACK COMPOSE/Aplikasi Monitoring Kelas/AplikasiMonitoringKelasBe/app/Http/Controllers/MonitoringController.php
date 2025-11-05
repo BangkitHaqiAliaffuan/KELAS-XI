@@ -358,4 +358,87 @@ class MonitoringController extends Controller
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+    
+    /**
+     * Mengambil data kelas kosong berdasarkan teacher attendance (endpoint khusus untuk kelas kosong dari kehadiran guru)
+     */
+    public function getKelasKosongFromAttendance(Request $request)
+    {
+        try {
+            // Ambil tanggal dari request atau gunakan tanggal hari ini
+            $tanggal = $request->input('tanggal');
+            
+            if (!$tanggal) {
+                $tanggal = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            } else {
+                // Validasi format tanggal
+                try {
+                    $tanggal = Carbon::parse($tanggal)->format('Y-m-d');
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Format tanggal tidak valid. Gunakan format YYYY-MM-DD',
+                        'error' => $e->getMessage()
+                    ], Response::HTTP_BAD_REQUEST);
+                }
+            }
+
+            // Ambil semua teacher attendance dengan status 'tidak_hadir' pada tanggal tertentu
+            $query = TeacherAttendance::with(['guru:id,name,email,mata_pelajaran', 'schedule:id,kelas,mata_pelajaran,ruang,hari,jam_mulai,jam_selesai'])
+                      ->where('status', 'tidak_hadir')
+                      ->whereDate('tanggal', $tanggal);
+
+            // Filter berdasarkan kelas jika disediakan
+            if ($request->has('kelas') && $request->kelas) {
+                $query->whereHas('schedule', function($q) use ($request) {
+                    $q->where('kelas', $request->kelas);
+                });
+            }
+
+            // Filter berdasarkan guru_id jika disediakan
+            if ($request->has('guru_id') && $request->guru_id) {
+                $query->where('guru_id', $request->guru_id);
+            }
+
+            $emptyClasses = $query->orderBy('tanggal', 'desc')
+                                  ->orderBy('jam_masuk', 'desc')
+                                  ->get();
+
+            // Format the data to match the kelas_kosong response structure
+            $formattedData = $emptyClasses->map(function($attendance) {
+                $schedule = $attendance->schedule;
+                
+                return [
+                    'attendance_id' => $attendance->id,
+                    'kelas' => $schedule->kelas ?? 'N/A',
+                    'mata_pelajaran' => $schedule->mata_pelajaran ?? 'N/A',
+                    'guru' => $attendance->guru,
+                    'jam_mulai' => $schedule->jam_mulai,
+                    'jam_selesai' => $schedule->jam_selesai,
+                    'ruang' => $schedule->ruang,
+                    'tanggal' => $attendance->tanggal,
+                    'hari' => $schedule->hari,
+                    'keterangan' => $attendance->keterangan,
+                    'status' => $attendance->status
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data kelas kosong dari kehadiran guru berhasil diambil',
+                'data' => $formattedData,
+                'summary' => [
+                    'total_kelas_kosong' => $formattedData->count(),
+                    'tanggal' => $tanggal,
+                ]
+            ], Response::HTTP_OK);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan server',
+                'error' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

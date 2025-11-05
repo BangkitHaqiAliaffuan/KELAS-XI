@@ -47,11 +47,13 @@ Route::middleware(['auth:sanctum', 'role:siswa'])->group(function () {
     Route::post('/monitoring/store', [MonitoringController::class, 'store']);
     Route::get('/monitoring/my-reports', [MonitoringController::class, 'myReports']); // Laporan yang dibuat siswa
 });
+Route::get('/monitoring/kelas-kosong-attendance', [MonitoringController::class, 'getKelasKosongFromAttendance']); 
 
 // Routes untuk KURIKULUM, GURU, KEPALA SEKOLAH, dan ADMIN - Cek kelas kosong, lihat laporan monitoring, dan lihat guru pengganti
 Route::middleware(['auth:sanctum', 'role:kurikulum,guru,kepala_sekolah,admin'])->group(function () {
     Route::get('/monitoring', [MonitoringController::class, 'index']);
     Route::get('/monitoring/kelas-kosong', [MonitoringController::class, 'kelasKosong']);
+
     Route::get('/guru-pengganti', [GuruPenggantiController::class, 'index']);
 
     // Teacher Replacement - Lihat penggantian guru

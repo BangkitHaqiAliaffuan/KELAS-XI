@@ -260,7 +260,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil data monitoring: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil data monitoring: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses data monitoring. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -281,7 +288,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil laporan kelas kosong: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil laporan kelas kosong: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses laporan kelas kosong. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -302,7 +316,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil data kelas kosong: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil data kelas kosong: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses data kelas kosong. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -323,7 +344,47 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil kelas kosong: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil kelas kosong: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses fitur ini. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
+    suspend fun getKelasKosongFromAttendance(
+        token: String, 
+        tanggal: String? = null,
+        kelas: String? = null,
+        guruId: Int? = null
+    ): Result<KelasKosongResponse> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.getKelasKosongFromAttendance("Bearer $token", tanggal, kelas, guruId)
+                if (response.isSuccessful && response.body() != null) {
+                    val kelasKosongResponse = response.body()!!
+                    if (kelasKosongResponse.success) {
+                        Result.success(kelasKosongResponse)
+                    } else {
+                        Result.failure(Exception(kelasKosongResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    val errorMessage = "Gagal mengambil kelas kosong dari kehadiran guru: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses fitur ini. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -346,7 +407,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil guru pengganti: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil guru pengganti: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses data guru pengganti. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -432,7 +500,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     }
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil data penggantian guru: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil data penggantian guru: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses data penggantian guru. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
@@ -575,7 +650,14 @@ class AppRepositoryNew(private val apiService: ApiService) {
                     Result.success(response.body()!!)
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Result.failure(Exception("Gagal mengambil data kehadiran: ${response.code()} - $errorBody"))
+                    val errorMessage = "Gagal mengambil data kehadiran: ${response.code()} - $errorBody"
+                    
+                    // Check if it's a 403 Forbidden error related to role permissions
+                    if (response.code() == 403 && errorBody?.contains("Forbidden") == true) {
+                        Result.failure(Exception("Akses ditolak: Anda tidak memiliki izin untuk mengakses data kehadiran. Hubungi administrator sistem."))
+                    } else {
+                        Result.failure(Exception(errorMessage))
+                    }
                 }
             } catch (e: Exception) {
                 Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
