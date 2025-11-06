@@ -52,7 +52,7 @@ export default function PageNavigation({ currentPage, totalPages, onPageChange, 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
             onClick={handlePrevPage}
-            className="fixed left-4 lg:left-8 top-1/2 -translate-y-1/2 z-40 w-12 h-12 lg:w-14 lg:h-14 rounded-full backdrop-blur-md bg-white/10 border-2 border-[#FFD700]/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] group"
+            className="fixed left-4 lg:left-8 top-1/2 -translate-y-1/2 z-[80] w-12 h-12 lg:w-14 lg:h-14 rounded-full backdrop-blur-md bg-white/10 border-2 border-[#FFD700]/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] group"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Previous page"
@@ -70,7 +70,7 @@ export default function PageNavigation({ currentPage, totalPages, onPageChange, 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             onClick={handleNextPage}
-            className="fixed right-4 lg:right-8 top-1/2 -translate-y-1/2 z-40 w-12 h-12 lg:w-14 lg:h-14 rounded-full backdrop-blur-md bg-white/10 border-2 border-[#FFD700]/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] group"
+            className="fixed right-4 lg:right-8 top-1/2 -translate-y-1/2 z-[80] w-12 h-12 lg:w-14 lg:h-14 rounded-full backdrop-blur-md bg-white/10 border-2 border-[#FFD700]/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-white/20 hover:shadow-[0_0_20px_rgba(255,215,0,0.4)] group"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             aria-label="Next page"
@@ -84,7 +84,7 @@ export default function PageNavigation({ currentPage, totalPages, onPageChange, 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 z-40 backdrop-blur-md bg-[#800000]/80 border-2 border-[#FFD700]/50 rounded-2xl px-5 py-3 shadow-lg"
+        className="fixed bottom-6 right-6 lg:bottom-8 lg:right-8 z-[80] backdrop-blur-md bg-[#800000]/80 border-2 border-[#FFD700]/50 rounded-2xl px-5 py-3 shadow-lg"
       >
         <div className="flex items-center gap-2">
           <span className="text-[#FFD700] font-bold text-2xl lg:text-3xl">{currentPage + 1}</span>
@@ -94,7 +94,7 @@ export default function PageNavigation({ currentPage, totalPages, onPageChange, 
       </motion.div>
 
       {/* Dot Navigation - Bottom Center */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 backdrop-blur-md bg-white/10 border border-[#FFD700]/30 rounded-full px-6 py-3 shadow-lg">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[80] backdrop-blur-md bg-white/10 border border-[#FFD700]/30 rounded-full px-6 py-3 shadow-lg">
         <div className="flex items-center gap-3">
           {sections.map((section, index) => (
             <motion.button

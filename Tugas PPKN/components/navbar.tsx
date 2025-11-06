@@ -32,7 +32,7 @@ export default function Navbar({ currentPage, totalPages, onPageChange, sections
         initial={{ y: -100 }}
         animate={{ y: isVisible ? 0 : -100 }}
         transition={{ duration: 0.3 }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-lg bg-[#800000]/90 border-b-2 border-gradient-gold shadow-lg"
+        className="fixed top-0 left-0 right-0 z-[100] backdrop-blur-lg bg-[#800000]/90 border-b-2 border-gradient-gold shadow-lg"
         style={{
           borderImage: "linear-gradient(to right, #FFD700, #d4af37, #FFD700) 1",
         }}
@@ -45,12 +45,12 @@ export default function Navbar({ currentPage, totalPages, onPageChange, sections
                 <span className="text-[#800000] font-bold text-lg lg:text-xl">P</span>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-white font-bold text-base lg:text-xl tracking-wide">
+                <h1 className="text-white font-bold text-base lg:text-xl tracking-wide mt-5">
                   Keberagaman Kota Palembang
                 </h1>
-                <p className="text-[#FFD700] text-xs lg:text-sm">Mutiara di Tepi Sungai Musi</p>
+             
               </div>
-              <h1 className="sm:hidden text-white font-bold text-sm">Palembang</h1>
+              
             </div>
 
             {/* Desktop Navigation Dots */}
@@ -100,7 +100,7 @@ export default function Navbar({ currentPage, totalPages, onPageChange, sections
           x: isMenuOpen ? 0 : "100%",
         }}
         transition={{ duration: 0.3 }}
-        className="fixed inset-0 z-40 lg:hidden"
+        className="fixed inset-0 z-[90] lg:hidden"
         style={{ pointerEvents: isMenuOpen ? "auto" : "none" }}
       >
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)} />

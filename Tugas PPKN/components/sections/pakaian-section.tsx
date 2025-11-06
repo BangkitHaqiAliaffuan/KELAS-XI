@@ -18,7 +18,7 @@ const pakaian = [
       "Warna dominan merah maroon dan emas",
     ],
     image: "/aesan-gede-busana-pengantin-wanita-palembang-songk.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual Aesan Gede video
+    videoId: "A2xD26d68g0",
   },
   {
     name: "Aesan Pak Sangkong",
@@ -30,7 +30,7 @@ const pakaian = [
       "Aksesori emas dan batu mulia sebagai pelengkap",
     ],
     image: "/aesan-pak-sangkong-busana-pengantin-pria-palembang.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual Aesan Pak Sangkong video
+    videoId: "KjBAyKDupdA",
   },
 ]
 
@@ -124,6 +124,7 @@ const styles = {
   section: {
     padding: "var(--spacing-2xl) 0",
     backgroundColor: "#FFF8DC",
+    marginTop: "60px"
   },
   container: {
     maxWidth: "1200px",

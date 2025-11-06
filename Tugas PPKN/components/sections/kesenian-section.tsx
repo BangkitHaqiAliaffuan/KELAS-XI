@@ -13,28 +13,28 @@ const kesenian = [
     description:
       "Tari penyambutan yang menampilkan gerakan gemulai dan anggun. Penari bergerak dengan lembut mengikuti irama musik tradisional. Tari ini sering ditampilkan dalam acara penyambutan tamu penting dan perayaan budaya.",
     image: "/tari-gending-sriwijaya-palembang.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual Palembang dance video
+    videoId: "lyXuNk6GwgA",
   },
   {
     title: "Musik Gambus",
     description:
       "Musik tradisional dengan pengaruh Arab-Melayu yang kaya akan harmoni. Gambus adalah alat musik petik yang menghasilkan suara yang merdu dan menyentuh hati. Musik ini sering dimainkan dalam acara-acara sosial dan keagamaan.",
     image: "/musik-gambus-palembang.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual Gambus music video
+    videoId: "5WDnSl3biqc",
   },
   {
     title: "Seni Ukir Palembang",
     description:
       "Seni ukir tradisional dengan motif naga dan burung yang rumit dan indah. Setiap ukiran memiliki makna filosofis yang mendalam tentang kehidupan dan budaya. Karya ukir ini sering ditemukan pada furniture dan dekorasi rumah tradisional.",
     image: "/seni-ukir-palembang-motif-naga.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual carving video
+    videoId: "dKVD05fZR04",
   },
   {
     title: "Kain Songket",
     description:
       "Tenun emas yang mendunia dengan motif tradisional yang memukau. Setiap helai benang emas ditenun dengan tangan oleh pengrajin berpengalaman. Kain songket Palembang telah diakui sebagai warisan budaya dunia.",
     image: "/kain-songket-palembang-tenun-emas.jpg",
-    videoId: "dQw4w9WgXcQ", // Replace with actual songket weaving video
+    videoId: "SCE7_afO5cQ",
   },
 ]
 
@@ -186,6 +186,7 @@ const styles = {
   section: {
     padding: "var(--spacing-2xl) 0",
     backgroundColor: "#f8f6f1",
+    marginTop:"60px"
   },
   container: {
     maxWidth: "1200px",

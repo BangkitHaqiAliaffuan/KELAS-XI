@@ -131,6 +131,7 @@ const styles = {
   section: {
     padding: "var(--spacing-2xl) 0",
     backgroundColor: "#FFF8DC",
+    marginTop: "60px",
   },
   container: {
     maxWidth: "1200px",

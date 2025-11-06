@@ -46,7 +46,7 @@ export default function ThankYouPage({ onBackToStart }: ThankYouPageProps) {
   }, [])
 
   return (
-    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#800000] via-[#a52a2a] to-[#FFD700]">
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#800000] via-[#a52a2a] to-[#FFD700] mt-15">
       {/* Decorative Background */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#FFD700] rounded-full blur-3xl animate-pulse" />
