@@ -25,6 +25,10 @@ class UsersTable
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('role'),
+                TextColumn::make('kelas.nama_kelas')
+                    ->label('Class')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('mata_pelajaran')
                     ->searchable(),
                 IconColumn::make('is_banned')
@@ -46,7 +50,12 @@ class UsersTable
                         'siswa' => 'Siswa',
                         'kurikulum' => 'Kurikulum',
                         'kepala_sekolah' => 'Kepala Sekolah'
-                    ])
+                    ]),
+                \Filament\Tables\Filters\SelectFilter::make('class_id')
+                    ->label('Class')
+                    ->relationship('kelas', 'nama_kelas')
+                    ->searchable()
+                    ->preload()
             ])
             ->recordActions([
                 ViewAction::make(),

@@ -67,6 +67,9 @@ class AuthController extends Controller
             ]);
 
             $token = $user->createToken('auth_token')->plainTextToken;
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
 
             return response()->json([
                 'success' => true,
@@ -168,19 +171,15 @@ class AuthController extends Controller
                 'ip' => $request->ip()
             ]);
 
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
+            
             // Response dengan data user yang sudah difilter
             return response()->json([
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'role' => $user->role,
-                        'created_at' => $user->created_at,
-                        'updated_at' => $user->updated_at
-                    ],
+                    'user' => $user, // Return full user with relationships
                     'token' => $token,
                     'token_type' => 'Bearer',
                     'expires_at' => now()->addDays(30)->toISOString()
@@ -239,10 +238,15 @@ class AuthController extends Controller
     public function user(Request $request)
     {
         try {
+            $user = $request->user();
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Data user berhasil diambil',
-                'data' => $request->user()
+                'data' => $user
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -281,6 +285,9 @@ class AuthController extends Controller
             }
 
             $user->save();
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
 
             return response()->json([
                 'success' => true,
@@ -309,7 +316,7 @@ class AuthController extends Controller
     public function getAllUsers()
     {
         try {
-            $users = User::select('id', 'name', 'email', 'role', 'mata_pelajaran', 'is_banned', 'created_at', 'updated_at')->get();
+            $users = User::with('kelas')->get();
 
             return response()->json([
                 'success' => true,
@@ -376,6 +383,9 @@ class AuthController extends Controller
                 'is_banned' => false
             ]);
 
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
+
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil dibuat',
@@ -410,6 +420,9 @@ class AuthController extends Controller
             $user = User::findOrFail($id);
             $user->role = $request->role;
             $user->save();
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
 
             return response()->json([
                 'success' => true,
@@ -452,6 +465,9 @@ class AuthController extends Controller
 
             // Revoke all tokens
             $user->tokens()->delete();
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
 
             return response()->json([
                 'success' => true,
@@ -477,6 +493,9 @@ class AuthController extends Controller
             $user = User::findOrFail($id);
             $user->is_banned = false;
             $user->save();
+            
+            // Load the class relationship with the user to get class name
+            $user->load('kelas');
 
             return response()->json([
                 'success' => true,

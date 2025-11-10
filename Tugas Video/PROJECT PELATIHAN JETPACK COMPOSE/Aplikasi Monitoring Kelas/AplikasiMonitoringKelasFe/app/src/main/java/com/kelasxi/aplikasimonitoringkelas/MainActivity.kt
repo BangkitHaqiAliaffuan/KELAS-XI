@@ -90,7 +90,8 @@ fun LoginScreen(modifier: Modifier = Modifier, viewModel: AuthViewModel = viewMo
                 userId = user!!.id,
                 name = user!!.name,
                 email = user!!.email,
-                role = user!!.role
+                role = user!!.role,
+                userClass = user!!.kelas
             )
             
             // Navigate berdasarkan role dari database

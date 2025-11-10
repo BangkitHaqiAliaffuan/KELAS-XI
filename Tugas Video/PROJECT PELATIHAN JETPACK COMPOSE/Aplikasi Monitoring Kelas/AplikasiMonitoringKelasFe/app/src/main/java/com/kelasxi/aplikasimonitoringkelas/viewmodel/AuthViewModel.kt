@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kelasxi.aplikasimonitoringkelas.data.api.RetrofitClient
+import com.kelasxi.aplikasimonitoringkelas.data.model.LoginResponse
 import com.kelasxi.aplikasimonitoringkelas.data.model.User
 import com.kelasxi.aplikasimonitoringkelas.data.repository.AuthRepository
 import kotlinx.coroutines.launch
@@ -65,6 +66,29 @@ class AuthViewModel : ViewModel() {
         errorMessage.value = null
         user.value = null
         token.value = null
+    }
+    
+    // Load user information using the token
+    fun loadUser(token: String) {
+        viewModelScope.launch {
+            isLoading.value = true
+            errorMessage.value = null
+            
+            repository.getUser("Bearer $token")
+                .onSuccess { response ->
+                    response.data?.let { data ->
+                        user.value = data.user
+                        loginSuccess.value = true
+                    } ?: run {
+                        errorMessage.value = "Data pengguna tidak valid"
+                    }
+                }
+                .onFailure { error ->
+                    errorMessage.value = error.message ?: "Gagal mengambil data pengguna"
+                }
+            
+            isLoading.value = false
+        }
     }
     
     private fun isValidEmail(email: String): Boolean {

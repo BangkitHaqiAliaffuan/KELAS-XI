@@ -26,6 +26,8 @@ data class User(
     val email: String,
     val role: String,
     val mata_pelajaran: String? = null,
+    val class_id: Int? = null,
+    val kelas: String? = null,  // The class name when included in the response
     @JsonAdapter(BooleanTypeAdapter::class)
     val is_banned: Boolean = false,
     val created_at: String,

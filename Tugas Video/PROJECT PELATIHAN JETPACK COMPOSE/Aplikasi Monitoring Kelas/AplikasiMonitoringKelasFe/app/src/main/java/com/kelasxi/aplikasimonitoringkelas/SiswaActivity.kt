@@ -300,9 +300,16 @@ fun JadwalPage(userRole: String) {
     val isLoading by scheduleViewModel.isLoading
     val errorMessage by scheduleViewModel.errorMessage
 
-    // Load schedules when page opens
+    // Load schedules for the user's class when page opens
     LaunchedEffect(Unit) {
-        token?.let { scheduleViewModel.loadSchedules(it) }
+        token?.let {
+            val userClass = sharedPrefManager.getUserClass()
+            if (!userClass.isNullOrEmpty()) {
+                scheduleViewModel.loadSchedules(it, kelas = userClass)
+            } else {
+                scheduleViewModel.loadSchedules(it)
+            }
+        }
     }
 
     // Handle error messages
@@ -354,6 +361,15 @@ fun JadwalPage(userRole: String) {
                         style = MaterialTheme.typography.bodyMedium,
                         color = NeutralGray600
                     )
+                    // Show student's class if available
+                    sharedPrefManager.getUserClass()?.let { kelas ->
+                        Text(
+                            text = "Kelas: $kelas",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SMKPrimary,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
 
                 Icon(
@@ -379,14 +395,27 @@ fun JadwalPage(userRole: String) {
                         subtitle = errorMessage ?: "Tidak dapat memuat jadwal",
                         icon = Icons.Default.Error,
                         actionText = "Coba Lagi",
-                        onActionClick = { token?.let { scheduleViewModel.loadSchedules(it) } }
+                        onActionClick = {
+                            token?.let {
+                                val userClass = sharedPrefManager.getUserClass()
+                                if (!userClass.isNullOrEmpty()) {
+                                    scheduleViewModel.loadSchedules(it, kelas = userClass)
+                                } else {
+                                    scheduleViewModel.loadSchedules(it)
+                                }
+                            }
+                        }
                     )
                 }
 
                 schedules.isEmpty() -> {
                     SchoolEmptyState(
                         title = "Belum Ada Jadwal",
-                        subtitle = "Jadwal pelajaran belum tersedia untuk hari ini",
+                        subtitle = if (sharedPrefManager.getUserClass() != null) {
+                            "Jadwal pelajaran belum tersedia untuk kelas ${sharedPrefManager.getUserClass()} hari ini"
+                        } else {
+                            "Jadwal pelajaran belum tersedia untuk hari ini"
+                        },
                         icon = Icons.Default.EventBusy,
                         modifier = Modifier.fillMaxWidth()
                     )

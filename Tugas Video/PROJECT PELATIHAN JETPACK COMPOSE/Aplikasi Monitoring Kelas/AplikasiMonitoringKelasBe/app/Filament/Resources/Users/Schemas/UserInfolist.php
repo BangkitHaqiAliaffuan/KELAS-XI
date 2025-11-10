@@ -18,6 +18,8 @@ class UserInfolist
                 TextEntry::make('email_verified_at')
                     ->dateTime(),
                 TextEntry::make('role'),
+                TextEntry::make('kelas.nama_kelas')
+                    ->label('Class'),
                 TextEntry::make('mata_pelajaran'),
                 IconEntry::make('is_banned')
                     ->boolean(),
