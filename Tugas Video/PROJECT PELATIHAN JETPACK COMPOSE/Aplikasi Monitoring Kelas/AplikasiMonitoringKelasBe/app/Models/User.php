@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -25,6 +26,7 @@ class User extends Authenticatable
         'role',
         'mata_pelajaran',
         'is_banned',
+        'class_id',
     ];
 
     /**
@@ -69,5 +71,13 @@ class User extends Authenticatable
     public function canLogin(): bool
     {
         return !$this->isBanned();
+    }
+
+    /**
+     * Get the class that the user belongs to.
+     */
+    public function kelas(): BelongsTo
+    {
+        return $this->belongsTo(Kelas::class, 'class_id');
     }
 }
