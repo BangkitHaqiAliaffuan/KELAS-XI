@@ -862,7 +862,7 @@ fun KepalaSekolahJadwalPage() {
                 isLoading = true
                 errorMessage = null
                 try {
-                    repository.getAllSchedules(token)
+                    repository.getAllSchedules(token, tanggal = null, kelas = null)
                         .onSuccess { response ->
                             jadwalList = response.data ?: emptyList()
                         }

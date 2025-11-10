@@ -722,15 +722,17 @@ fun EntriPage() {
     var selectedSchedule by remember { mutableStateOf<TodayScheduleWithAttendance?>(null) }
     var showEntryDialog by remember { mutableStateOf(false) }
 
-    // Load today's schedules
+    // Load today's schedules filtered by student's class
     LaunchedEffect(Unit) {
         if (token != null) {
             scope.launch {
                 isLoading = true
-                // Gunakan getAllSchedules untuk mendapatkan semua jadwal
+                // Get the student's class from shared preferences
+                val userClass = sharedPrefManager.getUserClass()
+                // Set date to today for filtering
                 val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                     .format(java.util.Date())
-                repository.getAllSchedules(token, currentDate)
+                repository.getAllSchedules(token, currentDate, userClass)
                     .onSuccess { response ->
                         todaySchedules = response.data
                     }
@@ -751,9 +753,10 @@ fun EntriPage() {
             // Reload schedules
             if (token != null) {
                 scope.launch {
+                    val userClass = sharedPrefManager.getUserClass()
                     val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                         .format(java.util.Date())
-                    repository.getAllSchedules(token, currentDate)
+                    repository.getAllSchedules(token, currentDate, userClass)
                         .onSuccess { response ->
                             todaySchedules = response.data
                         }
@@ -838,9 +841,10 @@ fun EntriPage() {
                             if (token != null) {
                                 scope.launch {
                                     isLoading = true
+                                    val userClass = sharedPrefManager.getUserClass()
                                     val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                                         .format(java.util.Date())
-                                    repository.getAllSchedules(token, currentDate)
+                                    repository.getAllSchedules(token, currentDate, userClass)
                                         .onSuccess { response ->
                                             todaySchedules = response.data
                                             errorMessage = null

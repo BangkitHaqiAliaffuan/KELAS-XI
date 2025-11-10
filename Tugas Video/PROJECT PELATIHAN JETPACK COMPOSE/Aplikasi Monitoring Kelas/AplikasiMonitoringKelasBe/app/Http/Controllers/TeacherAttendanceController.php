@@ -138,11 +138,18 @@ class TeacherAttendanceController extends Controller
     {
         $today = Carbon::today()->format('Y-m-d');
 
-        // Get parameter for date filtering (optional)
+        // Get parameters for date and class filtering (optional)
         $tanggal = $request->get('tanggal', $today);
+        $kelas = $request->get('kelas');
 
-        // Get all schedules
-        $schedules = Schedule::with(['guru'])
+        // Get all schedules with optional class filter
+        $query = Schedule::with(['guru']);
+        
+        if ($kelas) {
+            $query->where('kelas', $kelas);
+        }
+
+        $schedules = $query
             ->orderBy('hari', 'asc')
             ->orderBy('jam_mulai', 'asc')
             ->get();
@@ -172,6 +179,7 @@ class TeacherAttendanceController extends Controller
 
         return response()->json([
             'tanggal' => $tanggal,
+            'kelas' => $kelas,
             'total_schedules' => $result->count(),
             'sudah_dicatat' => $result->where('has_attendance', true)->count(),
             'belum_dicatat' => $result->where('has_attendance', false)->count(),
