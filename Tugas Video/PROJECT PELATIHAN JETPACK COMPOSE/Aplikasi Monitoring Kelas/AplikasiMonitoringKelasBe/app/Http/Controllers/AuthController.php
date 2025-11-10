@@ -75,7 +75,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'User berhasil didaftarkan',
                 'data' => [
-                    'user' => $user,
+                    'user' => $this->formatUserForResponse($user),
                     'token' => $token,
                     'token_type' => 'Bearer'
                 ]
@@ -179,7 +179,7 @@ class AuthController extends Controller
                 'success' => true,
                 'message' => 'Login berhasil',
                 'data' => [
-                    'user' => $user, // Return full user with relationships
+                    'user' => $this->formatUserForResponse($user), // Return formatted user data
                     'token' => $token,
                     'token_type' => 'Bearer',
                     'expires_at' => now()->addDays(30)->toISOString()
@@ -246,7 +246,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Data user berhasil diambil',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -292,7 +292,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Profile berhasil diupdate',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_OK);
 
         } catch (ValidationException $e) {
@@ -389,7 +389,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil dibuat',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_CREATED);
 
         } catch (ValidationException $e) {
@@ -427,7 +427,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Role user berhasil diupdate',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_OK);
 
         } catch (ValidationException $e) {
@@ -472,7 +472,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil di-ban',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -500,7 +500,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'User berhasil di-unban',
-                'data' => $user
+                'data' => $this->formatUserForResponse($user)
             ], Response::HTTP_OK);
 
         } catch (\Exception $e) {
@@ -541,5 +541,23 @@ class AuthController extends Controller
                 'error' => $e->getMessage()
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Format user data for API response ensuring kelas is a string
+     */
+    private function formatUserForResponse($user)
+    {
+        $userData = $user->toArray();
+        
+        // If user has a kelas relationship loaded, extract the class name as a string
+        if (isset($userData['kelas']) && is_array($userData['kelas']) && isset($userData['kelas']['nama_kelas'])) {
+            $userData['kelas'] = $userData['kelas']['nama_kelas'];
+        } elseif (!isset($userData['class_id']) || !$userData['class_id']) {
+            // Ensure kelas is null for users without class
+            $userData['kelas'] = null;
+        }
+        
+        return $userData;
     }
 }

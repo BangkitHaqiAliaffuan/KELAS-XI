@@ -80,4 +80,6 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Kelas::class, 'class_id');
     }
+
+
 }
