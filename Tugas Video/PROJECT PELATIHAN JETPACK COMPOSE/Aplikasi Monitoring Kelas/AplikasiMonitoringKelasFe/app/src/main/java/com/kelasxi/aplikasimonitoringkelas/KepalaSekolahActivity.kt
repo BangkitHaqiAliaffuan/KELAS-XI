@@ -1378,70 +1378,95 @@ fun KepalaSekolahAbsensiGuruPage() {
             }
             
             // Status filter
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = Spacing.sm),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    .padding(top = Spacing.sm)
             ) {
                 Text(
                     text = "Status:",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     color = SMKOnSurface,
-                    modifier = Modifier.align(Alignment.CenterVertically)
+                    modifier = Modifier.padding(bottom = Spacing.xs)
                 )
                 
-                OutlinedButton(
-                    onClick = { 
-                        selectedStatus = null
-                        loadTeacherAttendance(date = selectedDate, status = null)
-                    },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (selectedStatus == null) SMKPrimary else SMKSurface,
-                        contentColor = if (selectedStatus == null) SMKOnPrimary else SMKOnSurface
-                    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
                 ) {
-                    Text(text = "Semua")
-                }
-                
-                OutlinedButton(
-                    onClick = { 
-                        selectedStatus = "hadir"
-                        loadTeacherAttendance(date = selectedDate, status = "hadir")
-                    },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (selectedStatus == "hadir") SuccessGreen else SMKSurface,
-                        contentColor = if (selectedStatus == "hadir") Color.White else SMKOnSurface
-                    )
-                ) {
-                    Text(text = "Hadir")
-                }
-                
-                OutlinedButton(
-                    onClick = { 
-                        selectedStatus = "telat"
-                        loadTeacherAttendance(date = selectedDate, status = "telat")
-                    },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (selectedStatus == "telat") WarningYellow else SMKSurface,
-                        contentColor = if (selectedStatus == "telat") Color.White else SMKOnSurface
-                    )
-                ) {
-                    Text(text = "Telat")
-                }
-                
-                OutlinedButton(
-                    onClick = { 
-                        selectedStatus = "tidak_hadir"
-                        loadTeacherAttendance(date = selectedDate, status = "tidak_hadir")
-                    },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (selectedStatus == "tidak_hadir") ErrorRed else SMKSurface,
-                        contentColor = if (selectedStatus == "tidak_hadir") Color.White else SMKOnSurface
-                    )
-                ) {
-                    Text(text = "Tidak Hadir")
+                    OutlinedButton(
+                        onClick = { 
+                            selectedStatus = null
+                            loadTeacherAttendance(date = selectedDate, status = null)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (selectedStatus == null) SMKPrimary else SMKSurface,
+                            contentColor = if (selectedStatus == null) SMKOnPrimary else SMKOnSurface
+                        )
+                    ) {
+                        Text(
+                            text = "Semua",
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                    
+                    OutlinedButton(
+                        onClick = { 
+                            selectedStatus = "hadir"
+                            loadTeacherAttendance(date = selectedDate, status = "hadir")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (selectedStatus == "hadir") SuccessGreen else SMKSurface,
+                            contentColor = if (selectedStatus == "hadir") Color.White else SMKOnSurface
+                        )
+                    ) {
+                        Text(
+                            text = "Hadir",
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                    
+                    OutlinedButton(
+                        onClick = { 
+                            selectedStatus = "telat"
+                            loadTeacherAttendance(date = selectedDate, status = "telat")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (selectedStatus == "telat") WarningYellow else SMKSurface,
+                            contentColor = if (selectedStatus == "telat") Color.White else SMKOnSurface
+                        )
+                    ) {
+                        Text(
+                            text = "Telat",
+                            fontSize = 12.sp,
+                            maxLines = 1
+                        )
+                    }
+                    
+                    OutlinedButton(
+                        onClick = { 
+                            selectedStatus = "tidak_hadir"
+                            loadTeacherAttendance(date = selectedDate, status = "tidak_hadir")
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = if (selectedStatus == "tidak_hadir") ErrorRed else SMKSurface,
+                            contentColor = if (selectedStatus == "tidak_hadir") Color.White else SMKOnSurface
+                        )
+                    ) {
+                        Text(
+                            text = "Tidak\nHadir",
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center,
+                            lineHeight = 14.sp
+                        )
+                    }
                 }
             }
             
