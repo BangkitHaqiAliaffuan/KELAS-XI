@@ -199,7 +199,8 @@ interface ApiService {
     @GET("teacher-attendance/all-schedules")
     suspend fun getAllSchedules(
         @Header("Authorization") token: String,
-        @Query("tanggal") tanggal: String? = null
+        @Query("tanggal") tanggal: String? = null,
+        @Query("kelas") kelas: String? = null
     ): Response<TodaySchedulesResponse>
     
     @GET("teacher-attendance/today")

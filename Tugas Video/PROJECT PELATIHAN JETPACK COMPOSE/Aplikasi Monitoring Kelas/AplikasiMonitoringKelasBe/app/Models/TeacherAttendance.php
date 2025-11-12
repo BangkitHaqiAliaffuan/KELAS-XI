@@ -38,11 +38,24 @@ class TeacherAttendance extends Model
         return $this->belongsTo(User::class, 'guru_id');
     }
 
+    /**
+     * New relation: teacher record from `teachers` table (preferred source)
+     */
+    public function guruTeacher()
+    {
+        return $this->belongsTo(Teacher::class, 'guru_id');
+    }
+
     public function guruAsli()
     {
         // The relationship still points to User model for backward compatibility
         // In a complete migration to teachers table, this would reference Teacher model
         return $this->belongsTo(User::class, 'guru_asli_id');
+    }
+
+    public function guruAsliTeacher()
+    {
+        return $this->belongsTo(Teacher::class, 'guru_asli_id');
     }
 
     public function createdBy()

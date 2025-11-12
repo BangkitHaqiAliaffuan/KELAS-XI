@@ -31,4 +31,13 @@ class Schedule extends Model
     {
         return $this->belongsTo(User::class, 'guru_id');
     }
+
+    /**
+     * Optional relation to Teacher model (teachers table)
+     * Keeps backward compatibility while allowing API to use teachers table
+     */
+    public function teacher()
+    {
+        return $this->belongsTo(Teacher::class, 'guru_id');
+    }
 }

@@ -575,10 +575,10 @@ class AppRepositoryNew(private val apiService: ApiService) {
         }
     }
     
-    suspend fun getAllSchedules(token: String, tanggal: String? = null): Result<TodaySchedulesResponse> {
+    suspend fun getAllSchedules(token: String, tanggal: String? = null, kelas: String? = null): Result<TodaySchedulesResponse> {
         return withContext(Dispatchers.IO) {
             try {
-                val response = apiService.getAllSchedules("Bearer $token", tanggal)
+                val response = apiService.getAllSchedules("Bearer $token", tanggal, kelas)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
                 } else {

@@ -18,7 +18,8 @@ data class TeacherAttendance(
     @SerializedName("created_at") val createdAt: String?,
     @SerializedName("updated_at") val updatedAt: String?,
     @SerializedName("schedule") val schedule: Schedule?,
-    @SerializedName("guru") val guru: User?
+    @JsonAdapter(GuruOrIdDeserializer::class)
+    @SerializedName("guru") val guru: Guru?
 )
 
 // Custom deserializer to handle both User object and integer ID
@@ -38,6 +39,29 @@ class UserOrIdDeserializer : JsonDeserializer<User?> {
             json.isJsonObject -> {
                 // If it's an object, deserialize it as User
                 context?.deserialize(json, User::class.java)
+            }
+            else -> null
+        }
+    }
+}
+
+// Custom deserializer to handle Guru object or integer ID
+class GuruOrIdDeserializer : JsonDeserializer<Guru?> {
+    override fun deserialize(
+        json: JsonElement?,
+        typeOfT: Type?,
+        context: JsonDeserializationContext?
+    ): Guru? {
+        return when {
+            json == null || json.isJsonNull -> null
+            json.isJsonPrimitive && json.asJsonPrimitive.isNumber -> {
+                // If it's just a number (ID), return null for now
+                // Backend may return full Guru object if available
+                null
+            }
+            json.isJsonObject -> {
+                // If it's an object, deserialize it as Guru
+                context?.deserialize(json, Guru::class.java)
             }
             else -> null
         }

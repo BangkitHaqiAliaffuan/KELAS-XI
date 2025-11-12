@@ -862,7 +862,7 @@ fun KepalaSekolahJadwalPage() {
                 isLoading = true
                 errorMessage = null
                 try {
-                    repository.getAllSchedules(token)
+                    repository.getAllSchedules(token, tanggal = null, kelas = null)
                         .onSuccess { response ->
                             jadwalList = response.data ?: emptyList()
                         }
@@ -1280,14 +1280,19 @@ fun KepalaSekolahAbsensiGuruPage() {
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var selectedDate by remember { mutableStateOf<String?>(null) } // Make date optional
+    var selectedStatus by remember { mutableStateOf<String?>(null) } // For status filtering
     
     // Load teacher attendance data
-    fun loadTeacherAttendance(date: String? = null) {
+    fun loadTeacherAttendance(date: String? = null, status: String? = null) {
         if (token != null) {
             scope.launch {
                 isLoading = true
                 // Fetch all records if no date is selected, otherwise filter by date
-                repository.getTeacherAttendances(token, tanggal = date)
+                repository.getTeacherAttendances(
+                    token = token, 
+                    tanggal = date,
+                    status = status
+                )
                     .onSuccess { response ->
                         teacherAttendanceList = response.data
                         errorMessage = null
@@ -1312,19 +1317,20 @@ fun KepalaSekolahAbsensiGuruPage() {
             .background(SMKBackground)
             .padding(Spacing.md)
     ) {
-        // Date filter section
+        // Date and status filter section
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(bottom = Spacing.md)
         ) {
             Text(
-                text = if (selectedDate != null) "Filter Tanggal: $selectedDate" else "Semua Tanggal",
+                text = "Filter Data",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = SMKOnSurface
             )
             
+            // Date filter
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1334,7 +1340,7 @@ fun KepalaSekolahAbsensiGuruPage() {
                 Button(
                     onClick = {
                         selectedDate = java.time.LocalDate.now().toString()
-                        loadTeacherAttendance(selectedDate)
+                        loadTeacherAttendance(date = selectedDate, status = selectedStatus)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (selectedDate == java.time.LocalDate.now().toString()) SMKPrimary else SMKSurface,
@@ -1350,7 +1356,7 @@ fun KepalaSekolahAbsensiGuruPage() {
                         // In a full implementation, you would show a date picker
                         // For now, we'll just use the current date when clicked
                         selectedDate = java.time.LocalDate.now().toString()
-                        loadTeacherAttendance(selectedDate)
+                        loadTeacherAttendance(date = selectedDate, status = selectedStatus)
                     }
                 ) {
                     Icon(
@@ -1359,17 +1365,99 @@ fun KepalaSekolahAbsensiGuruPage() {
                         tint = SMKPrimary
                     )
                 }
-                
+
                 OutlinedButton(
                     onClick = {
                         selectedDate = null
-                        loadTeacherAttendance(null) // Load all records
+                        loadTeacherAttendance(date = null, status = selectedStatus) // Load all records
                     },
                     enabled = selectedDate != null
                 ) {
-                    Text(text = "Hapus Filter")
+                    Text(text = "Hapus Filter Tanggal")
                 }
             }
+            
+            // Status filter
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = Spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                Text(
+                    text = "Status:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = SMKOnSurface,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+                
+                OutlinedButton(
+                    onClick = { 
+                        selectedStatus = null
+                        loadTeacherAttendance(date = selectedDate, status = null)
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (selectedStatus == null) SMKPrimary else SMKSurface,
+                        contentColor = if (selectedStatus == null) SMKOnPrimary else SMKOnSurface
+                    )
+                ) {
+                    Text(text = "Semua")
+                }
+                
+                OutlinedButton(
+                    onClick = { 
+                        selectedStatus = "hadir"
+                        loadTeacherAttendance(date = selectedDate, status = "hadir")
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (selectedStatus == "hadir") SuccessGreen else SMKSurface,
+                        contentColor = if (selectedStatus == "hadir") Color.White else SMKOnSurface
+                    )
+                ) {
+                    Text(text = "Hadir")
+                }
+                
+                OutlinedButton(
+                    onClick = { 
+                        selectedStatus = "telat"
+                        loadTeacherAttendance(date = selectedDate, status = "telat")
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (selectedStatus == "telat") WarningYellow else SMKSurface,
+                        contentColor = if (selectedStatus == "telat") Color.White else SMKOnSurface
+                    )
+                ) {
+                    Text(text = "Telat")
+                }
+                
+                OutlinedButton(
+                    onClick = { 
+                        selectedStatus = "tidak_hadir"
+                        loadTeacherAttendance(date = selectedDate, status = "tidak_hadir")
+                    },
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = if (selectedStatus == "tidak_hadir") ErrorRed else SMKSurface,
+                        contentColor = if (selectedStatus == "tidak_hadir") Color.White else SMKOnSurface
+                    )
+                ) {
+                    Text(text = "Tidak Hadir")
+                }
+            }
+            
+            // Display current filters
+            Text(
+                text = buildString {
+                    append("Filter: ")
+                    if (selectedDate != null) append("Tanggal: $selectedDate")
+                    if (selectedDate != null && selectedStatus != null) append(", ")
+                    if (selectedStatus != null) append("Status: ${selectedStatus?.uppercase()}")
+                    if (selectedDate == null && selectedStatus == null) append("Tidak ada filter")
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = NeutralGray600,
+                modifier = Modifier.padding(top = Spacing.sm)
+            )
         }
         
         when {
@@ -1423,7 +1511,9 @@ fun KepalaSekolahAbsensiGuruPage() {
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            text = if (selectedDate != null) "Tidak ada data absensi untuk tanggal ini" else "Tidak ada data absensi",
+                            text = if (selectedDate != null || selectedStatus != null) 
+                                "Tidak ada data absensi sesuai filter" 
+                                else "Tidak ada data absensi",
                             style = MaterialTheme.typography.bodyMedium,
                             color = NeutralGray600
                         )
@@ -1472,17 +1562,42 @@ fun KepalaSekolahTeacherAttendanceCard(attendance: TeacherAttendance) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(
-                        text = attendance.guru?.name ?: "Guru Tidak Diketahui",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = SMKOnSurface
-                    )
-                    Text(
-                        text = attendance.schedule?.kelas ?: attendance.schedule?.mata_pelajaran ?: "Kelas/Mapel Tidak Diketahui",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = NeutralGray700
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    ) {
+                        // Avatar/Initials for the reported teacher
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(
+                                    color = SMKPrimary,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = attendance.guru?.name?.firstOrNull()?.toString()?.uppercase() ?: "?",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = attendance.guru?.name ?: "Guru Tidak Diketahui",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = SMKOnSurface
+                            )
+                            Text(
+                                text = attendance.schedule?.kelas ?: attendance.schedule?.mata_pelajaran ?: "Kelas/Mapel Tidak Diketahui",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = NeutralGray700
+                            )
+                        }
+                    }
                 }
                 
                 // Status badge
@@ -1516,17 +1631,18 @@ fun KepalaSekolahTeacherAttendanceCard(attendance: TeacherAttendance) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = when (attendance.status?.lowercase()) {
-                            "hadir" -> Color(0xFFE8F5E8)
-                            "telat" -> Color(0xFFFFF3E0)
-                            "tidak_hadir" -> Color(0xFFFCE4EC)
-                            else -> NeutralGray50
-                        },
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                            color = when (attendance.status?.lowercase()) {
+                                "hadir" -> SuccessLight
+                                "telat" -> WarningLight
+                                "tidak_hadir" -> ErrorLight
+                                else -> NeutralGray50
+                            },
+                            shape = RoundedCornerShape(8.dp)
+                        )
                     .padding(Spacing.md),
                 verticalArrangement = Arrangement.spacedBy(Spacing.sm)
             ) {
+                // Schedule time
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
@@ -1554,6 +1670,44 @@ fun KepalaSekolahTeacherAttendanceCard(attendance: TeacherAttendance) {
                                 }
                             )
                         }
+                    }
+                }
+                
+                // Teacher name (show name if available, fallback to unknown)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Icon(
+                        Icons.Default.Badge,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = SMKPrimary
+                    )
+                    Text(
+                        text = attendance.guru?.name ?: "Guru Tidak Diketahui",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = NeutralGray700
+                    )
+                }
+                
+                // Date information
+                if (attendance.tanggal != null) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    ) {
+                        Icon(
+                            Icons.Default.DateRange,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = SMKPrimary
+                        )
+                        Text(
+                            text = "Tanggal: ${formatDate(attendance.tanggal)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = NeutralGray700
+                        )
                     }
                 }
                 

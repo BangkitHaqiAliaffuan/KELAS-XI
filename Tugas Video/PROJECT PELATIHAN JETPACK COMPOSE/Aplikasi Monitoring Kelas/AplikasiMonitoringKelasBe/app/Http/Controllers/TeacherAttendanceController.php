@@ -15,7 +15,8 @@ class TeacherAttendanceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = TeacherAttendance::with(['schedule', 'guru', 'createdBy']);
+    // Load both legacy User relation and new Teacher relation (guruTeacher)
+    $query = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy']);
 
         // Filter by date
         if ($request->has('tanggal')) {
@@ -55,6 +56,17 @@ class TeacherAttendanceController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->paginate($request->get('per_page', 15));
 
+        // For each attendance, prefer the `guruTeacher` relation (from teachers table)
+        // but keep backward compatibility by setting it as the `guru` relation
+        foreach ($attendances->items() as $attendance) {
+            if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
+                $attendance->setRelation('guru', $attendance->guruTeacher);
+            }
+            if ($attendance->relationLoaded('guruAsliTeacher') && $attendance->guruAsliTeacher) {
+                $attendance->setRelation('guruAsli', $attendance->guruAsliTeacher);
+            }
+        }
+
         return response()->json($attendances);
     }
 
@@ -65,10 +77,20 @@ class TeacherAttendanceController extends Controller
     {
         $today = Carbon::today()->format('Y-m-d');
 
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'createdBy'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy'])
             ->where('tanggal', $today)
             ->orderBy('jam_masuk', 'asc')
             ->get();
+
+        // prefer guruTeacher over legacy guru
+        foreach ($attendances as $a) {
+            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
+                $a->setRelation('guru', $a->guruTeacher);
+            }
+            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
+                $a->setRelation('guruAsli', $a->guruAsliTeacher);
+            }
+        }
 
         return response()->json([
             'tanggal' => $today,
@@ -92,7 +114,8 @@ class TeacherAttendanceController extends Controller
         $dayNameEn = Carbon::today()->format('l');
 
         // Get schedules for today (try both Indonesian and English)
-        $schedules = Schedule::with(['guru'])
+        // load both schedule->guru (legacy User) and schedule->teacher (new Teacher)
+        $schedules = Schedule::with(['guru', 'teacher'])
             ->where(function($query) use ($dayName, $dayNameEn) {
                 $query->where('hari', $dayName)
                       ->orWhere('hari', $dayNameEn)
@@ -103,14 +126,29 @@ class TeacherAttendanceController extends Controller
             ->get();
 
         // Get attendances for today with relationships
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'createdBy', 'guruAsli'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy', 'guruAsli', 'guruAsliTeacher'])
             ->where('tanggal', $today)
             ->get()
             ->keyBy('schedule_id');
 
+        // prefer guruTeacher and guruAsliTeacher
+        foreach ($attendances as $a) {
+            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
+                $a->setRelation('guru', $a->guruTeacher);
+            }
+            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
+                $a->setRelation('guruAsli', $a->guruAsliTeacher);
+            }
+        }
+
         // Merge schedule with attendance data
         $result = $schedules->map(function($schedule) use ($attendances) {
             $attendance = $attendances->get($schedule->id);
+
+            // If schedule has 'teacher' relation prefer it over legacy 'guru'
+            if ($schedule->relationLoaded('teacher') && $schedule->teacher) {
+                $schedule->setRelation('guru', $schedule->teacher);
+            }
 
             return [
                 'schedule' => $schedule,
@@ -138,20 +176,36 @@ class TeacherAttendanceController extends Controller
     {
         $today = Carbon::today()->format('Y-m-d');
 
-        // Get parameter for date filtering (optional)
+        // Get parameters for date and class filtering (optional)
         $tanggal = $request->get('tanggal', $today);
+        $kelas = $request->get('kelas');
 
-        // Get all schedules
-        $schedules = Schedule::with(['guru'])
+        // Get all schedules with optional class filter
+    $query = Schedule::with(['guru', 'teacher']);
+
+        if ($kelas) {
+            $query->where('kelas', $kelas);
+        }
+
+        $schedules = $query
             ->orderBy('hari', 'asc')
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
         // Get attendances for the specified date with relationships
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'createdBy', 'guruAsli'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy', 'guruAsli', 'guruAsliTeacher'])
             ->where('tanggal', $tanggal)
             ->get()
             ->keyBy('schedule_id');
+
+        foreach ($attendances as $a) {
+            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
+                $a->setRelation('guru', $a->guruTeacher);
+            }
+            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
+                $a->setRelation('guruAsli', $a->guruAsliTeacher);
+            }
+        }
 
         // Merge schedule with attendance data
         $result = $schedules->map(function($schedule) use ($attendances) {
@@ -172,6 +226,7 @@ class TeacherAttendanceController extends Controller
 
         return response()->json([
             'tanggal' => $tanggal,
+            'kelas' => $kelas,
             'total_schedules' => $result->count(),
             'sudah_dicatat' => $result->where('has_attendance', true)->count(),
             'belum_dicatat' => $result->where('has_attendance', false)->count(),
@@ -223,7 +278,11 @@ class TeacherAttendanceController extends Controller
             'created_by' => $request->user()->id
         ]);
 
-        $attendance->load(['schedule', 'guru', 'createdBy']);
+        // load both legacy and teacher relations and prefer teacher
+        $attendance->load(['schedule', 'guru', 'guruTeacher', 'createdBy']);
+        if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
+            $attendance->setRelation('guru', $attendance->guruTeacher);
+        }
 
         return response()->json([
             'message' => 'Kehadiran guru berhasil dicatat',
@@ -236,8 +295,15 @@ class TeacherAttendanceController extends Controller
      */
     public function show($id)
     {
-        $attendance = TeacherAttendance::with(['schedule', 'guru', 'createdBy'])
+        $attendance = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'guruAsli', 'guruAsliTeacher', 'createdBy'])
             ->findOrFail($id);
+
+        if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
+            $attendance->setRelation('guru', $attendance->guruTeacher);
+        }
+        if ($attendance->relationLoaded('guruAsliTeacher') && $attendance->guruAsliTeacher) {
+            $attendance->setRelation('guruAsli', $attendance->guruAsliTeacher);
+        }
 
         return response()->json($attendance);
     }
@@ -263,7 +329,10 @@ class TeacherAttendanceController extends Controller
         }
 
         $attendance->update($request->only(['jam_masuk', 'status', 'keterangan']));
-        $attendance->load(['schedule', 'guru', 'createdBy']);
+        $attendance->load(['schedule', 'guru', 'guruTeacher', 'createdBy']);
+        if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
+            $attendance->setRelation('guru', $attendance->guruTeacher);
+        }
 
         return response()->json([
             'message' => 'Kehadiran guru berhasil diperbarui',
