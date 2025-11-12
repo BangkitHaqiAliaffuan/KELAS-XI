@@ -181,8 +181,13 @@ class TeacherAttendanceController extends Controller
         $kelas = $request->get('kelas');
 
         // Get all schedules with optional class filter
+<<<<<<< HEAD
     $query = Schedule::with(['guru', 'teacher']);
 
+=======
+        $query = Schedule::with(['guru']);
+        
+>>>>>>> 66e415bc80f83022ca743eaa6a544da0535f5249
         if ($kelas) {
             $query->where('kelas', $kelas);
         }
