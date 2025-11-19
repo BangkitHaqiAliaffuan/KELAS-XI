@@ -1,0 +1,129 @@
+.pekerjaan-page {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+.pekerjaan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.pekerjaan-hexagon {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(3, 105, 161, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pekerjaan-hexagon::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--cilacap-blue), var(--cilacap-green));
+}
+
+.pekerjaan-hexagon:hover {
+  box-shadow: 0 12px 48px rgba(3, 105, 161, 0.25);
+  transform: translateY(-5px);
+}
+
+.hexagon-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--cilacap-blue), var(--cilacap-navy));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 6px 20px rgba(3, 105, 161, 0.3);
+}
+
+.hexagon-title {
+  font-size: 1.2rem;
+  color: var(--cilacap-navy);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.hexagon-description {
+  color: #475569;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.info-box {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border-left: 6px solid var(--cilacap-blue);
+}
+
+.info-box p {
+  color: #475569;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.info-box strong {
+  color: var(--cilacap-navy);
+  font-weight: 700;
+}
+
+@media (max-width: 1024px) {
+  .pekerjaan-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .pekerjaan-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pekerjaan-hexagon {
+    padding: 1.5rem;
+  }
+
+  .icon-wrapper {
+    width: 70px;
+    height: 70px;
+  }
+
+  .icon-wrapper svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .hexagon-title {
+    font-size: 1.1rem;
+  }
+
+  .info-box {
+    padding: 1.5rem;
+  }
+
+  .info-box p {
+    font-size: 1rem;
+  }
+}

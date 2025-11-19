@@ -1,0 +1,44 @@
+.kesimpulan-page {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fde68a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kesimpulan-page .page-content {
+  max-width: 900px;
+}
+
+.kesimpulan-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 24px;
+  padding: 3.5rem;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+  border: 4px solid var(--cilacap-blue);
+  text-align: center;
+}
+
+.kesimpulan-text {
+  color: #334155;
+  font-size: 1.2rem;
+  line-height: 1.9;
+  margin-bottom: 1.5rem;
+  text-align: justify;
+}
+
+.kesimpulan-text:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .kesimpulan-card {
+    padding: 2rem;
+    border-width: 3px;
+  }
+
+  .kesimpulan-text {
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+}
