@@ -2,12 +2,29 @@ import { Anchor, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import './Navbar.css';
 
-const Navbar = ({ currentPage, totalPages, onPageChange }) => {
+const Navbar = ({ activeSection }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const handleDotClick = (pageIndex) => {
-    onPageChange(pageIndex);
-    setMobileMenuOpen(false);
+  const sections = [
+    { id: 'hero', label: 'Beranda' },
+    { id: 'makanan', label: 'Makanan' },
+    { id: 'pakaian', label: 'Pakaian' },
+    { id: 'kesenian', label: 'Kesenian' },
+    { id: 'pekerjaan', label: 'Pekerjaan' },
+    { id: 'adat', label: 'Adat' },
+    { id: 'nilai', label: 'Nilai' },
+    { id: 'konflik', label: 'Konflik' },
+    { id: 'solusi', label: 'Solusi' },
+    { id: 'kesimpulan', label: 'Kesimpulan' },
+    { id: 'refleksi', label: 'Refleksi' }
+  ];
+
+  const handleNavClick = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setMobileMenuOpen(false);
+    }
   };
 
   return (
@@ -19,23 +36,17 @@ const Navbar = ({ currentPage, totalPages, onPageChange }) => {
           <span className="navbar-title">Kabupaten Cilacap</span>
         </div>
 
-        {/* Desktop Navigation Dots */}
-        <div className="navbar-dots desktop-only">
-          {Array.from({ length: totalPages }).map((_, index) => (
+        {/* Desktop Navigation Links */}
+        <div className="navbar-links desktop-only">
+          {sections.map((section) => (
             <button
-              key={index}
-              className={`nav-dot ${currentPage === index ? 'active' : ''}`}
-              onClick={() => handleDotClick(index)}
-              aria-label={`Halaman ${index + 1}`}
-            />
+              key={section.id}
+              className={`nav-link ${activeSection === section.id ? 'active' : ''}`}
+              onClick={() => handleNavClick(section.id)}
+            >
+              {section.label}
+            </button>
           ))}
-        </div>
-
-        {/* Page Counter */}
-        <div className="navbar-counter desktop-only">
-          <span className="counter-current">{currentPage + 1}</span>
-          <span className="counter-separator">/</span>
-          <span className="counter-total">{totalPages}</span>
         </div>
 
         {/* Mobile Menu Button */}
@@ -52,13 +63,13 @@ const Navbar = ({ currentPage, totalPages, onPageChange }) => {
       {mobileMenuOpen && (
         <div className="mobile-menu">
           <div className="mobile-dots">
-            {Array.from({ length: totalPages }).map((_, index) => (
+            {sections.map((section) => (
               <button
-                key={index}
-                className={`mobile-dot ${currentPage === index ? 'active' : ''}`}
-                onClick={() => handleDotClick(index)}
+                key={section.id}
+                className={`mobile-dot ${activeSection === section.id ? 'active' : ''}`}
+                onClick={() => handleNavClick(section.id)}
               >
-                Halaman {index + 1}
+                {section.label}
               </button>
             ))}
           </div>

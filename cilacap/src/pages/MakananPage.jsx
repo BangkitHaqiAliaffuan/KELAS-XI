@@ -6,32 +6,20 @@ const MakananPage = () => {
     {
       name: 'Lontong Tuyuhan',
       description: 'Lontong kuah santan kental dengan sayuran, gurih creamy',
-      badge: 'Favorit Pagi'
+      badge: 'Favorit Pagi',
+      image: '/images/lontong-tuyuhan.jpg'
     },
     {
       name: 'Sate Blengong',
       description: 'Sate bebek dengan bumbu kacang manis pedas khas',
-      badge: 'Ikon Kuliner'
+      badge: 'Ikon Kuliner',
+      image: '/images/sate-blengong.jpg'
     },
     {
       name: 'Mie Kopyok',
       description: 'Mie kuah kental dengan topping ayam/seafood, porsi besar',
-      badge: 'Comfort Food'
-    },
-    {
-      name: 'Getuk Goreng',
-      description: 'Getuk singkong goreng crispy luar, lembut dalam, topping keju/coklat',
-      badge: 'Camilan'
-    },
-    {
-      name: 'Kupat Glabed',
-      description: 'Ketupat dengan kuah santan melimpah, sajian lebaran',
-      badge: 'Tradisi'
-    },
-    {
-      name: 'Peyek Kacang',
-      description: 'Rempeyek tebal, sangat renyah, tahan lama',
-      badge: 'Oleh-Oleh'
+      badge: 'Comfort Food',
+      image: '/images/mie-kopyok.jpg'
     }
   ];
 
@@ -64,6 +52,17 @@ const MakananPage = () => {
               transition={{ delay: 0.3 + index * 0.1 }}
               whileHover={{ y: -10, scale: 1.02 }}
             >
+              <div className="card-image-placeholder">
+                <img 
+                  src={item.image} 
+                  alt={item.name} 
+                  className="card-image"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.style.background = 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)';
+                  }}
+                />
+              </div>
               <div className="card-badge">{item.badge}</div>
               <h3 className="card-title">{item.name}</h3>
               <p className="card-description">{item.description}</p>

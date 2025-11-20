@@ -1,5 +1,6 @@
 .pekerjaan-page {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  background: transparent;
+  width: 100%;
 }
 
 .pekerjaan-grid {

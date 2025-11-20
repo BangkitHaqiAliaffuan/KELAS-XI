@@ -1,5 +1,6 @@
 .solusi-page {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  background: transparent;
+  width: 100%;
 }
 
 .solusi-main-card {

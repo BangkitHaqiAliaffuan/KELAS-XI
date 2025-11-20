@@ -47,6 +47,12 @@ const HeroPage = () => {
           transition={{ delay: 0.6, duration: 0.8 }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => {
+            const makananSection = document.getElementById('makanan');
+            if (makananSection) {
+              makananSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
         >
           Mulai Jelajahi
           <ChevronDown className="button-icon" />

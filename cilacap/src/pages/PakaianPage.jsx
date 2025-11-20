@@ -26,6 +26,17 @@ const PakaianPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
+            <div className="pakaian-image-placeholder">
+              <img 
+                src="/images/kebaya-wanita-cilacap.jpg" 
+                alt="Busana Wanita Cilacap" 
+                className="pakaian-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)';
+                }}
+              />
+            </div>
             <div className="section-content">
               <h3 className="section-title">Busana Wanita</h3>
               <div className="costume-item">
@@ -58,6 +69,17 @@ const PakaianPage = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
+            <div className="pakaian-image-placeholder">
+              <img 
+                src="/images/beskap-pria-cilacap.jpg" 
+                alt="Busana Pria Cilacap" 
+                className="pakaian-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%)';
+                }}
+              />
+            </div>
             <div className="section-content">
               <h3 className="section-title">Busana Pria</h3>
               <div className="costume-item">

@@ -1,12 +1,13 @@
 .adat-page {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde047 100%);
+  background: transparent;
+  width: 100%;
 }
 
 .timeline {
   position: relative;
-  max-width: 1000px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 0;
+  padding: 3rem 2rem;
 }
 
 .timeline::before {
@@ -15,82 +16,96 @@
   left: 50%;
   transform: translateX(-50%);
   width: 4px;
-  height: 100%;
+  height: calc(100% - 6rem);
   background: linear-gradient(to bottom, var(--cilacap-blue), var(--cilacap-green));
   border-radius: 2px;
+  top: 3rem;
 }
 
 .timeline-item {
   position: relative;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .timeline-item.left {
   justify-content: flex-end;
-  padding-right: calc(50% + 40px);
+  padding-right: calc(50% + 50px);
 }
 
 .timeline-item.right {
   justify-content: flex-start;
-  padding-left: calc(50% + 40px);
+  padding-left: calc(50% + 50px);
 }
 
 .timeline-content {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  padding: 2rem;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  border: 2px solid rgba(234, 179, 8, 0.3);
+  padding: 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+  max-width: 450px;
+  width: 100%;
+  border: 3px solid rgba(234, 179, 8, 0.4);
   transition: all 0.3s ease;
 }
 
 .timeline-content:hover {
-  transform: scale(1.03);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  border-color: rgba(234, 179, 8, 0.6);
 }
 
 .timeline-dot {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
-  background: var(--cilacap-yellow);
-  border: 4px solid white;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--cilacap-yellow), #f59e0b);
+  border: 5px solid white;
   border-radius: 50%;
-  box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+  box-shadow: 0 0 0 4px rgba(234, 179, 8, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.timeline-item:hover .timeline-dot {
+  transform: translateX(-50%) scale(1.2);
+  box-shadow: 0 0 0 6px rgba(234, 179, 8, 0.3), 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 .tradisi-name {
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   color: var(--cilacap-navy);
-  font-weight: 700;
-  margin-bottom: 0.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  line-height: 1.3;
 }
 
 .tradisi-description {
   color: #475569;
-  line-height: 1.6;
-  margin-bottom: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  font-size: 1.05rem;
 }
 
 .tradisi-nilai {
-  padding: 0.75rem 1rem;
-  background: rgba(234, 179, 8, 0.1);
-  border-radius: 8px;
-  border-left: 3px solid var(--cilacap-yellow);
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), rgba(234, 179, 8, 0.15));
+  border-radius: 10px;
+  border-left: 4px solid var(--cilacap-yellow);
   color: #334155;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .tradisi-nilai strong {
   color: var(--cilacap-navy);
-  font-weight: 700;
+  font-weight: 800;
+  display: block;
+  margin-bottom: 0.25rem;
 }
 
 @media (max-width: 768px) {

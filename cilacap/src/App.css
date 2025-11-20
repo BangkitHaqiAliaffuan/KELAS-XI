@@ -1,75 +1,125 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+* { 
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 80px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
-* { box-sizing: border-box; }
 
 .app {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
   position: relative;
-  overflow: hidden;
   background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
 }
 
-.page-wrapper {
+.landing-container {
   width: 100%;
-  height: 100vh;
+  padding-top: 80px; /* navbar height */
 }
 
-.page-container {
+.section-wrapper {
   width: 100%;
-  height: 100vh;
-  overflow: auto;
-  padding-top: 100px;
-  margin-top: 90px; /* navbar height */
+  min-height: 100vh;
+  padding: 100px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  scroll-margin-top: 80px;
+  transition: background 0.3s ease;
 }
 
-/* Small helper */
-.container-centered {
-  max-width: 1200px;
+.section-wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.02));
+  pointer-events: none;
+}
+
+/* Specific section backgrounds with smooth gradients */
+#hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #10b981 100%);
+}
+
+#makanan {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+#pakaian {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 100%);
+}
+
+#kesenian {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fcd34d 100%);
+}
+
+#pekerjaan {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+}
+
+#adat {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde047 100%);
+}
+
+#nilai {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+}
+
+#konflik {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+#solusi {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+#kesimpulan {
+  background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fde68a 100%);
+}
+
+#refleksi {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+/* Page containers inside sections */
+.page-container {
+  width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Responsive spacing adjustments */
+@media (max-width: 768px) {
+  .section-wrapper {
+    min-height: auto;
+    padding: 60px 16px;
+  }
+  
+  .landing-container {
+    padding-top: 70px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-wrapper {
+    padding: 50px 12px;
+  }
 }

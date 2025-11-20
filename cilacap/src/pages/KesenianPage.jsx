@@ -9,23 +9,28 @@ const KesenianPage = () => {
   const kesenian = [
     {
       name: 'Ebeg/Kuda Lumping',
-      description: 'Tarian kuda kepang energik gaya Banyumasan dengan trance'
+      description: 'Tarian kuda kepang energik gaya Banyumasan dengan trance',
+      image: '/images/ebeg-kuda-lumping.jpg'
     },
     {
       name: 'Calung Banyumasan',
-      description: 'Musik bambu dengan repertoar lagu khas pesisir'
+      description: 'Musik bambu dengan repertoar lagu khas pesisir',
+      image: '/images/calung-banyumasan.jpg'
     },
     {
       name: 'Sintren',
-      description: 'Kesenian mistis penari trance muncul dari kurungan bambu'
+      description: 'Kesenian mistis penari trance muncul dari kurungan bambu',
+      image: '/images/sintren.jpg'
     },
     {
       name: 'Batik Cilacap',
-      description: 'Motif "Gringsing Nusakambangan", "Ombak Samudra Hindia"'
+      description: 'Motif "Gringsing Nusakambangan", "Ombak Samudra Hindia"',
+      image: '/images/batik-cilacap.jpg'
     },
     {
       name: 'Kentongan Bumbung',
-      description: 'Alat musik bambu untuk komunikasi dan seni, ritme cepat dinamis'
+      description: 'Alat musik bambu untuk komunikasi dan seni, ritme cepat dinamis',
+      image: '/images/kentongan-bumbung.jpg'
     }
   ];
 
@@ -75,6 +80,17 @@ const KesenianPage = () => {
             exit={{ opacity: 0, x: -100 }}
             transition={{ duration: 0.5 }}
           >
+            <div className="carousel-image-placeholder">
+              <img 
+                src={kesenian[currentIndex].image} 
+                alt={kesenian[currentIndex].name} 
+                className="carousel-image"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.parentElement.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)';
+                }}
+              />
+            </div>
             <div className="item-number">{currentIndex + 1} / {kesenian.length}</div>
             <h3 className="item-title">{kesenian[currentIndex].name}</h3>
             <p className="item-description">{kesenian[currentIndex].description}</p>
