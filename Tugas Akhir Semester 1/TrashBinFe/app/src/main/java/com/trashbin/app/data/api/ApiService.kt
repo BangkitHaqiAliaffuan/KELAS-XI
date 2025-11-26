@@ -1,6 +1,7 @@
 package com.trashbin.app.data.api
 
 import com.trashbin.app.data.model.ApiResponse
+import com.trashbin.app.data.model.ClassificationResult
 import com.trashbin.app.data.model.CreateOrderRequest
 import com.trashbin.app.data.model.LoginResponse
 import com.trashbin.app.data.model.User

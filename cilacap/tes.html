@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Itinerary Excel</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>PAKET TOUR SIDOARJO - SEMARANG 2 DAYS</h1>
+    
+    <div>
+        <p><strong>Tanggal:</strong> 15-16 Oktober 2027</p>
+        <p><strong>Jumlah Pax:</strong> 50 Pax</p>
+        <p><strong>Jumlah Tour Guide:</strong> 01 Pax</p>
+        <p><strong>Jumlah Dokumentasi:</strong> 01 Pax</p>
+    </div>
+    
+    <button onclick="downloadExcel()">Download Itinerary Excel</button>
+    
+    <script>
+        function downloadExcel() {
+            // Data gabungan dalam satu sheet dengan format tabel
+            const itineraryData = [
+                ['ITINERARY'],
+                [],
+                ['TANGGAL', 'WAKTU', 'KETERANGAN'],
+                ['15 Oktober 2027', '04.00 - 05.00', 'Berkumpul di meeting point'],
+                ['', '05.00 - 09.00', 'Perjalanan menuju Lawang Sewu'],
+                ['', '09.00 - 11.00', 'Menikmati wisata di Lawang Sewu'],
+                ['', '11.00 - 11.15', 'Perjalanan menuju Restoran AGS Ayam'],
+                ['', '11.15 - 12.15', 'ISHOMA di Restoran AGS Ayam'],
+                ['', '12.15 - 13.15', 'Menikmati wisata Sam Poo Kong'],
+                ['', '13.15 - 13.30', 'Perjalanan menuju Quest Hotel Pemuda'],
+                ['', '13.30 - 14.30', 'Check in Hotel'],
+                ['', '14.30 - 18.00', 'Free Time'],
+                ['', '18.00 - 19.00', 'Makan malam'],
+                ['', '19.00 - 21.00', 'Menikmati wisata Kota Lama'],
+                ['16 Oktober 2027', '06.00 - 07.00', 'Breakfast di hotel'],
+                ['', '07.00 - 09.00', 'Persiapan Checkout'],
+                ['', '09.00 - 09.30', 'Menuju wisata Umbul Sido Mukti'],
+                ['', '09.30 - 11.30', 'Menikmati wisata Umbul Sido Mukti'],
+                ['', '11.30 - 12.30', 'ISHOMA di Umbul Sido Mukti'],
+                ['', '12.30 - 13.30', 'Menuju Taman Bunga Celosia'],
+                ['', '13.30 - 16.30', 'Menikmati Wisata di Taman Bunga Celosia'],
+                ['', '16.30 - 17.00', 'Perjalanan menuju Resto Bintangan'],
+                ['', '17.00 - 18.00', 'ISHOMA di Resto Bintangan'],
+                ['', '18.00 - 19.00', 'Perjalanan menuju Pusat Oleh-Oleh Djawa'],
+                ['', '19.00 - 20.00', 'Berbelanja di Pusat Oleh-Oleh Djawa'],
+                ['', '20.00 - 00.00', 'Perjalanan kembali menuju Sidoarjo']
+            ];
+            
+            // Membuat workbook baru
+            const wb = XLSX.utils.book_new();
+            
+            // Membuat worksheet dari data
+            const ws = XLSX.utils.aoa_to_sheet(itineraryData);
+            
+            // Mengatur lebar kolom
+            ws['!cols'] = [
+                { wch: 20 },  // Kolom TANGGAL
+                { wch: 20 },  // Kolom WAKTU
+                { wch: 60 }   // Kolom KETERANGAN
+            ];
+            
+            // Merge cells untuk judul "ITINERARY"
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 2 } }  // Merge A1:C1
+            ];
+            
+            // Menambahkan border ke semua cell yang terisi
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let row = range.s.r; row <= range.e.r; row++) {
+                for (let col = range.s.c; col <= range.e.c; col++) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+                    if (!ws[cellAddress]) continue;
+                    
+                    ws[cellAddress].s = {
+                        border: {
+                            top: { style: 'thin', color: { rgb: '000000' } },
+                            bottom: { style: 'thin', color: { rgb: '000000' } },
+                            left: { style: 'thin', color: { rgb: '000000' } },
+                            right: { style: 'thin', color: { rgb: '000000' } }
+                        },
+                        alignment: {
+                            vertical: 'center',
+                            horizontal: row === 0 ? 'center' : (col === 0 ? 'center' : 'left')
+                        },
+                        font: {
+                            bold: row === 0 || row === 2
+                        }
+                    };
+                }
+            }
+            
+            // Menambahkan worksheet ke workbook
+            XLSX.utils.book_append_sheet(wb, ws, "Itinerary");
+            
+            // Download file
+            XLSX.writeFile(wb, "Itinerary_Tour_Sidoarjo_Semarang_15-16Okt2027.xlsx");
+        }
+    </script>
+</body>
+</html>

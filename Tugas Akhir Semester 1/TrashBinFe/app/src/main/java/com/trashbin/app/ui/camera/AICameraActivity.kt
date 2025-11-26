@@ -24,8 +24,10 @@ import com.trashbin.app.data.model.ClassificationResult
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Call
-import retrofit2.Callback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -129,18 +131,15 @@ class AICameraActivity : AppCompatActivity() {
                 return
             }
             
-            // Create the API call with authorization header
-            val call = apiService.classifyWaste(imagePart)
-            
-            call.enqueue(object : Callback<ApiResponse<ClassificationResult>> {
-                override fun onResponse(
-                    call: Call<ApiResponse<ClassificationResult>>,
-                    response: Response<ApiResponse<ClassificationResult>>
-                ) {
-                    runOnUiThread {
+            // Call the suspend function in a coroutine
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = apiService.classifyWaste(imagePart)
+
+                    withContext(Dispatchers.Main) {
                         progressBar.visibility = android.view.View.GONE
                         cameraButton.isEnabled = true
-                        
+
                         if (response.isSuccessful && response.body()?.success == true) {
                             val result = response.body()?.data
                             if (result != null) {
@@ -152,16 +151,14 @@ class AICameraActivity : AppCompatActivity() {
                             showError("Gagal mengklasifikasikan sampah: ${response.message()}")
                         }
                     }
-                }
-
-                override fun onFailure(call: Call<ApiResponse<ClassificationResult>>, t: Throwable) {
-                    runOnUiThread {
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
                         progressBar.visibility = android.view.View.GONE
                         cameraButton.isEnabled = true
-                        showError("Gagal mengklasifikasikan sampah: ${t.message}")
+                        showError("Gagal mengklasifikasikan sampah: ${e.message}")
                     }
                 }
-            })
+            }
         } else {
             runOnUiThread {
                 progressBar.visibility = android.view.View.GONE

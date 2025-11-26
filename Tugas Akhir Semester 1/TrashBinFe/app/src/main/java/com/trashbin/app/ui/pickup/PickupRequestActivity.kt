@@ -2,6 +2,7 @@ package com.trashbin.app.ui.pickup
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.view.Gravity
 import android.os.Bundle
 import android.view.View
@@ -400,21 +401,20 @@ class PickupRequestActivity : AppCompatActivity() {
     
     private fun verifyWasteCategory() {
         val selectedPosition = categorySpinner.selectedItemPosition
-        
+
         // Validation - account for placeholder at position 0
         if (selectedPosition <= 0 || selectedPosition > categories.size) {
             Toast.makeText(this, "Pilih kategori sampah terlebih dahulu", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         // Get selected category
         val selectedCategory = categories[selectedPosition - 1]
-        
+
         // Launch AI Camera Activity with selected category
-        val intent = Intent(this, AICameraActivity::class.java).apply {
-            putExtra(AICameraActivity.EXTRA_SELECTED_CATEGORY, selectedCategory.id.toString())
-            putExtra(AICameraActivity.EXTRA_CATEGORY_NAME, selectedCategory.name)
-        }
+        val intent = Intent(this, AICameraActivity::class.java)
+        intent.putExtra(AICameraActivity.EXTRA_SELECTED_CATEGORY, selectedCategory.id.toString())
+        intent.putExtra(AICameraActivity.EXTRA_CATEGORY_NAME, selectedCategory.name)
         cameraLauncher.launch(intent)
     }
     
