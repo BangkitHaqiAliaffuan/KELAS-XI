@@ -2,5 +2,11 @@
   "name": "tanaman-hias",
   "buildCommand": "pnpm build",
   "devCommand": "pnpm dev",
-  "installCommand": "pnpm install"
+  "installCommand": "pnpm install",
+  "functions": {
+    "app/api/upload/route.ts": {
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }

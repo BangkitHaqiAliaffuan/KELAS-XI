@@ -3,8 +3,18 @@ import { type NextRequest, NextResponse } from "next/server"
 import { writeFile } from "fs/promises"
 import path from "path"
 
+// Configure max body size (10MB)
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
 // Toggle between local and Vercel Blob storage
 const USE_LOCAL_STORAGE = process.env.USE_LOCAL_STORAGE === "true"
+
+// Max file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,6 +24,19 @@ export async function POST(request: NextRequest) {
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
+
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: `File terlalu besar. Maksimal 10MB. Ukuran file: ${(file.size / 1024 / 1024).toFixed(2)}MB` },
+        { status: 413 }
+      )
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "File harus berupa gambar" }, { status: 400 })
     }
 
     if (USE_LOCAL_STORAGE) {
@@ -49,6 +72,10 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error("[v0] Upload error:", error)
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 })
+    const errorMessage = error instanceof Error ? error.message : "Upload failed"
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: 500 }
+    )
   }
 }

@@ -3,8 +3,63 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Upload, X, Check } from "lucide-react"
+import { Upload, X, Check, AlertCircle } from "lucide-react"
 import Link from "next/link"
+
+// Max file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024
+
+// Compress image before upload
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target?.result as string
+      img.onload = () => {
+        const canvas = document.createElement("canvas")
+        let width = img.width
+        let height = img.height
+
+        // Resize if too large (max 1920px)
+        const maxDimension = 1920
+        if (width > maxDimension || height > maxDimension) {
+          if (width > height) {
+            height = (height / width) * maxDimension
+            width = maxDimension
+          } else {
+            width = (width / height) * maxDimension
+            height = maxDimension
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext("2d")
+        ctx?.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              })
+              resolve(compressedFile)
+            } else {
+              reject(new Error("Kompresi gagal"))
+            }
+          },
+          "image/jpeg",
+          0.8
+        )
+      }
+      img.onerror = () => reject(new Error("Gagal memuat gambar"))
+    }
+    reader.onerror = () => reject(new Error("Gagal membaca file"))
+  })
+}
 
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([])
@@ -24,15 +79,28 @@ export default function UploadPage() {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.currentTarget.classList.remove("bg-accent-green/20")
-    const newFiles = Array.from(e.dataTransfer.files).filter((file) => file.type.startsWith("image/"))
+    const newFiles = Array.from(e.dataTransfer.files).filter((file) => {
+      if (!file.type.startsWith("image/")) return false
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File ${file.name} terlalu besar. Maksimal 10MB`)
+        return false
+      }
+      return true
+    })
     setFiles((prev) => [...prev, ...newFiles])
-    setError("")
+    if (newFiles.length > 0) setError("")
   }
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFiles = Array.from(e.target.files || [])
+    const newFiles = Array.from(e.target.files || []).filter((file) => {
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File ${file.name} terlalu besar. Maksimal 10MB`)
+        return false
+      }
+      return true
+    })
     setFiles((prev) => [...prev, ...newFiles])
-    setError("")
+    if (newFiles.length > 0) setError("")
   }
 
   const removeFile = (index: number) => {
@@ -50,8 +118,21 @@ export default function UploadPage() {
 
     try {
       for (const file of files) {
+        console.log("[v0] Compressing file:", file.name, "Size:", (file.size / 1024 / 1024).toFixed(2), "MB")
+        
+        // Compress image before upload
+        let fileToUpload = file
+        if (file.size > 1024 * 1024) { // Compress if > 1MB
+          try {
+            fileToUpload = await compressImage(file)
+            console.log("[v0] Compressed size:", (fileToUpload.size / 1024 / 1024).toFixed(2), "MB")
+          } catch (compressError) {
+            console.warn("[v0] Compression failed, uploading original:", compressError)
+          }
+        }
+
         const formData = new FormData()
-        formData.append("file", file)
+        formData.append("file", fileToUpload)
         formData.append("title", file.name)
 
         console.log("[v0] Uploading file:", file.name)
@@ -62,8 +143,15 @@ export default function UploadPage() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || "Upload gagal")
+          let errorMessage = "Upload gagal"
+          try {
+            const errorData = await response.json()
+            errorMessage = errorData.error || errorMessage
+          } catch {
+            // If response is not JSON, use status text
+            errorMessage = `${response.status}: ${response.statusText}`
+          }
+          throw new Error(errorMessage)
         }
 
         console.log("[v0] File uploaded successfully:", file.name)
@@ -77,7 +165,8 @@ export default function UploadPage() {
       }, 2000)
     } catch (err) {
       console.error("[v0] Upload error:", err)
-      setError("Terjadi kesalahan saat upload. Silakan coba lagi.")
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan saat upload"
+      setError(errorMessage)
     } finally {
       setUploading(false)
     }
