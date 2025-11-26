@@ -1,7 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Boldonse&family=Chelsea+Market&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+.chelsea-market-regular {
+  font-family: "Chelsea Market", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+.boldonse-regular {
+  font-family: "Boldonse", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
 
 :root {
   --background: oklch(1 0 0);

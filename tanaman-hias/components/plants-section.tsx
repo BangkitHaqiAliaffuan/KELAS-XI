@@ -171,7 +171,7 @@ function PlantCard({ plant, index }: PlantCardProps) {
             <div className="relative z-10 text-white text-center w-full flex flex-col justify-between h-full">
               <div />
               <div>
-                <h3 className="text-2xl font-bold mb-2 text-balance">{plant.name}</h3>
+                <h3 className="chelsea-market-regular text-2xl font-bold mb-2 text-balance">{plant.name}</h3>
                 <p className="text-sm italic text-cream-bg/80 mb-6">{plant.scientific}</p>
               </div>
               <button className="bg-secondary-green hover:bg-primary-green text-white px-4 py-2 rounded-lg text-sm font-semibold hover:shadow-lg transition-all hover:scale-105 w-full">
@@ -221,7 +221,7 @@ export default function PlantsSection() {
 
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold gradient-text mb-4">Tanaman Hias Kami</h2>
+          <h2 className="boldonse-regular py-10 text-5xl md:text-6xl font-bold gradient-text mb-4">Tanaman Hias Kami</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Koleksi lengkap tanaman hias Indonesia dengan informasi lengkap perawatan
           </p>

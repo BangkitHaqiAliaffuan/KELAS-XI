@@ -51,7 +51,7 @@ export default function HeroSection() {
       </svg>
 
       <div className="relative z-10 text-center px-4 md:px-8 w-full max-w-5xl mx-auto">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-cream-bg mb-4 drop-shadow-lg text-balance">
+        <h1 className="boldonse-regular text-4xl md:text-6xl lg:text-6xl font-bold text-cream-bg mb-4 drop-shadow-lg text-balance">
           MEMBUAT TAMAN HIAS INSPIRATIF XI-RPL
         </h1>
         <div className="h-1 w-32 mx-auto mb-6 bg-gradient-to-r from-accent-green to-cream-bg rounded" />
