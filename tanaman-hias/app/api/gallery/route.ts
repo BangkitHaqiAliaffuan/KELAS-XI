@@ -48,9 +48,25 @@ export async function GET() {
       }
     } else {
       // Read from Vercel Blob (for production)
-      const { blobs } = await list()
+      // Fetch all blobs with pagination
+      let allBlobs: any[] = []
+      let cursor: string | undefined = undefined
+      let hasMore = true
 
-      const galleryImages = blobs
+      while (hasMore) {
+        const response = await list({
+          limit: 1000, // Max limit per request
+          cursor: cursor,
+        })
+
+        allBlobs = [...allBlobs, ...response.blobs]
+        cursor = response.cursor
+        hasMore = response.hasMore
+
+        console.log(`[v0] Fetched ${response.blobs.length} blobs, total: ${allBlobs.length}, hasMore: ${hasMore}`)
+      }
+
+      const galleryImages = allBlobs
         .map((blob) => ({
           id: blob.pathname,
           url: blob.url,
@@ -63,6 +79,7 @@ export async function GET() {
         }))
         .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
 
+      console.log(`[v0] Total gallery images: ${galleryImages.length}`)
       return NextResponse.json(galleryImages)
     }
   } catch (error) {
