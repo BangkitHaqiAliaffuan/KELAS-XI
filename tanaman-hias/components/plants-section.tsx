@@ -152,11 +152,21 @@ function PlantCard({ plant, index }: PlantCardProps) {
         className="relative w-full h-full transition-transform duration-500"
         style={{
           transformStyle: "preserve-3d",
+          WebkitTransformStyle: "preserve-3d",
           transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+          WebkitTransform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
         }}
       >
         {/* Front - Background Image with Overlay */}
-        <div className="absolute w-full h-full rounded-xl overflow-hidden" style={{ backfaceVisibility: "hidden" }}>
+        <div 
+          className="absolute w-full h-full rounded-xl overflow-hidden" 
+          style={{ 
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(0deg)",
+            WebkitTransform: "rotateY(0deg)",
+          }}
+        >
           <div
             className="w-full h-full bg-cover bg-center flex flex-col items-center justify-between p-6 relative"
             style={{
@@ -184,7 +194,12 @@ function PlantCard({ plant, index }: PlantCardProps) {
         {/* Back - Care Tips */}
         <div
           className="absolute w-full h-full bg-primary-green text-white flex flex-col p-6 justify-between rounded-xl"
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          style={{ 
+            backfaceVisibility: "hidden",
+            WebkitBackfaceVisibility: "hidden",
+            transform: "rotateY(180deg)",
+            WebkitTransform: "rotateY(180deg)",
+          }}
         >
           <div>
             <p className="text-sm font-semibold text-accent-green mb-2">Perawatan</p>
