@@ -12,6 +12,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -37,7 +38,7 @@ class TeacherResource extends Resource
     {
         return $schema
             ->schema([
-                \Filament\Forms\Components\Section::make('Teacher Information')
+                Section::make('Teacher Information')
                     ->description('Add the basic information for the teacher')
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('name')

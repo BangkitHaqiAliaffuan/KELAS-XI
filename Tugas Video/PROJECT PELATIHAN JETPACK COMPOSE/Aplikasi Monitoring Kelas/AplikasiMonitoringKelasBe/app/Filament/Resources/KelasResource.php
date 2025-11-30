@@ -10,6 +10,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\Section;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -32,7 +33,7 @@ class KelasResource extends Resource
     {
         return $schema
             ->schema([
-                \Filament\Forms\Components\Section::make('Class Information')
+                Section::make('Class Information')
                     ->description('Add the class information')
                     ->schema([
                         \Filament\Forms\Components\TextInput::make('nama_kelas')
