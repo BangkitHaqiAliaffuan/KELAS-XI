@@ -9,3 +9,73 @@
     --font-sans: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Custom Theme untuk SMKN 2 BUDURAN SIDOARJO - Matching dengan Mobile App */
+@layer components {
+    /* Sidebar Styling */
+    .fi-sidebar {
+        @apply bg-gradient-to-b from-[#1e40af] to-[#1d4ed8];
+        border-right: none;
+        box-shadow: 0 10px 30px rgba(30, 64, 175, 0.1);
+    }
+
+    .fi-sidebar-item-button {
+        @apply rounded-xl px-4 py-3 font-medium transition-all duration-200;
+    }
+
+    .fi-sidebar-item-button:hover {
+        @apply bg-white/10;
+        transform: translateX(4px);
+    }
+
+    .fi-sidebar-item-button[data-active="true"] {
+        @apply bg-white/20 font-semibold;
+    }
+
+    /* Header Styling */
+    .fi-topbar {
+        @apply bg-white border-b border-slate-200 shadow-sm;
+    }
+
+    /* Card Styling */
+    .fi-section-content-ctn > div > div {
+        @apply rounded-2xl border border-slate-200 transition-all duration-200;
+    }
+
+    .fi-section-content-ctn > div > div:hover {
+        @apply shadow-lg;
+        transform: translateY(-2px);
+    }
+
+    /* Button Styling */
+    .fi-btn-primary {
+        @apply bg-gradient-to-br from-[#1e40af] to-[#3b82f6] border-0 rounded-xl px-6 py-3 font-semibold shadow-md hover:shadow-lg transition-all duration-200;
+    }
+
+    .fi-btn-primary:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Form Input */
+    .fi-input, .fi-select {
+        @apply rounded-xl border-2 border-slate-300 px-4 py-3 transition-all duration-200;
+    }
+
+    .fi-input:focus, .fi-select:focus {
+        @apply border-[#1e40af] ring-4 ring-[#1e40af]/10;
+    }
+
+    /* Badge Styling */
+    .fi-badge {
+        @apply rounded-lg px-3 py-1.5 font-semibold text-sm;
+    }
+
+    /* Login Page */
+    .fi-simple-page {
+        @apply bg-gradient-to-br from-[#1e40af] to-[#3b82f6];
+    }
+
+    .fi-simple-page .fi-simple-main-ctn {
+        @apply rounded-3xl shadow-2xl border-0;
+    }
+}
