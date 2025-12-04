@@ -76,7 +76,7 @@ class TeacherReplacementController extends Controller
         try {
             $request->validate([
                 'attendance_id' => 'required|exists:teacher_attendances,id',
-                'guru_pengganti_id' => 'required|exists:users,id',
+                'guru_pengganti_id' => 'required|exists:teachers,id',
                 'keterangan' => 'nullable|string'
             ]);
 

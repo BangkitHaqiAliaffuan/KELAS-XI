@@ -53,8 +53,8 @@ class GuruPenggantiController extends Controller
     {
         try {
             $request->validate([
-                'guru_pengganti_id' => 'required|exists:users,id',
-                'guru_asli_id' => 'nullable|exists:users,id',
+                'guru_pengganti_id' => 'required|exists:teachers,id',
+                'guru_asli_id' => 'nullable|exists:teachers,id',
                 'kelas' => 'required|string',
                 'mata_pelajaran' => 'required|string',
                 'tanggal' => 'required|date',
@@ -103,8 +103,8 @@ class GuruPenggantiController extends Controller
             $guruPengganti = GuruPengganti::findOrFail($id);
 
             $request->validate([
-                'guru_pengganti_id' => 'sometimes|required|exists:users,id',
-                'guru_asli_id' => 'nullable|exists:users,id',
+                'guru_pengganti_id' => 'sometimes|required|exists:teachers,id',
+                'guru_asli_id' => 'nullable|exists:teachers,id',
                 'kelas' => 'sometimes|required|string',
                 'mata_pelajaran' => 'sometimes|required|string',
                 'tanggal' => 'sometimes|required|date',

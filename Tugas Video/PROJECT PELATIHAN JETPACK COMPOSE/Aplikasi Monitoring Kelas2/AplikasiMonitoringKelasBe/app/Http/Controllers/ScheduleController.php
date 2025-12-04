@@ -14,7 +14,7 @@ class ScheduleController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Schedule::with('guru:id,name,email');
+            $query = Schedule::with('guru:id,name,email,mata_pelajaran');
 
             // Filter berdasarkan hari jika ada
             if ($request->has('hari') && $request->hari) {
@@ -55,14 +55,14 @@ class ScheduleController extends Controller
                 'hari' => 'required|in:Senin,Selasa,Rabu,Kamis,Jumat,Sabtu',
                 'kelas' => 'required|string|max:10',
                 'mata_pelajaran' => 'required|string|max:255',
-                'guru_id' => 'required|exists:users,id',
+                'guru_id' => 'required|exists:teachers,id',
                 'jam_mulai' => 'required|date_format:H:i',
                 'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
                 'ruang' => 'nullable|string|max:50'
             ]);
 
             $schedule = Schedule::create($request->all());
-            $schedule->load('guru:id,name,email');
+            $schedule->load('guru:id,name,email,mata_pelajaran');
 
             return response()->json([
                 'success' => true,

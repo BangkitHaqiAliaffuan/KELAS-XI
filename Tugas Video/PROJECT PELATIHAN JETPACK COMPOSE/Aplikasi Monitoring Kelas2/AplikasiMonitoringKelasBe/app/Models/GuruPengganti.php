@@ -29,19 +29,19 @@ class GuruPengganti extends Model
     ];
 
     /**
-     * Relasi ke guru pengganti
+     * Relasi ke guru pengganti (dari tabel teachers)
      */
     public function guruPengganti()
     {
-        return $this->belongsTo(User::class, 'guru_pengganti_id');
+        return $this->belongsTo(Teacher::class, 'guru_pengganti_id');
     }
 
     /**
-     * Relasi ke guru asli yang digantikan
+     * Relasi ke guru asli yang digantikan (dari tabel teachers)
      */
     public function guruAsli()
     {
-        return $this->belongsTo(User::class, 'guru_asli_id');
+        return $this->belongsTo(Teacher::class, 'guru_asli_id');
     }
 
     /**

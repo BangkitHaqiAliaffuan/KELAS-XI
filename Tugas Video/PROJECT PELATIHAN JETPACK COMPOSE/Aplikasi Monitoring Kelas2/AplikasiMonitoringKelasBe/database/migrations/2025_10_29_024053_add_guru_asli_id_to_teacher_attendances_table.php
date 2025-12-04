@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('teacher_attendances', function (Blueprint $table) {
-            $table->foreignId('guru_asli_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('assigned_by')->nullable()->constrained('users')->onDelete('set null');
+            if (!Schema::hasColumn('teacher_attendances', 'guru_asli_id')) {
+                $table->foreignId('guru_asli_id')->nullable()->constrained('teachers')->onDelete('set null');
+            }
+            if (!Schema::hasColumn('teacher_attendances', 'assigned_by')) {
+                $table->foreignId('assigned_by')->nullable()->constrained('users')->onDelete('set null');
+            }
         });
     }
 
