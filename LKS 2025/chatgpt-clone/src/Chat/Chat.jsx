@@ -72,7 +72,7 @@ const Chat = () => {
             ""
           )}
         </div>
-        <div className="footer">Chat Gpt Model OpenAi</div>
+        <div className="footer">Chatgpt</div>
       </div>
     </div>
   );
