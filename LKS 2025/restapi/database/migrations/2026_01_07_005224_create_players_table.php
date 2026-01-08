@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('players', function (Blueprint $table) {
             $table->id();
             $table->string('posisi');
+            $table->string('name');
             $table->integer('nomor_punggung');
             $table->foreignId('createdBy')->constrained('users')->onDelete('cascade');
             $table->foreignId('modifiedBy')->constrained('users')->onDelete('cascade');
