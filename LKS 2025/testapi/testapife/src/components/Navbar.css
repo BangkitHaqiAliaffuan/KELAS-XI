@@ -1,0 +1,41 @@
+.navbar{
+    padding-top: 5px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo{
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    border-radius: 10px;
+    rotate: 20deg;
+    height: 50px;
+    background-color: red;
+}
+
+.logo-name{
+    rotate: -20deg;
+}
+
+.items{
+    display: flex;
+    gap: 10px;
+    font-weight: bold;
+
+    font-size: 12px;
+}
+
+.item{
+    cursor: pointer;
+}
+
+.item:hover{
+    color: red;
+    transition: all ease 500ms;
+}
+
