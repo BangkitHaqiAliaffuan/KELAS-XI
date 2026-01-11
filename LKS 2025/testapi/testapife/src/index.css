@@ -3,4 +3,7 @@
 
 *{
   font-family: "Poppins", sans-serif;
+  margin: none;
+  padding: none;
+  box-sizing: border-box;
 }
