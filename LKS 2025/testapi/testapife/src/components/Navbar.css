@@ -38,6 +38,8 @@
     color: black;
     text-decoration: none;
     font-weight: bold;
+    border:none;
+    background-color: white;
 }
 
 .login{

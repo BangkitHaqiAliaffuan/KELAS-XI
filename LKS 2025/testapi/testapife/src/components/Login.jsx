@@ -15,9 +15,10 @@ const Login = (token, setToken) => {
         email: email,
         password: password,
       })
-      console.log("sukses", response.data.user);
-      localStorage.setItem("token",response.data.token)
-      // localStorage.setItem("user",response.data.user)
+      console.log("sukses token", response.data.token);
+      const token = localStorage.setItem("token",response.data.token)
+      console.log("sukses masukkan token", token);
+      localStorage.setItem("user",response.data.user)
       navigate("/")
     } catch (error){
       console.log("Error:", error.response?.data||error.message)

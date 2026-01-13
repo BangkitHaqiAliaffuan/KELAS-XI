@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import Login from './components/Login'
 import { Route, Routes } from 'react-router-dom'
 import Home from './components/Home'
+import Profile from './components/Profile'
 
 
 
@@ -18,13 +19,14 @@ const App = () => {
   }, []);
 
   return (
-    <>
+    <div className='main-container'>
     <Navbar/>
     <Routes>
     <Route path='/' element={<Home/>}/>
     <Route path='/login' element={<Login/>}/>
+    <Route path='/profile' element={<Profile/>}/>
     </Routes>
-    </>
+    </div>
   )
 }
 
