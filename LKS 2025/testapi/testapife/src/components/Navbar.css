@@ -32,10 +32,33 @@
 
 .item{
     cursor: pointer;
+    font-size: larger;
+    padding: 20px;
+    border-radius: 10px;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login{
+    cursor: pointer;
+    font-size: larger;
+    padding: 20px;
+    border-radius: 10px;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.login:hover{
+    background-color: red;
+    color: white;
+    transition: all ease 500ms;
 }
 
 .item:hover{
-    color: red;
+    background-color: red;
+    color: white;
     transition: all ease 500ms;
 }
 
