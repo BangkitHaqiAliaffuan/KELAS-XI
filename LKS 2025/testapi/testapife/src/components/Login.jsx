@@ -2,33 +2,34 @@ import React, { useState } from "react";
 import "./Login.css";
 import axios from "axios"
 import { Navigate, useNavigate } from "react-router-dom";
-const Login = (token, setToken) => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate()
   const handleSubmit = async (e)=>{
     e.preventDefault()
-
-    
     try{
-      const response = await axios.post("http://127.0.0.1:8000/api/users/auth",{
-        email: email,
-        password: password,
+      const response = await fetch("http://127.0.0.1:8000/api/users/auth",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body:JSON.stringify({email:email, password:password})
       })
-      console.log("sukses token", response.data.token);
-      const token = localStorage.setItem("token",response.data.token)
-      console.log("sukses masukkan token", token);
-      localStorage.setItem("user",response.data.user)
+      const data = await response.json()
+      // console.log("sukses token", data);
+      localStorage.setItem("token",data.token)
+      // console.log("sukses masukkan token", token);
+      localStorage.setItem("user",JSON.stringify(data.user))
+      // console.log("sukses masukkan user", user);
       navigate("/")
     } catch (error){
-      console.log("Error:", error.response?.data||error.message)
+      // console.log("Error:", error.response?.data||error.message)
     }
   }
 
 
 
   return (
-    <div className="container">    
+    <div className="container-manual">    
       <div className="login-container">
         <div className="judul">
           <svg

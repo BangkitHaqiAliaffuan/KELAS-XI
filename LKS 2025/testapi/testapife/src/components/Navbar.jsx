@@ -28,7 +28,7 @@ const Navbar = () => {
       localStorage.removeItem("user")
 
       isLoggedIn = false
-      navigate("home")
+      navigate("/")
     } catch (error){
       // console.log("Error", error.response?.data || error.message)
     }

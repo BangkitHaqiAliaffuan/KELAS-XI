@@ -1,0 +1,21 @@
+.container-manual{
+    width: 100%;
+    margin: none;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-image: linear-gradient(to bottom, #F5DAD8 ,#E5E3D6 );
+}
+
+.profile-container{
+    gap: 20px;
+    background-color: white;
+    height: 40%;
+    width:  500px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+} 
