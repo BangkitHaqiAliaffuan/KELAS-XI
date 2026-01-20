@@ -1,7 +1,5 @@
-// import React from 'react'
 import React, { useState } from "react";
-import { Route, Router, useNavigate } from "react-router-dom";
-import Dashboard from "./dashboard";
+import { useNavigate } from "react-router-dom";
 const Login = () => {
  const [idnumber, setIdnumber] = useState("");
    const [password, setPassword] = useState("");
@@ -30,7 +28,7 @@ const Login = () => {
      const data = await response.json();
      localStorage.setItem('token', data.test.login_tokens)
  
-       navigate('/')
+       navigate('/dashboard')
      //   console.log(data.test.login_tokens);
      
      } catch (error) {}
