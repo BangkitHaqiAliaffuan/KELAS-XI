@@ -29,7 +29,7 @@ const Login = () => {
      localStorage.setItem('token', data.test.login_tokens)
  
        navigate('/dashboard')
-     //   console.log(data.test.login_tokens);
+       console.log(data.test.login_tokens);
      
      } catch (error) {}
    };

@@ -44,9 +44,9 @@ class SocietyController extends Controller
         $token = $society->createToken('token')->plainTextToken;
 
         // Update login_tokens di database
-        DB::table('societies')
-            ->where('id', $society->id)
-            ->update(['login_tokens' => $token]);
+        $society->update([
+            'login_tokens' => $token
+        ]);
 
         return response()->json([
             'message' => 'Login berhasil',

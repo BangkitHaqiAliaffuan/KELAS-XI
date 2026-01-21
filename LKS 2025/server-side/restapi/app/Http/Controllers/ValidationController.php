@@ -21,14 +21,15 @@ class ValidationController extends Controller
         }
 
         // DEBUG: Cek semua societies dan login_tokens mereka
-        $allSocieties = DB::table('societies')->select('id', 'name', 'login_tokens')->get();
+
 
         // Cari society berdasarkan login_tokens menggunakan DB Query
-        $societyData = DB::table('societies')->where('login_tokens', $token)->first();
+        $societyData = Society::where('login_tokens', $token)->first();
 
 
 
         $validation = Validation::create([
+            // 'status' => 'pending',
             'society_id' => $societyData->id,
             'job_position' => $request->job_position,
             'job_category_id' => $request->job_category_id,
@@ -40,5 +41,15 @@ class ValidationController extends Controller
             'message' => 'Validation request berhasil dibuat',
             'data' => $validation,
         ], 201);
+    }
+    public function getValidation(Request $request){
+        $token = $request->bearerToken();
+        $society = Society::where('login_tokens', $token)->first();
+        $validation = Validation::where('society_id', $society->id)->first() ;
+        return response()->json([
+            'message' => $society->id,
+            'validation' => $validation,
+        ]);
+
     }
 }

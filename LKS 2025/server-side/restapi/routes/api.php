@@ -10,4 +10,9 @@ Route::post('/v1/auth/login', [SocietyController::class, 'login']);
 Route::post('/v1/auth/register', [SocietyController::class, 'store']);
 
 // Route yang membutuhkan login
-Route::post('/v1/validation', [ValidationController::class, 'request']);
+
+Route::group(['auth:sanctum'], function (){
+    Route::post('/v1/validation', [ValidationController::class, 'request']);
+    Route::get('/v1/validation', [ValidationController::class, 'getValidation']);
+});
+

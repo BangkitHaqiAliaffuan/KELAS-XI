@@ -1,8 +1,55 @@
 import React from "react";
 
 const Dashboard = () => {
+
+    const token = localStorage.getItem('token')
+
+    const fetchData = async (e)=>{
+        const response = await fetch('http://127.0.0.1:8000/api/v1/validation',{
+            headers:{
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json',
+            }
+        })
+
+        const data = await response.json()
+
+        console.json(data)
+    }
+
+    fetchData()
+
   return (
     <>
+     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+         <div class="container">
+           <a class="navbar-brand" href="#">
+             Job Seekers Platform
+           </a>
+           <button
+             class="navbar-toggler"
+             type="button"
+             data-toggle="collapse"
+             data-target="#navbarsExampleDefault"
+             aria-controls="navbarsExampleDefault"
+             aria-expanded="false"
+             aria-label="Toggle navigation"
+           >
+             <span class="navbar-toggler-icon"></span>
+           </button>
+ 
+           <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+             <ul class="navbar-nav ml-auto">
+               <li class="nav-item">
+                 <a class="nav-link" href="#">
+                   {token?"Logout":"Login"}
+                 </a>
+               </li>
+             </ul>
+           </div>
+         </div>
+       </nav>
+
     <header className="jumbotron">
         <div className="container">
             <h1 className="display-4">Dashboard</h1>
