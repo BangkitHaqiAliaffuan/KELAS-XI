@@ -1,37 +1,60 @@
 import React from "react";
 
 const Request = () => {
-        const token = localStorage.getItem('token')
+  const [jobCategory, setCategory] = useState(0);
+  const [jobPosition, setPosition] = useState("");
+  const [workExperience, setExperience] = useState("");
+  const [reason, setReason] = useState("");
+  const token = localStorage.getItem("token");
+  
+
+  const handleSubmit = async (e)=>{
+    e.preventDefault()
+
+    const response = await fetch('http://127.0.0.1:8000//api/v1/validation', {
+      headers:{
+        'Content-type': "application/json",
+        'Accept': "application/json",
+      },
+      body:{
+        job_position:jobPosition,
+        job_category_id:jobCategory,
+        reason_accepted:reason,
+        work_experience:workExperience,
+      }
+    })
+  }
+
   return (
     <>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
-         <div class="container">
-           <a class="navbar-brand" href="#">
-             Job Seekers Platform
-           </a>
-           <button
-             class="navbar-toggler"
-             type="button"
-             data-toggle="collapse"
-             data-target="#navbarsExampleDefault"
-             aria-controls="navbarsExampleDefault"
-             aria-expanded="false"
-             aria-label="Toggle navigation"
-           >
-             <span class="navbar-toggler-icon"></span>
-           </button>
- 
-           <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-             <ul class="navbar-nav ml-auto">
-               <li class="nav-item">
-                 <a class="nav-link" href="#">
-                   {token?"Logout":"Login"}
-                 </a>
-               </li>
-             </ul>
-           </div>
-         </div>
-       </nav>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+        <div class="container">
+          <a class="navbar-brand" href="#">
+            Job Seekers Platform
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav ml-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  {token ? "Logout" : "Login"}
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
 
       <main>
         <header class="jumbotron m-5">

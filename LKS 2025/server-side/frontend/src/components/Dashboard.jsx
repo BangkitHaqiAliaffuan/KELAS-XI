@@ -1,24 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const Dashboard = () => {
+    const [validations, setValidations] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
 
     const token = localStorage.getItem('token')
-
-    const fetchData = async (e)=>{
-        const response = await fetch('http://127.0.0.1:8000/api/v1/validation',{
-            headers:{
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json',
+    const jobCategory = [
+        'Computing and ICT',
+        'Construction and building',
+        'Animals, land and environment',
+        'Design, arts and crafts',
+    ]
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!token) return
+            setLoading(true)
+            setError(null)
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/v1/validation', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json',
+                    }
+                })
+                if (!res.ok) {
+                    const text = await res.text()
+                    throw new Error(`Fetch failed: ${res.status} ${text}`)
+                }
+                const data = await res.json()
+                setValidations(data.validation || [])
+            } catch (err) {
+                console.error('fetch validations error', err)
+                setError(err.message || 'Fetch error')
+            } finally {
+                setLoading(false)
             }
-        })
+        }
 
-        const data = await response.json()
+        fetchData()
+    }, [token])
 
-        console.json(data)
-    }
-
-    fetchData()
-
+    console.log('validations', validations, { loading, error })
   return (
     <>
      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
@@ -85,19 +108,23 @@ const Dashboard = () => {
                                     <tbody>
                                         <tr>
                                             <th>Status</th>
-                                            <td><span className="badge badge-info">Pending</span></td>
+                                            <td>
+                                                <span className="badge badge-info">{validations[0]?.status ?? '-'}</span>
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>Job Category</th>
-                                            <td className="text-muted">-</td>
+                                            <td className="text-muted">
+                                                {jobCategory[validations[0]?.job_category_id] ?? '-'}
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>Job Position</th>
-                                            <td className="text-muted">Web Developer</td>
+                                            <td className="text-muted">{validations[0]?.job_position ?? '-'}</td>
                                         </tr>
                                         <tr>
                                             <th>Reason Accepted</th>
-                                            <td className="text-muted">-</td>
+                                            <td className="text-muted">{validations[0]?.reason_accepted ?? '-'}</td>
                                         </tr>
                                         <tr>
                                             <th>Validator</th>
@@ -123,19 +150,21 @@ const Dashboard = () => {
                                     <tbody>
                                         <tr>
                                             <th>Status</th>
-                                            <td><span className="badge badge-success">Accepted</span></td>
+                                            <td><span className="badge badge-success">{validations[1]?.status ?? "-"}</span></td>
                                         </tr>
                                         <tr>
                                             <th>Job Category</th>
-                                            <td className="text-muted">Computing and ICT</td>
+                                            <td className="text-muted">{jobCategory[validations[1].job_category_id]}</td>
                                         </tr>
                                         <tr>
                                             <th>Job Position</th>
-                                            <td className="text-muted">Programmer</td>
+                                            <td className="text-muted">{validations[1].job_position}</td>
                                         </tr>
                                         <tr>
                                             <th>Reason Accepted</th>
-                                            <td className="text-muted">I can work hard</td>
+                                            <td className="text-muted">
+                                                {validations[1].reason_accepted}
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>Validator</th>
