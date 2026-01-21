@@ -45,11 +45,13 @@ class ValidationController extends Controller
     public function getValidation(Request $request){
         $token = $request->bearerToken();
         $society = Society::where('login_tokens', $token)->first();
-        $validation = Validation::where('society_id', $society->id)->first() ;
+        $validation = Validation::where('society_id', $society->id)
+            ->orderBy('created_at', 'desc')
+            ->take(2)
+            ->get();
         return response()->json([
             'message' => $society->id,
             'validation' => $validation,
         ]);
-
     }
 }
