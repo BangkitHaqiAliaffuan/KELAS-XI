@@ -12,9 +12,13 @@ class Society extends Model
     protected $table = 'societies';
 
     protected $fillable = [
-        'login_tokens',
         'id_card_number',
         'password',
         'name',
+        'born_date',
+        'gender',
+        'address',
+        'regional_id',
+        'login_tokens',
     ];
 }
