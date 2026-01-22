@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 const Request = () => {
   const [jobCategory, setCategory] = useState(0);
@@ -6,24 +6,29 @@ const Request = () => {
   const [workExperience, setExperience] = useState("");
   const [reason, setReason] = useState("");
   const token = localStorage.getItem("token");
-  
 
-  const handleSubmit = async (e)=>{
-    e.preventDefault()
-
-    const response = await fetch('http://127.0.0.1:8000//api/v1/validation', {
-      headers:{
-        'Content-type': "application/json",
-        'Accept': "application/json",
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(token)
+    const response = await fetch("http://127.0.0.1:8000/api/v1/validation", {
+      method:"POST",
+      headers: {
+        "Content-type": "application/json",
+        "Accept": "application/json",
+        "Authorization": token? "Bearer " + token : ""
       },
-      body:{
-        job_position:jobPosition,
-        job_category_id:jobCategory,
-        reason_accepted:reason,
-        work_experience:workExperience,
-      }
-    })
-  }
+      body: JSON.stringify({
+        job_position: jobPosition,
+        job_category_id: jobCategory,
+        reason_accepted: reason,
+        work_experience: workExperience,
+      }),
+    });
+
+    const data = response.json()
+    console.log(data)
+
+  };
 
   return (
     <>
@@ -64,13 +69,18 @@ const Request = () => {
         </header>
 
         <div class="container">
-          <form action="">
+          <form action="" onSubmit={handleSubmit}>
             <div class="row mb-4">
               <div class="col-md-6">
                 <div class="form-group">
                   <div class="d-flex align-items-center mb-3">
-                    <label class="mr-3 mb-0">Job Category</label>
-                    <select class="form-control-sm">
+                    <label class=" mb-0">Job Category</label>
+                    <select
+                      value={jobCategory}
+                      onChange={(e) => setCategory(e.target.value)}
+                      class="form-control-sm m-1"
+                    >
+                      <option value="">Select Your Category</option>
                       <option value="1">Computing and ICT</option>
                       <option value="2">Construction and building</option>
                       <option value="3">Animals, land and environment</option>
@@ -79,6 +89,8 @@ const Request = () => {
                     </select>
                   </div>
                   <textarea
+                    value={jobPosition}
+                    onChange={(e) => setPosition(e.target.value)}
                     class="form-control"
                     cols="30"
                     rows="5"
@@ -91,12 +103,14 @@ const Request = () => {
                 <div class="form-group">
                   <div class="d-flex align-items-center mb-3">
                     <label class="mr-3 mb-0">Work Experiences ?</label>
-                    <select class="form-control-sm">
+                    <select class="m-1 form-control-sm">
                       <option value="yes">Yes, I have</option>
                       <option value="no">No</option>
                     </select>
                   </div>
                   <textarea
+                    value={workExperience}
+                    onChange={(e) => setExperience(e.target.value)}
                     class="form-control"
                     cols="30"
                     rows="5"
@@ -111,6 +125,8 @@ const Request = () => {
                     <label class="mr-3 mb-0">Reason Accepted</label>
                   </div>
                   <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
                     class="form-control"
                     cols="30"
                     rows="6"
@@ -120,7 +136,7 @@ const Request = () => {
               </div>
             </div>
 
-            <button class="btn btn-primary">Send Request</button>
+            <button type="submit" class="btn btn-primary">Send Request</button>
           </form>
         </div>
       </main>

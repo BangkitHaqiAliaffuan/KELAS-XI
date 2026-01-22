@@ -12,6 +12,12 @@ const Dashboard = () => {
         'Animals, land and environment',
         'Design, arts and crafts',
     ]
+    const getCategoryLabel = (id) => {
+        const n = Number(id)
+        console.log(id)
+        if (!n) return '-'
+        return jobCategory[n - 1] ?? '-'
+    }
     useEffect(() => {
         const fetchData = async () => {
             if (!token) return
@@ -44,13 +50,13 @@ const Dashboard = () => {
     console.log('validations', validations, { loading, error })
   return (
     <>
-     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
-         <div class="container">
-           <a class="navbar-brand" href="#">
+         <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+                 <div className="container">
+                     <a className="navbar-brand" href="#">
              Job Seekers Platform
            </a>
-           <button
-             class="navbar-toggler"
+                     <button
+                         className="navbar-toggler"
              type="button"
              data-toggle="collapse"
              data-target="#navbarsExampleDefault"
@@ -61,15 +67,15 @@ const Dashboard = () => {
              <span class="navbar-toggler-icon"></span>
            </button>
  
-           <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-             <ul class="navbar-nav ml-auto">
-               <li class="nav-item">
-                 <a class="nav-link" href="#">
-                   {token?"Logout":"Login"}
-                 </a>
-               </li>
-             </ul>
-           </div>
+                     <div className="collapse navbar-collapse" id="navbarsExampleDefault">
+                         <ul className="navbar-nav ml-auto">
+                             <li className="nav-item">
+                                 <a className="nav-link" href="#">
+                                     {token?"Logout":"Login"}
+                                 </a>
+                             </li>
+                         </ul>
+                     </div>
          </div>
        </nav>
 
@@ -115,7 +121,7 @@ const Dashboard = () => {
                                         <tr>
                                             <th>Job Category</th>
                                             <td className="text-muted">
-                                                {jobCategory[validations[0]?.job_category_id] ?? '-'}
+                                                { getCategoryLabel(validations[0]?.job_category_id) }
                                             </td>
                                         </tr>
                                         <tr>
@@ -154,17 +160,15 @@ const Dashboard = () => {
                                         </tr>
                                         <tr>
                                             <th>Job Category</th>
-                                            <td className="text-muted">{jobCategory[validations[1].job_category_id]}</td>
+                                            <td className="text-muted">{ getCategoryLabel(validations[1]?.job_category_id) }</td>
                                         </tr>
                                         <tr>
                                             <th>Job Position</th>
-                                            <td className="text-muted">{validations[1].job_position}</td>
+                                            <td className="text-muted">{validations[1]?.job_position ?? '-'}</td>
                                         </tr>
                                         <tr>
                                             <th>Reason Accepted</th>
-                                            <td className="text-muted">
-                                                {validations[1].reason_accepted}
-                                            </td>
+                                            <td className="text-muted">{validations[1]?.reason_accepted ?? '-'}</td>
                                         </tr>
                                         <tr>
                                             <th>Validator</th>
