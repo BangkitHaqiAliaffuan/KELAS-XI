@@ -17,5 +17,7 @@ Route::group(['auth:sanctum'], function (){
     Route::get('/v1/validation', [ValidationController::class, 'getValidation']);
     Route::get('/v1/jobvacan/{id}', [JobVacanciesController::class, 'index']);
     Route::get('/v1/jobvacan/detail/{JobVacancies}', [JobVacanciesController::class, 'show']);
+    Route::post('/v1/jobvacan/create', [JobVacanciesController::class, 'store']);
+    Route::get('/v1/jobvacan/', [JobVacanciesController::class, 'alljobvacan']);
 });
 

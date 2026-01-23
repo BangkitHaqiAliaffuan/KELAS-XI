@@ -11,8 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_vacancies', function (Blueprint $table) {
-            $table->id();
+        Schema::table('job_apply_positions', function (Blueprint $table) {
             $table->timestamps();
         });
     }
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_vacancies');
+        Schema::table('job_apply_positions', function (Blueprint $table) {
+            //
+        });
     }
 };

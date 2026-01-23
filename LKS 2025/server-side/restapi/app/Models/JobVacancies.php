@@ -9,4 +9,7 @@ class JobVacancies extends Model
     public function category(){
         return $this->belongsTo(JobCategory::class, 'job_category_id');
     }
+    public function positions(){
+        return $this->hasMany(AvailablePosition::class, 'job_vacancy_id');
+    }
 }
