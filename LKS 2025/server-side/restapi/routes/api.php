@@ -15,9 +15,11 @@ Route::post('/v1/auth/register', [SocietyController::class, 'store']);
 Route::group(['auth:sanctum'], function (){
     Route::post('/v1/validation', [ValidationController::class, 'request']);
     Route::get('/v1/validation', [ValidationController::class, 'getValidation']);
+    Route::get('/v1/jobvacan/get', [JobVacanciesController::class, 'tes']);
     Route::get('/v1/jobvacan/{id}', [JobVacanciesController::class, 'index']);
     Route::get('/v1/jobvacan/detail/{JobVacancies}', [JobVacanciesController::class, 'show']);
     Route::post('/v1/jobvacan/create', [JobVacanciesController::class, 'store']);
     Route::get('/v1/jobvacan/', [JobVacanciesController::class, 'alljobvacan']);
+    // Route::get('/v1/jobvacan/myapplications', [JobVacanciesController::class, 'tes']);
 });
 

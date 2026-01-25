@@ -49,6 +49,13 @@ class ValidationController extends Controller
             ->orderBy('created_at', 'desc')
             ->take(2)
             ->get();
+
+            if(!$validation){
+                return response()->json([
+                    'message' =>'ngntot',
+
+                ]);
+            }
         return response()->json([
             'message' => $society->id,
             'validation' => $validation,
