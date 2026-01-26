@@ -1,41 +1,14 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Request Data Validation</title>
+    <link rel="stylesheet" href="../assets/css/bootstrap.css">
+    <link rel="stylesheet" href="../assets/css/custom.css">
+</head>
+<body>
 
-const Request = () => {
-
-    const token = localStorage.getItem("token")
-
-    const [jobCategory, setCategory] = useState()
-    const [workEx, setExperience] = useState()
-    const [reasonAcc, setReason] = useState()
-    const [jobPosition, setPosition] = useState()
-
-  const handleSubmit = async (e)=>{
-    e.preventDefault()
-    const usenavigate = useNavigate()
-    const response = await fetch('http://127.0.0.1:8000/api/v1/validations',{
-        method:"POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body:JSON.stringify({
-            "job_category_id":jobCategory,
-            "work_experience":workEx,
-            "reason_accepted":reasonAcc,
-            "job_position":jobPosition,
-        })
-    })
-
-    const data = await response.json()
-
-    
-    usenavigate("/dashboard")
-  } 
-return (
-    <>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+<nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
     <div class="container">
         <a class="navbar-brand" href="#">Job Seeker Platform</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,22 +26,23 @@ return (
 </nav>
 
 <main>
+    <!-- S: Header -->
     <header class="jumbotron">
         <div class="container">
             <h1 class="display-4">Request Data Validation</h1>
         </div>
     </header>
+    <!-- E: Header -->
 
     <div class="container">
 
-        <form action="" onSubmit={handleSubmit}>
+        <form action="">
             <div class="row mb-4">
                 <div class="col-md-6">
                     <div class="form-group">
                         <div class="d-flex align-items-center mb-3">
                             <label class="mr-3 mb-0">Job Category</label>
-                            <select value={jobCategory} onChange={(e)=>setCategory(e.target.value)} class="form-control-sm">
-                                <option value="">Select Your Category</option>
+                            <select class="form-control-sm">
                                 <option value="1">Computing and ICT</option>
                                 <option value="2">Construction and building</option>
                                 <option value="3">Animals, land and environment</option>
@@ -76,7 +50,7 @@ return (
                                 <option value="5">Education and training</option>
                             </select>
                         </div>
-                        <textarea value={jobPosition} onChange={(e)=>setPosition(e.target.value)} class="form-control" cols="30" rows="5" placeholder="Job position sparate with , (comma)"></textarea>
+                        <textarea class="form-control" cols="30" rows="5" placeholder="Job position sparate with , (comma)"></textarea>
                     </div>
                 </div>
 
@@ -89,7 +63,7 @@ return (
                                 <option value="no">No</option>
                             </select>
                         </div>
-                        <textarea value={workEx} onChange={(e)=>setExperience(e.target.value)} class="form-control" cols="30" rows="5" placeholder="Describe your work experiences"></textarea>
+                        <textarea class="form-control" cols="30" rows="5" placeholder="Describe your work experiences"></textarea>
                     </div>
                 </div>
                 
@@ -98,18 +72,19 @@ return (
                         <div class="d-flex align-items-center mb-3">
                             <label class="mr-3 mb-0">Reason Accepted</label>
                         </div>
-                        <textarea value={reasonAcc} onChange={(e)=>setReason(e.target.value)} class="form-control" cols="30" rows="6" placeholder="Explain why you should be accepted"></textarea>
+                        <textarea class="form-control" cols="30" rows="6" placeholder="Explain why you should be accepted"></textarea>
                     </div>
                 </div>
             </div>
 
-            <button type='submit' class="btn btn-primary">Send Request</button>
+            <button class="btn btn-primary">Send Request</button>
         </form>
 
     </div>
 
 </main>
 
+<!-- S: Footer -->
 <footer>
     <div class="container">
         <div class="text-center py-4 text-muted">
@@ -117,8 +92,7 @@ return (
         </div>
     </div>
 </footer>
-    </>
-  )
-}
+<!-- E: Footer -->
 
-export default Request
+</body>
+</html>

@@ -1,236 +1,247 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { use, useEffect, useState } from "react";
+import { data, Link } from "react-router-dom";
 
 const Dashboard = () => {
+  const [apps, setApps] = useState([]);
+  const token = localStorage.getItem("token");
+  const fetchData = async () => {
+    const response = await fetch("http://127.0.0.1:8000/api/v1/validations", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    const data = await response.json();
+    setApps(data.data)
+  };
+  useEffect(() => {
+    fetchData();
+  }, [token]);
+
   return (
     <>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="#">Job Seekers Platform</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Marsito Kusmawati</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<main>
-    <header class="jumbotron">
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
         <div class="container">
-            <h1 class="display-4">Dashboard</h1>
+          <a class="navbar-brand" href="#">
+            Job Seekers Platform
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span class="navbar-toggler-icon"></span>
+          </button>
+
+          <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav ml-auto">
+              <li class="nav-item">
+                {/* <a class="nav-link" href="#">Marsito Kusmawati</a> */}
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#">
+                  Logout
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
-    </header>
+      </nav>
 
-    <div class="container">
+      <main>
+        <header class="jumbotron">
+          <div class="container">
+            <h1 class="display-4">Dashboard</h1>
+          </div>
+        </header>
 
-        <section class="validation-section mb-5">
+        <div class="container">
+          <section class="validation-section mb-5">
             <div class="section-header mb-3">
-                <h4 class="section-title text-muted">My Data Validation</h4>
+              <h4 class="section-title text-muted">My Data Validation</h4>
             </div>
             <div class="row">
-
-                <div class="col-md-4">
-                    <div class="card card-default">
-                        <div class="card-header">
-                            <h5 class="mb-0">Data Validation</h5>
-                        </div>
-                        <div class="card-body">
-                            <Link to="/request" class="btn btn-primary btn-block" >+Request Validation</Link> 
-                        </div>
-                    </div>
+              <div class="col-md-4">
+                <div class="card card-default">
+                  <div class="card-header">
+                    <h5 class="mb-0">Data Validation</h5>
+                  </div>
+                  <div class="card-body">
+                    <Link to="/request" class="btn btn-primary btn-block">
+                      +Request Validation
+                    </Link>
+                  </div>
                 </div>
+              </div>
 
-                <div class="col-md-4">
-                    <div class="card card-default">
-                        <div class="card-header border-0">
-                            <h5 class="mb-0">Data Validation</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-striped mb-0">
-                                <tr>
-                                    <th>Status</th>
-                                    <td><span class="badge badge-info">Pending</span></td>
-                                </tr>
-                                <tr>
-                                    <th>Job Category</th>
-                                    <td class="text-muted">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Job Position</th>
-                                    <td class="text-muted">Web Developer</td>
-                                </tr>
-                                <tr>
-                                    <th>Reason Accepted</th>
-                                    <td class="text-muted">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Validator</th>
-                                    <td class="text-muted">-</td>
-                                </tr>
-                                <tr>
-                                    <th>Validator Notes</th>
-                                    <td class="text-muted">-</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
+              <div class="col-md-4">
+                <div class="card card-default">
+                  <div class="card-header border-0">
+                    <h5 class="mb-0">Data Validation</h5>
+                  </div>
+                  {app.map((index, i) => {})}
+                  <div class="card-body p-0">
+                    <table class="table table-striped mb-0">
+                      <tr>
+                        <th>Status</th>
+                        <td>
+                          <span class="badge badge-info">{data.status}</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <th>Job Category</th>
+                        <td class="text-muted"></td>
+                      </tr>
+                      <tr>
+                        <th>Job Position</th>
+                        <td class="text-muted">Web Developer</td>
+                      </tr>
+                      <tr>
+                        <th>Reason Accepted</th>
+                        <td class="text-muted">-</td>
+                      </tr>
+                      <tr>
+                        <th>Validator</th>
+                        <td class="text-muted">-</td>
+                      </tr>
+                      <tr>
+                        <th>Validator Notes</th>
+                        <td class="text-muted">-</td>
+                      </tr>
+                    </table>
+                  </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card card-default">
-                        <div class="card-header border-0">
-                            <h5 class="mb-0">Data Validation</h5>
-                        </div>
-                        <div class="card-body p-0">
-                            <table class="table table-striped mb-0">
-                                <tr>
-                                    <th>Status</th>
-                                    <td><span class="badge badge-success">Accepted</span></td>
-                                </tr>
-                                <tr>
-                                    <th>Job Category</th>
-                                    <td class="text-muted">Computing and ICT</td>
-                                </tr>
-                                <tr>
-                                    <th>Job Position</th>
-                                    <td class="text-muted">Programmer</td>
-                                </tr>
-                                <tr>
-                                    <th>Reason Accepted</th>
-                                    <td class="text-muted">I can work hard</td>
-                                </tr>
-                                <tr>
-                                    <th>Validator</th>
-                                    <td class="text-muted">Usman M.Ti</td>
-                                </tr>
-                                <tr>
-                                    <th>Validator Notes</th>
-                                    <td class="text-muted">siap kerja</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
+              </div>
             </div>
-        </section>
+          </section>
 
-        <section class="validation-section mb-5">
+          <section class="validation-section mb-5">
             <div class="section-header mb-3">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h4 class="section-title text-muted">My Job Applications</h4>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="" class="btn btn-primary btn-lg btn-block">+ Add Job Applications</a>
-                    </div>
+              <div class="row">
+                <div class="col-md-8">
+                  <h4 class="section-title text-muted">My Job Applications</h4>
                 </div>
+                <div class="col-md-4">
+                  <a href="" class="btn btn-primary btn-lg btn-block">
+                    + Add Job Applications
+                  </a>
+                </div>
+              </div>
             </div>
             <div class="section-body">
-                <div class="row mb-4">
-
-                    <div class="col-md-12">
-                        <div class="alert alert-warning">
-                            Your validation must be approved by validator to applying job.
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card card-default">
-                            <div class="card-header border-0">
-                                <h5 class="mb-0">PT. Maju Mundur Sejahtera</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped mb-0">
-                                    <tr>
-                                        <th>Address</th>
-                                        <td class="text-muted">Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI Jakarta</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Position</th>
-                                        <td class="text-muted">
-                                            <ul>
-                                                <li>Desain Grafis <span class="badge badge-info">Pending</span></li>
-                                                <li>Programmer <span class="badge badge-info">Pending</span></li>
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Apply Date</th>
-                                        <td class="text-muted">September 12, 2023</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Notes</th>
-                                        <td class="text-muted">I was the better one</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card card-default">
-                            <div class="card-header border-0">
-                                <h5 class="mb-0">PT. Maju Mundur Sejahtera</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <table class="table table-striped mb-0">
-                                    <tr>
-                                        <th>Address</th>
-                                        <td class="text-muted">Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI Jakarta</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Position</th>
-                                        <td class="text-muted">
-                                            <ul>
-                                                <li>Desain Grafis <span class="badge badge-success">Accepted </span></li>
-                                                <li>Programmer <span class="badge badge-danger">Rejected</span></li>
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Apply Date</th>
-                                        <td class="text-muted">September 12, 2023</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Notes</th>
-                                        <td class="text-muted">-</td>
-                                    </tr>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
+              <div class="row mb-4">
+                <div class="col-md-12">
+                  <div class="alert alert-warning">
+                    Your validation must be approved by validator to applying
+                    job.
+                  </div>
                 </div>
-                
 
+                <div class="col-md-6">
+                  <div class="card card-default">
+                    <div class="card-header border-0">
+                      <h5 class="mb-0">PT. Maju Mundur Sejahtera</h5>
+                    </div>
+                    <div class="card-body p-0">
+                      <table class="table table-striped mb-0">
+                        <tr>
+                          <th>Address</th>
+                          <td class="text-muted">
+                            Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI
+                            Jakarta
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Position</th>
+                          <td class="text-muted">
+                            <ul>
+                              <li>
+                                Desain Grafis{" "}
+                                <span class="badge badge-info">Pending</span>
+                              </li>
+                              <li>
+                                Programmer{" "}
+                                <span class="badge badge-info">Pending</span>
+                              </li>
+                            </ul>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Apply Date</th>
+                          <td class="text-muted">September 12, 2023</td>
+                        </tr>
+                        <tr>
+                          <th>Notes</th>
+                          <td class="text-muted">I was the better one</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-md-6">
+                  <div class="card card-default">
+                    <div class="card-header border-0">
+                      <h5 class="mb-0">PT. Maju Mundur Sejahtera</h5>
+                    </div>
+                    <div class="card-body p-0">
+                      <table class="table table-striped mb-0">
+                        <tr>
+                          <th>Address</th>
+                          <td class="text-muted">
+                            Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI
+                            Jakarta
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Position</th>
+                          <td class="text-muted">
+                            <ul>
+                              <li>
+                                Desain Grafis{" "}
+                                <span class="badge badge-success">
+                                  Accepted{" "}
+                                </span>
+                              </li>
+                              <li>
+                                Programmer{" "}
+                                <span class="badge badge-danger">Rejected</span>
+                              </li>
+                            </ul>
+                          </td>
+                        </tr>
+                        <tr>
+                          <th>Apply Date</th>
+                          <td class="text-muted">September 12, 2023</td>
+                        </tr>
+                        <tr>
+                          <th>Notes</th>
+                          <td class="text-muted">-</td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-        </section>
-        
-
-    </div>
-
-</main>
-
-<footer>
-    <div class="container">
-        <div class="text-center py-4 text-muted">
-            Copyright &copy; 2023 - Web Tech ID
+          </section>
         </div>
-    </div>
-</footer>
-    </>
-  )
-}
+      </main>
 
-export default Dashboard
+      <footer>
+        <div class="container">
+          <div class="text-center py-4 text-muted">
+            Copyright &copy; 2023 - Web Tech ID
+          </div>
+        </div>
+      </footer>
+    </>
+  );
+};
+
+export default Dashboard;
