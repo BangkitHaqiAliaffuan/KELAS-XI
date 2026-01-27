@@ -16,7 +16,7 @@ class JobVacanciesController extends Controller
      */
     public function index($id)
     {
-        $data = JobVacancies::where('job_category_id', $id)->get();
+        $data = JobVacancies::where('job_category_id', $id)->with('positions')->get();
 
         if (!$data) {
             return response()->json([

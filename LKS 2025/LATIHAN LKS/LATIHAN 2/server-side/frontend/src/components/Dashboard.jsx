@@ -13,7 +13,8 @@ const Dashboard = () => {
       },
     });
     const data = await response.json();
-    setApps(data.data)
+    setApps(data.data);
+    console.log(data.data);
   };
   useEffect(() => {
     fetchData();
@@ -79,44 +80,53 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div class="col-md-4">
-                <div class="card card-default">
-                  <div class="card-header border-0">
-                    <h5 class="mb-0">Data Validation</h5>
+              {apps.length === 0 ? (
+                <div>tidak ada data</div>
+              ) : (
+                apps.map((item, i) => (
+                  <div class="col-md-4">
+                    <div class="card card-default">
+                      <div class="card-header border-0">
+                        <h5 class="mb-0">Data Validation</h5>
+                      </div>
+                      <div key={i} class="card-body p-0">
+                        <table class="table table-striped mb-0">
+                          <tr>
+                            <th>Status</th>
+                            <td>
+                              <span class="badge badge-info">
+                                {item.status}
+                              </span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Job Category</th>
+                            <td class="text-muted">
+                              {item.category.job_category}
+                            </td>
+                          </tr>
+                          <tr>
+                            <th>Job Position</th>
+                            <td class="text-muted">{item.job_position}</td>
+                          </tr>
+                          <tr>
+                            <th>Reason Accepted</th>
+                            <td class="text-muted">{item.reason_accepted}</td>
+                          </tr>
+                          <tr>
+                            <th>Validator</th>
+                            <td class="text-muted">-</td>
+                          </tr>
+                          <tr>
+                            <th>Validator Notes</th>
+                            <td class="text-muted">-</td>
+                          </tr>
+                        </table>
+                      </div>
+                    </div>
                   </div>
-                  {app.map((index, i) => {})}
-                  <div class="card-body p-0">
-                    <table class="table table-striped mb-0">
-                      <tr>
-                        <th>Status</th>
-                        <td>
-                          <span class="badge badge-info">{data.status}</span>
-                        </td>
-                      </tr>
-                      <tr>
-                        <th>Job Category</th>
-                        <td class="text-muted"></td>
-                      </tr>
-                      <tr>
-                        <th>Job Position</th>
-                        <td class="text-muted">Web Developer</td>
-                      </tr>
-                      <tr>
-                        <th>Reason Accepted</th>
-                        <td class="text-muted">-</td>
-                      </tr>
-                      <tr>
-                        <th>Validator</th>
-                        <td class="text-muted">-</td>
-                      </tr>
-                      <tr>
-                        <th>Validator Notes</th>
-                        <td class="text-muted">-</td>
-                      </tr>
-                    </table>
-                  </div>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </section>
 
@@ -127,9 +137,9 @@ const Dashboard = () => {
                   <h4 class="section-title text-muted">My Job Applications</h4>
                 </div>
                 <div class="col-md-4">
-                  <a href="" class="btn btn-primary btn-lg btn-block">
+                  <Link to={`/jobvacan/${apps[0].job_category_id}`} class="btn btn-primary btn-lg btn-block">
                     + Add Job Applications
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
