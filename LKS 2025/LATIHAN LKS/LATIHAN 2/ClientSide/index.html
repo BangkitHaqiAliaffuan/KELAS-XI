@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-    <link rel="stylesheet" href="./index.css">
+    <link rel="stylesheet" href="./index.css" />
   </head>
   <body>
-    <div id="welcomeBoard" class="welcome-board hidden">
+    <div id="welcomeBoard" class="welcome-board flex">
       <div class="container-login">
         <form onsubmit="handleSubmit()" action="">
           <div class="title">
@@ -15,8 +15,8 @@
           </div>
 
           <div class="input">
-            <input id="username" placeholder="Input Username" type="text" />
-            <select name="" id="level">
+            <input required id="username" placeholder="Input Username" type="text" />
+            <select required name="" id="level">
               <option value="">Select Level</option>
               <option value="1">Level 1</option>
               <option value="2">Level 2</option>
@@ -25,18 +25,18 @@
           </div>
 
           <div class="button">
-            <button type="submit"  class="green">
+            <button type="submit" class="green">
               <img
                 src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png"
                 alt=""
               />Play Game
             </button>
-            <button id="buttonInstruction" class="yellow">Instruction</button>
+            <div onclick="handleNavigate('instruction','')" id="buttonInstruction" class="yellow">Instruction</div>
           </div>
         </form>
       </div>
 
-      <div class="container-ins">
+      <div id="instruction" class="container-ins hidden">
         <div class="title-inst">
           How to play game
           <div class="close">
@@ -61,87 +61,134 @@
 
     <div id="countdown" class="hidden">3</div>
 
-    <div id="gameBoard" class="flex">
-      
+    <div id="gameBoard" class="hidden">
       <div class="user">
-        Player Name
-        <span>Score:30</span>
-        <span>Time:01:22</span>
-      </div> 
-
-      
-      
-      <div class="sun-count">
-        50
+        <span id="name"></span>
+        <span>Score:0</span>
+        <span id="time">Time:01:22</span>
       </div>
 
+      <div class="sun-count">50</div>
+
       <div class="lawnmower">
-        <img src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif" alt="">
-        <img src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif" alt="">
-        <img src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif" alt="">
-        <img src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif" alt="">
-        <img src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif" alt="">
+        <img
+          src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif"
+          alt=""
+        />
+        <img
+          src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif"
+          alt=""
+        />
+        <img
+          src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif"
+          alt=""
+        />
+        <img
+          src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif"
+          alt=""
+        />
+        <img
+          src="./MODULE_CLIENT_MEDIA//Sprites/General/lawnmowerIdle.gif"
+          alt=""
+        />
       </div>
 
       <div class="sprites-wrapper">
         <div class="sun">
-          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/Sun.png"  alt="">
+          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/Sun.png" alt="" />
         </div>
         <div class="cards">
-        <div class="card">
-          <img src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/IcePeaSeed.png" alt="">
+          <div class="card">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/IcePeaSeed.png"
+              alt=""
+            />
+          </div>
+          <div class="card">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/PeaShooterSeed.png"
+              alt=""
+            />
+          </div>
+          <div class="card">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/SunFlowerSeed.png"
+              alt=""
+            />
+          </div>
+          <div class="card">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/WallNutSeed.png"
+              alt=""
+            />
+          </div>
         </div>
-        <div class="card">
-          <img src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/PeaShooterSeed.png" alt="">
+
+        <div class="shovel">
+          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png" alt="" />
         </div>
-        <div class="card">
-          <img src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/SunFlowerSeed.png" alt="">
+
+        <div class="field-sprite">
+          <div class="shooters">
+            <img
+              class="one"
+              src="./MODULE_CLIENT_MEDIA//Sprites/IcePea/frame_02_delay-0.12s.gif"
+              alt=""
+            />
+            <img
+              class="two"
+              src="./MODULE_CLIENT_MEDIA//Sprites/PeaShooter/frame_00_delay-0.12s.gif"
+              alt=""
+            />
+          </div>
+          <div class="peas">
+            <img
+              class="one"
+              src="./MODULE_CLIENT_MEDIA//Sprites/General/Pea.png"
+              alt=""
+            />
+            <img
+              class="two"
+              src="./MODULE_CLIENT_MEDIA//Sprites/General/IcePea.png"
+              alt=""
+            />
+          </div>
+          <div class="zombies">
+            <img
+              src="./MODULE_CLIENT_MEDIA//Sprites/Zombie/frame_00_delay-0.05s.gif"
+              alt=""
+            />
+            <img
+              src="./MODULE_CLIENT_MEDIA//Sprites/Zombie/frame_03_delay-0.05s.gif"
+              alt=""
+            />
+          </div>
+          <div class="wallnut">
+            <img
+              src="./MODULE_CLIENT_MEDIA//Sprites/WallNut/frame_00_delay-0.12s.gif"
+              alt=""
+            />
+          </div>
+          <div class="sunflower">
+            <img
+              src="./MODULE_CLIENT_MEDIA//Sprites/SunFlower/frame_00_delay-0.06s.gif"
+              alt=""
+            />
+          </div>
         </div>
-        <div class="card">
-          <img src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/WallNutSeed.png" alt="">
-        </div>
       </div>
-      
-      <div class="shovel">
-        <img src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png" alt="">
-      </div>
-      
-    <div class="field-sprite">
-      
-      <div class="shooters">
-        <img class="one"  src="./MODULE_CLIENT_MEDIA//Sprites/IcePea/frame_02_delay-0.12s.gif" alt="">
-        <img class="two" src="./MODULE_CLIENT_MEDIA//Sprites/PeaShooter/frame_00_delay-0.12s.gif" alt="">
-      </div>
-      <div class="peas">
-        <img class="one"  src="./MODULE_CLIENT_MEDIA//Sprites/General/Pea.png" alt="">
-        <img class="two"  src="./MODULE_CLIENT_MEDIA//Sprites/General/IcePea.png" alt="">
-      </div>
-      <div class="zombies">
-        <img  src="./MODULE_CLIENT_MEDIA//Sprites/Zombie/frame_00_delay-0.05s.gif" alt="">
-        <img  src="./MODULE_CLIENT_MEDIA//Sprites/Zombie/frame_03_delay-0.05s.gif" alt="">
-      </div>
-      <div class="wallnut">
-        <img  src="./MODULE_CLIENT_MEDIA//Sprites/WallNut/frame_00_delay-0.12s.gif" alt="">
-      </div>
-      <div class="sunflower">
-        <img  src="./MODULE_CLIENT_MEDIA//Sprites/SunFlower/frame_00_delay-0.06s.gif" alt="">
-      </div>
-    </div>
-    </div>
-      
-      <canvas id="canvas" class="">
-      
-      </canvas>
-        
+
+      <canvas id="canvas" class=""> </canvas>
+
       <div class="side">
         <div class="title-side">Leaderboard</div>
-        <select  class="select-side" name="" id="">
+        <select class="select-side" name="" id="">
           <option value="">Sort By Score</option>
         </select>
 
         <div class="player">
           <div class="name">
-            <span style="font-weight: bold;">Thomas Galih</span>
+            <span style="font-weight: bold">Thomas Galih</span>
             <span>Score: 42</span>
           </div>
 
@@ -150,83 +197,141 @@
         <div class="line"></div>
         <div class="player">
           <div class="name">
-            <span style="font-weight: bold;">Thomas Galih</span>
+            <span style="font-weight: bold">Thomas Galih</span>
             <span>Score: 42</span>
           </div>
           <button class="btn-select">Detail</button>
         </div>
         <div class="line"></div>
-        </div>
+      </div>
+    </div>
+
+    <div id="pause" class="hidden">
+      <div class="container-pause">
+        <div class="title-pause">Game Pause</div>
+        <div class="player-name">Player Name: Your Name</div>
+        <div class="buttons">
+          <div class="btn-pause">Contiunue</div>
+          <div class="btn-pause">Restart</div>
         </div>
       </div>
     </div>
 
-
-    
-
-    <div id="pause" class="hidden">
-        <div class="container-pause">
-            <div class="title-pause">
-                Game Pause
-            </div>
-            <div class="player-name">Player Name: Your Name</div>
-            <div class="buttons">
-                <div class="btn-pause">Contiunue</div>
-                <div class="btn-pause">Restart</div>
-            </div>
-        </div>
-    </div>
-
     <div id="gameOver" class="hidden">
-        <div class="container-pause">
-            <div class="title-pause">
-                Game Over
-            </div>
-            <div class="player-name">Player Name: Your Name</div>
-            <div class="buttons">
-                <div class="btn-pause">Contiunue</div>
-                <div class="btn-pause">Restart</div>
-            </div>
+      <div class="container-pause">
+        <div class="title-pause">Game Over</div>
+        <div class="player-name">Player Name: Your Name</div>
+        <div class="buttons">
+          <div class="btn-pause">Contiunue</div>
+          <div class="btn-pause">Restart</div>
         </div>
+      </div>
     </div>
-
 
     <script>
       const username = document.getElementById("username");
       const select = document.getElementById("level");
       const gameBoard = document.getElementById("gameBoard");
       const welcome = document.getElementById("welcomeBoard");
+      const countPage = document.getElementById("countdown");
+      const canvas = document.getElementById("canvas");
+      const time = document.getElementById("time");
+      const name = document.getElementById("name");
+      let user = ''
+      let level = 0      
 
+      function handleNavigate(dom, dom2) {
+        const e = document.getElementById(dom);
+        e.classList.toggle("hidden");
+        e.classList.toggle("flex");
+        if(dom2){
+          const e2 = document.getElementById(dom2);
+          e2.classList.toggle("hidden");
+          e2.classList.toggle("flex");
+        }
 
-    function handleNavigate(dom, dom2) {
-      const e = document.getElementById(dom);
-      const e2 = document.getElementById(dom2);
-  
-      e.classList.toggle("hidden");
-      e.classList.toggle("flex");
-      e2.classList.toggle("hidden");
-      e2.classList.toggle("flex");
-}
-      
-    function handleSubmit(){
-        event.preventDefault()
-        const user = username.value
-        const level = select.value
-        handleNavigate("countdown", "welcomeboard")
+      }
+
+      function handleSubmit() {
+        event.preventDefault();
+        user = username.value;
+       level = select.value;
+        handleNavigate("countdown", "welcomeBoard");
+        startCountdown();
         // handleNavigate("gameBoard", "welcomeBoard")
-    }
+      }
 
-    function startCountdown(){
-      let num = 3 
+      function startCountdown() {
+        let num = 3;
 
-      const interval = setInterval(()=>{
-        num
-      }, 1000)
+        const interval = setInterval(() => {
+          countPage.innerText = num;
+          num--;
+          if (num < 0) {
+            clearInterval(interval);
+            handleNavigate("gameBoard", "countdown");
+            startGame()
+          }
+          console.log(num);
+        }, 1000);
+      }
 
+      function spawnSunSimple() {
+        const img = document.createElement("img");
+        img.src = "./MODULE_CLIENT_MEDIA/Sprites/General/Sun.png";
+        img.style.position = "absolute";
+        img.style.width = "40px";
+        img.style.zIndex = "999";
+        const sunWidth = 40;
+        const margin = 20;
+        const minX = 200;
+        const maxX = Math.max(0, canvas.clientWidth - sunWidth + margin);
+        img.style.left =
+          minX + Math.floor(Math.random() * (maxX - minX)) + "px";
+        img.style.top = "50px";
+        img.style.transition = "top 2s linear";
+        gameBoard.appendChild(img);
+        setTimeout(() => {
+          if (document.body.contains(img)) img.remove();
+        }, 2200 + 7000);
+        setTimeout(() => {
+          img.style.top = gameBoard.clientHeight - 90 + "px";
+        }, 10);
+      }
+      let sunTimer = null;
+      function startSimpleSuns() {
+        spawnSunSimple();
+        if (sunTimer) clearInterval(sunTimer);
+        sunTimer = setInterval(
+          () => {
+            spawnSunSimple();
+          },
+          6000 + Math.random() * 2000,
+        ); // 2-4s
+      }
 
-    }
+      function stopSimpleSuns() {
+        if (sunTimer) clearInterval(sunTimer);
+        sunTimer = null;
+      }
 
+      let seconds = 180;
+      function startTimer() {
+        timer = setInterval(() => {
+          seconds--;
+          const min = Math.floor(seconds / 60);
+          const sec = seconds % 60;
+          time.textContent = `Time: ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+        },1000);
+      }
 
+      function startGame() {
+        let score = 0
+        console.log(user)
+        name.textContent = `${user}`
+        startSimpleSuns();
+        startTimer()
+      }
     </script>
   </body>
 </html>
