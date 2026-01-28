@@ -1,0 +1,372 @@
+body {
+  background-color: rgb(98, 22, 22);
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+* {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* welcome board */
+.welcome-board {
+  width: 1000px;
+  height: 600px;
+  justify-content: center;
+  align-items: center;
+}
+
+.input {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+}
+
+.input input,
+.input select {
+  padding: 10px;
+  color: white;
+  background-color: rgb(149, 38, 38);
+  border: 5px solid rgb(183, 45, 45);
+  border-radius: 10px;
+}
+
+.input input::placeholder {
+  color: white;
+}
+
+.button {
+  justify-content: space-between;
+  padding: 10px;
+  display: flex;
+}
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 180px;
+  height: 55px;
+  border: none;
+  font-size: 20px;
+  border-radius: 10px;
+}
+
+.green {
+  color: white;
+  background-color: green;
+}
+.yellow {
+  background-color: yellow;
+}
+
+button img {
+  width: 40px;
+}
+
+.container-ins {
+  background-color: rgb(70, 25, 25);
+  width: 70%;
+  color: white;
+  padding: 30px;
+  height: 100%;
+}
+
+.title-inst {
+  font-size: 25px;
+  display: flex;
+  /* align-items: center; */
+  justify-content: space-between;
+  font-weight: bold;
+}
+.title-inst img {
+  top: -15px;
+  position: relative;
+  width: 50px;
+}
+
+.list {
+  padding-left: 25px;
+  /* margin-top: 20px; */
+}
+
+.list li {
+  font-size: 18px;
+  margin-top: 20px;
+  /* padding: 5px; */
+}
+
+.flex {
+  display: flex;
+}
+
+.hidden {
+  display: none;
+}
+
+/* welcome board */
+
+/* countdown css */
+
+#countdown {
+  /* display: flex; */
+  align-items: center;
+  color: white;
+  font-size: 200px;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  background-color: red;
+}
+
+#gameBoard {
+  width: 1000px;
+  height: 600px;
+}
+
+canvas {
+  position: relative;
+  z-index: 1;
+  width: 80%;
+  height: 100%;
+  background-size: cover;
+  background-image: url("./MODULE_CLIENT_MEDIA/Sprites/General/Background.jpg");
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  width: 30%;
+  height: 100%;
+  color: white;
+}
+
+.title-side {
+  /* margin: auto; */
+  font-size: 20px;
+  font-weight: bold;
+}
+.name {
+  width: 100%;
+  font-size: 15px;
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-select {
+  background-color: yellow;
+  font-style: italic;
+  border: none;
+  height: 40px;
+}
+
+.select-side {
+  width: 90%;
+  height: 40px;
+  padding: 10px;
+  border-radius: 5px;
+  /* text-align: center; */
+}
+
+.zombies {
+  position: absolute;
+  left: 500px;
+  bottom: -100px;
+}
+
+.player {
+  align-items: center;
+  display: flex;
+}
+
+.line {
+  position: relative;
+  top: -5px;
+  width: 100%;
+  background-color: white;
+  height: 1px;
+}
+
+.user {
+  display: flex;
+  position: absolute;
+  z-index: 999;
+  color: white;
+  flex-direction: column;
+  font-weight: bold;
+  left: 665px;
+  top: 90px;
+}
+
+#pause {
+  width: 100%;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background-color: red;
+}
+
+#gameOver {
+  width: 100%;
+  height: 100vh;
+
+  align-items: center;
+  justify-content: center;
+  background-color: red;
+}
+
+.container-pause {
+  border-radius: 10px;
+  text-align: center;
+  padding: 20px;
+  border: 1px solid white;
+  width: 35%;
+  height: 200px;
+  color: white;
+  font-size: larger;
+  background-color: rgb(100, 100, 100);
+}
+
+.player-name {
+  /* font-size: smaller; */
+  margin-top: 10px;
+}
+
+.title-pause {
+  font-weight: bold;
+  color: white;
+  text-align: center;
+  font-size: 25px;
+}
+
+.buttons {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.btn-pause {
+  background-color: white;
+  width: 150px;
+  height: 50px;
+  color: red;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sun-count {
+  top: 142.5px;
+  left: 344.5px;
+  z-index: 999;
+  position: absolute;
+  font-weight: bold;
+}
+
+.sun img {
+  left: 129px;
+  top: 22px;
+  position: absolute;
+  width: 40px;
+  z-index: 999;
+}
+
+.sprites-wrapper {
+  position: absolute;
+  z-index: 99;
+}
+
+.shovel img {
+  position: absolute;
+  left: 650px;
+  top: 20px;
+  width: 40px;
+}
+
+.cards {
+  top: 15px;
+  gap: 12px;
+  left: 190px;
+  position: absolute;
+  display: flex;
+}
+
+.wallnut img {
+  position: relative;
+  left: 180px;
+  bottom: -80px;
+}
+
+.shooters {
+    top: 100px;
+    position: relative;
+  /* display: flex;
+        flex-direction: column;
+        justify-content: center; */
+}
+
+.shooters .one{
+    top: 200px;
+    left: 180px;
+    position: relative;
+    /* margin: 1000px; */
+}
+
+.shooters .two{
+    top: 26px;
+    left: 20px;
+    position: relative;
+}
+
+.peas{
+    position: relative;
+    left: 200px;
+}
+
+.peas .one{
+    position: relative;
+    top: 40px;
+    left: 200px;
+    width: 30px;
+}
+.peas .two{
+    position: relative;
+    top: 213px;
+    left: 200px;
+    width: 30px;
+}
+
+
+.sunflower {
+  position: relative;
+  bottom: -175px;
+  left: 100px;
+}
+
+.lawnmower{
+    position: absolute;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    top: 180px;
+    gap: 10px;
+}
+
+
+
+
+.lawnmower img{
+    width: 80px;
+}
+
+.field-sprite div img {
+  width: 80px;
+}
