@@ -79,7 +79,7 @@
       }
       .container-ins {
         height: 100%;
-
+        flex-direction: column;
         padding: 20px;
         width: 400px;
         background-color: rgb(87, 23, 23);
@@ -218,73 +218,74 @@
         top: 20px;
         /* bottom: 200px; */
       }
-      .field-sprite{
+      .field-sprite {
         position: absolute;
         z-index: 999;
       }
 
-      .field-sprite img{
+      .field-sprite img {
         width: 80px;
       }
 
-      .zombies{
+      .zombies {
         position: relative;
         left: 600px;
       }
 
-      .sunflower{
+      .sunflower {
         position: relative;
         top: 125px;
         left: 95px;
       }
 
-      .wallnut{
+      .wallnut {
         position: relative;
         left: 180px;
         top: -5px;
       }
 
-      .shooters{
+      .shooters {
         display: flex;
         position: relative;
-        top:55px;  
+        top: 55px;
         left: 180px;
         flex-direction: column;
-    }
+      }
 
-    .peas .one, .peas .two{
+      .peas .one,
+      .peas .two {
         position: relative;
         /* left: 400px; */
-    }
+      }
 
-    .peas .one{
+      .peas .one {
         position: relative;
         top: 90px;
         left: 400px;
         /* background-color: red; */
-    }
-    .peas .two{
+      }
+      .peas .two {
         position: relative;
         top: 175px;
         left: 400px;
         /* background-color: red; */
-    }
+      }
 
-    .peas img{
+      .peas img {
         width: 20px;
-    }
+      }
 
-    .countdown{
+      .countdown {
         justify-content: center;
         align-items: center;
         font-size: 150px;
         color: white;
         width: 100%;
         height: 100vh;
-        background-color: red;    
-    }
+        background-color: red;
+      }
 
-    .container-over{
+      .container-over {
         display: flex;
         justify-content: space-evenly;
         flex-direction: column;
@@ -293,38 +294,39 @@
         width: 500px;
         height: 250px;
         background-color: grey;
-    }
+      }
 
-    .title-over{
+      .title-over {
         font-weight: bold;
         font-size: 40px;
-    }
+      }
 
-    .name-over{
+      .name-over {
         font-size: 20px;
-    }
+      }
 
-    button{
+      button {
         width: 200px;
         color: red;
         border: 1px solid red;
-    }
-
-
-
-
+      }
     </style>
   </head>
   <body>
-    <div class="welcome flex">
-      <form onsubmit="handleNavigate(event)" action="">
+    <div id="welcome" class="welcome flex">
+      <form onsubmit="handleSubmit(event)" action="">
         <div class="title">
           <img src="./MODULE_CLIENT_MEDIA/Sprites/General/logo.png" alt="" />
         </div>
 
         <div class="inputs">
-          <input type="text" placeholder="Input Username" />
-          <select name="" id="">
+          <input
+            id="username"
+            required
+            type="text"
+            placeholder="Input Username"
+          />
+          <select id="level" required name="">
             <option value="">Select Your Category</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -339,11 +341,13 @@
               alt=""
             />Play game
           </button>
-          <div class="yellow">Instruction</div>
+          <div onclick="handleNavigate('instruction', '')" class="yellow">
+            Instruction
+          </div>
         </div>
       </form>
 
-      <div class="container-ins">
+      <div id="instruction" class="container-ins hidden">
         <div class="ins-title">
           How to play the game
           <img
@@ -364,7 +368,7 @@
       </div>
     </div>
 
-    <div class="gameBoard hidden">
+    <div id="gameBoard" class="gameBoard hidden">
       <div class="top-sprite">
         <div class="sun-count">50</div>
         <div class="seeds">
@@ -396,21 +400,44 @@
       </div>
       <div class="field-sprite">
         <div class="sunflower">
-            <img src="./MODULE_CLIENT_MEDIA/Sprites/SunFlower/frame_00_delay-0.06s.gif" alt="">
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/SunFlower/frame_00_delay-0.06s.gif"
+            alt=""
+          />
         </div>
         <div class="zombies">
-            <img src="./MODULE_CLIENT_MEDIA/Sprites/Zombie/frame_00_delay-0.05s.gif" alt="">
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/Zombie/frame_00_delay-0.05s.gif"
+            alt=""
+          />
         </div>
         <div class="wallnut">
-            <img src="./MODULE_CLIENT_MEDIA/Sprites/WallNut/frame_00_delay-0.12s.gif" alt="">
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/WallNut/frame_00_delay-0.12s.gif"
+            alt=""
+          />
         </div>
         <div class="peas">
-            <img class="one" src="./MODULE_CLIENT_MEDIA/Sprites/General/Pea.png" alt="">
-            <img class="two" src="./MODULE_CLIENT_MEDIA/Sprites/General/IcePea.png" alt="">
+          <img
+            class="one"
+            src="./MODULE_CLIENT_MEDIA/Sprites/General/Pea.png"
+            alt=""
+          />
+          <img
+            class="two"
+            src="./MODULE_CLIENT_MEDIA/Sprites/General/IcePea.png"
+            alt=""
+          />
         </div>
         <div class="shooters">
-            <img src="./MODULE_CLIENT_MEDIA/Sprites/PeaShooter/frame_00_delay-0.12s.gif" alt="">
-            <img src="./MODULE_CLIENT_MEDIA/Sprites/IcePea/frame_02_delay-0.12s.gif" alt="">
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/PeaShooter/frame_00_delay-0.12s.gif"
+            alt=""
+          />
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/IcePea/frame_02_delay-0.12s.gif"
+            alt=""
+          />
         </div>
       </div>
       <canvas></canvas>
@@ -442,79 +469,73 @@
         <div class="line"></div>
       </div>
     </div>
-    
-    <div class="countdown hidden" id="countdown">
-        3
-    </div>
+
+    <div class="countdown hidden" id="countdown">3</div>
 
     <div id="gameOver" class="hidden">
-        <div class="container-over">
-            <div class="title-over">
-                Game Over
-            </div>
+      <div class="container-over">
+        <div class="title-over">Game Over</div>
 
-            <div class="name-over">
-                 Player name: Name
-            </div>
+        <div class="name-over">Player name: Name</div>
 
-            <div class="score-over">
-                 Score: 0
-            </div>
+        <div class="score-over">Score: 0</div>
 
-            <div class="buttons">
-                <button class="button-over">Continue</button>
-                <button class="button-over">Restrart</button>
-            </div>
+        <div class="buttons">
+          <button class="button-over">Continue</button>
+          <button class="button-over">Restrart</button>
         </div>
+      </div>
     </div>
     <div id="gamePause" class="hidden">
-        <div class="container-over">
-            <div class="title-over">
-                Game Pause
-            </div>
+      <div class="container-over">
+        <div class="title-over">Game Pause</div>
 
-            <div class="name-over">
-                 Player name: Name
-            </div>
+        <div class="name-over">Player name: Name</div>
 
-            <div class="buttons">
-                <button class="button-over">Restart</button>
-                <button class="button-over">Exit</button>
-            </div>
+        <div class="buttons">
+          <button class="button-over">Restart</button>
+          <button class="button-over">Exit</button>
         </div>
+      </div>
     </div>
 
-
     <script>
-        const username = document.getElementById('username') 
-        const select = document.getElementById('level') 
+      const username = document.getElementById("username");
+      const select = document.getElementById("level");
+      const timeContent = document.getElementById("countdown");
 
-        let name = ''
-        let level = 0
+      function handleSubmit(event) {
+        event.preventDefault();
+        const name = username.value;
+        const level = select.value;
+        console.log(name, level);
+        startCountdown();
+        handleNavigate("countdown", "welcome");
+      }
 
-        function handleSubmit(event){
-            event.preventDefault()
-            name = username.value
-            level = level.value
-            console.log(name, level)
+      function startCountdown() {
+        let sec = 3;
+        let timer = setInterval(() => {
+          timeContent.textContent = `${sec}`;
+          console.log;
+          sec--;
+          if (sec < 0) {
+            clearInterval(timer);
+            handleNavigate("gameBoard", "countdown");
+          }
+        }, 1000);
+      }
+
+      function handleNavigate(dom, dom2) {
+        const e = document.getElementById(dom);
+        if (dom2) {
+          e2.classList.toggle("flex");
+          e2.classList.toggle("hidden");
         }
-
-        function startCountdown(){
-            let timer = setInterval(()=>{
-                
-            })
-        }
-
-
-        function handleNavigate(dom, dom2){
-            const e = document.getElementById(dom) 
-            const e2 = document.getElementById(dom2) 
-            e.classList.toggle('hidden')
-            e.classList.toggle('flex')
-            e2.classList.toggle('flex')
-            e2.classList.toggle('hidden')
-        }
+        const e2 = document.getElementById(dom2);
+        e.classList.toggle("hidden");
+        e.classList.toggle("flex");
+      }
     </script>
-
   </body>
 </html>
