@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        font-family: sans-serif;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        background-color: rgb(95, 23, 23);
+        justify-content: center;
+        align-items: center;
+      }
+
+      form {
+        /* background-color: rgb(104, 26, 26);     */
+      }
+
+      .title img {
+        width: 300px;
+      }
+
+      .inputs {
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
+        margin-bottom: 20px;
+      }
+
+      .inputs input,
+      .inputs select {
+        height: 50px;
+        border: 3px solid rgb(141, 40, 40);
+        color: white;
+        padding-left: 10px;
+        margin-top: 10px;
+        border-radius: 10px;
+        background-color: rgb(87, 23, 23);
+      }
+
+      .inputs input::placeholder {
+        color: white;
+      }
+      .buttons {
+        display: flex;
+        gap: 20px;
+      }
+
+      button,
+      .buttons div {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 60px;
+        border: none;
+        border-radius: 10px;
+        width: 50%;
+      }
+
+      .yellow {
+        background-color: yellow;
+      }
+      .green {
+        color: white;
+        background-color: green;
+      }
+
+      button img {
+        width: 40px;
+      }
+      .container-ins {
+        height: 100%;
+
+        padding: 20px;
+        width: 400px;
+        background-color: rgb(87, 23, 23);
+        color: white;
+      }
+
+      .welcome {
+        gap: 5px;
+        width: 1000px;
+        height: 600px;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .ins-title {
+        justify-content: space-between;
+        font-size: 25px;
+        font-weight: bold;
+        display: flex;
+      }
+
+      .ins-title img {
+        position: relative;
+        top: -10px;
+        width: 40px;
+      }
+
+      .list {
+        margin-left: 20px;
+        margin-top: 20px;
+      }
+
+      .list li {
+        margin-top: 20px;
+      }
+
+      .gameBoard {
+        width: 1000px;
+        height: 600px;
+      }
+
+      canvas {
+        z-index: 1;
+        position: relative;
+        width: 80%;
+        background-size: cover;
+        background-image: url("./MODULE_CLIENT_MEDIA/Sprites/General/Background.jpg");
+      }
+
+      .side {
+        padding: 20px;
+        color: white;
+        width: 30%;
+      }
+
+      .title-side {
+        text-align: center;
+        font-weight: bold;
+        font-size: 25px;
+      }
+
+      .flex {
+        display: flex;
+      }
+      .hidden {
+        display: none;
+      }
+
+      .side select {
+        margin-top: 10px;
+        width: 100%;
+        height: 40px;
+        border: none;
+        border-radius: 5px;
+      }
+
+      .player {
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .info {
+        width: 200px;
+      }
+
+      .name {
+        font-weight: bold;
+      }
+
+      .btn-detail {
+        height: 40px;
+        background-color: yellow;
+      }
+
+      .line {
+        margin-top: 5px;
+        width: 100%;
+        height: 1px;
+        background-color: white;
+      }
+
+      .top-sprite {
+        position: absolute;
+        z-index: 999;
+      }
+
+      .sun-count {
+        top: 74px;
+        left: 140px;
+        position: relative;
+      }
+
+      .seeds {
+        gap: 5px;
+        display: flex;
+        top: -2px;
+        left: 200px;
+        position: relative;
+      }
+
+      .user {
+        top: -45px;
+        position: relative;
+        left: 450px;
+        color: white;
+      }
+
+      .shovel img {
+        width: 40px;
+      }
+
+      .shovel {
+        position: absolute;
+        left: 650px;
+        top: 20px;
+        /* bottom: 200px; */
+      }
+      .field-sprite{
+        position: absolute;
+        z-index: 999;
+      }
+
+      .field-sprite img{
+        width: 80px;
+      }
+
+      .zombies{
+        position: relative;
+        left: 600px;
+      }
+
+      .sunflower{
+        position: relative;
+        top: 125px;
+        left: 95px;
+      }
+
+      .wallnut{
+        position: relative;
+        left: 180px;
+        top: -5px;
+      }
+
+      .shooters{
+        display: flex;
+        position: relative;
+        top:55px;  
+        left: 180px;
+        flex-direction: column;
+    }
+
+    .peas .one, .peas .two{
+        position: relative;
+        /* left: 400px; */
+    }
+
+    .peas .one{
+        position: relative;
+        top: 90px;
+        left: 400px;
+        /* background-color: red; */
+    }
+    .peas .two{
+        position: relative;
+        top: 175px;
+        left: 400px;
+        /* background-color: red; */
+    }
+
+    .peas img{
+        width: 20px;
+    }
+
+    .countdown{
+        justify-content: center;
+        align-items: center;
+        font-size: 150px;
+        color: white;
+        width: 100%;
+        height: 100vh;
+        background-color: red;    
+    }
+
+    .container-over{
+        display: flex;
+        justify-content: space-evenly;
+        flex-direction: column;
+        align-items: center;
+        color: white;
+        width: 500px;
+        height: 250px;
+        background-color: grey;
+    }
+
+    .title-over{
+        font-weight: bold;
+        font-size: 40px;
+    }
+
+    .name-over{
+        font-size: 20px;
+    }
+
+    button{
+        width: 200px;
+        color: red;
+        border: 1px solid red;
+    }
+
+
+
+
+    </style>
+  </head>
+  <body>
+    <div class="welcome flex">
+      <form onsubmit="handleNavigate(event)" action="">
+        <div class="title">
+          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/logo.png" alt="" />
+        </div>
+
+        <div class="inputs">
+          <input type="text" placeholder="Input Username" />
+          <select name="" id="">
+            <option value="">Select Your Category</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="buttons">
+          <button type="submit" class="green">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png"
+              alt=""
+            />Play game
+          </button>
+          <div class="yellow">Instruction</div>
+        </div>
+      </form>
+
+      <div class="container-ins">
+        <div class="ins-title">
+          How to play the game
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/General/close-icon.png"
+            alt=""
+          />
+        </div>
+
+        <div class="list">
+          <ol>
+            <li>Input Username</li>
+            <li>Take the sun to choose the plant card</li>
+            <li>Put a plant cards into the field to fight zombies</li>
+            <li>Dont let the zombies pass through the yard</li>
+            <li>Enjoy</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="gameBoard hidden">
+      <div class="top-sprite">
+        <div class="sun-count">50</div>
+        <div class="seeds">
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/IcePeaSeed.png"
+            alt=""
+          />
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/WallNutSeed.png"
+            alt=""
+          />
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/PeaShooterSeed.png"
+            alt=""
+          />
+          <img
+            src="./MODULE_CLIENT_MEDIA/Sprites/Seeds/SunFlowerSeed.png"
+            alt=""
+          />
+        </div>
+        <div class="user">
+          <div class="username"></div>
+          <div class="score">Score</div>
+          <div class="time">Time: 01:20</div>
+        </div>
+        <div class="shovel">
+          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png" alt="" />
+        </div>
+      </div>
+      <div class="field-sprite">
+        <div class="sunflower">
+            <img src="./MODULE_CLIENT_MEDIA/Sprites/SunFlower/frame_00_delay-0.06s.gif" alt="">
+        </div>
+        <div class="zombies">
+            <img src="./MODULE_CLIENT_MEDIA/Sprites/Zombie/frame_00_delay-0.05s.gif" alt="">
+        </div>
+        <div class="wallnut">
+            <img src="./MODULE_CLIENT_MEDIA/Sprites/WallNut/frame_00_delay-0.12s.gif" alt="">
+        </div>
+        <div class="peas">
+            <img class="one" src="./MODULE_CLIENT_MEDIA/Sprites/General/Pea.png" alt="">
+            <img class="two" src="./MODULE_CLIENT_MEDIA/Sprites/General/IcePea.png" alt="">
+        </div>
+        <div class="shooters">
+            <img src="./MODULE_CLIENT_MEDIA/Sprites/PeaShooter/frame_00_delay-0.12s.gif" alt="">
+            <img src="./MODULE_CLIENT_MEDIA/Sprites/IcePea/frame_02_delay-0.12s.gif" alt="">
+        </div>
+      </div>
+      <canvas></canvas>
+      <div class="side">
+        <div class="title-side">LEADERBOARD</div>
+
+        <select class="select" name="" id="">
+          <option value="">Sort By Score</option>
+        </select>
+
+        <div class="player">
+          <div class="info">
+            <div class="name">Thomas Galih</div>
+            <div class="score">Score: 44</div>
+          </div>
+
+          <button class="btn-detail">Detail</button>
+        </div>
+        <div class="line"></div>
+
+        <div class="player">
+          <div class="info">
+            <div class="name">Thomas Galih</div>
+            <div class="score">Score: 44</div>
+          </div>
+
+          <button class="btn-detail">Detail</button>
+        </div>
+        <div class="line"></div>
+      </div>
+    </div>
+    
+    <div class="countdown hidden" id="countdown">
+        3
+    </div>
+
+    <div id="gameOver" class="hidden">
+        <div class="container-over">
+            <div class="title-over">
+                Game Over
+            </div>
+
+            <div class="name-over">
+                 Player name: Name
+            </div>
+
+            <div class="score-over">
+                 Score: 0
+            </div>
+
+            <div class="buttons">
+                <button class="button-over">Continue</button>
+                <button class="button-over">Restrart</button>
+            </div>
+        </div>
+    </div>
+    <div id="gamePause" class="hidden">
+        <div class="container-over">
+            <div class="title-over">
+                Game Pause
+            </div>
+
+            <div class="name-over">
+                 Player name: Name
+            </div>
+
+            <div class="buttons">
+                <button class="button-over">Restart</button>
+                <button class="button-over">Exit</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const username = document.getElementById('username') 
+        const select = document.getElementById('level') 
+
+        let name = ''
+        let level = 0
+
+        function handleSubmit(event){
+            event.preventDefault()
+            name = username.value
+            level = level.value
+            console.log(name, level)
+        }
+
+        function startCountdown(){
+            let timer = setInterval(()=>{
+                
+            })
+        }
+
+
+        function handleNavigate(dom, dom2){
+            const e = document.getElementById(dom) 
+            const e2 = document.getElementById(dom2) 
+            e.classList.toggle('hidden')
+            e.classList.toggle('flex')
+            e2.classList.toggle('flex')
+            e2.classList.toggle('hidden')
+        }
+    </script>
+
+  </body>
+</html>
