@@ -40,7 +40,6 @@
       }
 
       .welcome {
-
         width: 1000px;
         height: 600px;
         justify-content: center;
@@ -49,7 +48,7 @@
         gap: 20px;
       }
 
-      .container-ins{
+      .container-ins {
         width: 60%;
         background-color: rgb(65, 15, 15);
         padding: 30px;
@@ -57,28 +56,27 @@
         height: 100%;
       }
 
-      .container-ins .title{
+      .container-ins .title {
         display: flex;
         align-items: center;
         justify-content: space-between;
         font-size: 30px;
       }
 
-      .list{
+      .list {
         margin-top: 30px;
         padding-left: 25px;
       }
 
-      .list li{
+      .list li {
         margin-top: 20px;
       }
 
-      .container-ins img{
+      .container-ins img {
         width: 40px;
       }
 
-      
-      form{
+      form {
         width: 40%;
         gap: 20px;
         flex-direction: column;
@@ -341,14 +339,16 @@
             <img src="./Sprites/General/Shovel.png" alt="" />
             Play Game
           </button>
-          <div onclick="handleNavigate('instruction')" class="yellow">Instruction</div>
+          <div onclick="handleNavigate('instruction')" class="yellow">
+            Instruction
+          </div>
         </div>
       </form>
 
       <div id="instruction" class="container-ins">
         <div class="title">
-        How To Play Game
-        <span><img src="./Sprites/General/close-icon.png" alt=""></span>
+          How To Play Game
+          <span><img src="./Sprites/General/close-icon.png" alt="" /></span>
         </div>
         <div class="list">
           <ol>
@@ -360,7 +360,6 @@
           </ol>
         </div>
       </div>
-
     </div>
     <div id="gameBoard" class="gameboard hidden">
       <div class="top-sprite">
@@ -465,9 +464,12 @@
       const countdown = document.getElementById("countdown");
       const canvas = document.getElementById("canvas");
       const time = document.getElementById("time");
+      const gameBoard = document.getElementById("gameBoard");
 
       let user = "";
       let level = "";
+      let sunSpawnInterval = null;
+      let isSpawning = "";
       function handleSubmit() {
         event.preventDefault();
         user = username.value;
@@ -477,11 +479,11 @@
         handleNavigate("countdown", "welcome");
       }
 
-      document.addEventListener('Keydown', function(event){
-        if(event.key = 'Escape'){
-          handleNavigate('gamePaused', 'gameBoard')
+      document.addEventListener("Keydown", function (event) {
+        if ((event.key = "Escape")) {
+          handleNavigate("gamePaused", "gameBoard");
         }
-      })
+      });
 
       function handleNavigate(dom, dom2) {
         const e = document.getElementById(dom);
@@ -494,8 +496,6 @@
         e.classList.toggle("flex");
       }
 
-      
-
       function startCountdown() {
         let sec = 3;
         let timer = setInterval(() => {
@@ -504,25 +504,73 @@
           if (sec < 0) {
             clearInterval(timer);
             handleNavigate("gameBoard", "countdown");
+            startSpawnSun();
             startTimer();
           }
-        },1000);
+        }, 1000);
       }
 
-      // function spawnSun() {
-      //   const img = document.createElement("img");
-      //   img.src = "./Sprites/General/Sun.png";
-      //   img.width = 40;
-      //   // const maxX = canvas.wi
-      // }
+      function spawnSun() {
+        const img = document.createElement("img");
+        img.src = "./Sprites/General/Sun.png";
+        img.width = 40;
+        img.style.position = "absolute";
+        img.style.zIndex = 999;
+
+        const maxX = canvas.offsetWidth - img.width;
+        const minX = 0;
+        const randomX = minX + Math.random() * (maxX - minX);
+
+        // Mulai dari atas (top: 0)
+        img.style.top = 0;
+        img.style.left = `${randomX}px`;
+
+        // Tambahkan animasi turun
+        img.style.transition = "top 3s linear"; // 3 detik turun
+
+        gameBoard.appendChild(img);
+
+        const maxY = 500; // Batas paling bawah
+        const minY = 200; // Batas paling atas (minimal height)
+        const randomY = minY + Math.random() * (maxY - minY);
+
+        // Trigger animasi turun setelah elemen ditambahkan
+        setTimeout(() => {
+          const maxY = canvas.offsetHeight - img.width;
+          img.style.top = `${randomX}px`; // Turun ke bawah
+        }, 10);
+
+        console.log("Sun spawned at:", randomX);
+
+        // Hapus setelah 6 detik
+        setTimeout(() => {
+          img.remove();
+          console.log("Sun removed");
+        }, 6000);
+      }
+
+      function startSpawnSun() {
+        if (!isSpawning) {
+          isSpawning = true;
+          sunSpawnInterval = setInterval(spawnSun, 3000);
+        }
+      }
+
+      function stopSpawnSun() {
+        if (isSpawning) {
+          isSpawning = false;
+          clearInterval(sunSpawnInterval);
+          sunSpawnInterval = null;
+        }
+      }
 
       function startTimer() {
         let seconds = 180;
         let timer = setInterval(() => {
           seconds--;
-          const min = Math.floor(seconds / 60) ;
+          const min = Math.floor(seconds / 60);
           const sec = seconds % 60;
-         time.innerText = `${String(min).padStart(2,0)}:${String(sec).padStart(2,0)}  `
+          time.innerText = `Time: ${String(min).padStart(2, 0)} ${String(sec).padStart(2, 0)}  `;
         }, 1000);
       }
     </script>

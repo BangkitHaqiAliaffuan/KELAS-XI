@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      #welcome {
+        width: 1000px;
+        height: 600px;
+        gap: 20px;
+        justify-content: center;
+        align-items: center;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: sans-serif;
+        width: 100%;
+        height: 100vh;
+        background-color: rgb(136, 34, 34);
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        /* background-color: red; */
+      }
+
+      .inputs {
+        gap: 5px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .inputs select {
+        padding-left: 10px;
+      }
+      .inputs input::placeholder {
+        padding-left: 10px;
+        color: white;
+      }
+
+      .inputs .input {
+        background-color: rgb(84, 19, 19);
+        color: white;
+        border: 2px solid rgb(177, 41, 41);
+        /* padding: 10px; */
+        height: 45px;
+        border-radius: 10px;
+      }
+
+      .buttons {
+        justify-content: space-between;
+        display: flex;
+      }
+
+      .green,
+      .yellow {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 180px;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 20px;
+        padding: 10px;
+      }
+
+      .green {
+        background-color: green;
+      }
+
+      .green img {
+        width: 40px;
+      }
+      .yellow {
+        background-color: yellow;
+        color: black;
+      }
+
+      .flex {
+        display: flex;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .side {
+        background-color: rgb(87, 24, 24);
+        width: 60%;
+        height: 100%;
+        flex-direction: column;
+        padding: 20px;
+        color: white;
+      }
+
+      .title-side { 
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: bold;
+        font-size: 20px;
+      }
+
+      .list{
+        padding-left: 25px;
+      }
+
+      .list li{
+        margin-top: 10px;
+      }
+
+      .side img {
+        width: 40px;
+      }
+
+      .countdown{
+        font-size: 150px;
+        color: white;
+        background-color: red;
+        width: 100%;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .gameboard{
+        width: 1000px;
+        height: 600px;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="welcome" class="welcome hidden">
+      <form action="">
+        <div class="title">
+          <img src="./MODULE_CLIENT_MEDIA/Sprites/General/logo.png" alt="" />
+        </div>
+        <div class="inputs">
+          <input class="input" placeholder="Input Username" type="text" />
+          <select class="input" name="" id="">
+            <option value="">Select Your Category</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+        <div class="buttons">
+          <button class="green">
+            <img
+              src="./MODULE_CLIENT_MEDIA/Sprites/General/Shovel.png"
+              alt=""
+            />Play Game
+          </button>
+          <div class="yellow">Instruction</div>
+        </div>
+      </form>
+
+      <div class="side flex">
+        <div class="title-side">
+          How to play the game
+          <span
+            ><img
+              src="./MODULE_CLIENT_MEDIA/Sprites/General/close-icon.png"
+              alt=""
+          /></span>
+        </div>
+
+        <div class="list">
+          <ol>
+            <li>Input Username</li>
+            <li>Use sun to choose card</li>
+            <li>Destroy the zombie</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div id="countdown" class="countdown hidden">
+        3
+    </div>
+
+    <div id="gameBoard" class="gameboard flex">
+        <canvas id="canvas">
+
+        </canvas>
+
+        <div class="side">
+            <div class="leader">
+                LEADERBOARD
+            </div>
+            <select name="" id="">
+                <option value="">Sort By Score</option>
+            </select>
+
+            <div class="player">
+                <div class="name">
+                    <span>thomasgalih</span>
+                    <span>score: 44</span>
+                </div>
+
+                <div class="btn-detail">Detail</div>
+            </div>
+        </div>
+    </div>
+
+  </body>
+</html>
