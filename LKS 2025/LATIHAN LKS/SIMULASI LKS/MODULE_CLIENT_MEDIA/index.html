@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100vh;
+      }
+
+      * {
+        margin: 0;
+        font-family: sans-serif;
+      }
+
+      .welcome {
+        position: relative;
+        z-index: 1;
+      }
+
+      form,
+      .inputs {
+        flex-direction: column;
+        gap: 10px;
+        display: flex;
+      }
+
+      .title {
+        margin: auto;
+      }
+
+      .inputs input,
+      select {
+        padding: 11px;
+        color: white;
+        background-color: red;
+        border-radius: 10px;
+      }
+
+      input::placeholder {
+        color: white;
+      }
+
+      .buttons {
+        gap: 20px;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .btn {
+        background-color: black;
+        width: 180px;
+        border-radius: 10px;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+      }
+
+      .instruction {
+        color: white;
+        /* padding: 40px; */
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.575);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        z-index: 999;
+      }
+
+      .title-ins {
+        justify-content: space-between;
+        padding: 20px;
+        display: flex;
+        font-weight: bold;
+        align-items: center;
+        font-size: 100px;
+      }
+
+      .list {
+        padding-left: 60px;
+        font-size: 50px;
+      }
+
+      li {
+        padding-top: 20px;
+      }
+
+      .flex {
+        display: flex;
+      }
+      .hidden {
+        display: none;
+      }
+
+      .gameBoard {
+        width: 1000px;
+        height: 600px;
+        /* display: flex; */
+        justify-content: center;
+        align-content: center;
+      }
+
+      canvas {
+        background-size: cover;
+        width: 80%;
+        height: 100%;
+        background-image: url("./Images/background.jpg");
+      }
+
+      .side {
+        display: flex;
+        gap: 20px;
+        flex-direction: column;
+        padding: 20px;
+        width: 20%;
+        /* height: 100%; */
+        background-color: black;
+        color: white;
+      }
+
+      .title-side {
+        font-weight: bold;
+        font-size: 30px;
+      }
+
+      .hearts {
+        margin-bottom: 20px;
+      }
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+      }
+
+      .gameOver {
+        gap: 10px;
+        color: white;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: rgb(71, 71, 71);
+        width: 100%;
+        height: 100%;
+    }
+
+    .title-over {
+        font-weight: bold;
+        font-size: 50px;
+    }
+      .items {
+        font-size: 30px;
+        gap: 20px;
+        display: flex;
+    }
+    
+    .text {
+        font-size: 20px;
+    }
+    
+      .btn-over {
+          width: 200px;
+          height: 50px;
+        font-size: 20px;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+      }
+
+      .blue {
+        background-color: blue;
+      }
+      .red {
+        background-color: red;
+    }
+    
+      .leaderboard {
+        width: 100%;
+        height: 100%;
+        gap: 25px;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background-color: rgb(71, 71, 71);
+    }
+
+    th{
+        padding: 20px;
+        /* padding-bottom: -10px; */
+    }
+
+    table{
+        border-collapse: collapse;
+        width: 35%;
+    }
+
+    tr{
+        border-bottom: 1px solid white;
+    }
+
+    td{
+        
+        text-align: center;
+        padding: 20px;
+    }
+
+    .line{
+        width: 100%;
+        background-color: white;
+        height: 1px;
+    }
+
+
+
+    </style>
+  </head>
+  <body>
+      <div class="welcome hidden">
+          <form action="">
+              <div class="title">
+                  <img src="./Images/logo.png" alt="" />
+        </div>
+
+        <div class="inputs">
+          <input placeholder="Input Username" type="text" />
+          <select name="" id="">
+            <option value="">Select Level</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+          </select>
+        </div>
+
+        <div class="buttons">
+          <button class="btn">Play Game</button>
+          <div class="btn">Instruction</div>
+        </div>
+      </form>
+    </div>
+
+    <div class="instruction hidden">
+      <div class="title-ins">
+        How To Play Game
+        <img width="100" src="./Images/close-icon.png" alt="" />
+      </div>
+      <div class="list">
+        <ol>
+          <li>Makan ayam dengan nak</li>
+          <li>Makan ayam dengan nak</li>
+          <li>Makan ayam dengan nak</li>
+          <li>Makan ayam dengan nak</li>
+          <li>Makan ayam dengan nak</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="gameBoard hidden">
+      <canvas> </canvas>
+
+      <div class="side">
+        <div class="title-side">BOMSKUY</div>
+
+        <div class="user">
+          <div>Player: David</div>
+          <div>Time: 01:20</div>
+        </div>
+
+        <div class="data">
+          <div class="hearts">
+            <img src="./Images/heart_indicator.png" alt="" />
+          </div>
+          <div class="brick item">
+            <img src="./Images/wall_crack.png" alt="" /> = 4
+          </div>
+          <div class="bomb item">
+            <img src="./Images/bomb.png" alt="" /> = 4
+          </div>
+          <div class="ice item"><img src="./Images/ice.png" alt="" /> = 4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gameOver hidden">
+      <div class="title-over">Game Over</div>
+
+      <div class="text">GoodJob</div>
+
+      <div class="items">
+        <div class="item"><img src="./Images/bomb.png" alt="" /> = 4</div>
+        <div class="item"><img src="./Images/bomb.png" alt="" /> = 4</div>
+        <div class="item"><img src="./Images/bomb.png" alt="" /> = 4</div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn-over red">Save Score</button>
+        <button class="btn-over blue">Leaderboards</button>
+      </div>
+    </div>
+
+    <div class="leaderboard">
+      <div class="title-over">Leaderboards</div>
+
+      <table>
+        <tr>
+          <th>Player Name</th>
+          <th>Time</th>
+          <th><img width="40" src="./Images/wall_crack.png" alt="" /></th>
+          <th><img width="40" src="./Images/wall_crack.png" alt="" /></th>
+          <th><img width="40" src="./Images/wall_crack.png" alt="" /></th>
+        </tr>
+        <tr>
+          <td>Andi</td>
+          <td>05:01</td>
+          <td>2</td>
+          <td>52</td>
+          <td>1</td>
+        </tr>
+      </table>
+      <div class="buttons">
+        <button class="btn-over red">Play Again</button>
+        <button class="btn-over blue">Reset</button>
+      </div>
+    </div>
+  </body>
+</html>
