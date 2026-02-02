@@ -36,6 +36,7 @@
 
       .inputs input,
       select {
+        border: 0;
         padding: 11px;
         color: white;
         background-color: red;
@@ -109,6 +110,8 @@
       }
 
       canvas {
+        /* position: absolute; */
+        z-index: 1;
         background-size: cover;
         width: 80%;
         height: 100%;
@@ -151,25 +154,25 @@
         background-color: rgb(71, 71, 71);
         width: 100%;
         height: 100%;
-    }
+      }
 
-    .title-over {
+      .title-over {
         font-weight: bold;
         font-size: 50px;
-    }
+      }
       .items {
         font-size: 30px;
         gap: 20px;
         display: flex;
-    }
-    
-    .text {
+      }
+
+      .text {
         font-size: 20px;
-    }
-    
+      }
+
       .btn-over {
-          width: 200px;
-          height: 50px;
+        width: 200px;
+        height: 50px;
         font-size: 20px;
         color: white;
         font-weight: bold;
@@ -182,60 +185,104 @@
       }
       .red {
         background-color: red;
-    }
-    
+      }
+
       .leaderboard {
         width: 100%;
         height: 100%;
         gap: 25px;
         color: white;
-        display: flex;
         align-items: center;
         justify-content: center;
         flex-direction: column;
         background-color: rgb(71, 71, 71);
-    }
+      }
 
-    th{
+      th {
         padding: 20px;
         /* padding-bottom: -10px; */
-    }
+      }
 
-    table{
+      table {
         border-collapse: collapse;
         width: 35%;
-    }
+      }
 
-    tr{
+      tr {
         border-bottom: 1px solid white;
-    }
+      }
 
-    td{
-        
+      td {
         text-align: center;
         padding: 20px;
-    }
+      }
 
-    .line{
+      .line {
         width: 100%;
         background-color: white;
         height: 1px;
-    }
+      }
 
+      .sprites {
+        top: 145px;
+        position: absolute;
+        z-index: 999;
+      }
 
+      .brick,
+      .dog,
+      .bomb,
+      .brick2,
+      .brick3,
+      .ice {
+        position: absolute;
+      }
 
+      .char {
+        position: relative;
+        left: -420px;
+      }
+
+      .bomb {
+        top: 150px;
+        left: -200px;
+      }
+
+      .brick {
+        left: 15px;
+        top: 220px;
+      }
+      .brick2 {
+        left: -200px;
+        top: 3px;
+        /* top: 220px; */
+      }
+      .brick3 {
+        left: 155px;
+        top: 3px;
+        /* top: 220px; */
+      }
+
+      .dog {
+        left: 15px;
+      }
+
+      .ice {
+        top: 450px;
+        left: 20px;
+      }
     </style>
   </head>
   <body>
-      <div class="welcome hidden">
-          <form action="">
-              <div class="title">
-                  <img src="./Images/logo.png" alt="" />
+    <div id="welcome" class="welcome flex">
+      <form onsubmit="handleSubmit()" action="">
+        <div class="title">
+          <img src="./Images/logo.png" alt="" />
         </div>
 
         <div class="inputs">
-          <input placeholder="Input Username" type="text" />
-          <select name="" id="">
+          <input id="username" placeholder="Input Username" type="text" />
+          <select id="level" name="" id="">
             <option value="">Select Level</option>
             <option value="1">1</option>
             <option value="2">2</option>
@@ -244,16 +291,23 @@
         </div>
 
         <div class="buttons">
-          <button class="btn">Play Game</button>
-          <div class="btn">Instruction</div>
+          <button type="submit" class="btn">Play Game</button>
+          <div onclick="handleNavigate('instruction', '')" class="btn">
+            Instruction
+          </div>
         </div>
       </form>
     </div>
 
-    <div class="instruction hidden">
+    <div id="instruction" class="instruction hidden">
       <div class="title-ins">
         How To Play Game
-        <img width="100" src="./Images/close-icon.png" alt="" />
+        <img
+          onclick="handleNavigate('instruction', '')"
+          width="100"
+          src="./Images/close-icon.png"
+          alt=""
+        />
       </div>
       <div class="list">
         <ol>
@@ -266,33 +320,41 @@
       </div>
     </div>
 
-    <div class="gameBoard hidden">
-      <canvas> </canvas>
+    <div id="gameBoard" class="gameBoard hidden">
+      <div class="sprites">
+        <img id="character" src="./Images/char_right.png" alt="" class="char" />
+        <img src="./Images/dog_down.png" alt="" class="dog" />
+        <img src="./Images/wall.png" alt="" class="brick" />
+        <img src="./Images/wall.png" alt="" class="brick2" />
+        <img src="./Images/wall.png" alt="" class="brick3" />
+        <img src="./Images/bomb.png" alt="" class="bomb" />
+        <img src="./Images/ice.png" alt="" class="ice" />
+      </div>
+
+      <canvas id="canvas"> </canvas>
 
       <div class="side">
         <div class="title-side">BOMSKUY</div>
 
         <div class="user">
           <div>Player: David</div>
-          <div>Time: 01:20</div>
+          <div id="timer">Time: 01:20</div>
         </div>
 
         <div class="data">
           <div class="hearts">
             <img src="./Images/heart_indicator.png" alt="" />
           </div>
-          <div class="brick item">
+          <div class="item">
             <img src="./Images/wall_crack.png" alt="" /> = 4
           </div>
-          <div class="bomb item">
-            <img src="./Images/bomb.png" alt="" /> = 4
-          </div>
-          <div class="ice item"><img src="./Images/ice.png" alt="" /> = 4</div>
+          <div class="item"><img src="./Images/bomb.png" alt="" /> = 4</div>
+          <div class="item"><img src="./Images/ice.png" alt="" /> = 4</div>
         </div>
       </div>
     </div>
 
-    <div class="gameOver hidden">
+    <div id="gameOver" class="gameOver hidden">
       <div class="title-over">Game Over</div>
 
       <div class="text">GoodJob</div>
@@ -309,7 +371,7 @@
       </div>
     </div>
 
-    <div class="leaderboard">
+    <div id="leaderboard" class="leaderboard hidden">
       <div class="title-over">Leaderboards</div>
 
       <table>
@@ -333,5 +395,98 @@
         <button class="btn-over blue">Reset</button>
       </div>
     </div>
+
+    <script>
+      const username = document.getElementById("username");
+      const select = document.getElementById("level");
+      const timerId = document.getElementById("timer");
+      const gameBoard = document.getElementById("gameBoard");
+      const canvas = document.getElementById("canvas");
+      let user = "";
+      let level = 0;
+      let movement = "";
+      let y = 0;
+      let x = -420;
+
+      function handleSubmit() {
+        event.preventDefault();
+        user = username.value;
+        level = select.value;
+        handleNavigate("gameBoard", "welcome");
+      }
+
+      function timer() {
+        let sec = 180;
+        timer = setInterval(() => {
+          sec--;
+          let min = sec / 60;
+          let second = sec % 60;
+          timerId.textContent = `Time: ${min}:${second}`;
+        }, 1000);
+      }
+
+      function handleNavigate(dom1, dom2) {
+        const e = document.getElementById(dom1);
+        const e2 = document.getElementById(dom2);
+        if (e2) {
+          e2.classList.toggle("hidden");
+          e2.classList.toggle("flex");
+        }
+        e.classList.toggle("hidden");
+        e.classList.toggle("flex");
+      }
+
+      let keys = {};
+
+      document.addEventListener("keydown", (e) => {
+        keys[e.key] = true;
+        console.log(e.key);
+      });
+
+      document.addEventListener("keyup", (e) => {
+        keys[e.key] = false;
+      });
+
+      function move() {
+        let speed = 10;
+
+        const player = document.getElementById("character");
+
+        if (keys["w"]) {
+          if (y < 0) {
+            y = 0;
+          }
+          y -= speed;
+          player.style.top = y + "px";
+        }
+        if (keys["a"]) {
+          if (x < -420) {
+            x = -420;
+          }
+          x -= speed;
+          player.style.left = x + "px";
+        }
+        if (keys["s"]) {
+          if (y > canvas.offsetHeight - 160) {
+            y = canvas.offsetHeight - 160;
+          }
+          y += speed;
+          player.style.top = y + "px";
+        }
+        if (keys["d"]) {
+          if (x > canvas.offsetWidth - 40 - 600) {
+            x = canvas.offsetWidth - 40 - 600;
+          }
+          x += speed;
+          player.style.left = x + "px";
+        }
+      }
+
+      function animate() {
+        move();
+        requestAnimationFrame(animate);
+      }
+      animate();
+    </script>
   </body>
 </html>
