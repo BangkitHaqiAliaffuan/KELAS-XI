@@ -20,8 +20,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'username',
-        'email',
         'password',
+        'remember_token'
     ];
 
     /**
@@ -45,5 +45,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function games(){
+        return $this->hasMany(Game::class, 'created_by');
     }
 }

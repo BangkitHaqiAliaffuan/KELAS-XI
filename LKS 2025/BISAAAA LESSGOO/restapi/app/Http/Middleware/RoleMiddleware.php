@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Admin;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +23,11 @@ class RoleMiddleware
 
         if($user && $user->role === $roles){
             return $next($request);
+        } else{
+            return response()->json([
+                'message' => "you're not allowed"
+            ]);
         }
-        
+
     }
 }
