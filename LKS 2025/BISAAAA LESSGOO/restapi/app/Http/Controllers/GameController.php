@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class GameController extends Controller
 {
@@ -17,7 +18,7 @@ class GameController extends Controller
         $sortBy = $request->get('sortBy', 'title');
         $size = $request->get('size', 10);
 
-        $sortColumn = match($sortBy){
+        $sortColumn = match ($sortBy) {
             'popular' => 'views',
             'uploaddate' => 'created_at',
             default => 'title'
@@ -39,7 +40,27 @@ class GameController extends Controller
      */
     public function create()
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|min:3',
+            'description' => 'required|max:200'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => $validator->errors()
+            ]);
+        }
+
+        $game = Game::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'slug' => Str::slug($request->title)
+        ]);
+
+        return response()->json([
+            'message' => 'done min',
+            'data' => $game
+        ]);
     }
 
     /**
@@ -53,9 +74,13 @@ class GameController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Game $game)
+    public function show(Game $game, $slug)
     {
-        //
+        $game = Game::where('slug', $slug)->first();
+
+        return response()->json([
+            'data' => $game
+        ]);
     }
 
     /**
