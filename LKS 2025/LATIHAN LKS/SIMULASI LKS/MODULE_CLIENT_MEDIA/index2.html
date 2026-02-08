@@ -109,14 +109,16 @@
       }
 
       #gameBoard {
+        position: absolute;
         width: 1000px;
         height: 600px;
         /* display: flex; */
+        /* position: absolute; */
 
         /* display: flex; */
       }
 
-      canvas {
+      #canvas {
         z-index: 1;
         /* position: absolute; */
         background-image: url("./Images/background.jpg");
@@ -201,32 +203,32 @@
         border-bottom: 2px solid white;
       }
 
-      .sprites > div{
+      .sprites > div {
         position: absolute;
         z-index: 2;
       }
 
-      .player{
+      .player {
         /* position: absolute; */
         left: 500px;
         top: 150px;
       }
 
-      .dog{
+      .dog {
         left: 580px;
         top: 200px;
       }
 
-      .wall{
-        left: 725px;
+      .wall {
+        left: 300px;
         top: 220px;
       }
 
-      .bomb{
+      .bomb {
         left: 300px;
         top: 520px;
       }
-      .ice{
+      .ice {
         left: 440px;
         top: 225px;
       }
@@ -240,7 +242,7 @@
         </div>
         <div class="inputs">
           <input id="name" type="text" placeholder="Input Username" />
-          <select id="level" name="" >
+          <select id="level" name="">
             <option value="">Select Your Category</option>
             <option value="">1</option>
             <option value="">2</option>
@@ -249,7 +251,9 @@
         </div>
         <div class="buttons">
           <button type="submit" class="btn green">Play Game</button>
-          <div onclick="handleNavigate('instruction','')" class="btn yellow">Instruction</div>
+          <div onclick="handleNavigate('instruction', '')" class="btn yellow">
+            Instruction
+          </div>
         </div>
       </form>
 
@@ -265,29 +269,26 @@
             <li>Input Username</li>
           </ol>
         </div>
-      </di>
-    </div>
+      </div>
     </div>
 
     <div id="gameBoard" class="flex">
-        <div class="sprites">
-            <div class="player">
-                <img src="./Images/char_right.png" alt="">
-            </div>
-            <div class="bomb">
-                <img src="./Images/bomb.png" alt="">
-            </div>
-            <div class="wall">
-                <img src="./Images/wall.png" alt="">
-            </div>
-            <div class="ice">
-                <img src="./Images/ice.png" alt="">
-            </div>
-            <div class="dog">
-                <img src="./Images/dog_down.png" alt="">
-            </div>
+      <div class="player"></div>
+      <div class="sprites">
+        <div class="bomb">
+          <img src="./Images/bomb.png" alt="" />
         </div>
-      <canvas></canvas>
+        <div class="wall">
+          <img src="./Images/wall.png" alt="" />
+        </div>
+        <div class="ice">
+          <img src="./Images/ice.png" alt="" />
+        </div>
+        <div class="dog">
+          <img src="./Images/dog_down.png" alt="" />
+        </div>
+      </div>
+      <div id="canvas"></div>
       <div class="side">
         <div class="title-side">BOMSKUY</div>
         <select name="" id="">
@@ -361,28 +362,68 @@
     </div>
 
     <script>
-        const username = document.getElementById('name')
-        const selectLevel = document.getElementById('level')
-        let name = ''
-        let level = 0
-        function handleNavigate(dom1, dom2){
-            const e = document.getElementById(dom1)
-            const e2 = document.getElementById(dom2)
-            if(e2){
-                e2.classList.toggle('hidden')
-                e2.classList.toggle('flex')
-            }
-            e.classList.toggle('hidden')
-            e.classList.toggle('flex')
-        }
+      const canvas = document.getElementById("canvas");
+      const player = {
+        x: 0,
+        y: 0,
+        speed: 3,
+        width: "40px",
+        direction: null,
+        spawn() {
+          this.element = document.createElement("img");
+          this.element.src = "./Images/char_right.png";
+          this.element.style.left = "10px";
+          this.element.style.top = "10px";
+          this.element.style.position = "absolute";
+          this.element.style.width = "40px";
+          this.element.width = 50;
+          canvas.appendChild(this.element);
+        },
 
+        update() {
+          if (this.direction === "up") {
+            this.y -= this.speed;
+          }
+          if (this.direction === "down") {
+            this.y += this.speed;
+          }
+          if (this.direction === "left") {
+            this.x -= this.speed;
+          }
+          if (this.direction === "right") {
+            this.x += this.speed;
+          }
 
-        function handleSubmit(){
-            event.preventDefault()
-            name = username.value
-            level = selectLevel.value
-            handleNavigate('gameBoard', 'welcome')
-        }
+          this.x = Math.max(
+            0,
+            Math.min(this.x, canvas.offsetWidth - this.width),
+          );
+          this.y = Math.max(
+            0,
+            Math.min(this.y, canvas.offsetHeight - this.width),
+          );
+
+          this.element.style.left = this.x + "px";
+          this.element.style.top = this.y + "px";
+        },
+      };
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "w") player.direction = "up";
+        if (e.key === "a") player.direction = "left";
+        if (e.key === "s") player.direction = "down";
+        if (e.key === "d") player.direction = "right";
+      });
+      document.addEventListener("keyup", (e) => {
+        player.direction = null;
+      });
+
+      function gameLoop() {
+        player.update();
+        requestAnimationFrame(gameLoop);
+      }
+      player.spawn();
+      gameLoop();
     </script>
   </body>
 </html>
