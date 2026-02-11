@@ -938,7 +938,7 @@ fun EntriPage() {
                 showEntryDialog = false
                 selectedSchedule = null
             },
-            onSubmit = { jamMasuk, status, keterangan ->
+            onSubmit = { jamMasuk, status, keterangan, namaGuruPengganti ->
                 if (token != null) {
                     scope.launch {
                         val currentDate = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
@@ -950,7 +950,8 @@ fun EntriPage() {
                             tanggal = currentDate,
                             jamMasuk = jamMasuk,
                             status = status,
-                            keterangan = keterangan
+                            keterangan = keterangan,
+                            namaGuruPengganti = namaGuruPengganti
                         )
                         
                         repository.createTeacherAttendance(token, request)
@@ -1080,38 +1081,66 @@ fun TeacherAttendanceEntryCard(
                         color = when (status.lowercase()) {
                             "hadir" -> SuccessGreen.copy(alpha = 0.1f)
                             "telat" -> WarningYellow.copy(alpha = 0.1f)
+                            "diganti" -> SMKInfo.copy(alpha = 0.1f)
                             else -> ErrorRed.copy(alpha = 0.1f)
                         }
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        Column(
+                            modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                         ) {
-                            Icon(
-                                imageVector = when (status.lowercase()) {
-                                    "hadir" -> Icons.Default.CheckCircle
-                                    "telat" -> Icons.Default.Warning
-                                    else -> Icons.Default.Cancel
-                                },
-                                contentDescription = null,
-                                tint = when (status.lowercase()) {
-                                    "hadir" -> SuccessGreen
-                                    "telat" -> WarningYellow
-                                    else -> ErrorRed
-                                },
-                                modifier = Modifier.size(Dimensions.iconSizeSmall)
-                            )
-                            Text(
-                                text = "Dicatat: ${status.capitalize()} • ${scheduleWithAttendance.attendance.jamMasuk ?: "-"}",
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = when (status.lowercase()) {
-                                    "hadir" -> SuccessGreen
-                                    "telat" -> WarningYellow
-                                    else -> ErrorRed
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                            ) {
+                                Icon(
+                                    imageVector = when (status.lowercase()) {
+                                        "hadir" -> Icons.Default.CheckCircle
+                                        "telat" -> Icons.Default.Warning
+                                        "diganti" -> Icons.Default.SwapHoriz
+                                        else -> Icons.Default.Cancel
+                                    },
+                                    contentDescription = null,
+                                    tint = when (status.lowercase()) {
+                                        "hadir" -> SuccessGreen
+                                        "telat" -> WarningYellow
+                                        "diganti" -> SMKInfo
+                                        else -> ErrorRed
+                                    },
+                                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                                )
+                                Text(
+                                    text = "Dicatat: ${status.capitalize()} • ${scheduleWithAttendance.attendance.jamMasuk ?: "-"}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when (status.lowercase()) {
+                                        "hadir" -> SuccessGreen
+                                        "telat" -> WarningYellow
+                                        "diganti" -> SMKInfo
+                                        else -> ErrorRed
+                                    }
+                                )
+                            }
+                            // Tampilkan nama guru pengganti jika status diganti
+                            if (status.lowercase() == "diganti" && !scheduleWithAttendance.attendance.namaGuruPengganti.isNullOrBlank()) {
+                                Row(
+                                    modifier = Modifier.padding(top = Spacing.xs),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PersonAdd,
+                                        contentDescription = null,
+                                        tint = SMKInfo,
+                                        modifier = Modifier.size(Dimensions.iconSizeSmall)
+                                    )
+                                    Text(
+                                        text = "Pengganti: ${scheduleWithAttendance.attendance.namaGuruPengganti}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Medium,
+                                        color = SMKInfo
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -1142,7 +1171,7 @@ fun TeacherAttendanceEntryDialog(
     schedule: Schedule,
     existingAttendance: TeacherAttendance?,
     onDismiss: () -> Unit,
-    onSubmit: (jamMasuk: String, status: String, keterangan: String?) -> Unit
+    onSubmit: (jamMasuk: String, status: String, keterangan: String?, namaGuruPengganti: String?) -> Unit
 ) {
     var jamMasuk by remember {
         mutableStateOf(
@@ -1154,6 +1183,7 @@ fun TeacherAttendanceEntryDialog(
     }
     var selectedStatus by remember { mutableStateOf(existingAttendance?.status ?: "hadir") }
     var keterangan by remember { mutableStateOf(existingAttendance?.keterangan ?: "") }
+    var namaGuruPengganti by remember { mutableStateOf(existingAttendance?.namaGuruPengganti ?: "") }
     var isSubmitting by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -1192,6 +1222,7 @@ fun TeacherAttendanceEntryDialog(
                         "hadir" -> "Hadir"
                         "telat" -> "Telat"
                         "tidak_hadir" -> "Tidak Hadir"
+                        "diganti" -> "Diganti"
                         else -> selectedStatus.capitalize()
                     },
                     onValueChange = { 
@@ -1199,14 +1230,27 @@ fun TeacherAttendanceEntryDialog(
                             "Hadir" -> "hadir"
                             "Telat" -> "telat"
                             "Tidak Hadir" -> "tidak_hadir"
+                            "Diganti" -> "diganti"
                             else -> it.lowercase()
                         }
                     },
-                    options = listOf("Hadir", "Telat", "Tidak Hadir"),
+                    options = listOf("Hadir", "Telat", "Tidak Hadir", "Diganti"),
                     label = "Status Kehadiran",
                     leadingIcon = Icons.Default.Check,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Nama Guru Pengganti (hanya tampil jika status = diganti)
+                if (selectedStatus == "diganti") {
+                    SchoolTextField(
+                        value = namaGuruPengganti,
+                        onValueChange = { namaGuruPengganti = it },
+                        label = "Nama Guru Pengganti",
+                        placeholder = "Masukkan nama guru pengganti",
+                        leadingIcon = Icons.Default.PersonAdd,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
 
                 // Keterangan
                 SchoolTextField(
@@ -1225,14 +1269,23 @@ fun TeacherAttendanceEntryDialog(
         confirmButton = {
             SchoolButton(
                 onClick = {
-                    if (jamMasuk.isNotEmpty() && !isSubmitting) {
+                    val isValidSubmit = jamMasuk.isNotEmpty() && 
+                        !isSubmitting && 
+                        (selectedStatus != "diganti" || namaGuruPengganti.isNotBlank())
+                    if (isValidSubmit) {
                         isSubmitting = true
-                        onSubmit(jamMasuk, selectedStatus, keterangan.ifBlank { null })
+                        onSubmit(
+                            jamMasuk, 
+                            selectedStatus, 
+                            keterangan.ifBlank { null },
+                            if (selectedStatus == "diganti") namaGuruPengganti.ifBlank { null } else null
+                        )
                     }
                 },
                 text = if (isSubmitting) "Menyimpan..." else "Simpan",
                 variant = ButtonVariant.Primary,
-                enabled = jamMasuk.isNotEmpty() && !isSubmitting
+                enabled = jamMasuk.isNotEmpty() && !isSubmitting && 
+                    (selectedStatus != "diganti" || namaGuruPengganti.isNotBlank())
             )
         },
         dismissButton = {
@@ -1615,38 +1668,66 @@ fun TeacherAttendanceListCard(attendance: TeacherAttendance) {
                     color = when (attendance.status.lowercase()) {
                         "hadir" -> SuccessGreen.copy(alpha = 0.1f)
                         "telat" -> WarningYellow.copy(alpha = 0.1f)
+                        "diganti" -> SMKInfo.copy(alpha = 0.1f)
                         else -> ErrorRed.copy(alpha = 0.1f)
                     }
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    Column(
+                        modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs)
                     ) {
-                        Icon(
-                            imageVector = when (attendance.status.lowercase()) {
-                                "hadir" -> Icons.Default.CheckCircle
-                                "telat" -> Icons.Default.Warning
-                                else -> Icons.Default.Cancel
-                            },
-                            contentDescription = null,
-                            tint = when (attendance.status.lowercase()) {
-                                "hadir" -> SuccessGreen
-                                "telat" -> WarningYellow
-                                else -> ErrorRed
-                            },
-                            modifier = Modifier.size(Dimensions.iconSizeSmall)
-                        )
-                        Text(
-                            text = attendance.status.capitalize(),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = when (attendance.status.lowercase()) {
-                                "hadir" -> SuccessGreen
-                                "telat" -> WarningYellow
-                                else -> ErrorRed
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        ) {
+                            Icon(
+                                imageVector = when (attendance.status.lowercase()) {
+                                    "hadir" -> Icons.Default.CheckCircle
+                                    "telat" -> Icons.Default.Warning
+                                    "diganti" -> Icons.Default.SwapHoriz
+                                    else -> Icons.Default.Cancel
+                                },
+                                contentDescription = null,
+                                tint = when (attendance.status.lowercase()) {
+                                    "hadir" -> SuccessGreen
+                                    "telat" -> WarningYellow
+                                    "diganti" -> SMKInfo
+                                    else -> ErrorRed
+                                },
+                                modifier = Modifier.size(Dimensions.iconSizeSmall)
+                            )
+                            Text(
+                                text = attendance.status.capitalize(),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = when (attendance.status.lowercase()) {
+                                    "hadir" -> SuccessGreen
+                                    "telat" -> WarningYellow
+                                    "diganti" -> SMKInfo
+                                    else -> ErrorRed
+                                }
+                            )
+                        }
+                        // Tampilkan nama guru pengganti jika status diganti
+                        if (attendance.status.lowercase() == "diganti" && !attendance.namaGuruPengganti.isNullOrBlank()) {
+                            Row(
+                                modifier = Modifier.padding(top = Spacing.xs),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PersonAdd,
+                                    contentDescription = null,
+                                    tint = SMKInfo,
+                                    modifier = Modifier.size(Dimensions.iconSizeSmall)
+                                )
+                                Text(
+                                    text = "Pengganti: ${attendance.namaGuruPengganti}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Medium,
+                                    color = SMKInfo
+                                )
                             }
-                        )
+                        }
                     }
                 }
             }

@@ -15,8 +15,8 @@ class TeacherAttendanceController extends Controller
      */
     public function index(Request $request)
     {
-    // Load both legacy User relation and new Teacher relation (guruTeacher)
-    $query = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy']);
+        // Load relations - guru dan guruAsli sekarang langsung mengarah ke Teacher model
+        $query = TeacherAttendance::with(['schedule', 'guru', 'guruAsli', 'createdBy']);
 
         // Filter by date
         if ($request->has('tanggal')) {
@@ -56,17 +56,6 @@ class TeacherAttendanceController extends Controller
                             ->orderBy('created_at', 'desc')
                             ->paginate($request->get('per_page', 15));
 
-        // For each attendance, prefer the `guruTeacher` relation (from teachers table)
-        // but keep backward compatibility by setting it as the `guru` relation
-        foreach ($attendances->items() as $attendance) {
-            if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
-                $attendance->setRelation('guru', $attendance->guruTeacher);
-            }
-            if ($attendance->relationLoaded('guruAsliTeacher') && $attendance->guruAsliTeacher) {
-                $attendance->setRelation('guruAsli', $attendance->guruAsliTeacher);
-            }
-        }
-
         return response()->json($attendances);
     }
 
@@ -77,20 +66,10 @@ class TeacherAttendanceController extends Controller
     {
         $today = Carbon::today()->format('Y-m-d');
 
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruAsli', 'createdBy'])
             ->where('tanggal', $today)
             ->orderBy('jam_masuk', 'asc')
             ->get();
-
-        // prefer guruTeacher over legacy guru
-        foreach ($attendances as $a) {
-            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
-                $a->setRelation('guru', $a->guruTeacher);
-            }
-            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
-                $a->setRelation('guruAsli', $a->guruAsliTeacher);
-            }
-        }
 
         return response()->json([
             'tanggal' => $today,
@@ -113,9 +92,8 @@ class TeacherAttendanceController extends Controller
         // Also try English day name for fallback
         $dayNameEn = Carbon::today()->format('l');
 
-        // Get schedules for today (try both Indonesian and English)
-        // load both schedule->guru (legacy User) and schedule->teacher (new Teacher)
-        $schedules = Schedule::with(['guru', 'teacher'])
+        // Get schedules for today - guru sekarang langsung dari Teacher model
+        $schedules = Schedule::with(['guru'])
             ->where(function($query) use ($dayName, $dayNameEn) {
                 $query->where('hari', $dayName)
                       ->orWhere('hari', $dayNameEn)
@@ -126,29 +104,14 @@ class TeacherAttendanceController extends Controller
             ->get();
 
         // Get attendances for today with relationships
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy', 'guruAsli', 'guruAsliTeacher'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruAsli', 'createdBy'])
             ->where('tanggal', $today)
             ->get()
             ->keyBy('schedule_id');
 
-        // prefer guruTeacher and guruAsliTeacher
-        foreach ($attendances as $a) {
-            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
-                $a->setRelation('guru', $a->guruTeacher);
-            }
-            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
-                $a->setRelation('guruAsli', $a->guruAsliTeacher);
-            }
-        }
-
         // Merge schedule with attendance data
         $result = $schedules->map(function($schedule) use ($attendances) {
             $attendance = $attendances->get($schedule->id);
-
-            // If schedule has 'teacher' relation prefer it over legacy 'guru'
-            if ($schedule->relationLoaded('teacher') && $schedule->teacher) {
-                $schedule->setRelation('guru', $schedule->teacher);
-            }
 
             return [
                 'schedule' => $schedule,
@@ -180,8 +143,8 @@ class TeacherAttendanceController extends Controller
         $tanggal = $request->get('tanggal', $today);
         $kelas = $request->get('kelas');
 
-        // Get all schedules with optional class filter
-        $query = Schedule::with(['guru', 'teacher']);
+        // Get all schedules with optional class filter - guru langsung dari Teacher model
+        $query = Schedule::with(['guru']);
 
         if ($kelas) {
             $query->where('kelas', $kelas);
@@ -193,19 +156,10 @@ class TeacherAttendanceController extends Controller
             ->get();
 
         // Get attendances for the specified date with relationships
-        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruTeacher', 'createdBy', 'guruAsli', 'guruAsliTeacher'])
+        $attendances = TeacherAttendance::with(['schedule', 'guru', 'guruAsli', 'createdBy'])
             ->where('tanggal', $tanggal)
             ->get()
             ->keyBy('schedule_id');
-
-        foreach ($attendances as $a) {
-            if ($a->relationLoaded('guruTeacher') && $a->guruTeacher) {
-                $a->setRelation('guru', $a->guruTeacher);
-            }
-            if ($a->relationLoaded('guruAsliTeacher') && $a->guruAsliTeacher) {
-                $a->setRelation('guruAsli', $a->guruAsliTeacher);
-            }
-        }
 
         // Merge schedule with attendance data
         $result = $schedules->map(function($schedule) use ($attendances) {
@@ -242,7 +196,7 @@ class TeacherAttendanceController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'schedule_id' => 'required|exists:schedules,id',
-            'guru_id' => 'required|exists:users,id',
+            'guru_id' => 'required|exists:teachers,id',
             'tanggal' => 'required|date',
             'jam_masuk' => 'required|date_format:H:i',
             'status' => 'required|in:hadir,telat,tidak_hadir',
@@ -278,11 +232,7 @@ class TeacherAttendanceController extends Controller
             'created_by' => $request->user()->id
         ]);
 
-        // load both legacy and teacher relations and prefer teacher
-        $attendance->load(['schedule', 'guru', 'guruTeacher', 'createdBy']);
-        if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
-            $attendance->setRelation('guru', $attendance->guruTeacher);
-        }
+        $attendance->load(['schedule', 'guru', 'createdBy']);
 
         return response()->json([
             'message' => 'Kehadiran guru berhasil dicatat',
@@ -329,13 +279,65 @@ class TeacherAttendanceController extends Controller
         }
 
         $attendance->update($request->only(['jam_masuk', 'status', 'keterangan']));
-        $attendance->load(['schedule', 'guru', 'guruTeacher', 'createdBy']);
-        if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
-            $attendance->setRelation('guru', $attendance->guruTeacher);
-        }
+        $attendance->load(['schedule', 'guru', 'guruAsli', 'createdBy']);
 
         return response()->json([
+            'success' => true,
             'message' => 'Kehadiran guru berhasil diperbarui',
+            'data' => $attendance
+        ]);
+    }
+
+    /**
+     * Update status kehadiran guru pengganti
+     * Jika status diganti dari "diganti" ke "tidak_hadir", 
+     * maka guru_id dikembalikan ke guru_asli dan status jadi tidak_hadir
+     */
+    public function updateStatus(Request $request, $id)
+    {
+        $attendance = TeacherAttendance::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:hadir,tidak_hadir'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $newStatus = $request->status;
+        
+        // Jika guru pengganti hadir, update status menjadi hadir
+        if ($newStatus === 'hadir') {
+            $attendance->status = 'hadir';
+            $attendance->jam_masuk = Carbon::now()->format('H:i');
+            $attendance->save();
+        } 
+        // Jika guru pengganti tidak hadir, kembalikan ke guru asli dan status tidak_hadir
+        elseif ($newStatus === 'tidak_hadir') {
+            // Kembalikan guru_id ke guru asli jika ada
+            if ($attendance->guru_asli_id) {
+                $attendance->guru_id = $attendance->guru_asli_id;
+                $attendance->guru_asli_id = null;
+            }
+            $attendance->status = 'tidak_hadir';
+            $attendance->assigned_by = null;
+            $attendance->keterangan = ($attendance->keterangan ? $attendance->keterangan . ' | ' : '') . 
+                                       'Guru pengganti tidak hadir pada ' . Carbon::now()->format('H:i');
+            $attendance->save();
+        }
+
+        $attendance->load(['schedule', 'guru', 'guruAsli', 'createdBy']);
+
+        return response()->json([
+            'success' => true,
+            'message' => $newStatus === 'hadir' 
+                ? 'Guru pengganti dikonfirmasi hadir' 
+                : 'Guru pengganti tidak hadir, kelas kembali ke status kelas kosong',
             'data' => $attendance
         ]);
     }

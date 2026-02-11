@@ -249,6 +249,13 @@ interface ApiService {
         @Body request: TeacherAttendanceUpdateRequest
     ): Response<ApiResponse<TeacherAttendance>>
     
+    @PATCH("teacher-attendance/{id}/status")
+    suspend fun updateTeacherAttendanceStatus(
+        @Header("Authorization") token: String,
+        @Path("id") id: Int,
+        @Body request: Map<String, String>
+    ): Response<ApiResponse<TeacherAttendance>>
+    
     @DELETE("teacher-attendance/{id}")
     suspend fun deleteTeacherAttendance(
         @Header("Authorization") token: String,

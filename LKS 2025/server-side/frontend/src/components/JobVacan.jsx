@@ -1,163 +1,139 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
 
 const JobVacan = () => {
-  return (
-    <>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="#">Job Seeker Platform</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Marsito Kusmawati</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Login</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+    useEffect(() => {
+        const fetchJobs = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`${API_BASE}/api/v1/jobvacan/`, {
+                    headers: {
+                        Accept: "application/json",
+                        Authorization: token ? "Bearer " + token : "",
+                    },
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`Request failed: ${res.status} ${txt}`);
+                }
+                const data = await res.json();
+                setJobs(data.data || []);
+            } catch (err) {
+                console.error("fetch jobs error", err);
+                setError(err.message || "Fetch error");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-<main>
-    <header class="jumbotron">
-        <div class="container">
-            <h1 class="display-4">Job Vacancies</h1>
-        </div>
-    </header>
+        fetchJobs();
+    }, []);
 
-    <div class="container mb-5">
+    const renderPositions = (positions) => {
+        if (!positions || !Array.isArray(positions)) return "-";
+        return positions
+            .map((p) => {
+                const name = p.position || p.name || p.title || "position";
+                const cap = p.capacity ?? p.available ?? p.qty ?? p.count ?? "";
+                return cap ? `${name} (${cap})` : name;
+            })
+            .join(", ");
+    };
 
-        <div class="section-header mb-4">
-            <h4 class="section-title text-muted font-weight-normal">List of Job Vacancies</h4>
-        </div>
+    return (
+        <>
+            <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+                <div className="container">
+                    <a className="navbar-brand" href="#">
+                        Job Seeker Platform
+                    </a>
+                    <button
+                        className="navbar-toggler"
+                        type="button"
+                        data-toggle="collapse"
+                        data-target="#navbarsExampleDefault"
+                        aria-controls="navbarsExampleDefault"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
 
-        <div class="section-body">
-
-            <article class="spot">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
-                    </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
-                    </div>
-                    <div class="col-3">
-                        <button class="btn btn-danger btn-lg btn-block">
-                            Detail / Apply
-                        </button>
+                    <div className="collapse navbar-collapse" id="navbarsExampleDefault">
+                        <ul className="navbar-nav ml-auto">
+                            <li className="nav-item">
+                                <a className="nav-link" href="#">
+                                    {localStorage.getItem("token") ? "Profile" : "Guest"}
+                                </a>
+                            </li>
+                            <li className="nav-item">
+                                <a className="nav-link" href="#">
+                                    {localStorage.getItem("token") ? "Logout" : "Login"}
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
-            </article>
+            </nav>
 
-            <article class="spot unavailable">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
+            <main>
+                <header className="jumbotron">
+                    <div className="container">
+                        <h1 className="display-4">Job Vacancies</h1>
                     </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
+                </header>
+
+                <div className="container mb-5">
+                    <div className="section-header mb-4">
+                        <h4 className="section-title text-muted font-weight-normal">
+                            List of Job Vacancies
+                        </h4>
                     </div>
-                    <div class="col-3">
-                        <div class="bg-success text-white p-2">
-                            Vacancies have been submitted
-                        </div>
+
+                    <div className="section-body">
+                        {loading && <div>Loading...</div>}
+                        {error && <div className="text-danger">{error}</div>}
+
+                        {jobs.map((job) => (
+                            <article className="spot" key={job.id}>
+                                <div className="row">
+                                    <div className="col-5">
+                                        <h5 className="text-primary">{job.name || job.title || job.company_name || `Job #${job.id}`}</h5>
+                                        <span className="text-muted">{job.address || job.location || job.city || "-"}</span>
+                                    </div>
+                                    <div className="col-4">
+                                        <h5>Available Position (Capacity)</h5>
+                                        <span className="text-muted">{renderPositions(job.positions)}</span>
+                                    </div>
+                                    <div className="col-3">
+                                        <Link to={`/jobdetail/${job.id}`} className="btn btn-danger btn-lg btn-block">
+                                            Detail / Apply
+                                        </Link>
+                                    </div>
+                                </div>
+                            </article>
+                        ))}
+
+                        {!loading && jobs.length === 0 && <div className="text-muted">No job vacancies found.</div>}
                     </div>
                 </div>
-            </article>
+            </main>
 
-            <article class="spot">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
-                    </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
-                    </div>
-                    <div class="col-3">
-                        <button class="btn btn-danger btn-lg btn-block">
-                            Detail / Apply
-                        </button>
-                    </div>
+            <footer>
+                <div className="container">
+                    <div className="text-center py-4 text-muted">Copyright &copy; 2023 - Web Tech ID</div>
                 </div>
-            </article>
-            <article class="spot">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
-                    </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
-                    </div>
-                    <div class="col-3">
-                        <button class="btn btn-danger btn-lg btn-block">
-                            Detail / Apply
-                        </button>
-                    </div>
-                </div>
-            </article>
-            <article class="spot">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
-                    </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
-                    </div>
-                    <div class="col-3">
-                        <button class="btn btn-danger btn-lg btn-block">
-                            Detail / Apply
-                        </button>
-                    </div>
-                </div>
-            </article>
-            <article class="spot">
-                <div class="row">
-                    <div class="col-5">
-                        <h5 class="text-primary">PT. Maju Mundur Sejahtera</h5>
-                        <span class="text-muted">Ds. Abdullah No. 31, DKI Jakarta</span>
-                    </div>
-                    <div class="col-4">
-                        <h5>Available Position (Capacity)</h5>
-                        <span class="text-muted">Desain Grafis (3), Programmer (1), Manager (1)</span>
-                    </div>
-                    <div class="col-3">
-                        <button class="btn btn-danger btn-lg btn-block">
-                            Detail / Apply
-                        </button>
-                    </div>
-                </div>
-            </article>
+            </footer>
+        </>
+    );
+};
 
-        </div>
-
-    </div>
-
-</main>
-
-<footer>
-    <div class="container">
-        <div class="text-center py-4 text-muted">
-            Copyright &copy; 2023 - Web Tech ID
-        </div>
-    </div>
-</footer>
-    </>
-  )
-}
-
-export default JobVacan
+export default JobVacan;

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body{
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .butterfly{  
+            position: relative;
+            animation: fly 4s ease alternate infinite; 
+            transform: scale(0.5);
+            align-items: center;         
+            display: flex;
+        }
+
+        .head{
+            z-index: 999;
+            height: 200px;
+            width: 200px;
+            border-radius: 50%;
+            background-color: black;
+        }
+        
+        .body{
+            position: relative;
+            z-index: 2;
+            transform: translateX(-35px);
+            height: 150px;
+            width: 400px;
+            background-color: yellow;
+        }
+
+        .wings{
+            position: relative;
+            top: 40px;
+            left: -350px;
+            display: flex;
+            /* gap: 100px; */
+            flex-direction: column;
+        }
+
+        .wing1,  .wing2{
+            width: 250px;
+            z-index: 1;
+            /* left: -150px; */
+            position: relative;
+            height: 200px;
+            top: -50px;
+            /* display: flex; */
+            border-radius: 50%;
+            animation: flap 1s ease infinite;
+            background-color: red;
+        }
+
+        @keyframes flap {
+            0%{
+                transform: scale(2);
+            }
+            100%{
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fly {
+           0%{
+            top: 0;
+            left: -400px;
+           } 
+           50%{
+            top: -50px;
+            left: 100px;
+           }
+           100%{
+            rotate: 30deg;
+            left: 300px;
+            top: -100px;
+           } 
+        }
+
+
+
+
+    </style>
+</head>
+<body>
+    <div class="butterfly">
+        <div  class="head"></div>
+        <div class="body">
+        </div>
+        <div class="wings">
+            <div class="wing1"></div>
+            <div class="wing2"></div>
+        </div>
+
+    </div>
+</body>
+</html>

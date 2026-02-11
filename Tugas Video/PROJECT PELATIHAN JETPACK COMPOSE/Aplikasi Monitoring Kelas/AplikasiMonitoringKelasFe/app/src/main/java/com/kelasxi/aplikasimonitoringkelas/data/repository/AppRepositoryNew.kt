@@ -728,6 +728,32 @@ class AppRepositoryNew(private val apiService: ApiService) {
         }
     }
     
+    /**
+     * Update status kehadiran guru pengganti
+     * Digunakan untuk konfirmasi apakah guru pengganti hadir atau tidak
+     */
+    suspend fun updateTeacherAttendanceStatus(token: String, id: Int, status: String): Result<TeacherAttendance> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = mapOf("status" to status)
+                val response = apiService.updateTeacherAttendanceStatus("Bearer $token", id, request)
+                if (response.isSuccessful && response.body() != null) {
+                    val apiResponse = response.body()!!
+                    if (apiResponse.success && apiResponse.data != null) {
+                        Result.success(apiResponse.data)
+                    } else {
+                        Result.failure(Exception(apiResponse.message))
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Result.failure(Exception("Gagal update status: ${response.code()} - $errorBody"))
+                }
+            } catch (e: Exception) {
+                Result.failure(Exception("Gagal terhubung ke server: ${e.message}"))
+            }
+        }
+    }
+    
     // ==================== LOGOUT ====================
     
     suspend fun logout(token: String): Result<Boolean> {

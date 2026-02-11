@@ -6,12 +6,12 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -28,9 +28,40 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->registration()
+            ->passwordReset()
+            ->emailVerification()
+            ->profile()
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Indigo,
+                'danger' => Color::Red,
+                'gray' => Color::Zinc,
+                'info' => Color::Cyan,
+                'success' => Color::Teal,
+                'warning' => Color::Amber,
             ])
+            ->font('Poppins')
+            ->brandName('📚 Monitoring Kelas')
+            ->brandLogo(null)
+            ->favicon(asset('favicon.ico'))
+            ->darkMode(true)
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('280px')
+            ->navigationGroups([
+                NavigationGroup::make()
+                    ->label('📊 Akademik')
+                    ->icon('heroicon-o-academic-cap')
+                    ->collapsed(false),
+                NavigationGroup::make()
+                    ->label('👥 Manajemen')
+                    ->icon('heroicon-o-user-group')
+                    ->collapsed(false),
+                NavigationGroup::make()
+                    ->label('📁 Data Master')
+                    ->icon('heroicon-o-folder-open')
+                    ->collapsed(false),
+            ])
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -39,7 +70,6 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
                 AccountWidget::class,
-                FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

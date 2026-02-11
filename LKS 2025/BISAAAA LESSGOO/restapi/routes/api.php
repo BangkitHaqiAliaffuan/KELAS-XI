@@ -24,4 +24,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/v1/users/{id}', [AdministratorController::class, 'update'])->middleware('admin');
     Route::delete('/v1/users/{id}', [AdministratorController::class, 'destroy'])->middleware('admin');
     Route::get('/v1/games', [GameController::class, 'index']);
+    Route::get('/v1/games/{slug}', [GameController::class, 'show']);
 });

@@ -18,6 +18,7 @@ Route::get('/users/{id}', [UserController::class, 'getUser']);
 Route::get('/player/{id}', [PlayerController::class, 'getPlayer']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::put('/users/{id}/update', [UserController::class, 'updateUser']);
     Route::delete('/users/{id}/delete', [UserController::class, 'deleteUser']);
     Route::get('/player', [PlayerController::class, 'getAllPlayers']);

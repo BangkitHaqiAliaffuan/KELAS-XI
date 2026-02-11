@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 class GameController extends Controller
@@ -66,9 +67,13 @@ class GameController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, $slug)
     {
-        //
+
+        $game = Game::where('slug', $slug)->first();
+
+        $path = $request->file('zipFile')->store('uploads');
+
     }
 
     /**
@@ -76,10 +81,20 @@ class GameController extends Controller
      */
     public function show(Game $game, $slug)
     {
-        $game = Game::where('slug', $slug)->first();
+        $game = Game::where('slug', $slug)->with('latestVersion', 'user')->withSum('scores', 'score')->first();
 
         return response()->json([
-            'data' => $game
+            'data' => [
+                'slug' => $game->slug,
+                'title' => $game->title,
+                'description' => $game->description,
+                'thumbnail' => $game->description ? $game->description : null,
+                'uploadTimeStamp' => $game->created_at,
+                'author' => $game->user->username,
+                'scoreCount' => $game->scores_sum_score,
+                'gamePath' =>$game->latestVersion[0]->storage_path,
+            ],
+            'real-data' => $game
         ]);
     }
 

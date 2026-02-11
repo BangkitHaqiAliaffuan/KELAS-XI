@@ -1,108 +1,217 @@
-import React from 'react'
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+
+const API_BASE = process.env.REACT_APP_API_URL || "http://127.0.0.1:8000";
 
 const JobDetail = () => {
-  return (
-    <>
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="#">Job Seekers Platform</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    const { id } = useParams();
+    const [job, setJob] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [selectedPositions, setSelectedPositions] = useState([]);
+    const [notes, setNotes] = useState("");
+    const [applyResult, setApplyResult] = useState(null);
 
-        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Marsito Kusmawati</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+    useEffect(() => {
+        const fetchDetail = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`${API_BASE}/api/v1/jobvacan/detail/${id}`, {
+                    headers: {
+                        Accept: "application/json",
+                        Authorization: token ? "Bearer " + token : "",
+                    },
+                });
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`Request failed: ${res.status} ${txt}`);
+                }
+                const data = await res.json();
+                setJob(data.data || null);
+            } catch (err) {
+                console.error("fetch job detail error", err);
+                setError(err.message || "Fetch error");
+            } finally {
+                setLoading(false);
+            }
+        };
 
-<main>
-    <header class="jumbotron">
-        <div class="container text-center">
-            <div>
-                <h1 class="display-4">PT. Maju Mundur Sejahtera</h1>
-                <span class="text-muted">Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI Jakarta</span>
-            </div>
-        </div>
-    </header>
+        if (id) fetchDetail();
+    }, [id]);
 
-    <div class="container">
+    const togglePosition = (posName) => {
+        setSelectedPositions((prev) => {
+            if (prev.includes(posName)) return prev.filter((p) => p !== posName);
+            return [...prev, posName];
+        });
+    };
 
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="form-group">
-                    <h3>Description</h3>
-                    some description of job vacancy
-                </div>
-            </div>
-        </div>
+    const handleApply = async (e) => {
+        e.preventDefault();
+        setApplyResult(null);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_BASE}/api/v1/jobvacan/create`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: token ? "Bearer " + token : "",
+                },
+                body: JSON.stringify({
+                    vacancy_id: id,
+                    positions: selectedPositions,
+                    note: notes,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || JSON.stringify(data));
+            }
+            setApplyResult({ success: true, message: data.message || "Applied" });
+        } catch (err) {
+            console.error("apply error", err);
+            setApplyResult({ success: false, message: err.message || "Error" });
+        }
+    };
 
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="form-group">
-                    <h3>Select position</h3>
-                    <table class="table table-bordered table-hover table-striped"> 
-                        <tr>
-                            <th width="1">#</th>
-                            <th>Position</th>
-                            <th>Capacity</th>
-                            <th>Application / Max</th>
-                            <th rowspan="4">
-                                <a href="" class="btn btn-primary btn-lg">Apply for this job</a>
-                            </th>
-                        </tr>
-                        <tr>    
-                            <td><input type="checkbox"/></td>
-                            <td>Desain Grafis</td>
-                            <td>3</td>
-                            <td>6/12</td>
-                        </tr>
-                        <tr>    
-                            <td><input type="checkbox"/></td>
-                            <td>Programmer</td>
-                            <td>1</td>
-                            <td>3/8</td>
-                        </tr>
-                        <tr class="table-warning">    
-                            <td><input type="checkbox" disabled/></td>
-                            <td>Manager</td>
-                            <td>1</td>
-                            <td>22/22</td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
+    return (
+        <>
+            <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
+                <div className="container">
+                    <a className="navbar-brand" href="#">
+                        Job Seekers Platform
+                    </a>
+                    <button
+                        className="navbar-toggler"
+                        type="button"
+                        data-toggle="collapse"
+                        data-target="#navbarsExampleDefault"
+                        aria-controls="navbarsExampleDefault"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation"
+                    >
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
 
-            <div class="col-md-12">
-                <div class="form-group">
-                    <div class="d-flex align-items-center mb-3">
-                        <label class="mr-3 mb-0">Notes for Company</label>
+                    <div className="collapse navbar-collapse" id="navbarsExampleDefault">
+                        <ul className="navbar-nav ml-auto">
+                            <li className="nav-item">
+                                <a className="nav-link" href="#">
+                                    {localStorage.getItem("token") ? "Profile" : "Login"}
+                                </a>
+                            </li>
+                        </ul>
                     </div>
-                    <textarea class="form-control" cols="30" rows="6" placeholder="Explain why you should be accepted"></textarea>
                 </div>
-            </div>
-        </div>
+            </nav>
 
-    </div>
+            <main>
+                <header className="jumbotron">
+                    <div className="container text-center">
+                        <div>
+                            <h1 className="display-4">{job?.name || job?.title || `Job #${id}`}</h1>
+                            <span className="text-muted">{job?.address || job?.location || "-"}</span>
+                        </div>
+                    </div>
+                </header>
 
-</main>
+                <div className="container">
+                    {loading && <div>Loading...</div>}
+                    {error && <div className="text-danger">{error}</div>}
 
-<footer>
-    <div class="container">
-        <div class="text-center py-4 text-muted">
-            Copyright &copy; 2023 - Web Tech ID
-        </div>
-    </div>
-</footer>
-    </>
-  )
-}
+                    {job && (
+                        <form onSubmit={handleApply}>
+                            <div className="row mb-3">
+                                <div className="col-md-12">
+                                    <div className="form-group">
+                                        <h3>Description</h3>
+                                        <div>{job.description || job.desc || "-"}</div>
+                                    </div>
+                                </div>
+                            </div>
 
-export default JobDetail
+                            <div className="row mb-3">
+                                <div className="col-md-12">
+                                    <div className="form-group">
+                                        <h3>Select position</h3>
+                                        <table className="table table-bordered table-hover table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th width="1">#</th>
+                                                    <th>Position</th>
+                                                    <th>Capacity</th>
+                                                    <th>Application / Max</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(job.positions || []).map((p, idx) => {
+                                                    const name = p.position || p.name || p.title || `pos-${idx}`;
+                                                    const cap = p.capacity ?? p.available ?? p.qty ?? "-";
+                                                    const applications = p.applications ?? "-";
+                                                    const disabled = p.disabled ?? false;
+                                                    return (
+                                                        <tr key={idx} className={disabled ? "table-warning" : ""}>
+                                                            <td>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedPositions.includes(name)}
+                                                                    disabled={disabled}
+                                                                    onChange={() => togglePosition(name)}
+                                                                />
+                                                            </td>
+                                                            <td>{name}</td>
+                                                            <td>{cap}</td>
+                                                            <td>{applications}</td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                        <div className="text-right">
+                                            <button type="submit" className="btn btn-primary btn-lg">
+                                                Apply for this job
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="col-md-12">
+                                    <div className="form-group">
+                                        <div className="d-flex align-items-center mb-3">
+                                            <label className="mr-3 mb-0">Notes for Company</label>
+                                        </div>
+                                        <textarea
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                            className="form-control"
+                                            cols="30"
+                                            rows="6"
+                                            placeholder="Explain why you should be accepted"
+                                        ></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {applyResult && (
+                                <div className={`alert ${applyResult.success ? "alert-success" : "alert-danger"}`}>
+                                    {applyResult.message}
+                                </div>
+                            )}
+                        </form>
+                    )}
+                </div>
+            </main>
+
+            <footer>
+                <div className="container">
+                    <div className="text-center py-4 text-muted">Copyright &copy; 2023 - Web Tech ID</div>
+                </div>
+            </footer>
+        </>
+    );
+};
+
+export default JobDetail;

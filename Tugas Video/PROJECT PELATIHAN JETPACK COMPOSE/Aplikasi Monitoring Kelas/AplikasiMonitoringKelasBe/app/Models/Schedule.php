@@ -25,18 +25,9 @@ class Schedule extends Model
     ];
 
     /**
-     * Relasi ke model User (guru)
+     * Relasi ke model Teacher (guru dari tabel teachers)
      */
     public function guru()
-    {
-        return $this->belongsTo(User::class, 'guru_id');
-    }
-
-    /**
-     * Optional relation to Teacher model (teachers table)
-     * Keeps backward compatibility while allowing API to use teachers table
-     */
-    public function teacher()
     {
         return $this->belongsTo(Teacher::class, 'guru_id');
     }

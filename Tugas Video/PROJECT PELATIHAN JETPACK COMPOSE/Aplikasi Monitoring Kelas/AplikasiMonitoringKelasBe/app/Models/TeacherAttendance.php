@@ -31,29 +31,20 @@ class TeacherAttendance extends Model
         return $this->belongsTo(Schedule::class);
     }
 
-    public function guru()
-    {
-        // The relationship still points to User model for backward compatibility
-        // In a complete migration to teachers table, this would reference Teacher model
-        return $this->belongsTo(User::class, 'guru_id');
-    }
-
     /**
-     * New relation: teacher record from `teachers` table (preferred source)
+     * Relasi ke guru (pengganti jika status diganti, atau guru asli jika belum diganti)
+     * Menggunakan Teacher model dari tabel teachers
      */
-    public function guruTeacher()
+    public function guru()
     {
         return $this->belongsTo(Teacher::class, 'guru_id');
     }
 
+    /**
+     * Relasi ke guru asli (jika sudah diganti)
+     * Menggunakan Teacher model dari tabel teachers
+     */
     public function guruAsli()
-    {
-        // The relationship still points to User model for backward compatibility
-        // In a complete migration to teachers table, this would reference Teacher model
-        return $this->belongsTo(User::class, 'guru_asli_id');
-    }
-
-    public function guruAsliTeacher()
     {
         return $this->belongsTo(Teacher::class, 'guru_asli_id');
     }

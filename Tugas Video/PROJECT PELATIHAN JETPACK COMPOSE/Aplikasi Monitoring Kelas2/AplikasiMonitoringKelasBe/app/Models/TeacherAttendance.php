@@ -17,6 +17,8 @@ class TeacherAttendance extends Model
         'jam_masuk',
         'status',
         'keterangan',
+        'nama_guru_pengganti',
+        'guru_pengganti_id',
         'created_by',
         'assigned_by'
     ];
@@ -47,6 +49,15 @@ class TeacherAttendance extends Model
     public function guruAsli()
     {
         return $this->belongsTo(Teacher::class, 'guru_asli_id');
+    }
+
+    /**
+     * Relasi ke guru pengganti
+     * Menggunakan Teacher model dari tabel teachers
+     */
+    public function guruPengganti()
+    {
+        return $this->belongsTo(Teacher::class, 'guru_pengganti_id');
     }
 
     public function createdBy()

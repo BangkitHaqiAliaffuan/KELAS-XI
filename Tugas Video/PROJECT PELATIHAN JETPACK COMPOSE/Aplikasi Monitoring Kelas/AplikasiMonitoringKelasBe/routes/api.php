@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/teacher-attendance', [TeacherAttendanceController::class, 'store']);
     Route::get('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'show']);
     Route::put('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'update']);
+    Route::patch('/teacher-attendance/{id}/status', [TeacherAttendanceController::class, 'updateStatus']);
     Route::delete('/teacher-attendance/{id}', [TeacherAttendanceController::class, 'destroy']);
 });
 

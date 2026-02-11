@@ -199,8 +199,10 @@ class TeacherAttendanceController extends Controller
             'guru_id' => 'required|exists:teachers,id',
             'tanggal' => 'required|date',
             'jam_masuk' => 'required|date_format:H:i',
-            'status' => 'required|in:hadir,telat,tidak_hadir',
-            'keterangan' => 'nullable|string'
+            'status' => 'required|in:hadir,telat,tidak_hadir,diganti',
+            'keterangan' => 'nullable|string',
+            'nama_guru_pengganti' => 'nullable|string|required_if:status,diganti',
+            'guru_pengganti_id' => 'nullable|integer|exists:teachers,id'
         ]);
 
         if ($validator->fails()) {
@@ -229,10 +231,12 @@ class TeacherAttendanceController extends Controller
             'jam_masuk' => $request->jam_masuk,
             'status' => $request->status,
             'keterangan' => $request->keterangan,
+            'nama_guru_pengganti' => $request->nama_guru_pengganti,
+            'guru_pengganti_id' => $request->guru_pengganti_id,
             'created_by' => $request->user()->id
         ]);
 
-        $attendance->load(['schedule', 'guru', 'createdBy']);
+        $attendance->load(['schedule', 'guru', 'guruPengganti', 'createdBy']);
 
         return response()->json([
             'message' => 'Kehadiran guru berhasil dicatat',
@@ -267,8 +271,10 @@ class TeacherAttendanceController extends Controller
 
         $validator = Validator::make($request->all(), [
             'jam_masuk' => 'sometimes|date_format:H:i',
-            'status' => 'sometimes|in:hadir,telat,tidak_hadir',
-            'keterangan' => 'nullable|string'
+            'status' => 'sometimes|in:hadir,telat,tidak_hadir,diganti',
+            'keterangan' => 'nullable|string',
+            'nama_guru_pengganti' => 'nullable|string|required_if:status,diganti',
+            'guru_pengganti_id' => 'nullable|integer|exists:teachers,id'
         ]);
 
         if ($validator->fails()) {
@@ -278,7 +284,7 @@ class TeacherAttendanceController extends Controller
             ], 422);
         }
 
-        $attendance->update($request->only(['jam_masuk', 'status', 'keterangan']));
+        $attendance->update($request->only(['jam_masuk', 'status', 'keterangan', 'nama_guru_pengganti', 'guru_pengganti_id']));
         $attendance->load(['schedule', 'guru', 'guruTeacher', 'createdBy']);
         if ($attendance->relationLoaded('guruTeacher') && $attendance->guruTeacher) {
             $attendance->setRelation('guru', $attendance->guruTeacher);

@@ -4,6 +4,9 @@ const Dashboard = () => {
     const [validations, setValidations] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
+    const [applications, setApplications] = useState([])
+    const [appsLoading, setAppsLoading] = useState(false)
+    const [appsError, setAppsError] = useState(null)
 
     const token = localStorage.getItem('token')
     const jobCategory = [
@@ -12,6 +15,7 @@ const Dashboard = () => {
         'Animals, land and environment',
         'Design, arts and crafts',
     ]
+    console.log(token)
     const getCategoryLabel = (id) => {
         const n = Number(id)
         console.log(id)
@@ -47,7 +51,36 @@ const Dashboard = () => {
         fetchData()
     }, [token])
 
-    console.log('validations', validations, { loading, error })
+    useEffect(() => {
+        const fetchApplications = async () => {
+            if (!token) return
+            setAppsLoading(true)
+            setAppsError(null)
+            try {
+                const res = await fetch('http://127.0.0.1:8000/api/v1/jobvacan/get', {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/json'
+                    }
+                })
+                if (!res.ok) {
+                    const txt = await res.text()
+                    throw new Error(`Fetch failed: ${res.status} ${txt}`)
+                }
+                const data = await res.json()
+                setApplications(data.data || [])
+            } catch (err) {
+                console.error('fetch applications error', err)
+                setAppsError('Fetch error')
+            } finally {
+                setAppsLoading(false)
+            }
+        }
+
+        fetchApplications()
+    }, [token])
+
+    console.log('appliucation', applications, { loading, error })
   return (
     <>
          <nav className="navbar navbar-expand-md navbar-dark fixed-top bg-primary">
@@ -207,75 +240,59 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        <div className="col-md-6">
-                            <div className="card card-default">
-                                <div className="card-header border-0">
-                                    <h5 className="mb-0">PT. Maju Mundur Sejahtera</h5>
-                                </div>
-                                <div className="card-body p-0">
-                                    <table className="table table-striped mb-0">
-                                        <tbody>
-                                            <tr>
-                                                <th>Address</th>
-                                                <td className="text-muted">Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI Jakarta</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Position</th>
-                                                <td className="text-muted">
-                                                    <ul>
-                                                        <li>Desain Grafis <span className="badge badge-info">Pending</span></li>
-                                                        <li>Programmer <span className="badge badge-info">Pending</span></li>
-                                                    </ul>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Apply Date</th>
-                                                <td className="text-muted">September 12, 2023</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Notes</th>
-                                                <td className="text-muted">I was the better one</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                        {appsLoading && (
+                            <div className="col-12">Loading applications...</div>
+                        )}
 
-                        <div className="col-md-6">
-                            <div className="card card-default">
-                                <div className="card-header border-0">
-                                    <h5 className="mb-0">PT. Maju Mundur Sejahtera</h5>
-                                </div>
-                                <div className="card-body p-0">
-                                    <table className="table table-striped mb-0">
-                                        <tbody>
-                                            <tr>
-                                                <th>Address</th>
-                                                <td className="text-muted">Jln. HOS. Cjokroaminoto (Pasirkaliki) No. 900, DKI Jakarta</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Position</th>
-                                                <td className="text-muted">
-                                                    <ul>
-                                                        <li>Desain Grafis <span className="badge badge-success">Accepted</span></li>
-                                                        <li>Programmer <span className="badge badge-danger">Rejected</span></li>
-                                                    </ul>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Apply Date</th>
-                                                <td className="text-muted">September 12, 2023</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Notes</th>
-                                                <td className="text-muted">-</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                        {appsError && (
+                            <div className="col-12 text-danger">{appsError}</div>
+                        )}
+
+                        {!appsLoading && applications.length === 0 && (
+                            <div className="col-12 text-muted">You have no job applications.</div>
+                        )}
+
+                        {applications.map((app) => (
+                            <div className="col-md-6" key={app.apply_id}>
+                                <div className="card card-default">
+                                    <div className="card-header border-0">
+                                        <h5 className="mb-0">{app.job_name ?? `Job #${app.job_id}`}</h5>
+                                    </div>
+                                    <div className="card-body p-0">
+                                        <table className="table table-striped mb-0">
+                                            <tbody>
+                                                <tr>
+                                                    <th>Address</th>
+                                                    <td className="text-muted">{app.job_address ?? '-'}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Position</th>
+                                                    <td className="text-muted">
+                                                        <ul>
+                                                            {app.positions && app.positions.length > 0 ? (
+                                                                app.positions.map((p, i) => (
+                                                                    <li key={i}>{p}</li>
+                                                                ))
+                                                            ) : (
+                                                                <li>-</li>
+                                                            )}
+                                                        </ul>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Apply Date</th>
+                                                    <td className="text-muted">{app.applied_at ?? '-'}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Notes</th>
+                                                    <td className="text-muted">{app.notes ?? '-'}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        ))}
 
                     </div>
                 </div>

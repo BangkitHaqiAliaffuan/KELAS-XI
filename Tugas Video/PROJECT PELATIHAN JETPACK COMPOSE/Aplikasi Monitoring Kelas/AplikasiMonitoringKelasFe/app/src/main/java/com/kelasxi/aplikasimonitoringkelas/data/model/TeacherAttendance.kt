@@ -9,17 +9,21 @@ data class TeacherAttendance(
     @SerializedName("id") val id: Int,
     @SerializedName("schedule_id") val scheduleId: Int,
     @SerializedName("guru_id") val guruId: Int,
+    @SerializedName("guru_asli_id") val guruAsliId: Int? = null,
     @SerializedName("tanggal") val tanggal: String,
     @SerializedName("jam_masuk") val jamMasuk: String?,
-    @SerializedName("status") val status: String, // hadir, telat, tidak_hadir
+    @SerializedName("status") val status: String, // hadir, telat, tidak_hadir, diganti
     @SerializedName("keterangan") val keterangan: String?,
     @JsonAdapter(UserOrIdDeserializer::class)
     @SerializedName("created_by") val createdBy: User?, // Can be User object or just an ID
+    @SerializedName("assigned_by") val assignedBy: Int? = null, // ID of user who assigned replacement
     @SerializedName("created_at") val createdAt: String?,
     @SerializedName("updated_at") val updatedAt: String?,
     @SerializedName("schedule") val schedule: Schedule?,
     @JsonAdapter(GuruOrIdDeserializer::class)
-    @SerializedName("guru") val guru: Guru?
+    @SerializedName("guru") val guru: Guru?, // Guru pengganti jika status diganti, guru asli jika tidak
+    @JsonAdapter(GuruOrIdDeserializer::class)
+    @SerializedName("guru_asli") val guruAsli: Guru? = null // Guru asli jika status diganti
 )
 
 // Custom deserializer to handle both User object and integer ID

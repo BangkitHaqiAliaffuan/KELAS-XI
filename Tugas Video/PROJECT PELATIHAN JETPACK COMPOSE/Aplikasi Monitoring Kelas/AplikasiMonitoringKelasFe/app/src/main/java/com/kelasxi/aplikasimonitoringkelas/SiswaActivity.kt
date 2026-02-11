@@ -918,6 +918,23 @@ fun EntriPage() {
                                         onEntryClick = {
                                             selectedSchedule = scheduleItem
                                             showEntryDialog = true
+                                        },
+                                        onConfirmReplacementAttendance = { attendanceId, newStatus ->
+                                            if (token != null) {
+                                                scope.launch {
+                                                    repository.updateTeacherAttendanceStatus(token, attendanceId, newStatus)
+                                                        .onSuccess {
+                                                            successMessage = if (newStatus == "hadir") {
+                                                                "Guru pengganti dikonfirmasi hadir"
+                                                            } else {
+                                                                "Guru pengganti tidak hadir, kelas akan masuk ke daftar kelas kosong"
+                                                            }
+                                                        }
+                                                        .onFailure { error ->
+                                                            Toast.makeText(context, "Gagal: ${error.message}", Toast.LENGTH_LONG).show()
+                                                        }
+                                                }
+                                            }
                                         }
                                     )
                                 }
@@ -975,8 +992,12 @@ fun EntriPage() {
 @Composable
 fun TeacherAttendanceEntryCard(
     scheduleWithAttendance: TodayScheduleWithAttendance,
-    onEntryClick: () -> Unit
+    onEntryClick: () -> Unit,
+    onConfirmReplacementAttendance: (attendanceId: Int, status: String) -> Unit = { _, _ -> }
 ) {
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var confirmAction by remember { mutableStateOf("") } // "hadir" atau "tidak_hadir"
+    
     val schedule = scheduleWithAttendance.schedule
     val hasAttendance = scheduleWithAttendance.hasAttendance
     val status = scheduleWithAttendance.status
@@ -1012,22 +1033,63 @@ fun TeacherAttendanceEntryCard(
 
                 Spacer(modifier = Modifier.height(Spacing.xs))
 
-                // Teacher Name
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        tint = NeutralGray600,
-                        modifier = Modifier.size(Dimensions.iconSizeSmall)
-                    )
-                    Text(
-                        text = schedule.guru.name,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = NeutralGray700
-                    )
+                // Teacher Name - tampilkan guru asli dan pengganti jika status diganti
+                if (status.lowercase() == "diganti" && scheduleWithAttendance.attendance?.guruAsli != null) {
+                    // Guru Asli (yang tidak hadir)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonOff,
+                            contentDescription = null,
+                            tint = ErrorRed,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Guru Asli: ${scheduleWithAttendance.attendance.guruAsli.name}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ErrorRed
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(2.dp))
+                    
+                    // Guru Pengganti
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PersonAdd,
+                            contentDescription = null,
+                            tint = SuccessGreen,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = "Pengganti: ${scheduleWithAttendance.attendance.guru?.name ?: schedule.guru.name}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = SuccessGreen
+                        )
+                    }
+                } else {
+                    // Tampilan normal guru
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Spacing.xs)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = NeutralGray600,
+                            modifier = Modifier.size(Dimensions.iconSizeSmall)
+                        )
+                        Text(
+                            text = schedule.guru.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = NeutralGray700
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(Spacing.xs))
@@ -1080,6 +1142,7 @@ fun TeacherAttendanceEntryCard(
                         color = when (status.lowercase()) {
                             "hadir" -> SuccessGreen.copy(alpha = 0.1f)
                             "telat" -> WarningYellow.copy(alpha = 0.1f)
+                            "diganti" -> SMKPrimary.copy(alpha = 0.1f)
                             else -> ErrorRed.copy(alpha = 0.1f)
                         }
                     ) {
@@ -1092,26 +1155,99 @@ fun TeacherAttendanceEntryCard(
                                 imageVector = when (status.lowercase()) {
                                     "hadir" -> Icons.Default.CheckCircle
                                     "telat" -> Icons.Default.Warning
+                                    "diganti" -> Icons.Default.SwapHoriz
                                     else -> Icons.Default.Cancel
                                 },
                                 contentDescription = null,
                                 tint = when (status.lowercase()) {
                                     "hadir" -> SuccessGreen
                                     "telat" -> WarningYellow
+                                    "diganti" -> SMKPrimary
                                     else -> ErrorRed
                                 },
                                 modifier = Modifier.size(Dimensions.iconSizeSmall)
                             )
                             Text(
-                                text = "Dicatat: ${status.capitalize()} • ${scheduleWithAttendance.attendance.jamMasuk ?: "-"}",
+                                text = when (status.lowercase()) {
+                                    "diganti" -> "Status: Diganti"
+                                    else -> "Dicatat: ${status.replaceFirstChar { it.uppercase() }} • ${scheduleWithAttendance.attendance.jamMasuk ?: "-"}"
+                                },
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = when (status.lowercase()) {
                                     "hadir" -> SuccessGreen
                                     "telat" -> WarningYellow
+                                    "diganti" -> SMKPrimary
                                     else -> ErrorRed
                                 }
                             )
+                        }
+                    }
+                    
+                    // Tombol konfirmasi kehadiran guru pengganti untuk status "diganti"
+                    if (status.lowercase() == "diganti") {
+                        Spacer(modifier = Modifier.height(Spacing.sm))
+                        
+                        Text(
+                            text = "Konfirmasi kehadiran guru pengganti:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = NeutralGray600
+                        )
+                        
+                        Spacer(modifier = Modifier.height(Spacing.xs))
+                        
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+                        ) {
+                            // Tombol Hadir
+                            Button(
+                                onClick = {
+                                    confirmAction = "hadir"
+                                    showConfirmDialog = true
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = SuccessGreen
+                                ),
+                                contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Hadir",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            
+                            // Tombol Tidak Hadir
+                            Button(
+                                onClick = {
+                                    confirmAction = "tidak_hadir"
+                                    showConfirmDialog = true
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = ErrorRed
+                                ),
+                                contentPadding = PaddingValues(horizontal = Spacing.md, vertical = Spacing.xs),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Cancel,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "Tidak Hadir",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -1124,7 +1260,7 @@ fun TeacherAttendanceEntryCard(
                         variant = ButtonVariant.Primary,
                         leadingIcon = Icons.Default.Add
                     )
-            } else {
+            } else if (status.lowercase() != "diganti") {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "Sudah dicatat",
@@ -1133,6 +1269,49 @@ fun TeacherAttendanceEntryCard(
                 )
             }
         }
+    }
+    
+    // Dialog konfirmasi
+    if (showConfirmDialog && scheduleWithAttendance.attendance != null) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = {
+                Text(
+                    text = if (confirmAction == "hadir") "Konfirmasi Hadir" else "Konfirmasi Tidak Hadir",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text(
+                    text = if (confirmAction == "hadir") {
+                        "Apakah guru pengganti (${scheduleWithAttendance.attendance.guru?.name ?: "Unknown"}) sudah hadir mengajar?"
+                    } else {
+                        "Guru pengganti tidak hadir? Kelas ini akan masuk kembali ke daftar kelas kosong di Kurikulum."
+                    }
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onConfirmReplacementAttendance(
+                            scheduleWithAttendance.attendance.id,
+                            confirmAction
+                        )
+                        showConfirmDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (confirmAction == "hadir") SuccessGreen else ErrorRed
+                    )
+                ) {
+                    Text(if (confirmAction == "hadir") "Ya, Hadir" else "Ya, Tidak Hadir")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text("Batal")
+                }
+            }
+        )
     }
 }
 
