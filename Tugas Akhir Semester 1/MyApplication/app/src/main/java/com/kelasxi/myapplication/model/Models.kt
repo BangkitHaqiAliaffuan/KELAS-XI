@@ -52,6 +52,25 @@ enum class ProductCondition(val label: String) {
     FAIR("Bekas Layak")
 }
 
+enum class OrderStatus(val label: String, val emoji: String) {
+    WAITING_PAYMENT("Menunggu Pembayaran", "⏳"),
+    PROCESSING("Diproses", "🔄"),
+    SHIPPED("Dikirim", "🚚"),
+    DELIVERED("Selesai", "✅"),
+    CANCELLED("Dibatalkan", "❌")
+}
+
+data class Order(
+    val id: String,
+    val product: Product,
+    val quantity: Int,
+    val totalPrice: Long,
+    val status: OrderStatus,
+    val orderedAt: String,
+    val estimatedArrival: String = "",
+    val shippingAddress: String = ""
+)
+
 data class UserProfile(
     val name: String,
     val email: String,

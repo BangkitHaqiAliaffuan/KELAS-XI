@@ -1,7 +1,5 @@
 package com.kelasxi.myapplication.ui.auth
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -13,14 +11,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.viewmodel.AuthViewModel
 
 // ─────────────────────────────────────────────────────────────────
 // LOGIN SCREEN
@@ -28,13 +27,20 @@ import com.kelasxi.myapplication.ui.theme.*
 
 @Composable
 fun LoginScreen(
-    onLoginClick: () -> Unit,
-    onNavigateToRegister: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onNavigateToRegister: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
+    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+
+    // Navigate to Home as soon as login succeeds
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) onLoginSuccess()
+    }
 
     Box(
         modifier = Modifier
@@ -130,6 +136,16 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
+                    // ── Error banner ──
+                    if (uiState.errorMessage != null) {
+                        ErrorBanner(
+                            message = uiState.errorMessage!!,
+                            onDismiss = { authViewModel.clearError() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
                     // Email field
                     OutlinedTextField(
                         value = email,
@@ -210,8 +226,7 @@ fun LoginScreen(
                     // Login button
                     Button(
                         onClick = {
-                            isLoading = true
-                            onLoginClick()
+                            authViewModel.login(email, password)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -219,7 +234,7 @@ fun LoginScreen(
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                         contentPadding = PaddingValues(0.dp),
-                        enabled = !isLoading
+                        enabled = !uiState.isLoading
                     ) {
                         Box(
                             modifier = Modifier
@@ -232,7 +247,7 @@ fun LoginScreen(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isLoading) {
+                            if (uiState.isLoading) {
                                 CircularProgressIndicator(
                                     color = Color.White,
                                     modifier = Modifier.size(24.dp),
@@ -265,7 +280,7 @@ fun LoginScreen(
 
                     // Social login hint (UI only)
                     OutlinedButton(
-                        onClick = { onLoginClick() },
+                        onClick = { authViewModel.login(email, password) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -317,9 +332,12 @@ fun LoginScreen(
 
 @Composable
 fun RegisterScreen(
-    onRegisterClick: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    authViewModel: AuthViewModel = viewModel()
 ) {
+    val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
+
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -328,7 +346,11 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var agreeToTerms by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(false) }
+
+    // Navigate to Home as soon as register succeeds
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn) onRegisterSuccess()
+    }
 
     Box(
         modifier = Modifier
@@ -406,6 +428,14 @@ fun RegisterScreen(
                     modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
+                    // ── Error banner ──
+                    if (uiState.errorMessage != null) {
+                        ErrorBanner(
+                            message = uiState.errorMessage!!,
+                            onDismiss = { authViewModel.clearError() }
+                        )
+                    }
+
                     // Full name
                     OutlinedTextField(
                         value = name,
@@ -596,8 +626,7 @@ fun RegisterScreen(
                     // Register button
                     Button(
                         onClick = {
-                            isLoading = true
-                            onRegisterClick()
+                            authViewModel.register(name, email, phone, password)
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -605,7 +634,7 @@ fun RegisterScreen(
                         shape = RoundedCornerShape(24.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                         contentPadding = PaddingValues(0.dp),
-                        enabled = !isLoading && agreeToTerms
+                        enabled = !uiState.isLoading && agreeToTerms
                     ) {
                         Box(
                             modifier = Modifier
@@ -621,7 +650,7 @@ fun RegisterScreen(
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isLoading) {
+                            if (uiState.isLoading) {
                                 CircularProgressIndicator(
                                     color = Color.White,
                                     modifier = Modifier.size(24.dp),
@@ -673,6 +702,32 @@ fun RegisterScreen(
 // ─────────────────────────────────────────────────────────────────
 
 @Composable
+fun ErrorBanner(message: String, onDismiss: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = StatusCancelled.copy(alpha = 0.1f))
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Outlined.ErrorOutline, contentDescription = null, tint = StatusCancelled, modifier = Modifier.size(20.dp))
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = StatusCancelled,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                Icon(Icons.Outlined.Close, contentDescription = "Tutup", tint = StatusCancelled, modifier = Modifier.size(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
 fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = GreenDeep,
     unfocusedBorderColor = GreenPale,
@@ -688,7 +743,7 @@ fun authTextFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 fun LoginScreenPreview() {
     TrashCareTheme {
-        LoginScreen(onLoginClick = {}, onNavigateToRegister = {})
+        LoginScreen(onLoginSuccess = {}, onNavigateToRegister = {})
     }
 }
 
@@ -696,7 +751,7 @@ fun LoginScreenPreview() {
 @Composable
 fun LoginScreenDarkPreview() {
     TrashCareTheme(darkTheme = true) {
-        LoginScreen(onLoginClick = {}, onNavigateToRegister = {})
+        LoginScreen(onLoginSuccess = {}, onNavigateToRegister = {})
     }
 }
 
@@ -704,6 +759,6 @@ fun LoginScreenDarkPreview() {
 @Composable
 fun RegisterScreenPreview() {
     TrashCareTheme {
-        RegisterScreen(onRegisterClick = {}, onNavigateToLogin = {})
+        RegisterScreen(onRegisterSuccess = {}, onNavigateToLogin = {})
     }
 }

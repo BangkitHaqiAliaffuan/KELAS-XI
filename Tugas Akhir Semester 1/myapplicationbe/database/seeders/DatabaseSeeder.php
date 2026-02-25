@@ -15,6 +15,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed waste categories first (required before pickup requests)
+        $this->call(WasteCategorySeeder::class);
+
         // User::factory(10)->create();
 
         User::factory()->create([

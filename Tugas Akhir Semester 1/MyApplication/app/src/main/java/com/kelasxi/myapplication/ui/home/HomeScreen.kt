@@ -28,16 +28,33 @@ import com.kelasxi.myapplication.viewmodel.HomeViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
-    val recentPickups by viewModel.recentPickups.collectAsStateWithLifecycle()
-    val statsCards by viewModel.statsCards.collectAsStateWithLifecycle()
-    val selectedTrashTypes by viewModel.selectedTrashTypes.collectAsStateWithLifecycle()
-    val address by viewModel.address.collectAsStateWithLifecycle()
-    val notes by viewModel.notes.collectAsStateWithLifecycle()
-    val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
-    val selectedTime by viewModel.selectedTime.collectAsStateWithLifecycle()
-    val showSuccessDialog by viewModel.showSuccessDialog.collectAsStateWithLifecycle()
+    val recentPickups       by viewModel.recentPickups.collectAsStateWithLifecycle()
+    val statsCards          by viewModel.statsCards.collectAsStateWithLifecycle()
+    val selectedTrashTypes  by viewModel.selectedTrashTypes.collectAsStateWithLifecycle()
+    val address             by viewModel.address.collectAsStateWithLifecycle()
+    val notes               by viewModel.notes.collectAsStateWithLifecycle()
+    val selectedDate        by viewModel.selectedDate.collectAsStateWithLifecycle()
+    val selectedTime        by viewModel.selectedTime.collectAsStateWithLifecycle()
+    val showSuccessDialog   by viewModel.showSuccessDialog.collectAsStateWithLifecycle()
+    val isLoadingPickups    by viewModel.isLoadingPickups.collectAsStateWithLifecycle()
+    val pickupsError        by viewModel.pickupsError.collectAsStateWithLifecycle()
+    val isSubmitting        by viewModel.isSubmitting.collectAsStateWithLifecycle()
+    val submitError         by viewModel.submitError.collectAsStateWithLifecycle()
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundGreen)) {
+    // Show submit-error snackbar
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(submitError) {
+        if (submitError != null) {
+            snackbarHostState.showSnackbar(submitError!!)
+            viewModel.dismissError()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = BackgroundGreen
+    ) { innerPadding ->
+    Box(modifier = Modifier.fillMaxSize().padding(innerPadding).background(BackgroundGreen)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 24.dp)
@@ -63,7 +80,8 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     onTimeSelected = viewModel::updateTime,
                     notes = notes,
                     onNotesChange = viewModel::updateNotes,
-                    onSubmit = viewModel::submitPickup
+                    onSubmit = viewModel::submitPickup,
+                    isSubmitting = isSubmitting
                 )
             }
 
@@ -83,15 +101,64 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary
                     )
-                    TextButton(onClick = {}) {
-                        Text("Lihat Semua", color = GreenDeep)
+                    IconButton(onClick = viewModel::loadPickups) {
+                        Icon(
+                            imageVector = Icons.Outlined.Refresh,
+                            contentDescription = "Refresh",
+                            tint = GreenDeep
+                        )
                     }
                 }
             }
 
-            // Recent Pickup Cards
-            items(recentPickups) { pickup ->
-                RecentPickupCard(pickup = pickup)
+            // Loading / error / list
+            when {
+                isLoadingPickups -> item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator(color = GreenDeep) }
+                }
+                pickupsError != null -> item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "⚠️ ${pickupsError}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = StatusCancelled
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = viewModel::loadPickups,
+                            border = BorderStroke(1.dp, GreenDeep)
+                        ) { Text("Coba Lagi", color = GreenDeep) }
+                    }
+                }
+                recentPickups.isEmpty() -> item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("🗑️", fontSize = 40.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Belum ada riwayat pickup.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+                }
+                else -> items(recentPickups) { pickup ->
+                    RecentPickupCard(pickup = pickup)
+                }
             }
         }
 
@@ -100,6 +167,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             PickupSuccessDialog(onDismiss = viewModel::dismissSuccessDialog)
         }
     }
+    } // end Scaffold
 }
 
 @Composable
@@ -259,7 +327,8 @@ fun PickupRequestCard(
     onTimeSelected: (String) -> Unit,
     notes: String,
     onNotesChange: (String) -> Unit,
-    onSubmit: () -> Unit
+    onSubmit: () -> Unit,
+    isSubmitting: Boolean = false
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -426,6 +495,7 @@ fun PickupRequestCard(
             // Submit Button
             Button(
                 onClick = onSubmit,
+                enabled = !isSubmitting,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -438,24 +508,35 @@ fun PickupRequestCard(
                         .fillMaxSize()
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(GreenDeep, GreenMedium, GreenLight)
+                                colors = if (isSubmitting)
+                                    listOf(GreenDeep.copy(alpha = 0.5f), GreenLight.copy(alpha = 0.5f))
+                                else
+                                    listOf(GreenDeep, GreenMedium, GreenLight)
                             ),
                             shape = RoundedCornerShape(24.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text("🚛", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            text = "Request Pickup",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
+                    if (isSubmitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
                         )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text("🚛", fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "Request Pickup",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -774,7 +855,31 @@ fun PickupSuccessDialog(onDismiss: () -> Unit) {
 @Composable
 fun HomeScreenPreview() {
     TrashCareTheme {
-        HomeScreen()
+        // Preview-safe: render the static parts without a real ViewModel
+        Box(modifier = Modifier.fillMaxSize().background(BackgroundGreen)) {
+            LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+                item { HomeHeader() }
+                item { StatsBanner(stats = listOf(
+                    StatCard("12", "Pickups Done", "🚛"),
+                    StatCard("5", "Items Sold", "🛒")
+                )) }
+                item {
+                    PickupRequestCard(
+                        address = "Jl. Sudirman No. 12",
+                        onAddressChange = {},
+                        selectedTrashTypes = setOf(TrashType.PLASTIC),
+                        onTrashTypeToggle = {},
+                        selectedDate = "25 Feb 2026",
+                        selectedTime = "09:00",
+                        onDateSelected = {},
+                        onTimeSelected = {},
+                        notes = "",
+                        onNotesChange = {},
+                        onSubmit = {}
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -782,6 +887,10 @@ fun HomeScreenPreview() {
 @Composable
 fun HomeScreenDarkPreview() {
     TrashCareTheme(darkTheme = true) {
-        HomeScreen()
+        Box(modifier = Modifier.fillMaxSize().background(BackgroundGreen)) {
+            LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
+                item { HomeHeader() }
+            }
+        }
     }
 }

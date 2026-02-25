@@ -118,6 +118,62 @@ object MockData {
         StatCard("15kg", "CO₂ Saved", "🌍")
     )
 
+    val myOrders = listOf(
+        Order(
+            id = "ORD-001",
+            product = products[0], // Kursi Kayu Vintage Jati
+            quantity = 1,
+            totalPrice = 350_000L,
+            status = OrderStatus.DELIVERED,
+            orderedAt = "20 Feb 2026",
+            estimatedArrival = "23 Feb 2026",
+            shippingAddress = "Jl. Sudirman No. 12, Jakarta Pusat"
+        ),
+        Order(
+            id = "ORD-002",
+            product = products[2], // Dress Batik Tulis Solo
+            quantity = 2,
+            totalPrice = 170_000L,
+            status = OrderStatus.SHIPPED,
+            orderedAt = "23 Feb 2026",
+            estimatedArrival = "26 Feb 2026",
+            shippingAddress = "Jl. Sudirman No. 12, Jakarta Pusat"
+        ),
+        Order(
+            id = "ORD-003",
+            product = products[5], // Speaker Bluetooth JBL
+            quantity = 1,
+            totalPrice = 250_000L,
+            status = OrderStatus.PROCESSING,
+            orderedAt = "25 Feb 2026",
+            estimatedArrival = "28 Feb 2026",
+            shippingAddress = "Jl. Gatot Subroto No. 45, Jakarta"
+        ),
+        Order(
+            id = "ORD-004",
+            product = products[3], // Set Buku Novel Tere Liye
+            quantity = 1,
+            totalPrice = 120_000L,
+            status = OrderStatus.CANCELLED,
+            orderedAt = "18 Feb 2026",
+            shippingAddress = "Jl. Thamrin No. 7, Jakarta"
+        ),
+        Order(
+            id = "ORD-005",
+            product = products[1], // Laptop ASUS ROG Bekas
+            quantity = 1,
+            totalPrice = 4_500_000L,
+            status = OrderStatus.WAITING_PAYMENT,
+            orderedAt = "25 Feb 2026",
+            estimatedArrival = "28 Feb 2026",
+            shippingAddress = "Jl. Kebayoran Baru No. 3, Jakarta"
+        )
+    )
+
+    // Products that the user has added to wishlist
+    val wishlistProductIds = setOf("1", "3", "5") // Kursi Kayu, Dress Batik, Speaker JBL
+    val wishlistProducts get() = products.filter { it.id in wishlistProductIds }
+
     val onboardingPages = listOf(
         OnboardingPage(
             emoji = "🚛",

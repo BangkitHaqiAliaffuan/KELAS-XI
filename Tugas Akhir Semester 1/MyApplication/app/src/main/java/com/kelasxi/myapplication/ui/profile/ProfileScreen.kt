@@ -23,7 +23,11 @@ import com.kelasxi.myapplication.ui.theme.*
 
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    onLogout: () -> Unit = {},
+    onMyOrders: () -> Unit = {},
+    onWishlist: () -> Unit = {}
+) {
     val user = MockData.currentUser
     var isDarkMode by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(true) }
@@ -49,9 +53,9 @@ fun ProfileScreen() {
         ProfileMenuSection(
             title = "Akun",
             items = listOf(
-                MenuItemData("My Orders", "📦", Color.Unspecified) {},
+                MenuItemData("My Orders", "📦", Color.Unspecified) { onMyOrders() },
                 MenuItemData("My Listings", "🏷️", Color.Unspecified) {},
-                MenuItemData("Wishlist", "🤍", Color.Unspecified) {},
+                MenuItemData("Wishlist", "🧡", Color.Unspecified) { onWishlist() },
                 MenuItemData("Addresses", "📍", Color.Unspecified) {}
             )
         )
@@ -172,7 +176,10 @@ fun ProfileScreen() {
             },
             confirmButton = {
                 Button(
-                    onClick = { showLogoutDialog = false },
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogout()
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = StatusCancelled),
                     shape = RoundedCornerShape(20.dp)
                 ) {

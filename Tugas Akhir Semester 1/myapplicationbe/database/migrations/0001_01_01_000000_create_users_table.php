@@ -15,8 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('phone', 20)->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar_path')->nullable();
+            $table->integer('total_pickups')->default(0);
+            $table->integer('items_sold')->default(0);
+            $table->decimal('co2_saved', 8, 2)->default(0);
+            $table->integer('points_balance')->default(0);
             $table->rememberToken();
             $table->timestamps();
         });

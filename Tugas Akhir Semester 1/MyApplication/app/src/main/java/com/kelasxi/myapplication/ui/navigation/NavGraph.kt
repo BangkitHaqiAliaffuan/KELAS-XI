@@ -36,9 +36,12 @@ import com.kelasxi.myapplication.ui.marketplace.MarketplaceScreen
 import com.kelasxi.myapplication.ui.marketplace.ProductDetailScreen
 import com.kelasxi.myapplication.ui.onboarding.OnboardingScreen
 import com.kelasxi.myapplication.ui.onboarding.SplashScreen
+import com.kelasxi.myapplication.ui.profile.MyOrdersScreen
 import com.kelasxi.myapplication.ui.profile.ProfileScreen
+import com.kelasxi.myapplication.ui.profile.WishlistScreen
 import com.kelasxi.myapplication.viewmodel.HomeViewModel
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
+import com.kelasxi.myapplication.viewmodel.AuthViewModel
 
 data class BottomNavItem(
     val label: String,
@@ -61,6 +64,17 @@ fun TrashCareNavGraph() {
 
     val homeViewModel: HomeViewModel = viewModel()
     val marketplaceViewModel: MarketplaceViewModel = viewModel()
+    val authViewModel: AuthViewModel = viewModel()
+
+    // Navigate to Login only after logout() fully completes (coroutine finished)
+    LaunchedEffect(Unit) {
+        authViewModel.logoutEvent.collect {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
 
     val screensWithBottomNav = listOf(Screen.Home.route, Screen.Marketplace.route, Screen.Profile.route)
     val showBottomBar = currentDestination?.route in screensWithBottomNav
@@ -129,26 +143,28 @@ fun TrashCareNavGraph() {
         ) {
             composable(Screen.Login.route) {
                 LoginScreen(
-                    onLoginClick = {
+                    onLoginSuccess = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     },
                     onNavigateToRegister = {
                         navController.navigate(Screen.Register.route)
-                    }
+                    },
+                    authViewModel = authViewModel
                 )
             }
             composable(Screen.Register.route) {
                 RegisterScreen(
-                    onRegisterClick = {
+                    onRegisterSuccess = {
                         navController.navigate(Screen.Home.route) {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     },
                     onNavigateToLogin = {
                         navController.popBackStack()
-                    }
+                    },
+                    authViewModel = authViewModel
                 )
             }
             composable(Screen.Splash.route) {
@@ -184,7 +200,23 @@ fun TrashCareNavGraph() {
                 )
             }
             composable(Screen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onLogout = { authViewModel.logout() },
+                    onMyOrders = { navController.navigate(Screen.MyOrders.route) },
+                    onWishlist = { navController.navigate(Screen.Wishlist.route) }
+                )
+            }
+            composable(Screen.MyOrders.route) {
+                MyOrdersScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Screen.Wishlist.route) {
+                WishlistScreen(
+                    onBack = { navController.popBackStack() },
+                    onProductClick = { product ->
+                        marketplaceViewModel.selectProduct(product)
+                        navController.navigate(Screen.ProductDetail.createRoute(product.id))
+                    }
+                )
             }
         }
     }
