@@ -60,4 +60,24 @@ class User extends Authenticatable
     {
         return $this->hasMany(PickupRequest::class);
     }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class, 'buyer_id');
+    }
+
+    public function wishlists(): HasMany
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function marketplaceListings(): HasMany
+    {
+        return $this->hasMany(MarketplaceListing::class, 'seller_id');
+    }
+
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(UserAddress::class);
+    }
 }

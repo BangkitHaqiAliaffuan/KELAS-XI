@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\MarketplaceController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PickupController;
+use App\Http\Controllers\Api\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -16,17 +20,70 @@ Route::prefix('auth')->group(function () {
 // ─────────────────────────────────────────────────────────────────
 // Protected routes (Sanctum Bearer token required)
 // ─────────────────────────────────────────────────────────────────
-Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/me',      [AuthController::class, 'me']);
+Route::middleware('auth:sanctum')->group(function () {
+
+    // Auth
+    Route::prefix('auth')->group(function () {
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me',      [AuthController::class, 'me']);
+    });
+
+    // Pickup routes
+    // GET  /api/pickups            → list user's pickups
+    // POST /api/pickups            → create pickup
+    // GET  /api/pickups/{id}       → show pickup
+    // POST /api/pickups/{id}/cancel → cancel pickup
+    Route::prefix('pickups')->group(function () {
+        Route::get('/',                 [PickupController::class, 'index']);
+        Route::post('/',                [PickupController::class, 'store']);
+        Route::get('/{id}',             [PickupController::class, 'show'])->whereNumber('id');
+        Route::post('/{id}/cancel',     [PickupController::class, 'cancel'])->whereNumber('id');
+    });
+
+    // Marketplace routes
+    // GET  /api/marketplace         → list active listings (with ?category= & ?search=)
+    // POST /api/marketplace         → create a new listing (seller)
+    // GET  /api/marketplace/{id}    → listing detail
+    Route::prefix('marketplace')->group(function () {
+        Route::get('/mine',         [MarketplaceController::class, 'myListings']);
+        Route::get('/',             [MarketplaceController::class, 'index']);
+        Route::post('/',            [MarketplaceController::class, 'store']);
+        Route::get('/{id}',         [MarketplaceController::class, 'show'])->whereNumber('id');
+        Route::put('/{id}',         [MarketplaceController::class, 'update'])->whereNumber('id');
+        Route::delete('/{id}',      [MarketplaceController::class, 'destroy'])->whereNumber('id');
+    });
+
+    // Order routes
+    // GET  /api/orders              → list buyer's orders
+    // POST /api/orders              → create order (buy a listing)
+    // GET  /api/orders/{id}         → single order detail
+    // POST /api/orders/{id}/cancel  → cancel a pending order
+    Route::prefix('orders')->group(function () {
+        Route::get('/',                 [OrderController::class, 'index']);
+        Route::post('/',                [OrderController::class, 'store']);
+        Route::get('/{id}',             [OrderController::class, 'show'])->whereNumber('id');
+        Route::post('/{id}/pay',        [OrderController::class, 'pay'])->whereNumber('id');
+        Route::post('/{id}/cancel',     [OrderController::class, 'cancel'])->whereNumber('id');
+    });
+
+    // Wishlist routes
+    // GET  /api/wishlist         → list user's wishlisted items
+    // POST /api/wishlist/toggle  → toggle wishlist (add or remove)
+    Route::prefix('wishlist')->group(function () {
+        Route::get('/',       [WishlistController::class, 'index']);
+        Route::post('/toggle', [WishlistController::class, 'toggle']);
+    });
+
+    // Address routes
+    // GET    /api/addresses              → list user's addresses
+    // POST   /api/addresses              → add new address
+    // PATCH  /api/addresses/{id}/default → set as default
+    // DELETE /api/addresses/{id}         → delete address
+    Route::prefix('addresses')->group(function () {
+        Route::get('/',               [AddressController::class, 'index']);
+        Route::post('/',              [AddressController::class, 'store']);
+        Route::patch('/{id}/default', [AddressController::class, 'setDefault'])->whereNumber('id');
+        Route::delete('/{id}',        [AddressController::class, 'destroy'])->whereNumber('id');
+    });
 });
 
-// ─────────────────────────────────────────────────────────────────
-// Pickup routes (Sanctum Bearer token required)
-// ─────────────────────────────────────────────────────────────────
-Route::middleware('auth:sanctum')->prefix('pickups')->group(function () {
-    Route::get('/',         [PickupController::class, 'index']);   // GET  /api/pickups
-    Route::post('/',        [PickupController::class, 'store']);   // POST /api/pickups
-    Route::get('/{id}',     [PickupController::class, 'show']);    // GET  /api/pickups/{id}
-    Route::post('/{id}/cancel', [PickupController::class, 'cancel']); // POST /api/pickups/{id}/cancel
-});
