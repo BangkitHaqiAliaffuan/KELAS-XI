@@ -45,14 +45,15 @@ class PickupController extends Controller
         $validTrashTypes = ['organic', 'plastic', 'electronic', 'glass'];
 
         $validated = $request->validate([
-            'address'     => ['required', 'string', 'max:500'],
-            'latitude'    => ['nullable', 'numeric', 'between:-90,90'],
-            'longitude'   => ['nullable', 'numeric', 'between:-180,180'],
-            'pickup_date' => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
-            'pickup_time' => ['required', 'date_format:H:i'],
-            'notes'       => ['nullable', 'string', 'max:1000'],
-            'trash_types' => ['required', 'array', 'min:1'],
-            'trash_types.*' => ['required', 'string', Rule::in($validTrashTypes)],
+            'address'               => ['required', 'string', 'max:500'],
+            'latitude'              => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'             => ['nullable', 'numeric', 'between:-180,180'],
+            'pickup_date'           => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'pickup_time'           => ['required', 'date_format:H:i'],
+            'notes'                 => ['nullable', 'string', 'max:1000'],
+            'estimated_weight_kg'   => ['nullable', 'numeric', 'min:0.1', 'max:9999'],
+            'trash_types'           => ['required', 'array', 'min:1'],
+            'trash_types.*'         => ['required', 'string', Rule::in($validTrashTypes)],
         ]);
 
         // Resolve waste category IDs from the provided trash_types slugs
@@ -77,14 +78,15 @@ class PickupController extends Controller
         try {
             // Create the pickup request
             $pickup = PickupRequest::create([
-                'user_id'     => $request->user()->id,
-                'address'     => $validated['address'],
-                'latitude'    => $validated['latitude'] ?? null,
-                'longitude'   => $validated['longitude'] ?? null,
-                'pickup_date' => $validated['pickup_date'],
-                'pickup_time' => $validated['pickup_time'],
-                'status'      => 'pending',
-                'notes'       => $validated['notes'] ?? null,
+                'user_id'               => $request->user()->id,
+                'address'               => $validated['address'],
+                'latitude'              => $validated['latitude'] ?? null,
+                'longitude'             => $validated['longitude'] ?? null,
+                'pickup_date'           => $validated['pickup_date'],
+                'pickup_time'           => $validated['pickup_time'],
+                'status'                => 'pending',
+                'notes'                 => $validated['notes'] ?? null,
+                'estimated_weight_kg'   => $validated['estimated_weight_kg'] ?? null,
             ]);
 
             // Create one pickup_item row per trash type
