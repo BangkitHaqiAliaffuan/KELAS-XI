@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         // Seed waste categories first (required before pickup requests)
         $this->call(WasteCategorySeeder::class);
 
+        // Seed couriers for auto-assignment
+        $this->call(CourierSeeder::class);
+
         // User::factory(10)->create();
 
         User::factory()->create([

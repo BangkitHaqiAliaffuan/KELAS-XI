@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PickupController;
@@ -87,3 +88,18 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
+// ─────────────────────────────────────────────────────────────────
+// Courier-protected routes (Sanctum token issued to a Courier model)
+// GET  /api/courier/me                      → courier profile
+// GET  /api/courier/pickups                 → assigned pickups
+// PATCH /api/courier/pickups/{id}/status   → update pickup status
+// PATCH /api/courier/availability          → toggle online/offline
+// ─────────────────────────────────────────────────────────────────
+Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureIsCourier::class])
+    ->prefix('courier')
+    ->group(function () {
+        Route::get('/me',                              [CourierController::class, 'me']);
+        Route::get('/pickups',                         [CourierController::class, 'pickups']);
+        Route::patch('/pickups/{id}/status',           [CourierController::class, 'updateStatus'])->whereNumber('id');
+        Route::patch('/availability',                  [CourierController::class, 'availability']);
+    });

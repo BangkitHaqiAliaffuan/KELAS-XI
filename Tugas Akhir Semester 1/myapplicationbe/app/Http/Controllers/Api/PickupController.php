@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Courier;
 use App\Models\PickupRequest;
 use App\Models\WasteCategory;
 use Illuminate\Http\JsonResponse;
@@ -21,7 +22,7 @@ class PickupController extends Controller
     {
         $pickups = $request->user()
             ->pickupRequests()
-            ->with(['items.wasteCategory'])
+            ->with(['items.wasteCategory', 'courier'])
             ->latest()
             ->get()
             ->map(fn ($pickup) => $this->formatPickup($pickup));
@@ -101,8 +102,11 @@ class PickupController extends Controller
 
             DB::commit();
 
-            // Return the freshly created pickup with relations
-            $pickup->load('items.wasteCategory');
+            // Auto-assign the best available courier (outside transaction — best effort)
+            $this->assignCourier($pickup);
+
+            // Return the freshly created pickup with all relations
+            $pickup->load(['items.wasteCategory', 'courier']);
 
             return response()->json([
                 'message' => 'Pickup berhasil dijadwalkan!',
@@ -124,7 +128,7 @@ class PickupController extends Controller
     {
         $pickup = $request->user()
             ->pickupRequests()
-            ->with(['items.wasteCategory'])
+            ->with(['items.wasteCategory', 'courier'])
             ->findOrFail($id);
 
         return response()->json([
@@ -160,8 +164,59 @@ class PickupController extends Controller
 
         return response()->json([
             'message' => 'Pickup berhasil dibatalkan.',
-            'data'    => $this->formatPickup($pickup->fresh('items.wasteCategory')),
+            'data'    => $this->formatPickup($pickup->fresh(['items.wasteCategory', 'courier'])),
         ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Auto-assign the best available courier to a pickup request.
+    //
+    // Selection criteria (in order):
+    //   1. status = 'active' AND is_available = true
+    //   2. Fewest active pickups (pending + on_the_way)
+    //   3. Highest rating as tie-breaker
+    //
+    // If no courier is available the pickup stays without one — a
+    // background job or admin can assign later.
+    // ─────────────────────────────────────────────────────────────
+    private function assignCourier(PickupRequest $pickup): void
+    {
+        $courier = $this->selectBestCourier();
+
+        if (! $courier) {
+            return; // no available courier — leave unassigned
+        }
+
+        DB::transaction(function () use ($pickup, $courier) {
+            $pickup->update(['courier_id' => $courier->id]);
+
+            // Mark courier as on_duty when they now have active pickups
+            $activeCount = $courier->activePickups()->count();
+            if ($activeCount >= 1) {
+                $courier->update(['status' => 'on_duty']);
+            }
+
+            $courier->increment('total_deliveries');
+        });
+    }
+
+    /**
+     * Find the best available courier using a single efficient query.
+     * Uses a LEFT JOIN subquery to count active pickups per courier.
+     */
+    private function selectBestCourier(): ?Courier
+    {
+        return Courier::query()
+            ->where('status', '!=', 'inactive')
+            ->where('is_available', true)
+            ->withCount([
+                'pickupRequests as active_pickups_count' => function ($q) {
+                    $q->whereIn('status', ['pending', 'on_the_way']);
+                },
+            ])
+            ->orderBy('active_pickups_count', 'asc')   // least busy first
+            ->orderBy('rating', 'desc')                 // highest rating as tie-breaker
+            ->first();
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -184,6 +239,16 @@ class PickupController extends Controller
             'cancelled_at'        => $pickup->cancelled_at?->toIso8601String(),
             'cancellation_reason' => $pickup->cancellation_reason,
             'created_at'   => $pickup->created_at?->toIso8601String(),
+            'courier'      => $pickup->courier ? [
+                'id'            => $pickup->courier->id,
+                'name'          => $pickup->courier->name,
+                'phone'         => $pickup->courier->phone,
+                'avatar_path'   => $pickup->courier->avatar_path,
+                'vehicle_type'  => $pickup->courier->vehicle_type,
+                'vehicle_plate' => $pickup->courier->vehicle_plate,
+                'rating'        => $pickup->courier->rating,
+                'status'        => $pickup->courier->status,
+            ] : null,
             'trash_types'  => $pickup->items->map(fn ($item) => [
                 'id'       => $item->wasteCategory->id,
                 'type'     => $item->wasteCategory->type,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Courier;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,6 +44,8 @@ class AuthController extends Controller
     // ─────────────────────────────────────────────────────────────
     // POST /api/auth/login
     // Body: { email, password }
+    // Tries User table first; if not found, tries Courier table.
+    // Response includes `role` field: "user" | "courier"
     // ─────────────────────────────────────────────────────────────
     public function login(Request $request): JsonResponse
     {
@@ -51,23 +54,39 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        // ── 1. Try user table ─────────────────────────────────────
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Email atau password salah.'],
+        if ($user && Hash::check($request->password, $user->password)) {
+            $user->tokens()->where('name', 'mobile')->delete();
+            $token = $user->createToken('mobile')->plainTextToken;
+
+            return response()->json([
+                'message' => 'Login berhasil.',
+                'role'    => 'user',
+                'token'   => $token,
+                'user'    => $this->userResource($user),
             ]);
         }
 
-        // Revoke previous tokens from this device (optional — keeps it clean)
-        $user->tokens()->where('name', 'mobile')->delete();
+        // ── 2. Fallback: try courier table ────────────────────────
+        $courier = Courier::where('email', $request->email)->first();
 
-        $token = $user->createToken('mobile')->plainTextToken;
+        if ($courier && Hash::check($request->password, $courier->password)) {
+            // Couriers use Laravel Sanctum via HasApiTokens too — add the trait to Courier model
+            $token = $courier->createToken('mobile')->plainTextToken;
 
-        return response()->json([
-            'message' => 'Login berhasil.',
-            'token'   => $token,
-            'user'    => $this->userResource($user),
+            return response()->json([
+                'message' => 'Login berhasil.',
+                'role'    => 'courier',
+                'token'   => $token,
+                'courier' => $this->courierResource($courier),
+            ]);
+        }
+
+        // ── 3. Neither matched ────────────────────────────────────
+        throw ValidationException::withMessages([
+            'email' => ['Email atau password salah.'],
         ]);
     }
 
@@ -110,6 +129,26 @@ class AuthController extends Controller
             'co2_saved'     => $user->co2_saved,
             'points_balance'=> $user->points_balance,
             'member_since'  => $user->created_at?->translatedFormat('F Y') ?? '-',
+        ];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Private helper — normalise courier shape for the mobile app
+    // ─────────────────────────────────────────────────────────────
+    private function courierResource(Courier $courier): array
+    {
+        return [
+            'id'               => $courier->id,
+            'name'             => $courier->name,
+            'email'            => $courier->email,
+            'phone'            => $courier->phone,
+            'avatar_path'      => $courier->avatar_path,
+            'vehicle_type'     => $courier->vehicle_type,
+            'vehicle_plate'    => $courier->vehicle_plate,
+            'status'           => $courier->status,
+            'is_available'     => (bool) $courier->is_available,
+            'rating'           => (float) $courier->rating,
+            'total_deliveries' => (int) $courier->total_deliveries,
         ];
     }
 }

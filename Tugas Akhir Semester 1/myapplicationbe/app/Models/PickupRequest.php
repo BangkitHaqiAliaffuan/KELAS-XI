@@ -46,7 +46,7 @@ class PickupRequest extends Model
 
     public function courier(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'courier_id');
+        return $this->belongsTo(Courier::class, 'courier_id');
     }
 
     public function items(): HasMany
