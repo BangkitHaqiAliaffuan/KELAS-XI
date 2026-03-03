@@ -7,6 +7,7 @@ use App\Models\Courier;
 use App\Models\PickupRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CourierController extends Controller
@@ -26,9 +27,65 @@ class CourierController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // GET /api/courier/available-pickups
+    // Returns pickup requests in 'searching' state (no courier yet).
+    // Any online courier can see and accept these.
+    // ─────────────────────────────────────────────────────────────
+    public function availablePickups(Request $request): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        // Only show available pickups if the courier is online
+        if (! $courier->is_available) {
+            return response()->json(['data' => []]);
+        }
+
+        $pickups = PickupRequest::with(['items.wasteCategory', 'user'])
+            ->whereNull('courier_id')
+            ->where('status', 'searching')
+            ->orderBy('created_at', 'asc')   // oldest request first
+            ->get()
+            ->map(fn ($p) => $this->formatPickup($p));
+
+        return response()->json(['data' => $pickups]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/courier/pickups/{id}/accept
+    // Courier accepts a 'searching' pickup → assigns self, status → pending
+    // ─────────────────────────────────────────────────────────────
+    public function acceptPickup(Request $request, int $id): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        $pickup = PickupRequest::where('status', 'searching')
+            ->whereNull('courier_id')
+            ->findOrFail($id);
+
+        DB::transaction(function () use ($pickup, $courier) {
+            $pickup->update([
+                'courier_id' => $courier->id,
+                'status'     => 'pending',
+            ]);
+
+            // Mark courier as on_duty
+            $courier->update(['status' => 'on_duty']);
+            $courier->increment('total_deliveries');
+        });
+
+        $pickup->load(['items.wasteCategory', 'user']);
+
+        return response()->json([
+            'message' => 'Pickup berhasil diterima!',
+            'data'    => $this->formatPickup($pickup),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // GET /api/courier/pickups
-    // Returns all pickup requests assigned to this courier,
-    // ordered by pickup_date asc (upcoming first).
+    // Returns all pickup requests assigned to this courier.
     // ─────────────────────────────────────────────────────────────
     public function pickups(Request $request): JsonResponse
     {
@@ -60,14 +117,16 @@ class CourierController extends Controller
             ->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => ['required', Rule::in(['on_the_way', 'done'])],
+            'status' => ['required', Rule::in(['on_the_way', 'done', 'cancelled'])],
         ]);
 
         $newStatus = $validated['status'];
 
-        // Guard against going backwards
-        $order = ['pending' => 0, 'on_the_way' => 1, 'done' => 2, 'cancelled' => 3];
-        if (($order[$newStatus] ?? 0) <= ($order[$pickup->status] ?? 0)) {
+        // Guard against going backwards (cancelled is always allowed from pending/on_the_way)
+        $order = ['searching' => 0, 'pending' => 1, 'on_the_way' => 2, 'done' => 3, 'cancelled' => 4];
+        $isAllowedForward = ($order[$newStatus] ?? 0) > ($order[$pickup->status] ?? 0);
+        $isCancelFromActive = $newStatus === 'cancelled' && in_array($pickup->status, ['pending', 'on_the_way']);
+        if (! $isAllowedForward && ! $isCancelFromActive) {
             return response()->json([
                 'message' => "Tidak bisa mengubah status dari '{$pickup->status}' ke '{$newStatus}'.",
             ], 422);
@@ -83,6 +142,24 @@ class CourierController extends Controller
             $pickup->user()->increment('points_balance', $updates['points_awarded']);
 
             // Free up courier availability when all their pickups are done
+            $remainingActive = PickupRequest::where('courier_id', $courier->id)
+                ->whereIn('status', ['pending', 'on_the_way'])
+                ->where('id', '!=', $pickup->id)
+                ->count();
+
+            if ($remainingActive === 0) {
+                $courier->update(['status' => 'active', 'is_available' => true]);
+            }
+        }
+
+        if ($newStatus === 'cancelled') {
+            $updates['cancelled_at'] = now();
+            $updates['courier_id']   = null; // unassign courier so pickup can be re-searched
+
+            // Reset status back to searching so another courier can pick it up
+            $updates['status'] = 'searching';
+
+            // Free up courier if no more active pickups
             $remainingActive = PickupRequest::where('courier_id', $courier->id)
                 ->whereIn('status', ['pending', 'on_the_way'])
                 ->where('id', '!=', $pickup->id)

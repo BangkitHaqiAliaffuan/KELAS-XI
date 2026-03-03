@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Courier;
 use App\Models\PickupRequest;
 use App\Models\WasteCategory;
 use Illuminate\Http\JsonResponse;
@@ -77,7 +76,7 @@ class PickupController extends Controller
 
         DB::beginTransaction();
         try {
-            // Create the pickup request
+            // Create the pickup request — starts in 'searching' until a courier accepts
             $pickup = PickupRequest::create([
                 'user_id'               => $request->user()->id,
                 'address'               => $validated['address'],
@@ -85,7 +84,7 @@ class PickupController extends Controller
                 'longitude'             => $validated['longitude'] ?? null,
                 'pickup_date'           => $validated['pickup_date'],
                 'pickup_time'           => $validated['pickup_time'],
-                'status'                => 'pending',
+                'status'                => 'searching',
                 'notes'                 => $validated['notes'] ?? null,
                 'estimated_weight_kg'   => $validated['estimated_weight_kg'] ?? null,
             ]);
@@ -102,14 +101,11 @@ class PickupController extends Controller
 
             DB::commit();
 
-            // Auto-assign the best available courier (outside transaction — best effort)
-            $this->assignCourier($pickup);
-
             // Return the freshly created pickup with all relations
             $pickup->load(['items.wasteCategory', 'courier']);
 
             return response()->json([
-                'message' => 'Pickup berhasil dijadwalkan!',
+                'message' => 'Pickup berhasil dijadwalkan! Mencari kurir...',
                 'data'    => $this->formatPickup($pickup),
             ], 201);
         } catch (\Throwable $e) {
@@ -146,9 +142,9 @@ class PickupController extends Controller
             ->pickupRequests()
             ->findOrFail($id);
 
-        if ($pickup->status !== 'pending') {
+        if (! in_array($pickup->status, ['searching', 'pending'])) {
             return response()->json([
-                'message' => 'Hanya pickup berstatus pending yang bisa dibatalkan.',
+                'message' => 'Hanya pickup berstatus searching atau pending yang bisa dibatalkan.',
             ], 422);
         }
 
@@ -166,57 +162,6 @@ class PickupController extends Controller
             'message' => 'Pickup berhasil dibatalkan.',
             'data'    => $this->formatPickup($pickup->fresh(['items.wasteCategory', 'courier'])),
         ]);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Auto-assign the best available courier to a pickup request.
-    //
-    // Selection criteria (in order):
-    //   1. status = 'active' AND is_available = true
-    //   2. Fewest active pickups (pending + on_the_way)
-    //   3. Highest rating as tie-breaker
-    //
-    // If no courier is available the pickup stays without one — a
-    // background job or admin can assign later.
-    // ─────────────────────────────────────────────────────────────
-    private function assignCourier(PickupRequest $pickup): void
-    {
-        $courier = $this->selectBestCourier();
-
-        if (! $courier) {
-            return; // no available courier — leave unassigned
-        }
-
-        DB::transaction(function () use ($pickup, $courier) {
-            $pickup->update(['courier_id' => $courier->id]);
-
-            // Mark courier as on_duty when they now have active pickups
-            $activeCount = $courier->activePickups()->count();
-            if ($activeCount >= 1) {
-                $courier->update(['status' => 'on_duty']);
-            }
-
-            $courier->increment('total_deliveries');
-        });
-    }
-
-    /**
-     * Find the best available courier using a single efficient query.
-     * Uses a LEFT JOIN subquery to count active pickups per courier.
-     */
-    private function selectBestCourier(): ?Courier
-    {
-        return Courier::query()
-            ->where('status', '!=', 'inactive')
-            ->where('is_available', true)
-            ->withCount([
-                'pickupRequests as active_pickups_count' => function ($q) {
-                    $q->whereIn('status', ['pending', 'on_the_way']);
-                },
-            ])
-            ->orderBy('active_pickups_count', 'asc')   // least busy first
-            ->orderBy('rating', 'desc')                 // highest rating as tie-breaker
-            ->first();
     }
 
     // ─────────────────────────────────────────────────────────────

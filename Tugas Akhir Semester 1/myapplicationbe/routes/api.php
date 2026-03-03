@@ -99,6 +99,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureIsCourier::class])
     ->prefix('courier')
     ->group(function () {
         Route::get('/me',                              [CourierController::class, 'me']);
+        Route::get('/available-pickups',               [CourierController::class, 'availablePickups']);
+        Route::post('/pickups/{id}/accept',            [CourierController::class, 'acceptPickup'])->whereNumber('id');
         Route::get('/pickups',                         [CourierController::class, 'pickups']);
         Route::patch('/pickups/{id}/status',           [CourierController::class, 'updateStatus'])->whereNumber('id');
         Route::patch('/availability',                  [CourierController::class, 'availability']);

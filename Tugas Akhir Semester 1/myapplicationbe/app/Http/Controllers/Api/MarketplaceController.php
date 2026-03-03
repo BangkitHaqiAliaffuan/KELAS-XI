@@ -23,16 +23,27 @@ class MarketplaceController extends Controller
         // Get user's wishlist listing IDs for isWishlisted flag
         $wishlistedIds = $user->wishlists()->pluck('listing_id')->toArray();
 
-        $query = MarketplaceListing::active()
+        $perPage = min((int) $request->query('per_page', 20), 50);
+
+        $paginator = MarketplaceListing::active()
             ->byCategory($category)
             ->when($search, fn ($q, $s) => $q->where('name', 'like', "%{$s}%"))
-            ->latest();
+            ->latest()
+            ->paginate($perPage);
 
-        $listings = $query->get()->map(fn (MarketplaceListing $listing) =>
-            $this->formatListing($listing, $wishlistedIds)
+        $listings = $paginator->getCollection()->map(
+            fn (MarketplaceListing $listing) => $this->formatListing($listing, $wishlistedIds)
         );
 
-        return response()->json(['data' => $listings]);
+        return response()->json([
+            'data' => $listings,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -89,15 +100,26 @@ class MarketplaceController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function myListings(Request $request): JsonResponse
     {
-        $listings = $request->user()
+        $perPage = min((int) $request->query('per_page', 20), 50);
+
+        $paginator = $request->user()
             ->marketplaceListings()
             ->latest()
-            ->get()
-            ->map(fn (MarketplaceListing $listing) =>
-                $this->formatListing($listing, [])
-            );
+            ->paginate($perPage);
 
-        return response()->json(['data' => $listings]);
+        $listings = $paginator->getCollection()->map(
+            fn (MarketplaceListing $listing) => $this->formatListing($listing, [])
+        );
+
+        return response()->json([
+            'data' => $listings,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────

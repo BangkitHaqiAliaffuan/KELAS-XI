@@ -18,14 +18,25 @@ class OrderController extends Controller
     // ─────────────────────────────────────────────────────────────
     public function index(Request $request): JsonResponse
     {
-        $orders = $request->user()
+        $perPage = min((int) $request->query('per_page', 20), 50);
+
+        $paginator = $request->user()
             ->orders()
             ->with('listing')
             ->latest()
-            ->get()
-            ->map(fn ($order) => $this->formatOrder($order));
+            ->paginate($perPage);
 
-        return response()->json(['data' => $orders]);
+        $orders = $paginator->getCollection()->map(fn ($order) => $this->formatOrder($order));
+
+        return response()->json([
+            'data' => $orders,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────
