@@ -22,6 +22,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -29,31 +30,45 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.kelasxi.myapplication.R
 import com.kelasxi.myapplication.ui.auth.LoginScreen
 import com.kelasxi.myapplication.ui.auth.RegisterScreen
 import com.kelasxi.myapplication.ui.home.HomeScreen
+import com.kelasxi.myapplication.ui.home.PickupDetailScreen
+import com.kelasxi.myapplication.ui.marketplace.AddListingScreen
+import com.kelasxi.myapplication.ui.marketplace.EditListingScreen
 import com.kelasxi.myapplication.ui.marketplace.MarketplaceScreen
 import com.kelasxi.myapplication.ui.marketplace.ProductDetailScreen
 import com.kelasxi.myapplication.ui.onboarding.OnboardingScreen
 import com.kelasxi.myapplication.ui.onboarding.SplashScreen
 import com.kelasxi.myapplication.ui.profile.MyOrdersScreen
+import com.kelasxi.myapplication.ui.profile.MyShopScreen
+import com.kelasxi.myapplication.ui.profile.AddressScreen
 import com.kelasxi.myapplication.ui.profile.ProfileScreen
 import com.kelasxi.myapplication.ui.profile.WishlistScreen
+import com.kelasxi.myapplication.ui.courier.CourierHomeScreen
+import com.kelasxi.myapplication.ui.courier.CourierRouteScreen
+import com.kelasxi.myapplication.ui.map.MapPickerScreen
+import com.kelasxi.myapplication.ui.map.MapPickerResult
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+import com.kelasxi.myapplication.viewmodel.AddressViewModel
 import com.kelasxi.myapplication.viewmodel.HomeViewModel
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 import com.kelasxi.myapplication.viewmodel.AuthViewModel
+import com.kelasxi.myapplication.viewmodel.CourierViewModel
 
 data class BottomNavItem(
-    val label: String,
+    val labelRes: Int,
     val route: String,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector
 )
 
 val bottomNavItems = listOf(
-    BottomNavItem("Home", Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
-    BottomNavItem("Marketplace", Screen.Marketplace.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
-    BottomNavItem("Profile", Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person)
+    BottomNavItem(R.string.nav_home, Screen.Home.route, Icons.Filled.Home, Icons.Outlined.Home),
+    BottomNavItem(R.string.nav_marketplace, Screen.Marketplace.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
+    BottomNavItem(R.string.nav_profile, Screen.Profile.route, Icons.Filled.Person, Icons.Outlined.Person)
 )
 
 @Composable
@@ -65,6 +80,8 @@ fun TrashCareNavGraph() {
     val homeViewModel: HomeViewModel = viewModel()
     val marketplaceViewModel: MarketplaceViewModel = viewModel()
     val authViewModel: AuthViewModel = viewModel()
+    val addressViewModel: AddressViewModel = viewModel()
+    val courierViewModel: CourierViewModel = viewModel()
 
     // Navigate to Login only after logout() fully completes (coroutine finished)
     LaunchedEffect(Unit) {
@@ -73,6 +90,28 @@ fun TrashCareNavGraph() {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }
+        }
+    }
+
+    // Navigate courier to their home when isCourierLoggedIn becomes true
+    val authUiState by authViewModel.uiState.collectAsState()
+    LaunchedEffect(authUiState.isCourierLoggedIn) {
+        if (authUiState.isCourierLoggedIn) {
+            navController.navigate(Screen.CourierHome.route) {
+                popUpTo(Screen.Login.route) { inclusive = true }
+                launchSingleTop = true
+            }
+            // Token is now stored — load courier data immediately
+            courierViewModel.refresh()
+        }
+    }
+
+    // Reload data for Home & Marketplace as soon as user login is confirmed
+    // This handles the case where Google Sign-In completes after ViewModels are already created
+    LaunchedEffect(authUiState.isLoggedIn) {
+        if (authUiState.isLoggedIn) {
+            homeViewModel.loadPickups()
+            marketplaceViewModel.loadProducts()
         }
     }
 
@@ -103,13 +142,13 @@ fun TrashCareNavGraph() {
                             icon = {
                                 Icon(
                                     imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                    contentDescription = item.label,
+                                    contentDescription = stringResource(item.labelRes),
                                     modifier = Modifier.scale(scale)
                                 )
                             },
                             label = {
                                 Text(
-                                    text = item.label,
+                                    text = stringResource(item.labelRes),
                                     style = MaterialTheme.typography.labelSmall
                                 )
                             },
@@ -148,6 +187,11 @@ fun TrashCareNavGraph() {
                             popUpTo(Screen.Login.route) { inclusive = true }
                         }
                     },
+                    onLoginAsCourier = {
+                        navController.navigate(Screen.CourierHome.route) {
+                            popUpTo(Screen.Login.route) { inclusive = true }
+                        }
+                    },
                     onNavigateToRegister = {
                         navController.navigate(Screen.Register.route)
                     },
@@ -181,8 +225,39 @@ fun TrashCareNavGraph() {
                     }
                 })
             }
-            composable(Screen.Home.route) {
-                HomeScreen(viewModel = homeViewModel)
+            composable(Screen.Home.route) { backEntry ->
+                // Observe MapPicker results returned via savedStateHandle
+                val mapLat = backEntry.savedStateHandle
+                    .getStateFlow<Double?>(MapPickerResult.KEY_LAT, null)
+                    .collectAsState().value
+                val mapLng = backEntry.savedStateHandle
+                    .getStateFlow<Double?>(MapPickerResult.KEY_LNG, null)
+                    .collectAsState().value
+                val mapAddress = backEntry.savedStateHandle
+                    .getStateFlow(MapPickerResult.KEY_ADDRESS, "")
+                    .collectAsState().value
+
+                LaunchedEffect(mapLat, mapLng) {
+                    if (mapLat != null && mapLng != null) {
+                        homeViewModel.updateCoordinates(mapLat, mapLng, mapAddress)
+                        // Clear so a second visit doesn't re-apply stale values
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LAT)
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LNG)
+                        backEntry.savedStateHandle.remove<String>(MapPickerResult.KEY_ADDRESS)
+                    }
+                }
+
+                HomeScreen(
+                    viewModel = homeViewModel,
+                    addressViewModel = addressViewModel,
+                    onPickupClick = { pickup ->
+                        homeViewModel.selectPickup(pickup)
+                        navController.navigate(Screen.PickupDetail.createRoute(pickup.id))
+                    },
+                    onPickLocationClick = {
+                        navController.navigate(Screen.MapPicker.route)
+                    }
+                )
             }
             composable(Screen.Marketplace.route) {
                 MarketplaceScreen(
@@ -196,26 +271,121 @@ fun TrashCareNavGraph() {
             composable(Screen.ProductDetail.route) {
                 ProductDetailScreen(
                     viewModel = marketplaceViewModel,
-                    onBack = { navController.popBackStack() }
+                    addressViewModel = addressViewModel,
+                    onBack = { navController.popBackStack() },
+                    onOrderSuccess = {
+                        navController.navigate(Screen.MyOrders.route) {
+                            popUpTo(Screen.ProductDetail.route) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(
-                    onLogout = { authViewModel.logout() },
-                    onMyOrders = { navController.navigate(Screen.MyOrders.route) },
-                    onWishlist = { navController.navigate(Screen.Wishlist.route) }
+                    onLogout      = { authViewModel.logout() },
+                    onMyOrders    = { navController.navigate(Screen.MyOrders.route) },
+                    onWishlist    = { navController.navigate(Screen.Wishlist.route) },
+                    onMyShop      = { navController.navigate(Screen.MyShop.route) },
+                    onAddresses   = { navController.navigate(Screen.Addresses.route) },
+                    authViewModel = authViewModel,
+                    homeViewModel = homeViewModel
                 )
             }
             composable(Screen.MyOrders.route) {
-                MyOrdersScreen(onBack = { navController.popBackStack() })
+                MyOrdersScreen(
+                    viewModel = marketplaceViewModel,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(Screen.Wishlist.route) {
                 WishlistScreen(
+                    viewModel = marketplaceViewModel,
                     onBack = { navController.popBackStack() },
                     onProductClick = { product ->
                         marketplaceViewModel.selectProduct(product)
                         navController.navigate(Screen.ProductDetail.createRoute(product.id))
                     }
+                )
+            }
+            composable(Screen.MyShop.route) {
+                MyShopScreen(
+                    viewModel    = marketplaceViewModel,
+                    onBack       = { navController.popBackStack() },
+                    onAddListing = { navController.navigate(Screen.AddListing.route) },
+                    onManage     = { productId ->
+                        navController.navigate(Screen.EditListing.createRoute(productId))
+                    }
+                )
+            }
+            composable(Screen.AddListing.route) {
+                AddListingScreen(
+                    viewModel = marketplaceViewModel,
+                    onBack    = { navController.popBackStack() },
+                    onSuccess = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.EditListing.route) { backStackEntry ->
+                val productId = backStackEntry.arguments?.getString("productId") ?: ""
+                EditListingScreen(
+                    productId = productId,
+                    viewModel = marketplaceViewModel,
+                    onBack    = { navController.popBackStack() },
+                    onSuccess = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.Addresses.route) {
+                AddressScreen(
+                    viewModel = addressViewModel,
+                    onBack    = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.PickupDetail.route) {
+                val pickup = homeViewModel.selectedPickup.collectAsState().value
+                if (pickup != null) {
+                    PickupDetailScreen(
+                        pickup = pickup,
+                        onBack = {
+                            homeViewModel.clearSelectedPickup()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+            composable(Screen.CourierHome.route) {
+                CourierHomeScreen(
+                    viewModel = courierViewModel,
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onNavigateRoute = { lat, lng, address ->
+                        navController.navigate(Screen.CourierRoute.createRoute(lat, lng, address))
+                    }
+                )
+            }
+            composable(Screen.MapPicker.route) {
+                MapPickerScreen(navController = navController)
+            }
+            composable(
+                route = Screen.CourierRoute.route,
+                arguments = listOf(
+                    navArgument("lat") { type = NavType.StringType },
+                    navArgument("lng") { type = NavType.StringType },
+                    navArgument("address") { type = NavType.StringType }
+                )
+            ) { backEntry ->
+                val lat = backEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
+                val lng = backEntry.arguments?.getString("lng")?.toDoubleOrNull() ?: 0.0
+                val address = java.net.URLDecoder.decode(
+                    backEntry.arguments?.getString("address") ?: "", "UTF-8"
+                )
+                CourierRouteScreen(
+                    destLat = lat,
+                    destLng = lng,
+                    destAddress = address,
+                    navController = navController
                 )
             }
         }

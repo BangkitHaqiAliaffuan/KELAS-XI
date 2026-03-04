@@ -7,14 +7,33 @@ data class PickupRequest(
     val address: String,
     val trashTypes: List<TrashType>,
     val status: PickupStatus,
-    val notes: String = ""
+    val notes: String = "",
+    val estimatedWeightKg: Double? = null,
+    val pointsAwarded: Int = 0,
+    val completedAt: String? = null,
+    val cancelledAt: String? = null,
+    val cancellationReason: String? = null,
+    val createdAt: String? = null,
+    val courier: Courier? = null
+)
+
+data class Courier(
+    val id: Long,
+    val name: String,
+    val phone: String? = null,
+    val avatarUrl: String? = null,
+    val vehicleType: String? = null,
+    val vehiclePlate: String? = null,
+    val rating: Double? = null,
+    val status: String? = null
 )
 
 enum class PickupStatus(val label: String, val emoji: String) {
-    PENDING("Pending", "🟡"),
-    ON_THE_WAY("On the Way", "🔵"),
-    DONE("Done", "✅"),
-    CANCELLED("Cancelled", "❌")
+    SEARCHING("Mencari Kurir", "🔍"),
+    PENDING("Menunggu", "🟡"),
+    ON_THE_WAY("Dalam Perjalanan", "🔵"),
+    DONE("Selesai", "✅"),
+    CANCELLED("Dibatalkan", "❌")
 }
 
 enum class TrashType(val label: String, val emoji: String) {
@@ -34,7 +53,8 @@ data class Product(
     val category: ProductCategory,
     val condition: ProductCondition,
     val imageUrl: String = "",
-    val isWishlisted: Boolean = false
+    val isWishlisted: Boolean = false,
+    val isSold: Boolean = false
 )
 
 enum class ProductCategory(val label: String) {
@@ -77,7 +97,7 @@ data class UserProfile(
     val memberSince: String,
     val totalPickups: Int,
     val itemsSold: Int,
-    val co2Saved: Float,
+    val totalWeightKg: Float = 0f,
     val avatarUrl: String = ""
 )
 

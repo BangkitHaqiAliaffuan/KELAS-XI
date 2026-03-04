@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,7 +20,10 @@ import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.util.GoogleAuthHelper
+import com.kelasxi.myapplication.util.GoogleSignInResult
 import com.kelasxi.myapplication.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 // ─────────────────────────────────────────────────────────────────
 // LOGIN SCREEN
@@ -28,18 +32,30 @@ import com.kelasxi.myapplication.viewmodel.AuthViewModel
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
+    onLoginAsCourier: () -> Unit = {},
     onNavigateToRegister: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
     val uiState by authViewModel.uiState.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    val scope = rememberCoroutineScope()
+    val googleHelper = remember(activity) { activity?.let { GoogleAuthHelper(it) } }
+    var googleLoading by remember { mutableStateOf(false) }
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
 
-    // Navigate to Home as soon as login succeeds
+    // Navigate to Home when user login succeeds
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) onLoginSuccess()
+    }
+
+    // Navigate to CourierHome when courier login succeeds
+    LaunchedEffect(uiState.isCourierLoggedIn) {
+        if (uiState.isCourierLoggedIn) onLoginAsCourier()
     }
 
     Box(
@@ -280,21 +296,50 @@ fun LoginScreen(
 
                     // Social login hint (UI only)
                     OutlinedButton(
-                        onClick = { authViewModel.login(email, password) },
+                        onClick = {
+                            if (googleHelper == null) {
+                                authViewModel.setGoogleError("Google Sign-In tidak tersedia.")
+                                return@OutlinedButton
+                            }
+                            scope.launch {
+                                googleLoading = true
+                                when (val result = googleHelper.signIn()) {
+                                    is GoogleSignInResult.Success -> {
+                                        authViewModel.loginWithGoogle(result.idToken)
+                                    }
+                                    is GoogleSignInResult.Error -> {
+                                        authViewModel.clearError()
+                                        // Show the error via the existing error banner
+                                        // by triggering an error state in viewmodel
+                                        authViewModel.setGoogleError(result.message)
+                                    }
+                                }
+                                googleLoading = false
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
                         shape = RoundedCornerShape(24.dp),
-                        border = BorderStroke(1.dp, DividerColor)
+                        border = BorderStroke(1.dp, DividerColor),
+                        enabled = !uiState.isLoading && !googleLoading
                     ) {
-                        Text("🌐", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
-                        Text(
-                            "Masuk dengan Google",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
-                        )
+                        if (googleLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = GreenDeep
+                            )
+                        } else {
+                            Text("🌐", fontSize = 18.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                "Masuk dengan Google",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = TextPrimary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
             }

@@ -15,19 +15,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.model.*
+import com.kelasxi.myapplication.ui.common.AddressPickerField
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.viewmodel.AddressViewModel
 import com.kelasxi.myapplication.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(),
+    addressViewModel: AddressViewModel = viewModel(),
+    onPickupClick: (PickupRequest) -> Unit = {},
+    onPickLocationClick: () -> Unit = {}
+) {
     val recentPickups       by viewModel.recentPickups.collectAsStateWithLifecycle()
     val statsCards          by viewModel.statsCards.collectAsStateWithLifecycle()
     val selectedTrashTypes  by viewModel.selectedTrashTypes.collectAsStateWithLifecycle()
@@ -40,6 +49,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
     val pickupsError        by viewModel.pickupsError.collectAsStateWithLifecycle()
     val isSubmitting        by viewModel.isSubmitting.collectAsStateWithLifecycle()
     val submitError         by viewModel.submitError.collectAsStateWithLifecycle()
+    val estimatedWeightKg   by viewModel.estimatedWeightKg.collectAsStateWithLifecycle()
+    val userName            by viewModel.userName.collectAsStateWithLifecycle()
+    val latitude            by viewModel.latitude.collectAsStateWithLifecycle()
+    val longitude           by viewModel.longitude.collectAsStateWithLifecycle()
 
     // Show submit-error snackbar
     val snackbarHostState = remember { SnackbarHostState() }
@@ -60,7 +73,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // Gradient Header
-            item { HomeHeader() }
+            item { HomeHeader(userName = userName) }
 
             // Stats Banner
             item {
@@ -72,6 +85,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                 PickupRequestCard(
                     address = address,
                     onAddressChange = viewModel::updateAddress,
+                    addressViewModel = addressViewModel,
                     selectedTrashTypes = selectedTrashTypes,
                     onTrashTypeToggle = viewModel::toggleTrashType,
                     selectedDate = selectedDate,
@@ -80,8 +94,13 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     onTimeSelected = viewModel::updateTime,
                     notes = notes,
                     onNotesChange = viewModel::updateNotes,
+                    estimatedWeightKg = estimatedWeightKg,
+                    onWeightChange = viewModel::updateEstimatedWeight,
                     onSubmit = viewModel::submitPickup,
-                    isSubmitting = isSubmitting
+                    isSubmitting = isSubmitting,
+                    latitude = latitude,
+                    longitude = longitude,
+                    onPickLocationClick = onPickLocationClick
                 )
             }
 
@@ -157,7 +176,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                     }
                 }
                 else -> items(recentPickups) { pickup ->
-                    RecentPickupCard(pickup = pickup)
+                    RecentPickupCard(
+                        pickup = pickup,
+                        onClick = { onPickupClick(pickup) }
+                    )
                 }
             }
         }
@@ -171,7 +193,7 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
 }
 
 @Composable
-fun HomeHeader() {
+fun HomeHeader(userName: String = "") {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -253,7 +275,7 @@ fun HomeHeader() {
 
             Column {
                 Text(
-                    text = "Hi, Budi 👋",
+                    text = if (userName.isNotBlank()) "Hi, $userName 👋" else "Hi, Selamat Datang 👋",
                     style = MaterialTheme.typography.headlineSmall,
                     color = Color.White,
                     fontWeight = FontWeight.Bold
@@ -319,6 +341,7 @@ fun StatCardItem(stat: StatCard) {
 fun PickupRequestCard(
     address: String,
     onAddressChange: (String) -> Unit,
+    addressViewModel: AddressViewModel = viewModel(),
     selectedTrashTypes: Set<TrashType>,
     onTrashTypeToggle: (TrashType) -> Unit,
     selectedDate: String,
@@ -327,11 +350,28 @@ fun PickupRequestCard(
     onTimeSelected: (String) -> Unit,
     notes: String,
     onNotesChange: (String) -> Unit,
+    estimatedWeightKg: Double? = null,
+    onWeightChange: (Double?) -> Unit = {},
     onSubmit: () -> Unit,
-    isSubmitting: Boolean = false
+    isSubmitting: Boolean = false,
+    latitude: Double? = null,
+    longitude: Double? = null,
+    onPickLocationClick: () -> Unit = {}
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
+
+    // Weight picker local state
+    val weightPresets = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
+    var showCustomWeight by remember { mutableStateOf(false) }
+    var customWeightText by remember { mutableStateOf("") }
+    LaunchedEffect(estimatedWeightKg) {
+        // Sync showCustomWeight flag when state is reset externally
+        if (estimatedWeightKg == null) {
+            showCustomWeight = false
+            customWeightText = ""
+        }
+    }
 
     Card(
         modifier = Modifier
@@ -365,31 +405,27 @@ fun PickupRequestCard(
             HorizontalDivider(color = DividerColor)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Map Placeholder
-            MapPlaceholder()
+            // Map Preview / Picker Button
+            if (latitude != null && longitude != null) {
+                // Show mini osmdroid preview
+                MapMiniPreview(
+                    lat = latitude,
+                    lng = longitude,
+                    onClick = onPickLocationClick
+                )
+            } else {
+                // No location selected yet — show placeholder with "Pilih di Peta" button
+                MapPlaceholderWithButton(onClick = onPickLocationClick)
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Address Field
-            OutlinedTextField(
+            AddressPickerField(
                 value = address,
                 onValueChange = onAddressChange,
-                label = { Text("Alamat Penjemputan") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = GreenDeep
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = GreenDeep,
-                    focusedLabelColor = GreenDeep,
-                    cursorColor = GreenDeep
-                ),
-                maxLines = 2
+                addressViewModel = addressViewModel,
+                label = "Alamat Penjemputan"
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -490,6 +526,98 @@ fun PickupRequestCard(
                 placeholder = { Text("Tambahkan instruksi untuk kurir...") }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ── Estimated Weight Section ──────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "Estimasi Berat Sampah",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "(opsional)",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextHint
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                weightPresets.forEach { kg ->
+                    val isSelected = !showCustomWeight && estimatedWeightKg == kg
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = {
+                            showCustomWeight = false
+                            customWeightText = ""
+                            onWeightChange(if (isSelected) null else kg)
+                        },
+                        label = { Text("${kg.toInt()} kg") },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = GreenDeep,
+                            selectedLabelColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    )
+                }
+                // "Lainnya" chip
+                FilterChip(
+                    selected = showCustomWeight,
+                    onClick = {
+                        showCustomWeight = !showCustomWeight
+                        if (!showCustomWeight) {
+                            customWeightText = ""
+                            onWeightChange(null)
+                        }
+                    },
+                    label = { Text("Lainnya") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Edit,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = GreenDeep,
+                        selectedLabelColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                )
+            }
+            if (showCustomWeight) {
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customWeightText,
+                    onValueChange = { raw ->
+                        customWeightText = raw
+                        onWeightChange(raw.toDoubleOrNull())
+                    },
+                    label = { Text("Berat (kg)") },
+                    placeholder = { Text("Contoh: 7.5") },
+                    suffix = { Text("kg") },
+                    leadingIcon = {
+                        Icon(Icons.Outlined.Scale, contentDescription = null, tint = GreenDeep)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = GreenDeep,
+                        focusedLabelColor = GreenDeep,
+                        cursorColor = GreenDeep
+                    ),
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                    ),
+                    singleLine = true
+                )
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             // Submit Button
@@ -567,7 +695,7 @@ fun PickupRequestCard(
 }
 
 @Composable
-fun MapPlaceholder() {
+fun MapPlaceholderWithButton(onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -585,65 +713,110 @@ fun MapPlaceholder() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            // Map grid lines decoration
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
+                    .size(48.dp)
+                    .background(GreenDeep, CircleShape),
+                contentAlignment = Alignment.Center
             ) {
-                // Simulated map roads
-                repeat(5) { i ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(1.dp)
-                            .offset(y = (30 + i * 30).dp)
-                            .background(GreenPale.copy(alpha = 0.5f))
-                    )
-                }
-                repeat(8) { i ->
-                    Box(
-                        modifier = Modifier
-                            .width(1.dp)
-                            .fillMaxHeight()
-                            .offset(x = (30 + i * 40).dp)
-                            .background(GreenPale.copy(alpha = 0.5f))
-                    )
-                }
+                Icon(
+                    Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
             }
-
-            // Location pin
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .background(GreenDeep, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(28.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(
-                    color = GreenDeep,
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = "📍 Lokasi Kamu",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.White,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
+            Spacer(modifier = Modifier.height(10.dp))
+            Button(
+                onClick = onClick,
+                colors = ButtonDefaults.buttonColors(containerColor = GreenDeep),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Pilih di Peta", fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
             }
         }
     }
+}
+
+@Composable
+fun MapMiniPreview(lat: Double, lng: Double, onClick: () -> Unit = {}) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .border(1.dp, GreenMedium.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+    ) {
+        AndroidView(
+            factory = { ctx ->
+                org.osmdroid.config.Configuration.getInstance()
+                    .load(ctx, ctx.getSharedPreferences("osmdroid", android.content.Context.MODE_PRIVATE))
+                org.osmdroid.config.Configuration.getInstance().userAgentValue = ctx.packageName
+                org.osmdroid.views.MapView(ctx).also { mv ->
+                    mv.setTileSource(org.osmdroid.tileprovider.tilesource.TileSourceFactory.MAPNIK)
+                    mv.setMultiTouchControls(false)
+                    mv.isClickable = false
+                    mv.controller.setZoom(16.0)
+                    mv.controller.setCenter(org.osmdroid.util.GeoPoint(lat, lng))
+                    val marker = org.osmdroid.views.overlay.Marker(mv)
+                    marker.position = org.osmdroid.util.GeoPoint(lat, lng)
+                    marker.setAnchor(
+                        org.osmdroid.views.overlay.Marker.ANCHOR_CENTER,
+                        org.osmdroid.views.overlay.Marker.ANCHOR_BOTTOM
+                    )
+                    mv.overlays.add(marker)
+                }
+            },
+            update = { mv ->
+                mv.controller.setCenter(org.osmdroid.util.GeoPoint(lat, lng))
+                mv.overlays.filterIsInstance<org.osmdroid.views.overlay.Marker>()
+                    .firstOrNull()?.position = org.osmdroid.util.GeoPoint(lat, lng)
+                mv.invalidate()
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        // "Ubah Lokasi" chip overlay
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(10.dp),
+            color = GreenDeep,
+            shape = RoundedCornerShape(20.dp),
+            onClick = onClick
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Ubah Lokasi", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+// Keep original MapPlaceholder for Preview usage
+@Composable
+fun MapPlaceholder() {
+    MapPlaceholderWithButton()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -721,14 +894,15 @@ fun SimpleTimePickerDialog(
 }
 
 @Composable
-fun RecentPickupCard(pickup: PickupRequest) {
+fun RecentPickupCard(pickup: PickupRequest, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 5.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -783,10 +957,11 @@ fun RecentPickupCard(pickup: PickupRequest) {
 @Composable
 fun StatusBadge(status: PickupStatus) {
     val (bgColor, textColor) = when (status) {
-        PickupStatus.PENDING -> Pair(StatusPending.copy(alpha = 0.15f), StatusPending)
+        PickupStatus.SEARCHING  -> Pair(OrangeAccent.copy(alpha = 0.15f), OrangeAccent)
+        PickupStatus.PENDING    -> Pair(StatusPending.copy(alpha = 0.15f), StatusPending)
         PickupStatus.ON_THE_WAY -> Pair(StatusOnTheWay.copy(alpha = 0.15f), StatusOnTheWay)
-        PickupStatus.DONE -> Pair(StatusDone.copy(alpha = 0.15f), StatusDone)
-        PickupStatus.CANCELLED -> Pair(StatusCancelled.copy(alpha = 0.15f), StatusCancelled)
+        PickupStatus.DONE       -> Pair(StatusDone.copy(alpha = 0.15f), StatusDone)
+        PickupStatus.CANCELLED  -> Pair(StatusCancelled.copy(alpha = 0.15f), StatusCancelled)
     }
     Surface(
         color = bgColor,
@@ -875,6 +1050,8 @@ fun HomeScreenPreview() {
                         onTimeSelected = {},
                         notes = "",
                         onNotesChange = {},
+                        estimatedWeightKg = null,
+                        onWeightChange = {},
                         onSubmit = {}
                     )
                 }

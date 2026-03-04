@@ -10,7 +10,7 @@ object MockData {
         memberSince = "Januari 2024",
         totalPickups = 12,
         itemsSold = 5,
-        co2Saved = 30f
+        totalWeightKg = 30f
     )
 
     val recentPickups = listOf(

@@ -15,12 +15,23 @@ object TokenStore {
     val KEY_TOKEN = stringPreferencesKey("auth_token")
     val KEY_USER_NAME = stringPreferencesKey("user_name")
     val KEY_USER_EMAIL = stringPreferencesKey("user_email")
+    val KEY_ROLE = stringPreferencesKey("role")   // "user" | "courier"
 
     suspend fun save(context: Context, token: String, user: UserDto) {
         context.authDataStore.edit { prefs ->
             prefs[KEY_TOKEN] = token
             prefs[KEY_USER_NAME] = user.name
             prefs[KEY_USER_EMAIL] = user.email
+            prefs[KEY_ROLE] = "user"
+        }
+    }
+
+    suspend fun saveCourier(context: Context, token: String, courier: CourierProfileDto) {
+        context.authDataStore.edit { prefs ->
+            prefs[KEY_TOKEN] = token
+            prefs[KEY_USER_NAME] = courier.name
+            prefs[KEY_USER_EMAIL] = courier.email
+            prefs[KEY_ROLE] = "courier"
         }
     }
 
@@ -31,8 +42,14 @@ object TokenStore {
     fun tokenFlow(context: Context): Flow<String?> =
         context.authDataStore.data.map { it[KEY_TOKEN] }
 
+    fun roleFlow(context: Context): Flow<String?> =
+        context.authDataStore.data.map { it[KEY_ROLE] }
+
     suspend fun getToken(context: Context): String? =
         tokenFlow(context).first()
+
+    suspend fun getRole(context: Context): String? =
+        roleFlow(context).first()
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -56,7 +73,11 @@ class AuthRepository(private val context: Context) {
             val response = api.login(LoginRequest(email, password))
             if (response.isSuccessful) {
                 val body = response.body()!!
-                TokenStore.save(context, body.token!!, body.user!!)
+                if (body.role == "courier" && body.courier != null) {
+                    TokenStore.saveCourier(context, body.token!!, body.courier)
+                } else {
+                    TokenStore.save(context, body.token!!, body.user!!)
+                }
                 AuthResult.Success(body)
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))
@@ -94,6 +115,21 @@ class AuthRepository(private val context: Context) {
         }
     }
 
+    suspend fun loginWithGoogle(idToken: String): AuthResult<AuthResponse> {
+        return try {
+            val response = api.loginWithGoogle(GoogleLoginRequest(idToken))
+            if (response.isSuccessful) {
+                val body = response.body()!!
+                TokenStore.save(context, body.token!!, body.user!!)
+                AuthResult.Success(body)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server. Cek koneksi internet.")
+        }
+    }
+
     suspend fun logout(): AuthResult<Unit> {
         return try {
             val token = TokenStore.getToken(context) ?: return AuthResult.Error("Belum login.")
@@ -108,7 +144,118 @@ class AuthRepository(private val context: Context) {
         }
     }
 
+    /** Fetch fresh user profile from GET /api/auth/me */
+    suspend fun fetchMe(): AuthResult<UserDto> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.me("Bearer $token")
+            if (response.isSuccessful) {
+                val user = response.body()?.user
+                    ?: return AuthResult.Error("Data user tidak ditemukan.")
+                AuthResult.Success(user)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
     fun tokenFlow(): Flow<String?> = TokenStore.tokenFlow(context)
+
+    fun roleFlow(): Flow<String?> = TokenStore.roleFlow(context)
+
+    // ── Courier endpoints ──────────────────────────────────────────
+    suspend fun getCourierMe(): AuthResult<CourierProfileDto> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.getCourierMe("Bearer $token")
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.courier)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun getCourierPickups(): AuthResult<List<CourierPickupDto>> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.getCourierPickups("Bearer $token")
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.data)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun getAvailablePickups(): AuthResult<List<CourierPickupDto>> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.getAvailablePickups("Bearer $token")
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.data)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun acceptPickup(id: Long): AuthResult<CourierPickupDto> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.acceptPickup("Bearer $token", id)
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.data)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun updatePickupStatus(id: Long, status: String): AuthResult<CourierPickupDto> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.updatePickupStatus("Bearer $token", id, UpdatePickupStatusRequest(status))
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.data)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun toggleAvailability(isAvailable: Boolean): AuthResult<CourierAvailabilityResponse> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login.")
+            val response = api.updateCourierAvailability("Bearer $token", CourierAvailabilityRequest(isAvailable))
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
 
     // ── Parse Laravel validation errors e.g. {"message":"...","errors":{...}} ──
     private fun parseError(raw: String?): String {

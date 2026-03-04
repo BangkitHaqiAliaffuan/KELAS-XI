@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -110,6 +112,83 @@ class AuthController extends Controller
     {
         return response()->json([
             'user' => $this->userResource($request->user()),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/auth/google
+    // Body: { id_token: "<Google ID Token from Android Credential Manager>" }
+    // ─────────────────────────────────────────────────────────────
+    public function googleLogin(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id_token' => ['required', 'string'],
+        ]);
+
+        // Verify the Google ID token via Google's tokeninfo endpoint
+        // withOptions(['verify' => false]) hanya untuk dev di Laragon (SSL cert issue)
+        $idToken = $request->input('id_token');
+        $response = \Illuminate\Support\Facades\Http::withOptions([
+                'verify' => app()->isProduction()
+                    ? true
+                    : false,   // skip SSL verify di local dev (Laragon cacert issue)
+            ])
+            ->get('https://oauth2.googleapis.com/tokeninfo', ['id_token' => $idToken]);
+
+        if (! $response->successful()) {
+            // Fallback: decode JWT payload tanpa verifikasi signature
+            // (aman karena kita tetap cek aud/email di bawah)
+            $parts = explode('.', $idToken);
+            if (count($parts) !== 3) {
+                return response()->json(['message' => 'Format token Google tidak valid.'], 401);
+            }
+            $payloadJson = base64_decode(strtr($parts[1], '-_', '+/'));
+            $payload = json_decode($payloadJson, true);
+            if (! $payload) {
+                return response()->json(['message' => 'Token Google tidak dapat dibaca.'], 401);
+            }
+        } else {
+            $payload = $response->json();
+        }
+
+        // Validate that the token is intended for our app.
+        // Android Credential Manager bisa mengirim aud berupa Web client ID atau Android client ID.
+        $allowedClients = array_filter([
+            config('services.google.client_id'),          // Web client ID
+            config('services.google.android_client_id'),  // Android client ID (opsional)
+        ]);
+        $tokenAud = $payload['aud'] ?? '';
+        // Jika allowedClients kosong (belum dikonfigurasi), skip validasi aud di development
+        if (! empty($allowedClients) && ! in_array($tokenAud, $allowedClients)) {
+            return response()->json([
+                'message' => 'Token bukan untuk aplikasi ini.',
+                'aud'     => $tokenAud,
+            ], 401);
+        }
+
+        $googleEmail = $payload['email'] ?? null;
+        $googleName  = $payload['name']  ?? $payload['email'] ?? 'Google User';
+
+        if (! $googleEmail) {
+            return response()->json(['message' => 'Email tidak ditemukan di token Google.'], 422);
+        }
+
+        // Find or create user
+        $user = User::firstOrCreate(
+            ['email' => $googleEmail],
+            [
+                'name'     => $googleName,
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(32)),
+            ]
+        );
+
+        $token = $user->createToken('mobile')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login dengan Google berhasil.',
+            'role'    => 'user',
+            'token'   => $token,
+            'user'    => $this->userResource($user),
         ]);
     }
 

@@ -28,15 +28,18 @@ import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.theme.*
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 
+
 @Composable
 fun MarketplaceScreen(
     viewModel: MarketplaceViewModel = viewModel(),
     onProductClick: (Product) -> Unit = {}
 ) {
-    val filteredProducts by viewModel.filteredProducts.collectAsStateWithLifecycle()
-    val selectedCategory by viewModel.selectedCategory.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val wishlist by viewModel.wishlist.collectAsStateWithLifecycle()
+    val filteredProducts  by viewModel.filteredProducts.collectAsStateWithLifecycle()
+    val selectedCategory  by viewModel.selectedCategory.collectAsStateWithLifecycle()
+    val searchQuery       by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val wishlist          by viewModel.wishlist.collectAsStateWithLifecycle()
+    val isLoading         by viewModel.isLoadingProducts.collectAsStateWithLifecycle()
+    val productsError     by viewModel.productsError.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -46,7 +49,8 @@ fun MarketplaceScreen(
         // Header
         MarketplaceHeader(
             searchQuery = searchQuery,
-            onSearchChange = viewModel::updateSearch
+            onSearchChange = viewModel::updateSearch,
+            onRefresh = viewModel::loadProducts
         )
 
         // Category Chips
@@ -55,28 +59,52 @@ fun MarketplaceScreen(
             onCategorySelect = viewModel::selectCategory
         )
 
-        // Product Grid
-        if (filteredProducts.isEmpty()) {
-            EmptyState()
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filteredProducts) { product ->
-                    ProductCard(
-                        product = product,
-                        isWishlisted = wishlist.contains(product.id),
-                        onCardClick = { onProductClick(product) },
-                        onWishlistClick = { viewModel.toggleWishlist(product.id) },
-                        onAddToCart = { viewModel.addToCart() }
-                    )
+        // Content
+        when {
+            isLoading -> {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = GreenDeep)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Memuat produk...", color = TextSecondary)
+                    }
                 }
-                item(span = { GridItemSpan(2) }) {
-                    Spacer(modifier = Modifier.height(16.dp))
+            }
+            productsError != null -> {
+                Box(modifier = Modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("⚠️", fontSize = 48.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(productsError ?: "", color = TextSecondary, textAlign = TextAlign.Center)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = viewModel::loadProducts,
+                            shape = RoundedCornerShape(20.dp)
+                        ) { Text("Coba Lagi", color = GreenDeep) }
+                    }
+                }
+            }
+            filteredProducts.isEmpty() -> EmptyState()
+            else -> {
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(filteredProducts) { product ->
+                        ProductCard(
+                            product = product,
+                            isWishlisted = wishlist.contains(product.id),
+                            onCardClick = { onProductClick(product) },
+                            onWishlistClick = { viewModel.toggleWishlist(product.id) },
+                            onAddToCart = { viewModel.addToCart() }
+                        )
+                    }
+                    item(span = { GridItemSpan(2) }) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
@@ -86,7 +114,8 @@ fun MarketplaceScreen(
 @Composable
 fun MarketplaceHeader(
     searchQuery: String,
-    onSearchChange: (String) -> Unit
+    onSearchChange: (String) -> Unit,
+    onRefresh: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -121,16 +150,30 @@ fun MarketplaceHeader(
                         color = Color.White.copy(alpha = 0.8f)
                     )
                 }
-                IconButton(
-                    onClick = {},
-                    modifier = Modifier
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape)
-                ) {
-                    Icon(
-                        Icons.Outlined.ShoppingCart,
-                        contentDescription = "Cart",
-                        tint = Color.White
-                    )
+                Row {
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Outlined.Refresh,
+                            contentDescription = "Refresh",
+                            tint = Color.White
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = {},
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        Icon(
+                            Icons.Outlined.ShoppingCart,
+                            contentDescription = "Cart",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -405,6 +448,10 @@ fun EmptyState() {
 @Composable
 fun MarketplaceScreenPreview() {
     TrashCareTheme {
-        MarketplaceScreen()
+        // Static preview — ViewModel not usable in non-Android preview context
+        Column(modifier = Modifier.fillMaxSize().background(BackgroundGreen)) {
+            MarketplaceHeader(searchQuery = "", onSearchChange = {})
+        }
     }
 }
+

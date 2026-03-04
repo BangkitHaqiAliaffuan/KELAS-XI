@@ -20,17 +20,20 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.kelasxi.myapplication.data.MockData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.model.Product
 import com.kelasxi.myapplication.model.ProductCategory
 import com.kelasxi.myapplication.model.ProductCondition
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 
-// ─── Price formatter (local copy for this package) ────────────────────────────
+// ─── Price formatter ──────────────────────────────────────────────────────────
 private fun formatPrice(price: Long): String {
     val str = price.toString()
     val result = StringBuilder()
@@ -41,27 +44,27 @@ private fun formatPrice(price: Long): String {
     return "Rp $result"
 }
 
-// ─── Category emoji (local copy) ──────────────────────────────────────────────
-private fun ProductCategory.emoji(): String = when (this) {
-    ProductCategory.ELECTRONICS  -> "💻"
-    ProductCategory.FURNITURE    -> "🪑"
-    ProductCategory.CLOTHING     -> "👗"
-    ProductCategory.BOOKS        -> "📚"
-    ProductCategory.ALL          -> "🛍️"
-    ProductCategory.OTHERS       -> "📦"
+// ─── Category emoji ───────────────────────────────────────────────────────────
+private fun ProductCategory.wishlistEmoji(): String = when (this) {
+    ProductCategory.ELECTRONICS -> "💻"
+    ProductCategory.FURNITURE   -> "🪑"
+    ProductCategory.CLOTHING    -> "👗"
+    ProductCategory.BOOKS       -> "📚"
+    ProductCategory.ALL         -> "🛍️"
+    ProductCategory.OTHERS      -> "📦"
 }
 
-// ─── Condition label helper ───────────────────────────────────────────────────
-private fun ProductCondition.label(): String = when (this) {
-    ProductCondition.LIKE_NEW    -> "Seperti Baru"
-    ProductCondition.GOOD        -> "Bekas Baik"
-    ProductCondition.FAIR        -> "Bekas Layak"
+// ─── Condition helpers ────────────────────────────────────────────────────────
+private fun ProductCondition.displayLabel(): String = when (this) {
+    ProductCondition.LIKE_NEW -> "Seperti Baru"
+    ProductCondition.GOOD     -> "Bekas Baik"
+    ProductCondition.FAIR     -> "Bekas Layak"
 }
 
-private fun ProductCondition.color(): Color = when (this) {
-    ProductCondition.LIKE_NEW    -> Color(0xFF4CAF50)
-    ProductCondition.GOOD        -> Color(0xFF03A9F4)
-    ProductCondition.FAIR        -> Color(0xFFFF9800)
+private fun ProductCondition.displayColor(): Color = when (this) {
+    ProductCondition.LIKE_NEW -> Color(0xFF4CAF50)
+    ProductCondition.GOOD     -> Color(0xFF03A9F4)
+    ProductCondition.FAIR     -> Color(0xFFFF9800)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -71,22 +74,32 @@ private fun ProductCondition.color(): Color = when (this) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WishlistScreen(
+    viewModel: MarketplaceViewModel = viewModel(),
     onBack: () -> Unit = {},
     onProductClick: (Product) -> Unit = {}
 ) {
-    // Local wishlist state: starts from mock, togglable in-screen
-    var wishlistIds by remember { mutableStateOf(MockData.wishlistProductIds) }
-    val wishlistProducts = remember(wishlistIds) {
-        MockData.products.filter { it.id in wishlistIds }
+    val wishlistProducts  by viewModel.wishlistProducts.collectAsStateWithLifecycle()
+    val isLoading         by viewModel.isLoadingWishlist.collectAsStateWithLifecycle()
+    val wishlistError     by viewModel.wishlistError.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) { viewModel.loadWishlist() }
+
+    LaunchedEffect(wishlistError) {
+        if (wishlistError != null) {
+            snackbarHostState.showSnackbar(wishlistError!!)
+            viewModel.dismissWishlistError()
+        }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            "Wishlist",
+                            "Wishlist ❤\uFE0F",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
@@ -109,29 +122,41 @@ fun WishlistScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        if (wishlistProducts.isEmpty()) {
-            WishlistEmpty(modifier = Modifier.padding(padding))
-        } else {
-            Column(modifier = Modifier.padding(padding)) {
-                // ── Stats banner ──────────────────────────────────────────────
-                WishlistBanner(count = wishlistProducts.size)
-
-                // ── Product grid ─────────────────────────────────────────────
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    items(wishlistProducts, key = { it.id }) { product ->
-                        WishlistProductCard(
-                            product = product,
-                            onCardClick = { onProductClick(product) },
-                            onRemoveWishlist = {
-                                wishlistIds = wishlistIds - product.id
-                            }
-                        )
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = GreenDeep)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Memuat wishlist...", color = TextSecondary)
+                    }
+                }
+            }
+            wishlistProducts.isEmpty() -> {
+                WishlistEmpty(modifier = Modifier.padding(padding))
+            }
+            else -> {
+                Column(modifier = Modifier.padding(padding)) {
+                    WishlistBanner(count = wishlistProducts.size)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(wishlistProducts, key = { it.id }) { product ->
+                            WishlistProductCard(
+                                product = product,
+                                onCardClick = { onProductClick(product) },
+                                onRemoveWishlist = { viewModel.toggleWishlist(product.id) }
+                            )
+                        }
                     }
                 }
             }
@@ -159,7 +184,6 @@ private fun WishlistBanner(count: Int) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Heart icon
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -174,7 +198,6 @@ private fun WishlistBanner(count: Int) {
                     modifier = Modifier.size(28.dp)
                 )
             }
-
             Column {
                 Text(
                     "Produk Favorit Kamu ❤\uFE0F",
@@ -212,7 +235,7 @@ private fun WishlistProductCard(
     ) {
         Box {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // ── Image placeholder ─────────────────────────────────────────
+                // Image placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -224,10 +247,10 @@ private fun WishlistProductCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(product.category.emoji(), fontSize = 52.sp)
+                    Text(product.category.wishlistEmoji(), fontSize = 52.sp)
                 }
 
-                // ── Info ──────────────────────────────────────────────────────
+                // Info
                 Column(
                     modifier = Modifier.padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -244,11 +267,11 @@ private fun WishlistProductCard(
                     // Condition badge
                     Surface(
                         shape = RoundedCornerShape(4.dp),
-                        color = product.condition.color().copy(alpha = 0.12f)
+                        color = product.condition.displayColor().copy(alpha = 0.12f)
                     ) {
                         Text(
-                            product.condition.label(),
-                            color = product.condition.color(),
+                            product.condition.displayLabel(),
+                            color = product.condition.displayColor(),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -291,7 +314,7 @@ private fun WishlistProductCard(
                 }
             }
 
-            // ── Remove (heart) button ─────────────────────────────────────────
+            // Remove (heart) button
             IconButton(
                 onClick = onRemoveWishlist,
                 modifier = Modifier
@@ -336,7 +359,7 @@ private fun WishlistEmpty(modifier: Modifier = Modifier) {
             "Tambahkan produk favoritmu ke wishlist\nagar mudah ditemukan nanti",
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            textAlign = TextAlign.Center,
             lineHeight = 20.sp
         )
     }
@@ -344,18 +367,11 @@ private fun WishlistEmpty(modifier: Modifier = Modifier) {
 
 // ─── Preview ──────────────────────────────────────────────────────────────────
 
-@Preview(showBackground = true)
-@Composable
-private fun WishlistScreenPreview() {
-    MyApplicationTheme {
-        WishlistScreen()
-    }
-}
-
-@Preview(showBackground = true)
+@Preview(showBackground = true, name = "Wishlist Empty")
 @Composable
 private fun WishlistEmptyPreview() {
-    MyApplicationTheme {
+    TrashCareTheme {
         WishlistEmpty()
     }
 }
+

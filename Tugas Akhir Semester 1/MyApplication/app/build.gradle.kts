@@ -1,7 +1,11 @@
+
+import java.util.Properties
+
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -16,6 +20,17 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Read ORS API key from local.properties (never committed to git)
+        val localProps = Properties().also { props ->
+            val f = rootProject.file("local.properties")
+            if (f.exists()) props.load(f.inputStream())
+        }
+        buildConfigField(
+            "String",
+            "ORS_API_KEY",
+            "\"${localProps.getProperty("ORS_API_KEY", "")}\""
+        )
     }
 
     buildTypes {
@@ -36,11 +51,14 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
 
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -58,6 +76,11 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.gson)
     implementation(libs.datastore.preferences)
+    implementation(libs.osmdroid)
+    implementation(libs.play.services.location)
+    implementation(libs.credential.manager)
+    implementation(libs.credential.manager.play)
+    implementation(libs.googleid)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -65,4 +88,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// VS Code's test runner looks for :app:testClasses which doesn't exist in
+// Android projects. This alias maps it to the correct Android task so that
+// "Run Test" / "Debug Test" works from the editor.
+tasks.register("testClasses") {
+    dependsOn("compileDebugUnitTestKotlin")
 }

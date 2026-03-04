@@ -18,14 +18,44 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
-import com.kelasxi.myapplication.data.MockData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyOrdersScreen(onBack: () -> Unit = {}) {
-    val orders = MockData.myOrders
+fun MyOrdersScreen(
+    viewModel: MarketplaceViewModel = viewModel(),
+    onBack: () -> Unit = {}
+) {
+    val orders       by viewModel.orders.collectAsStateWithLifecycle()
+    val isLoading    by viewModel.isLoadingOrders.collectAsStateWithLifecycle()
+    val ordersError  by viewModel.ordersError.collectAsStateWithLifecycle()
+    val isPayingOrder by viewModel.isPayingOrder.collectAsStateWithLifecycle()
+    val paySuccess   by viewModel.paySuccess.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Order to show payment dialog for
+    var payingOrder by remember { mutableStateOf<Order?>(null) }
+
+    // Load on first entry
+    LaunchedEffect(Unit) { viewModel.loadOrders() }
+
+    LaunchedEffect(ordersError) {
+        if (ordersError != null) {
+            snackbarHostState.showSnackbar(ordersError!!)
+        }
+    }
+
+    LaunchedEffect(paySuccess) {
+        if (paySuccess != null) {
+            snackbarHostState.showSnackbar(paySuccess!!)
+            viewModel.dismissPaySuccess()
+        }
+    }
 
     // Filter state
     var selectedStatus by remember { mutableStateOf<OrderStatus?>(null) }
@@ -33,6 +63,7 @@ fun MyOrdersScreen(onBack: () -> Unit = {}) {
     else orders.filter { it.status == selectedStatus }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -51,6 +82,11 @@ fun MyOrdersScreen(onBack: () -> Unit = {}) {
                         )
                     }
                 },
+                actions = {
+                    IconButton(onClick = { viewModel.loadOrders() }) {
+                        Icon(Icons.Outlined.Refresh, contentDescription = "Refresh", tint = Color.White)
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = GreenDeep,
                     titleContentColor = Color.White
@@ -59,6 +95,20 @@ fun MyOrdersScreen(onBack: () -> Unit = {}) {
         },
         containerColor = BackgroundGreen
     ) { innerPadding ->
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize().padding(innerPadding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        CircularProgressIndicator(color = GreenDeep)
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Memuat pesanan...", color = TextSecondary)
+                    }
+                }
+            }
+            else -> {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -82,12 +132,31 @@ fun MyOrdersScreen(onBack: () -> Unit = {}) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     items(filtered, key = { it.id }) { order ->
-                        OrderCard(order = order)
+                        OrderCard(
+                            order = order,
+                            onPay    = { payingOrder = order },
+                            onCancel = { viewModel.cancelOrder(order.id) }
+                        )
                     }
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
         }
+            } // end else
+        }
+    }
+
+    // Payment dialog — shown on top of Scaffold
+    payingOrder?.let { order ->
+        PaymentDialog(
+            order    = order,
+            isPaying = isPayingOrder,
+            onPay    = { method ->
+                viewModel.payOrder(order.id, method)
+                payingOrder = null
+            },
+            onDismiss = { payingOrder = null }
+        )
     }
 }
 
@@ -187,7 +256,7 @@ fun OrderStatusFilter(
 // Single order card
 // ─────────────────────────────────────────────────────────────────
 @Composable
-fun OrderCard(order: Order) {
+fun OrderCard(order: Order, onPay: () -> Unit = {}, onCancel: () -> Unit = {}) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -316,7 +385,7 @@ fun OrderCard(order: Order) {
                 }
 
                 // Action button per status
-                OrderActionButton(status = order.status)
+                OrderActionButton(status = order.status, onPay = onPay, onCancel = onCancel)
             }
         }
     }
@@ -349,15 +418,21 @@ fun OrderStatusBadge(status: OrderStatus) {
 // Action button
 // ─────────────────────────────────────────────────────────────────
 @Composable
-fun OrderActionButton(status: OrderStatus) {
+fun OrderActionButton(status: OrderStatus, onPay: () -> Unit = {}, onCancel: () -> Unit = {}) {
     when (status) {
         OrderStatus.WAITING_PAYMENT ->
-            Button(
-                onClick = {},
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = StatusPending),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-            ) { Text("Bayar", style = MaterialTheme.typography.labelSmall, color = Color.White) }
+            Column(horizontalAlignment = Alignment.End) {
+                Button(
+                    onClick = onPay,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusPending),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) { Text("Bayar 💳", style = MaterialTheme.typography.labelSmall, color = Color.White) }
+                TextButton(
+                    onClick = onCancel,
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp)
+                ) { Text("Batalkan", style = MaterialTheme.typography.labelSmall, color = StatusCancelled) }
+            }
 
         OrderStatus.SHIPPED ->
             OutlinedButton(
@@ -434,12 +509,171 @@ private fun ProductCategory.emoji(): String = when (this) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Payment Dialog
+// ─────────────────────────────────────────────────────────────────
+@Composable
+fun PaymentDialog(
+    order: Order,
+    isPaying: Boolean,
+    onPay: (method: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val methods = listOf(
+        Triple("transfer", "💳", "Transfer Bank"),
+        Triple("ewallet",  "📱", "E-Wallet (GoPay/OVO/Dana)"),
+        Triple("cod",      "🚚", "Bayar di Tempat (COD)")
+    )
+    var selectedMethod by remember { mutableStateOf("transfer") }
+
+    AlertDialog(
+        onDismissRequest = { if (!isPaying) onDismiss() },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = SurfaceWhite,
+        title = {
+            Column {
+                Text("💳 Pembayaran", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    order.id,
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                // Order summary
+                Card(
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = SurfaceVariant)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            order.product.name,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            formatRupiah(order.totalPrice),
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 14.sp,
+                            color = GreenDeep
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Pilih Metode Pembayaran",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = TextPrimary
+                )
+
+                // Payment method selector
+                methods.forEach { (value, emoji, label) ->
+                    val isSelected = selectedMethod == value
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedMethod = value },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isSelected)
+                                GreenDeep.copy(alpha = 0.08f)
+                            else SurfaceVariant
+                        ),
+                        border = if (isSelected)
+                            androidx.compose.foundation.BorderStroke(1.5.dp, GreenDeep)
+                        else null
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Text(emoji, fontSize = 20.sp)
+                            Text(
+                                label,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                fontSize = 14.sp,
+                                color = if (isSelected) GreenDeep else TextPrimary,
+                                modifier = Modifier.weight(1f)
+                            )
+                            RadioButton(
+                                selected = isSelected,
+                                onClick = { selectedMethod = value },
+                                colors = RadioButtonDefaults.colors(
+                                    selectedColor = GreenDeep
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onPay(selectedMethod) },
+                enabled = !isPaying,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = GreenDeep),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (isPaying) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Memproses...", color = Color.White, fontWeight = FontWeight.Bold)
+                } else {
+                    Text("✅ Bayar Sekarang", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isPaying
+            ) {
+                Text("Batal", color = TextSecondary)
+            }
+        }
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Preview
 // ─────────────────────────────────────────────────────────────────
 @Preview(showBackground = true)
 @Composable
 fun MyOrdersScreenPreview() {
     TrashCareTheme {
-        MyOrdersScreen()
+        // Static preview — no ViewModel
+        Scaffold(
+            topBar = {
+                @OptIn(ExperimentalMaterial3Api::class)
+                TopAppBar(
+                    title = { Text("My Orders", fontWeight = FontWeight.Bold, color = Color.White) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = GreenDeep)
+                )
+            },
+            containerColor = BackgroundGreen
+        ) { p ->
+            Box(Modifier.padding(p).fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("My Orders Preview", color = TextSecondary)
+            }
+        }
     }
 }

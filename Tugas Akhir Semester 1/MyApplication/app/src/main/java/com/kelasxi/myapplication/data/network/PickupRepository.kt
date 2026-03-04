@@ -1,6 +1,7 @@
 package com.kelasxi.myapplication.data.network
 
 import android.content.Context
+import com.kelasxi.myapplication.model.Courier
 import com.kelasxi.myapplication.model.PickupRequest
 import com.kelasxi.myapplication.model.PickupStatus
 import com.kelasxi.myapplication.model.TrashType
@@ -38,6 +39,7 @@ class PickupRepository(private val context: Context) {
         pickupTime: String,   // HH:mm
         trashTypes: List<TrashType>,
         notes: String?,
+        estimatedWeightKg: Double? = null,
         latitude: Double? = null,
         longitude: Double? = null
     ): AuthResult<PickupRequest> {
@@ -46,13 +48,14 @@ class PickupRepository(private val context: Context) {
                 ?: return AuthResult.Error("Belum login. Silakan login kembali.")
 
             val body = CreatePickupRequest(
-                address     = address,
-                latitude    = latitude,
-                longitude   = longitude,
-                pickup_date = pickupDate,
-                pickup_time = pickupTime,
-                notes       = notes?.ifBlank { null },
-                trash_types = trashTypes.map { it.name.lowercase() }
+                address                = address,
+                latitude               = latitude,
+                longitude              = longitude,
+                pickup_date            = pickupDate,
+                pickup_time            = pickupTime,
+                notes                  = notes?.ifBlank { null },
+                estimated_weight_kg    = estimatedWeightKg,
+                trash_types            = trashTypes.map { it.name.lowercase() }
             )
 
             val response = api.createPickup("Bearer $token", body)
@@ -94,19 +97,38 @@ class PickupRepository(private val context: Context) {
             TrashType.entries.firstOrNull { it.name.equals(dto.type, ignoreCase = true) }
         }
         val domainStatus = when (status) {
+            "searching"  -> PickupStatus.SEARCHING
             "on_the_way" -> PickupStatus.ON_THE_WAY
             "done"       -> PickupStatus.DONE
             "cancelled"  -> PickupStatus.CANCELLED
             else         -> PickupStatus.PENDING
         }
         return PickupRequest(
-            id         = id.toString(),
-            date       = pickup_date,
-            time       = pickup_time,
-            address    = address,
-            trashTypes = domainTrashTypes.ifEmpty { listOf(TrashType.ORGANIC) },
-            status     = domainStatus,
-            notes      = notes ?: ""
+            id                  = id.toString(),
+            date                = pickup_date,
+            time                = pickup_time,
+            address             = address,
+            trashTypes          = domainTrashTypes.ifEmpty { listOf(TrashType.ORGANIC) },
+            status              = domainStatus,
+            notes               = notes ?: "",
+            estimatedWeightKg   = estimated_weight_kg,
+            pointsAwarded       = points_awarded,
+            completedAt         = completed_at,
+            cancelledAt         = cancelled_at,
+            cancellationReason  = cancellation_reason,
+            createdAt           = created_at,
+            courier             = courier?.let {
+                Courier(
+                    id           = it.id,
+                    name         = it.name,
+                    phone        = it.phone,
+                    avatarUrl    = it.avatar_path,
+                    vehicleType  = it.vehicle_type,
+                    vehiclePlate = it.vehicle_plate,
+                    rating       = it.rating,
+                    status       = it.status
+                )
+            }
         )
     }
 

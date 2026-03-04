@@ -22,27 +22,66 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.kelasxi.myapplication.data.MockData
 import com.kelasxi.myapplication.model.*
+import com.kelasxi.myapplication.ui.common.AddressPickerField
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.viewmodel.AddressViewModel
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductDetailScreen(
     viewModel: MarketplaceViewModel = viewModel(),
-    onBack: () -> Unit = {}
+    addressViewModel: AddressViewModel = viewModel(),
+    onBack: () -> Unit = {},
+    onOrderSuccess: () -> Unit = {}
 ) {
-    val product by viewModel.selectedProduct.collectAsStateWithLifecycle()
-    val wishlist by viewModel.wishlist.collectAsStateWithLifecycle()
-    var quantity by remember { mutableIntStateOf(1) }
-    var showBuySuccess by remember { mutableStateOf(false) }
+    val product         by viewModel.selectedProduct.collectAsStateWithLifecycle()
+    val wishlist        by viewModel.wishlist.collectAsStateWithLifecycle()
+    val isSubmitting    by viewModel.isSubmittingOrder.collectAsStateWithLifecycle()
+    val isToggling      by viewModel.isTogglingWishlist.collectAsStateWithLifecycle()
+    val orderSuccess    by viewModel.orderSuccess.collectAsStateWithLifecycle()
+    val orderError      by viewModel.orderError.collectAsStateWithLifecycle()
+    val wishlistError   by viewModel.wishlistError.collectAsStateWithLifecycle()
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    var quantity          by remember { mutableIntStateOf(1) }
+    var showBuyDialog     by remember { mutableStateOf(false) }
+    var shippingAddress   by remember { mutableStateOf("") }
+
+    // Show snackbar on errors
+    LaunchedEffect(orderError) {
+        if (orderError != null) {
+            snackbarHostState.showSnackbar(orderError!!)
+            viewModel.dismissOrderError()
+        }
+    }
+    LaunchedEffect(wishlistError) {
+        if (wishlistError != null) {
+            snackbarHostState.showSnackbar(wishlistError!!)
+            viewModel.dismissWishlistError()
+        }
+    }
+
+    // Auto-navigate after order success
+    LaunchedEffect(orderSuccess) {
+        if (orderSuccess != null) {
+            onOrderSuccess()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = BackgroundGreen
+    ) { innerPadding ->
 
     product?.let { p ->
         val isWishlisted = wishlist.contains(p.id)
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .padding(innerPadding)
                 .background(BackgroundGreen)
         ) {
             // Top App Bar
@@ -223,21 +262,30 @@ fun ProductDetailScreen(
 
                         // Buy Now Button
                         Button(
-                            onClick = { showBuySuccess = true },
+                            onClick = { showBuyDialog = true },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(52.dp),
                             shape = RoundedCornerShape(24.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent)
+                            colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent),
+                            enabled = !isSubmitting
                         ) {
-                            Icon(Icons.Filled.ShoppingBag, contentDescription = null, tint = Color.White)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Beli Sekarang",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleSmall
-                            )
+                            if (isSubmitting) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Filled.ShoppingBag, contentDescription = null, tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Beli Sekarang",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -249,71 +297,112 @@ fun ProductDetailScreen(
                                 .fillMaxWidth()
                                 .height(52.dp),
                             shape = RoundedCornerShape(24.dp),
-                            border = BorderStroke(1.5.dp, if (isWishlisted) StatusCancelled else GreenDeep)
+                            border = BorderStroke(1.5.dp, if (isWishlisted) StatusCancelled else GreenDeep),
+                            enabled = !isToggling
                         ) {
-                            Icon(
-                                imageVector = if (isWishlisted) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                contentDescription = null,
-                                tint = if (isWishlisted) StatusCancelled else GreenDeep
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = if (isWishlisted) "Hapus dari Wishlist" else "Tambah ke Wishlist 🤍",
-                                color = if (isWishlisted) StatusCancelled else GreenDeep,
-                                fontWeight = FontWeight.Bold,
-                                style = MaterialTheme.typography.titleSmall
-                            )
+                            if (isToggling) {
+                                CircularProgressIndicator(
+                                    color = GreenDeep,
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = if (isWishlisted) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                    contentDescription = null,
+                                    tint = if (isWishlisted) StatusCancelled else GreenDeep
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = if (isWishlisted) "Hapus dari Wishlist" else "Tambah ke Wishlist 🤍",
+                                    color = if (isWishlisted) StatusCancelled else GreenDeep,
+                                    fontWeight = FontWeight.Bold,
+                                    style = MaterialTheme.typography.titleSmall
+                                )
+                            }
                         }
                     }
                 }
             }
         }
 
-        // Buy Success Dialog
-        if (showBuySuccess) {
+        // ── Shipping Address Dialog ──────────────────────────────
+        if (showBuyDialog) {
             AlertDialog(
-                onDismissRequest = { showBuySuccess = false },
-                icon = { Text("🎊", fontSize = 48.sp) },
+                onDismissRequest = { if (!isSubmitting) showBuyDialog = false },
+                icon = { Text("🛒", fontSize = 40.sp) },
                 title = {
                     Text(
-                        "Pembelian Berhasil!",
+                        "Konfirmasi Pembelian",
                         fontWeight = FontWeight.Bold,
                         color = GreenDeep
                     )
                 },
                 text = {
-                    Text(
-                        "Pesananmu sedang diproses. Terima kasih sudah memilih produk daur ulang! 🌱",
-                        textAlign = TextAlign.Center,
-                        color = TextSecondary
-                    )
+                    Column {
+                        Text(
+                            text = "${p.name}  ×$quantity",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary
+                        )
+                        Text(
+                            text = "Total: Rp ${formatPrice(p.price * quantity)}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = OrangeDark
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        AddressPickerField(
+                            value = shippingAddress,
+                            onValueChange = { shippingAddress = it },
+                            addressViewModel = addressViewModel,
+                            label = "Alamat Pengiriman"
+                        )
+                    }
                 },
                 confirmButton = {
                     Button(
                         onClick = {
-                            showBuySuccess = false
-                            onBack()
+                            showBuyDialog = false
+                            viewModel.createOrder(
+                                productId       = p.id,
+                                quantity        = quantity,
+                                shippingAddress = shippingAddress,
+                                notes           = null
+                            )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = GreenDeep),
+                        enabled = shippingAddress.isNotBlank() && !isSubmitting,
+                        colors = ButtonDefaults.buttonColors(containerColor = OrangeAccent),
                         shape = RoundedCornerShape(20.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Lihat Pesanan 📦", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Pesan Sekarang 🛍️", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBuyDialog = false }) {
+                        Text("Batal", color = TextSecondary)
                     }
                 },
                 shape = RoundedCornerShape(24.dp),
                 containerColor = SurfaceWhite
             )
         }
+
     } ?: run {
         // Fallback if no product selected
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator(color = GreenDeep)
         }
     }
+
+    } // end Scaffold
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -531,10 +620,14 @@ fun QuantitySelector(
 @Preview(showBackground = true, name = "Product Detail")
 @Composable
 fun ProductDetailPreview() {
-    val vm = MarketplaceViewModel().apply {
-        selectProduct(MockData.products.first())
-    }
     TrashCareTheme {
-        ProductDetailScreen(viewModel = vm)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(androidx.compose.ui.graphics.Color.White),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Product Detail Preview", style = MaterialTheme.typography.titleMedium)
+        }
     }
 }

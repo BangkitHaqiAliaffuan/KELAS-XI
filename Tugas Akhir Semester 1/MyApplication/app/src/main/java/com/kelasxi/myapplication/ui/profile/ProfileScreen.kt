@@ -13,12 +13,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.kelasxi.myapplication.R
 import com.kelasxi.myapplication.data.MockData
+import com.kelasxi.myapplication.data.network.UserDto
+import com.kelasxi.myapplication.data.network.toUserProfile
 import com.kelasxi.myapplication.model.UserProfile
 import com.kelasxi.myapplication.ui.theme.*
+import com.kelasxi.myapplication.util.LanguageManager
+import com.kelasxi.myapplication.viewmodel.AuthViewModel
+import com.kelasxi.myapplication.viewmodel.HomeViewModel
 
 
 
@@ -26,12 +36,28 @@ import com.kelasxi.myapplication.ui.theme.*
 fun ProfileScreen(
     onLogout: () -> Unit = {},
     onMyOrders: () -> Unit = {},
-    onWishlist: () -> Unit = {}
+    onWishlist: () -> Unit = {},
+    onMyShop: () -> Unit = {},
+    onAddresses: () -> Unit = {},
+    authViewModel: AuthViewModel = viewModel(),
+    homeViewModel: HomeViewModel = viewModel()
 ) {
-    val user = MockData.currentUser
+    val authState      by authViewModel.uiState.collectAsStateWithLifecycle()
+    val totalWeightKg  by homeViewModel.totalWeightKg.collectAsStateWithLifecycle()
+    // Refresh user data every time the Profile screen is composed (navigated to)
+    LaunchedEffect(Unit) {
+        authViewModel.loadUserProfile()
+    }
+    // Build a UserProfile from live UserDto; fall back to MockData only in previews
+    val user = authState.user?.toUserProfile() ?: MockData.currentUser
     var isDarkMode by remember { mutableStateOf(false) }
     var notificationsEnabled by remember { mutableStateOf(true) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showLanguageDialog by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val currentLang = remember { mutableStateOf(LanguageManager.getSavedLanguage(context)) }
+    val currentLangLabel = if (currentLang.value == LanguageManager.LANG_EN) "English" else "Indonesia"
 
     Column(
         modifier = Modifier
@@ -45,18 +71,18 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Stats Row
-        ProfileStatsRow(user = user)
+        ProfileStatsRow(user = user, totalWeightKg = totalWeightKg)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Account Section
         ProfileMenuSection(
-            title = "Akun",
+            title = stringResource(R.string.section_account),
             items = listOf(
-                MenuItemData("My Orders", "📦", Color.Unspecified) { onMyOrders() },
-                MenuItemData("My Listings", "🏷️", Color.Unspecified) {},
-                MenuItemData("Wishlist", "🧡", Color.Unspecified) { onWishlist() },
-                MenuItemData("Addresses", "📍", Color.Unspecified) {}
+                MenuItemData(stringResource(R.string.menu_my_orders), "📦", Color.Unspecified) { onMyOrders() },
+                MenuItemData(stringResource(R.string.menu_my_shop), "🛍️", Color.Unspecified) { onMyShop() },
+                MenuItemData(stringResource(R.string.menu_wishlist), "🧡", Color.Unspecified) { onWishlist() },
+                MenuItemData(stringResource(R.string.menu_addresses), "📍", Color.Unspecified) { onAddresses() }
             )
         )
 
@@ -73,7 +99,7 @@ fun ProfileScreen(
         ) {
             Column(modifier = Modifier.padding(vertical = 8.dp)) {
                 Text(
-                    text = "Pengaturan",
+                    text = stringResource(R.string.section_settings),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = TextSecondary,
@@ -83,7 +109,7 @@ fun ProfileScreen(
 
                 MenuRow(
                     emoji = "🔔",
-                    title = "Notifikasi",
+                    title = stringResource(R.string.settings_notifications),
                     trailing = {
                         Switch(
                             checked = notificationsEnabled,
@@ -98,14 +124,14 @@ fun ProfileScreen(
                 HorizontalDivider(color = DividerColor, modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp))
                 MenuRow(
                     emoji = "🌐",
-                    title = "Bahasa",
-                    subtitle = "Indonesia",
-                    onClick = {}
+                    title = stringResource(R.string.settings_language),
+                    subtitle = currentLangLabel,
+                    onClick = { showLanguageDialog = true }
                 )
                 HorizontalDivider(color = DividerColor, modifier = Modifier.padding(horizontal = 16.dp))
                 MenuRow(
                     emoji = "🌙",
-                    title = "Mode Gelap",
+                    title = stringResource(R.string.settings_dark_mode),
                     trailing = {
                         Switch(
                             checked = isDarkMode,
@@ -120,7 +146,7 @@ fun ProfileScreen(
                 HorizontalDivider(color = DividerColor, modifier = Modifier.padding(horizontal = 16.dp))
                 MenuRow(
                     emoji = "🔒",
-                    title = "Privasi & Ketentuan",
+                    title = stringResource(R.string.settings_privacy),
                     onClick = {}
                 )
             }
@@ -139,7 +165,7 @@ fun ProfileScreen(
         ) {
             MenuRow(
                 emoji = "🚪",
-                title = "Keluar",
+                title = stringResource(R.string.menu_logout),
                 titleColor = StatusCancelled,
                 onClick = { showLogoutDialog = true }
             )
@@ -149,7 +175,7 @@ fun ProfileScreen(
 
         // App version
         Text(
-            text = "TrashCare v1.0.0 · 🌱 Bersama Jaga Bumi",
+            text = stringResource(R.string.app_version),
             style = MaterialTheme.typography.bodySmall,
             color = TextHint,
             modifier = Modifier
@@ -159,17 +185,88 @@ fun ProfileScreen(
         )
     }
 
+    // ── Language Picker Dialog ─────────────────────────────────────
+    if (showLanguageDialog) {
+        AlertDialog(
+            onDismissRequest = { showLanguageDialog = false },
+            icon = { Text("🌐", fontSize = 36.sp) },
+            title = {
+                Text(
+                    stringResource(R.string.lang_dialog_title),
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        stringResource(R.string.lang_dialog_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Indonesian option
+                    LanguageOption(
+                        label = stringResource(R.string.lang_indonesian),
+                        isSelected = currentLang.value == LanguageManager.LANG_ID,
+                        onClick = {
+                            if (currentLang.value != LanguageManager.LANG_ID) {
+                                LanguageManager.saveLanguage(context, LanguageManager.LANG_ID)
+                                currentLang.value = LanguageManager.LANG_ID
+                                showLanguageDialog = false
+                                // Restart activity so locale takes effect immediately
+                                (context as? android.app.Activity)?.let { activity ->
+                                    activity.finish()
+                                    activity.startActivity(activity.intent)
+                                }
+                            } else {
+                                showLanguageDialog = false
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    // English option
+                    LanguageOption(
+                        label = stringResource(R.string.lang_english),
+                        isSelected = currentLang.value == LanguageManager.LANG_EN,
+                        onClick = {
+                            if (currentLang.value != LanguageManager.LANG_EN) {
+                                LanguageManager.saveLanguage(context, LanguageManager.LANG_EN)
+                                currentLang.value = LanguageManager.LANG_EN
+                                showLanguageDialog = false
+                                (context as? android.app.Activity)?.let { activity ->
+                                    activity.finish()
+                                    activity.startActivity(activity.intent)
+                                }
+                            } else {
+                                showLanguageDialog = false
+                            }
+                        }
+                    )
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showLanguageDialog = false }) {
+                    Text(stringResource(R.string.btn_cancel), color = TextSecondary)
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+
     // Logout Dialog
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
             icon = { Text("🚪", fontSize = 40.sp) },
             title = {
-                Text("Keluar dari Akun?", fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(stringResource(R.string.logout_title), fontWeight = FontWeight.Bold, color = TextPrimary)
             },
             text = {
                 Text(
-                    "Kamu akan keluar dari akun TrashCare. Yakin?",
+                    stringResource(R.string.logout_body),
                     color = TextSecondary,
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center
                 )
@@ -183,7 +280,7 @@ fun ProfileScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = StatusCancelled),
                     shape = RoundedCornerShape(20.dp)
                 ) {
-                    Text("Keluar", color = Color.White, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.btn_logout), color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -192,11 +289,51 @@ fun ProfileScreen(
                     shape = RoundedCornerShape(20.dp),
                     border = BorderStroke(1.dp, GreenDeep)
                 ) {
-                    Text("Batal", color = GreenDeep)
+                    Text(stringResource(R.string.btn_cancel), color = GreenDeep)
                 }
             },
             shape = RoundedCornerShape(24.dp)
         )
+    }
+}
+
+// ── Language Option Row ────────────────────────────────────────────
+@Composable
+fun LanguageOption(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val borderColor = if (isSelected) GreenDeep else DividerColor
+    val bgColor     = if (isSelected) GreenDeep.copy(alpha = 0.08f) else Color.Transparent
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(1.5.dp, borderColor, RoundedCornerShape(12.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) GreenDeep else TextPrimary
+        )
+        if (isSelected) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .background(GreenDeep, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("✓", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
     }
 }
 
@@ -228,7 +365,7 @@ fun ProfileHeader(user: UserProfile) {
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "Profil",
+                text = stringResource(R.string.profile_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
@@ -269,7 +406,7 @@ fun ProfileHeader(user: UserProfile) {
                             color = Color.White.copy(alpha = 0.85f)
                         )
                         Text(
-                            text = "Bergabung ${user.memberSince}",
+                            text = stringResource(R.string.profile_joined, user.memberSince),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White.copy(alpha = 0.7f)
                         )
@@ -282,7 +419,7 @@ fun ProfileHeader(user: UserProfile) {
                         contentColor = Color.White
                     )
                 ) {
-                    Icon(Icons.Outlined.Edit, contentDescription = "Edit")
+                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.profile_edit))
                 }
             }
         }
@@ -290,7 +427,13 @@ fun ProfileHeader(user: UserProfile) {
 }
 
 @Composable
-fun ProfileStatsRow(user: UserProfile) {
+fun ProfileStatsRow(user: UserProfile, totalWeightKg: Double = 0.0) {
+    val weightLabel = when {
+        totalWeightKg == 0.0       -> "0 kg"
+        totalWeightKg < 1.0        -> "${(totalWeightKg * 1000).toInt()} g"
+        totalWeightKg % 1.0 == 0.0 -> "${totalWeightKg.toInt()} kg"
+        else                       -> String.format("%.1f kg", totalWeightKg)
+    }
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -305,11 +448,11 @@ fun ProfileStatsRow(user: UserProfile) {
                 .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(value = "${user.totalPickups}", label = "Total\nPickup", emoji = "🚛")
+            StatItem(value = "${user.totalPickups}", label = stringResource(R.string.stat_pickups), emoji = "🚛")
             VerticalDivider(modifier = Modifier.height(50.dp), color = DividerColor)
-            StatItem(value = "${user.itemsSold}", label = "Items\nTerjual", emoji = "🛒")
+            StatItem(value = "${user.itemsSold}", label = stringResource(R.string.stat_sold), emoji = "🛒")
             VerticalDivider(modifier = Modifier.height(50.dp), color = DividerColor)
-            StatItem(value = "${user.co2Saved}kg", label = "CO₂\nDihemat", emoji = "🌍")
+            StatItem(value = weightLabel, label = stringResource(R.string.stat_recycled), emoji = "♻️")
         }
     }
 }

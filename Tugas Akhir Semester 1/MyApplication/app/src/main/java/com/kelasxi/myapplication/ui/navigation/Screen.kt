@@ -10,7 +10,24 @@ sealed class Screen(val route: String) {
     object Profile : Screen("profile")
     object MyOrders : Screen("my_orders")
     object Wishlist : Screen("wishlist")
+    object MyShop : Screen("my_shop")
+    object AddListing : Screen("add_listing")
+    object Addresses : Screen("addresses")
     object ProductDetail : Screen("product_detail/{productId}") {
         fun createRoute(productId: String) = "product_detail/$productId"
+    }
+    object EditListing : Screen("edit_listing/{productId}") {
+        fun createRoute(productId: String) = "edit_listing/$productId"
+    }
+    object PickupDetail : Screen("pickup_detail/{pickupId}") {
+        fun createRoute(pickupId: String) = "pickup_detail/$pickupId"
+    }
+    object CourierHome : Screen("courier_home")
+    object MapPicker : Screen("map_picker")
+    object CourierRoute : Screen("courier_route/{lat}/{lng}/{address}") {
+        fun createRoute(lat: Double, lng: Double, address: String): String {
+            val encoded = java.net.URLEncoder.encode(address, "UTF-8")
+            return "courier_route/$lat/$lng/$encoded"
+        }
     }
 }
