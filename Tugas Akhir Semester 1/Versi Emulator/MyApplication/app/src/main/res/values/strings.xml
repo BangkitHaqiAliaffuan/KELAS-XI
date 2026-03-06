@@ -1,0 +1,67 @@
+<resources>
+    <string name="app_name">TrashCare</string>
+
+    <!-- ── Bottom Nav ── -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_marketplace">Marketplace</string>
+    <string name="nav_profile">Profil</string>
+
+    <!-- ── Profile Screen ── -->
+    <string name="profile_title">Profil</string>
+    <string name="profile_joined">Bergabung %1$s</string>
+    <string name="profile_edit">Edit Profil</string>
+    <string name="stat_pickups">Total\nPickup</string>
+    <string name="stat_sold">Items\nTerjual</string>
+    <string name="stat_recycled">Didaur\nUlang</string>
+
+    <string name="section_account">Akun</string>
+    <string name="menu_my_orders">My Orders</string>
+    <string name="menu_my_shop">Toko Saya 🏪</string>
+    <string name="menu_wishlist">Wishlist</string>
+    <string name="menu_addresses">Addresses</string>
+
+    <string name="section_settings">Pengaturan</string>
+    <string name="settings_notifications">Notifikasi</string>
+    <string name="settings_language">Bahasa</string>
+    <string name="settings_dark_mode">Mode Gelap</string>
+    <string name="settings_privacy">Privasi &amp; Ketentuan</string>
+
+    <string name="menu_logout">Keluar</string>
+    <string name="app_version">TrashCare v1.0.0 · 🌱 Bersama Jaga Bumi</string>
+
+    <!-- ── Language Dialog ── -->
+    <string name="lang_dialog_title">Pilih Bahasa</string>
+    <string name="lang_dialog_subtitle">Aplikasi akan dimuat ulang setelah memilih bahasa.</string>
+    <string name="lang_indonesian">🇮🇩  Indonesia</string>
+    <string name="lang_english">🇬🇧  English</string>
+    <string name="btn_cancel">Batal</string>
+
+    <!-- ── Logout Dialog ── -->
+    <string name="logout_title">Keluar dari Akun?</string>
+    <string name="logout_body">Kamu akan keluar dari akun TrashCare. Yakin?</string>
+    <string name="btn_logout">Keluar</string>
+
+    <!-- ── Home Screen ── -->
+    <string name="home_greeting_morning">Selamat Pagi</string>
+    <string name="home_greeting_afternoon">Selamat Siang</string>
+    <string name="home_greeting_evening">Selamat Sore</string>
+    <string name="home_greeting_night">Selamat Malam</string>
+    <string name="home_subtitle">Ayo jaga bumi hari ini! 🌍</string>
+    <string name="home_schedule_pickup">Jadwalkan Penjemputan</string>
+    <string name="home_your_pickups">Pickup Kamu</string>
+    <string name="home_empty_pickups">Belum ada pickup.\nYuk mulai daur ulang!</string>
+
+    <!-- ── Marketplace ── -->
+    <string name="marketplace_title">Marketplace</string>
+    <string name="marketplace_search">Cari produk daur ulang…</string>
+    <string name="marketplace_empty">Belum ada produk tersedia.</string>
+
+    <!-- ── Auth ── -->
+    <string name="login_title">Masuk</string>
+    <string name="login_subtitle">Selamat datang kembali!</string>
+    <string name="register_title">Daftar</string>
+    <string name="btn_login">Masuk</string>
+    <string name="btn_register">Daftar</string>
+    <string name="btn_save">Simpan</string>
+    <string name="btn_done">Selesai</string>
+</resources>
