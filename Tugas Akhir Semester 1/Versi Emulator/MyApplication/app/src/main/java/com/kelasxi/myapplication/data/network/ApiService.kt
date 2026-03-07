@@ -5,11 +5,15 @@ import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
 interface ApiService {
 
@@ -81,11 +85,17 @@ interface ApiService {
         @Path("id") id: Long
     ): Response<ListingSingleResponse>
 
-    /** POST /api/marketplace — create a new listing */
+    /** POST /api/marketplace — create a new listing (multipart for image upload) */
+    @Multipart
     @POST("marketplace")
     suspend fun createListing(
         @Header("Authorization") bearer: String,
-        @Body body: CreateListingRequest
+        @Part("name")        name: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("price")       price: RequestBody,
+        @Part("category")    category: RequestBody,
+        @Part("condition")   condition: RequestBody,
+        @Part            image: MultipartBody.Part? = null
     ): Response<ListingSingleResponse>
 
     /** DELETE /api/marketplace/{id} — deactivate seller's listing */
@@ -95,12 +105,19 @@ interface ApiService {
         @Path("id") id: Long
     ): Response<Map<String, String>>
 
-    /** PUT /api/marketplace/{id} — update seller's listing */
-    @PUT("marketplace/{id}")
+    /** POST /api/marketplace/{id}?_method=PUT — update a listing (multipart for image) */
+    @Multipart
+    @POST("marketplace/{id}")
     suspend fun updateListing(
         @Header("Authorization") bearer: String,
         @Path("id") id: Long,
-        @Body body: UpdateListingRequest
+        @Part("_method")     method: RequestBody,
+        @Part("name")        name: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("price")       price: RequestBody,
+        @Part("category")    category: RequestBody,
+        @Part("condition")   condition: RequestBody,
+        @Part            image: MultipartBody.Part? = null
     ): Response<ListingSingleResponse>
 
     // ── Order endpoints ───────────────────────────────────────────
@@ -147,6 +164,12 @@ interface ApiService {
         @Path("id") id: Long,
         @Body body: CancelOrderRequest = CancelOrderRequest()
     ): Response<OrderSingleResponse>
+
+    /** GET /api/orders/sales-transactions — Mayar paid+unpaid history (seller) */
+    @GET("orders/sales-transactions")
+    suspend fun getSalesTransactions(
+        @Header("Authorization") bearer: String
+    ): Response<SalesTransactionsResponse>
 
     // ── Wishlist endpoints ────────────────────────────────────────
 

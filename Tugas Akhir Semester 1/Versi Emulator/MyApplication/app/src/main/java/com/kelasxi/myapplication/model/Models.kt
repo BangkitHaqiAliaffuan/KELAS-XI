@@ -96,6 +96,14 @@ data class Order(
     val paidAt: String? = null
 )
 
+// ── Cart ──────────────────────────────────────────────────────────
+data class CartItem(
+    val product: Product,
+    val quantity: Int = 1
+) {
+    val subtotal: Long get() = product.price * quantity
+}
+
 data class UserProfile(
     val name: String,
     val email: String,
@@ -116,4 +124,25 @@ data class OnboardingPage(
     val emoji: String,
     val title: String,
     val description: String
+)
+
+/** Satu entri transaksi dari Mayar (paid / unpaid) */
+data class SalesTransaction(
+    val id: String,
+    val transactionId: String = "",
+    val status: String,          // "SUCCESS", "UNPAID", "EXPIRED", etc.
+    val mayarStatus: String,     // "paid" | "unpaid"  (set oleh backend)
+    val amount: Long,
+    val customerName: String = "",
+    val customerEmail: String = "",
+    val description: String = "",
+    val createdAt: String = ""
+)
+
+/** Ringkasan revenue dari Mayar */
+data class SalesSummary(
+    val totalTransactions: Int = 0,
+    val totalPaid: Int = 0,
+    val totalUnpaid: Int = 0,
+    val totalRevenue: Long = 0L
 )

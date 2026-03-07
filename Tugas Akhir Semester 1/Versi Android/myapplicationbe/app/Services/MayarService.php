@@ -116,6 +116,57 @@ class MayarService
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Get all PAID transactions (sales history)
+    // GET /hl/v1/transaction/paid
+    // Returns array of transaction objects or throws
+    // ─────────────────────────────────────────────────────────────
+    public function getPaidTransactions(int $limit = 100, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $query = ['limit' => $limit];
+        if ($startDate) $query['startDate'] = $startDate;
+        if ($endDate)   $query['endDate']   = $endDate;
+
+        $response = Http::withToken($this->apiKey)
+            ->timeout(15)
+            ->get("{$this->baseUrl}/transaction/paid", $query);
+
+        if (!$response->successful()) {
+            Log::error('Mayar getPaidTransactions failed', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            throw new \RuntimeException(
+                'Gagal mengambil transaksi: ' . $response->status()
+            );
+        }
+
+        $body = $response->json();
+        return $body['data'] ?? [];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Get all UNPAID / pending transactions
+    // GET /hl/v1/transaction/unpaid
+    // ─────────────────────────────────────────────────────────────
+    public function getUnpaidTransactions(int $limit = 100): array
+    {
+        $response = Http::withToken($this->apiKey)
+            ->timeout(15)
+            ->get("{$this->baseUrl}/transaction/unpaid", ['limit' => $limit]);
+
+        if (!$response->successful()) {
+            Log::warning('Mayar getUnpaidTransactions failed', [
+                'status' => $response->status(),
+                'body'   => $response->body(),
+            ]);
+            return [];  // non-fatal — return empty
+        }
+
+        $body = $response->json();
+        return $body['data'] ?? [];
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Close / cancel a payment request
     // ─────────────────────────────────────────────────────────────
     public function closePayment(string $paymentId): bool

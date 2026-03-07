@@ -82,6 +82,7 @@ dependencies {
     implementation(libs.credential.manager.play)
     implementation(libs.googleid)
     implementation("androidx.browser:browser:1.8.0")
+    implementation(libs.coil.compose)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -1,13 +1,20 @@
 package com.kelasxi.myapplication.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kelasxi.myapplication.data.network.AuthResult
+import com.kelasxi.myapplication.data.network.CartCheckoutItemRequest
+import com.kelasxi.myapplication.data.network.CartCheckoutResponse
 import com.kelasxi.myapplication.data.network.MarketplaceRepository
+import com.kelasxi.myapplication.model.CartCheckoutGroup
+import com.kelasxi.myapplication.model.CartItem
 import com.kelasxi.myapplication.model.Order
 import com.kelasxi.myapplication.model.Product
 import com.kelasxi.myapplication.model.ProductCategory
+import com.kelasxi.myapplication.model.SalesSummary
+import com.kelasxi.myapplication.model.SalesTransaction
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -130,9 +137,50 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
     private val _updateListingError = MutableStateFlow<String?>(null)
     val updateListingError: StateFlow<String?> = _updateListingError.asStateFlow()
 
-    // Cart count (local only — kept for UI badge)
+    // ── Cart (local, in-memory) ───────────────────────────────────
+    private val _cartItems = MutableStateFlow<List<CartItem>>(emptyList())
+    val cartItems: StateFlow<List<CartItem>> = _cartItems.asStateFlow()
+
     private val _cartCount = MutableStateFlow(0)
     val cartCount: StateFlow<Int> = _cartCount.asStateFlow()
+
+    private val _cartTotal = MutableStateFlow(0L)
+    val cartTotal: StateFlow<Long> = _cartTotal.asStateFlow()
+
+    private val _cartAddedMessage = MutableStateFlow<String?>(null)
+    val cartAddedMessage: StateFlow<String?> = _cartAddedMessage.asStateFlow()
+
+    // ── Cart Checkout ─────────────────────────────────────────────
+    private val _isCheckingOut = MutableStateFlow(false)
+    val isCheckingOut: StateFlow<Boolean> = _isCheckingOut.asStateFlow()
+
+    private val _checkoutResult = MutableStateFlow<CartCheckoutResponse?>(null)
+    val checkoutResult: StateFlow<CartCheckoutResponse?> = _checkoutResult.asStateFlow()
+
+    private val _checkoutError = MutableStateFlow<String?>(null)
+    val checkoutError: StateFlow<String?> = _checkoutError.asStateFlow()
+
+    private val _cartCheckoutGroups = MutableStateFlow<List<CartCheckoutGroup>>(emptyList())
+    val cartCheckoutGroups: StateFlow<List<CartCheckoutGroup>> = _cartCheckoutGroups.asStateFlow()
+
+    private val _isLoadingCartCheckouts = MutableStateFlow(false)
+    val isLoadingCartCheckouts: StateFlow<Boolean> = _isLoadingCartCheckouts.asStateFlow()
+
+    private val _cartCheckoutPolledStatus = MutableStateFlow<String?>(null)
+    val cartCheckoutPolledStatus: StateFlow<String?> = _cartCheckoutPolledStatus.asStateFlow()
+
+    // ── Sales Transactions (Mayar) ───────────────────────────────
+    private val _salesTransactions = MutableStateFlow<List<SalesTransaction>>(emptyList())
+    val salesTransactions: StateFlow<List<SalesTransaction>> = _salesTransactions.asStateFlow()
+
+    private val _salesSummary = MutableStateFlow(SalesSummary())
+    val salesSummary: StateFlow<SalesSummary> = _salesSummary.asStateFlow()
+
+    private val _isLoadingSales = MutableStateFlow(false)
+    val isLoadingSales: StateFlow<Boolean> = _isLoadingSales.asStateFlow()
+
+    private val _salesError = MutableStateFlow<String?>(null)
+    val salesError: StateFlow<String?> = _salesError.asStateFlow()
 
     // ─────────────────────────────────────────────────────────────
     // Init — load products on ViewModel creation
@@ -141,9 +189,28 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
         loadProducts()
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────
+    // Load sales transactions from Mayar (via Laravel proxy)
+    // ───────────────────────────────────────────────────────────────
+    fun loadSalesTransactions() {
+        viewModelScope.launch {
+            _isLoadingSales.value = true
+            _salesError.value = null
+            when (val result = repository.getSalesTransactions()) {
+                is AuthResult.Success -> {
+                    _salesTransactions.value = result.data.first
+                    _salesSummary.value      = result.data.second
+                }
+                is AuthResult.Error   -> _salesError.value = result.message
+                else -> {}
+            }
+            _isLoadingSales.value = false
+        }
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // Load all listings from API
-    // ─────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────
     fun loadProducts() {
         viewModelScope.launch {
             _isLoadingProducts.value = true
@@ -300,7 +367,8 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
             when (val result = repository.createOrder(listingId, quantity, shippingAddress, notes)) {
                 is AuthResult.Success -> {
                     _orderSuccess.value = result.data
-                    _cartCount.value++
+                    // Clear ordered product from cart if present
+                    removeFromCart(productId)
 
                     // Mark product as sold in local list
                     _filteredProducts.value = _filteredProducts.value.map { p ->
@@ -435,12 +503,14 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
         price: Long,
         category: String,
         condition: String,
+        imageUri: Uri? = null,
+        stock: Int = 1,
         onSuccess: () -> Unit = {}
     ) {
         viewModelScope.launch {
             _isCreatingListing.value = true
             _createListingError.value = null
-            when (val result = repository.createListing(name, description, price, category, condition)) {
+            when (val result = repository.createListing(name, description, price, category, condition, imageUri, stock)) {
                 is AuthResult.Success -> {
                     // Prepend new listing to myListings list
                     _myListings.value = listOf(result.data) + _myListings.value
@@ -466,6 +536,8 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
         price: Long,
         category: String,
         condition: String,
+        imageUri: Uri? = null,
+        stock: Int = 1,
         onSuccess: () -> Unit = {}
     ) {
         val id = productId.toLongOrNull() ?: run {
@@ -475,7 +547,7 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             _isUpdatingListing.value = true
             _updateListingError.value = null
-            when (val result = repository.updateListing(id, name, description, price, category, condition)) {
+            when (val result = repository.updateListing(id, name, description, price, category, condition, imageUri, stock)) {
                 is AuthResult.Success -> {
                     // Replace the updated listing in myListings
                     _myListings.value = _myListings.value.map { p ->
@@ -507,6 +579,145 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
     fun dismissUpdateListingError()  { _updateListingError.value = null }
 
     // Legacy compatibility — kept so MarketplaceScreen compiles
-    fun addToCart() { _cartCount.value++ }
+    // ─────────────────────────────────────────────────────────────
+    // Cart operations
+    // ─────────────────────────────────────────────────────────────
+    fun addToCart(product: Product) {
+        val current = _cartItems.value.toMutableList()
+        val idx = current.indexOfFirst { it.product.id == product.id }
+        if (idx >= 0) {
+            current[idx] = current[idx].copy(quantity = current[idx].quantity + 1)
+        } else {
+            current.add(CartItem(product = product, quantity = 1))
+        }
+        _cartItems.value = current
+        recalcCart(current)
+        _cartAddedMessage.value = "${product.name} ditambahkan ke keranjang"
+    }
+
+    fun removeFromCart(productId: String) {
+        val current = _cartItems.value.filter { it.product.id != productId }
+        _cartItems.value = current
+        recalcCart(current)
+    }
+
+    fun updateCartQuantity(productId: String, quantity: Int) {
+        if (quantity <= 0) { removeFromCart(productId); return }
+        val current = _cartItems.value.toMutableList()
+        val idx = current.indexOfFirst { it.product.id == productId }
+        if (idx >= 0) {
+            current[idx] = current[idx].copy(quantity = quantity)
+            _cartItems.value = current
+            recalcCart(current)
+        }
+    }
+
+    fun clearCart() {
+        _cartItems.value = emptyList()
+        _cartCount.value = 0
+        _cartTotal.value = 0L
+    }
+
+    fun dismissCartMessage() { _cartAddedMessage.value = null }
+
+    private fun recalcCart(items: List<CartItem>) {
+        _cartCount.value = items.sumOf { it.quantity }
+        _cartTotal.value = items.sumOf { it.subtotal }
+    }
+
+    // Legacy no-arg kept for backward compat (ProductCard uses this via old lambda)
+    fun addToCart() { /* no-op – use addToCart(product) */ }
+
+    // ─────────────────────────────────────────────────────────────
+    // Cart Checkout — POST /api/orders/checkout-cart
+    // ─────────────────────────────────────────────────────────────
+    fun checkoutCart(
+        shippingAddress: String,
+        notes: String?,
+        onSuccess: (paymentLink: String, cartCheckoutId: String) -> Unit = { _, _ -> }
+    ) {
+        viewModelScope.launch {
+            _isCheckingOut.value = true
+            _checkoutError.value = null
+
+            val items = _cartItems.value.mapNotNull { ci ->
+                val id = ci.product.id.toLongOrNull() ?: return@mapNotNull null
+                CartCheckoutItemRequest(listing_id = id, quantity = ci.quantity)
+            }
+            if (items.isEmpty()) {
+                _checkoutError.value = "Keranjang kosong."
+                _isCheckingOut.value = false
+                return@launch
+            }
+
+            when (val result = repository.cartCheckout(shippingAddress, notes, items)) {
+                is AuthResult.Success -> {
+                    _checkoutResult.value = result.data
+                    // Clear cart after successful checkout
+                    clearCart()
+                    onSuccess(result.data.payment_link, result.data.cart_checkout_id)
+                }
+                is AuthResult.Error -> _checkoutError.value = result.message
+                else -> {}
+            }
+            _isCheckingOut.value = false
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Load cart checkout groups (MyOrders tab)
+    // ─────────────────────────────────────────────────────────────
+    fun loadCartCheckouts() {
+        viewModelScope.launch {
+            _isLoadingCartCheckouts.value = true
+            when (val result = repository.getCartCheckouts()) {
+                is AuthResult.Success -> _cartCheckoutGroups.value = result.data
+                is AuthResult.Error   -> { /* silently fail, keep old data */ }
+                else -> {}
+            }
+            _isLoadingCartCheckouts.value = false
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Poll cart checkout payment status
+    // ─────────────────────────────────────────────────────────────
+    fun pollCartCheckoutStatus(cartCheckoutId: String) {
+        viewModelScope.launch {
+            when (val result = repository.pollCartCheckoutStatus(cartCheckoutId)) {
+                is AuthResult.Success -> {
+                    val status = result.data.payment_status
+                    _cartCheckoutPolledStatus.value = status
+                    if (status == "paid") {
+                        loadCartCheckouts()
+                        _paySuccess.value = "Pembayaran cart berhasil dikonfirmasi! 🎉"
+                    }
+                }
+                is AuthResult.Error -> { /* ignore polling errors */ }
+                else -> {}
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Cancel cart checkout
+    // ─────────────────────────────────────────────────────────────
+    fun cancelCartCheckout(cartCheckoutId: String, onDone: () -> Unit = {}) {
+        viewModelScope.launch {
+            when (val result = repository.cancelCartCheckout(cartCheckoutId)) {
+                is AuthResult.Success -> {
+                    loadCartCheckouts()
+                    onDone()
+                }
+                is AuthResult.Error -> _checkoutError.value = result.message
+                else -> {}
+            }
+        }
+    }
+
+    fun dismissCheckoutError()  { _checkoutError.value = null }
+    fun clearCheckoutResult()   { _checkoutResult.value = null }
+    fun clearCartCheckoutPolledStatus() { _cartCheckoutPolledStatus.value = null }
 }
+
 

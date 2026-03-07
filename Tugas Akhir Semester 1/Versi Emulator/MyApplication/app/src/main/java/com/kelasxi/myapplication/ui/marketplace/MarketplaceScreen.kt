@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -24,6 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.theme.*
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
@@ -32,7 +34,8 @@ import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
 @Composable
 fun MarketplaceScreen(
     viewModel: MarketplaceViewModel = viewModel(),
-    onProductClick: (Product) -> Unit = {}
+    onProductClick: (Product) -> Unit = {},
+    onCartClick: () -> Unit = {}
 ) {
     val filteredProducts  by viewModel.filteredProducts.collectAsStateWithLifecycle()
     val selectedCategory  by viewModel.selectedCategory.collectAsStateWithLifecycle()
@@ -40,17 +43,34 @@ fun MarketplaceScreen(
     val wishlist          by viewModel.wishlist.collectAsStateWithLifecycle()
     val isLoading         by viewModel.isLoadingProducts.collectAsStateWithLifecycle()
     val productsError     by viewModel.productsError.collectAsStateWithLifecycle()
+    val cartCount         by viewModel.cartCount.collectAsStateWithLifecycle()
+    val cartAddedMessage  by viewModel.cartAddedMessage.collectAsStateWithLifecycle()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(cartAddedMessage) {
+        if (cartAddedMessage != null) {
+            snackbarHostState.showSnackbar(cartAddedMessage!!)
+            viewModel.dismissCartMessage()
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        containerColor = BackgroundGreen
+    ) { scaffoldPadding ->
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(scaffoldPadding)
             .background(BackgroundGreen)
     ) {
         // Header
         MarketplaceHeader(
             searchQuery = searchQuery,
             onSearchChange = viewModel::updateSearch,
-            onRefresh = viewModel::loadProducts
+            onRefresh = viewModel::loadProducts,
+            cartCount = cartCount,
+            onCartClick = onCartClick
         )
 
         // Category Chips
@@ -99,7 +119,7 @@ fun MarketplaceScreen(
                             isWishlisted = wishlist.contains(product.id),
                             onCardClick = { onProductClick(product) },
                             onWishlistClick = { viewModel.toggleWishlist(product.id) },
-                            onAddToCart = { viewModel.addToCart() }
+                            onAddToCart = { viewModel.addToCart(product) }
                         )
                     }
                     item(span = { GridItemSpan(2) }) {
@@ -109,13 +129,16 @@ fun MarketplaceScreen(
             }
         }
     }
+    } // end Scaffold
 }
 
 @Composable
 fun MarketplaceHeader(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
-    onRefresh: () -> Unit = {}
+    onRefresh: () -> Unit = {},
+    cartCount: Int = 0,
+    onCartClick: () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -163,16 +186,37 @@ fun MarketplaceHeader(
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {},
-                        modifier = Modifier
-                            .background(Color.White.copy(alpha = 0.2f), CircleShape)
-                    ) {
-                        Icon(
-                            Icons.Outlined.ShoppingCart,
-                            contentDescription = "Cart",
-                            tint = Color.White
-                        )
+                    Box {
+                        IconButton(
+                            onClick = onCartClick,
+                            modifier = Modifier
+                                .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                        ) {
+                            Icon(
+                                Icons.Outlined.ShoppingCart,
+                                contentDescription = "Cart",
+                                tint = Color.White
+                            )
+                        }
+                        if (cartCount > 0) {
+                            Surface(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .offset(x = 4.dp, y = (-4).dp)
+                                    .size(18.dp),
+                                shape = CircleShape,
+                                color = OrangeAccent
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = if (cartCount > 99) "99+" else "$cartCount",
+                                        color = Color.White,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -259,28 +303,41 @@ fun ProductCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column {
-            // Product Image (Placeholder with gradient shimmer)
+            // Product Image
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(140.dp)
                     .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                GreenPale.copy(alpha = 0.6f),
-                                SurfaceVariant
-                            ),
-                            radius = 300f
-                        )
-                    )
             ) {
-                // Category icon in center
-                Text(
-                    text = product.category.emoji(),
-                    modifier = Modifier.align(Alignment.Center),
-                    fontSize = 48.sp
-                )
+                if (!product.imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model              = product.imageUrl,
+                        contentDescription = product.name,
+                        contentScale       = ContentScale.Crop,
+                        modifier           = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        GreenPale.copy(alpha = 0.6f),
+                                        SurfaceVariant
+                                    ),
+                                    radius = 300f
+                                )
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text     = product.category.emoji(),
+                            fontSize = 48.sp
+                        )
+                    }
+                }
 
                 // Wishlist button
                 IconButton(

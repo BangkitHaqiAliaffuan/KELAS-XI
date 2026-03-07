@@ -1,11 +1,17 @@
 package com.kelasxi.myapplication.data.network
 
 import android.content.Context
+import android.net.Uri
 import com.kelasxi.myapplication.model.Order
 import com.kelasxi.myapplication.model.OrderStatus
 import com.kelasxi.myapplication.model.Product
 import com.kelasxi.myapplication.model.ProductCategory
 import com.kelasxi.myapplication.model.ProductCondition
+import com.kelasxi.myapplication.model.SalesSummary
+import com.kelasxi.myapplication.model.SalesTransaction
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class MarketplaceRepository(private val context: Context) {
 
@@ -65,19 +71,35 @@ class MarketplaceRepository(private val context: Context) {
         description: String,
         price: Long,
         category: String,
-        condition: String
+        condition: String,
+        imageUri: Uri? = null
     ): AuthResult<Product> {
         return try {
             val token = TokenStore.getToken(context)
                 ?: return AuthResult.Error("Belum login. Silakan login kembali.")
-            val body = CreateListingRequest(
-                name        = name,
-                description = description,
-                price       = price,
-                category    = category,
-                condition   = condition
+
+            val textType = "text/plain".toMediaTypeOrNull()
+            val imagePart = imageUri?.let { uri ->
+                val stream = context.contentResolver.openInputStream(uri)
+                    ?: return AuthResult.Error("Tidak bisa membaca file gambar.")
+                val bytes = stream.readBytes()
+                stream.close()
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                MultipartBody.Part.createFormData(
+                    "image", "listing.jpg",
+                    bytes.toRequestBody(mime.toMediaTypeOrNull())
+                )
+            }
+
+            val response = api.createListing(
+                bearer      = "Bearer $token",
+                name        = name.toRequestBody(textType),
+                description = description.toRequestBody(textType),
+                price       = price.toString().toRequestBody(textType),
+                category    = category.toRequestBody(textType),
+                condition   = condition.toRequestBody(textType),
+                image       = imagePart
             )
-            val response = api.createListing("Bearer $token", body)
             if (response.isSuccessful) {
                 AuthResult.Success(response.body()!!.data.toDomain())
             } else {
@@ -353,19 +375,37 @@ class MarketplaceRepository(private val context: Context) {
         description: String,
         price: Long,
         category: String,
-        condition: String
+        condition: String,
+        imageUri: Uri? = null
     ): AuthResult<Product> {
         return try {
             val token = TokenStore.getToken(context)
                 ?: return AuthResult.Error("Belum login. Silakan login kembali.")
-            val body = UpdateListingRequest(
-                name        = name,
-                description = description,
-                price       = price,
-                category    = category,
-                condition   = condition
+
+            val textType = "text/plain".toMediaTypeOrNull()
+            val imagePart = imageUri?.let { uri ->
+                val stream = context.contentResolver.openInputStream(uri)
+                    ?: return AuthResult.Error("Tidak bisa membaca file gambar.")
+                val bytes = stream.readBytes()
+                stream.close()
+                val mime = context.contentResolver.getType(uri) ?: "image/jpeg"
+                MultipartBody.Part.createFormData(
+                    "image", "listing.jpg",
+                    bytes.toRequestBody(mime.toMediaTypeOrNull())
+                )
+            }
+
+            val response = api.updateListing(
+                bearer      = "Bearer $token",
+                id          = id,
+                method      = "PUT".toRequestBody(textType),
+                name        = name.toRequestBody(textType),
+                description = description.toRequestBody(textType),
+                price       = price.toString().toRequestBody(textType),
+                category    = category.toRequestBody(textType),
+                condition   = condition.toRequestBody(textType),
+                image       = imagePart
             )
-            val response = api.updateListing("Bearer $token", id, body)
             if (response.isSuccessful) {
                 AuthResult.Success(response.body()!!.data.toDomain())
             } else {
@@ -392,6 +432,46 @@ class MarketplaceRepository(private val context: Context) {
             }
         } catch (_: Exception) {
             "Terjadi kesalahan."
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/orders/sales-transactions
+    // Returns Pair<List<SalesTransaction>, SalesSummary>
+    // ─────────────────────────────────────────────────────────────
+    suspend fun getSalesTransactions(): AuthResult<Pair<List<SalesTransaction>, SalesSummary>> {
+        val token = TokenStore.getToken(context)
+            ?: return AuthResult.Error("Belum login. Silakan login kembali.")
+        return try {
+            val response = api.getSalesTransactions("Bearer $token")
+            if (response.isSuccessful) {
+                val body = response.body()!!
+                val list = body.data.map { dto ->
+                    SalesTransaction(
+                        id            = dto.id,
+                        transactionId = dto.transactionId ?: dto.id,
+                        status        = dto.status,
+                        mayarStatus   = dto.mayarStatus,
+                        amount        = dto.amount,
+                        customerName  = dto.customerName,
+                        customerEmail = dto.customerEmail ?: "",
+                        description   = dto.description ?: "",
+                        createdAt     = dto.createdAt ?: ""
+                    )
+                }
+                val s = body.summary
+                val summary = SalesSummary(
+                    totalTransactions = s.totalTransactions,
+                    totalPaid         = s.totalPaid,
+                    totalUnpaid       = s.totalUnpaid,
+                    totalRevenue      = s.totalRevenue
+                )
+                AuthResult.Success(Pair(list, summary))
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
         }
     }
 }

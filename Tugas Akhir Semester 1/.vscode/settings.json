@@ -1,0 +1,16 @@
+{
+    "kotlin.projectStructure": {
+        "excludePatterns": [
+            "**/Versi Emulator/**"
+        ]
+    },
+    "files.exclude": {
+        "**/Versi Emulator/**/.gradle": true,
+        "**/Versi Emulator/**/build": true
+    },
+    "search.exclude": {
+        "**/Versi Emulator/**/build": true,
+        "**/Versi Android/**/build": true,
+        "**/vendor": true
+    }
+}

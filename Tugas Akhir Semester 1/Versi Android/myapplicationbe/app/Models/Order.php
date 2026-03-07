@@ -17,6 +17,7 @@ class Order extends Model
         'total_price',
         'quantity',
         'notes',
+        'cart_checkout_id',
         'shipping_address',
         'mayar_payment_id',
         'mayar_payment_link',

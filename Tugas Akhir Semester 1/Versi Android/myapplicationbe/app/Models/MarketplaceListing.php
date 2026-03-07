@@ -25,6 +25,7 @@ class MarketplaceListing extends Model
         'is_sold',
         'is_active',
         'views_count',
+        'stock',
     ];
 
     protected $casts = [
@@ -33,6 +34,7 @@ class MarketplaceListing extends Model
         'is_sold'       => 'boolean',
         'is_active'     => 'boolean',
         'views_count'   => 'integer',
+        'stock'         => 'integer',
     ];
 
     // ── Relationships ─────────────────────────────────────────────

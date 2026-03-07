@@ -64,6 +64,13 @@ class OrderController extends Controller
 
         $quantity = $validated['quantity'] ?? 1;
 
+        // Check stock
+        if ($listing->stock < $quantity) {
+            return response()->json([
+                'message' => "Stok tidak mencukupi. Tersedia: {$listing->stock}.",
+            ], 422);
+        }
+
         DB::beginTransaction();
         try {
             $order = Order::create([
@@ -77,7 +84,13 @@ class OrderController extends Controller
                 'payment_status'   => 'unpaid',
             ]);
 
-            $listing->update(['is_sold' => true]);
+            // Decrement stock; if reaches 0 mark sold out
+            $newStock = $listing->stock - $quantity;
+            $listing->update([
+                'stock'     => $newStock,
+                'is_sold'   => $newStock <= 0,
+                'is_active' => $newStock > 0,
+            ]);
 
             DB::commit();
 
@@ -264,7 +277,16 @@ class OrderController extends Controller
                 'cancellation_reason' => $validated['reason'] ?? null,
             ]);
 
-            $order->listing()->update(['is_sold' => false]);
+            // Restore stock
+            $listing = $order->listing;
+            if ($listing) {
+                $restoredStock = $listing->stock + ($order->quantity ?? 1);
+                $listing->update([
+                    'stock'     => $restoredStock,
+                    'is_sold'   => false,
+                    'is_active' => true,
+                ]);
+            }
 
             DB::commit();
 
@@ -323,5 +345,62 @@ class OrderController extends Controller
                 'is_sold'       => $listing->is_sold,
             ] : null,
         ];
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/orders/sales-transactions
+    // Returns all orders on seller's listings (DB-based),
+    // with revenue summary. No Mayar API call needed.
+    // ─────────────────────────────────────────────────────────────
+    public function salesTransactions(Request $request): JsonResponse
+    {
+        $sellerId = $request->user()->id;
+
+        // Ambil semua order yang listing-nya dimiliki seller ini
+        $orders = Order::with(['listing', 'buyer'])
+            ->whereHas('listing', fn($q) => $q->where('seller_id', $sellerId))
+            ->latest()
+            ->get();
+
+        $data = $orders->map(function (Order $order) {
+            $buyer   = $order->buyer;
+            $listing = $order->listing;
+
+            // Anggap "lunas" jika payment_status=paid ATAU order sudah completed/confirmed/shipped
+            $isEffectivelyPaid = $order->payment_status === 'paid'
+                || in_array($order->status, ['completed', 'confirmed', 'shipped']);
+
+            return [
+                'id'            => (string) $order->id,
+                'transactionId' => $order->mayar_payment_id ?? '',
+                'status'        => strtoupper($order->status),   // PENDING, CONFIRMED, SHIPPED, COMPLETED, CANCELLED
+                'mayar_status'  => $isEffectivelyPaid ? 'paid' : 'unpaid',
+                'amount'        => (int) $order->total_price,
+                'customerName'  => $buyer?->name ?? 'Pembeli',
+                'customerEmail' => $buyer?->email ?? '',
+                'description'   => $listing?->name ?? 'Produk',
+                'createdAt'     => $order->created_at?->toIso8601String() ?? '',
+            ];
+        });
+
+        // Summary — revenue dari order yang efektif terbayar (bukan cancelled)
+        $effectivePaidOrders = $orders->filter(function (Order $o) {
+            return $o->payment_status === 'paid'
+                || in_array($o->status, ['completed', 'confirmed', 'shipped']);
+        });
+
+        $totalRevenue = $effectivePaidOrders->sum('total_price');
+        $totalPaid    = $effectivePaidOrders->count();
+        $totalUnpaid  = $orders->count() - $totalPaid;
+
+        return response()->json([
+            'data' => $data->values(),
+            'summary' => [
+                'total_transactions' => $orders->count(),
+                'total_paid'         => $totalPaid,
+                'total_unpaid'       => $totalUnpaid,
+                'total_revenue'      => (int) $totalRevenue,
+            ],
+        ]);
     }
 }

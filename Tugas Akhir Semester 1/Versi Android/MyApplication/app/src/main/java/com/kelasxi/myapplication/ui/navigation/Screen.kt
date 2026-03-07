@@ -7,6 +7,7 @@ sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
     object Home : Screen("home")
     object Marketplace : Screen("marketplace")
+    object Cart : Screen("cart")
     object Profile : Screen("profile")
     object MyOrders : Screen("my_orders")
     object Wishlist : Screen("wishlist")
@@ -36,5 +37,12 @@ sealed class Screen(val route: String) {
             return "payment/$orderId/$paymentId?link=$encodedLink"
         }
         const val ROUTE_WITH_QUERY = "payment/{orderId}/{paymentId}?link={paymentLink}"
+    }
+    /** Cart checkout: address + items review before paying */
+    object CartCheckout : Screen("cart_checkout/{cartCheckoutId}/{paymentLink}") {
+        fun createRoute(cartCheckoutId: String, paymentLink: String): String {
+            val encodedLink = java.net.URLEncoder.encode(paymentLink, "UTF-8")
+            return "cart_checkout/$cartCheckoutId/$encodedLink"
+        }
     }
 }

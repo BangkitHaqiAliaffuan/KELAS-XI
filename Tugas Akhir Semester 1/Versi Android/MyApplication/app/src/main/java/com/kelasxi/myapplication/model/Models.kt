@@ -54,7 +54,9 @@ data class Product(
     val condition: ProductCondition,
     val imageUrl: String = "",
     val isWishlisted: Boolean = false,
-    val isSold: Boolean = false
+    val isSold: Boolean = false,
+    val stock: Int = 1,
+    val isActive: Boolean = true
 )
 
 enum class ProductCategory(val label: String) {
@@ -96,6 +98,27 @@ data class Order(
     val paidAt: String? = null
 )
 
+// ── Cart ──────────────────────────────────────────────────────────
+data class CartItem(
+    val product: Product,
+    val quantity: Int = 1
+) {
+    val subtotal: Long get() = product.price * quantity
+}
+
+// ── Cart Checkout Group (banyak order dalam 1 transaksi Mayar) ────
+data class CartCheckoutGroup(
+    val cartCheckoutId: String,
+    val orders: List<Order>,
+    val total: Long,
+    val paymentStatus: String,      // "unpaid" | "paid" | "expired"
+    val orderStatus: OrderStatus,
+    val paymentLink: String?,
+    val paymentId: String?,
+    val shippingAddress: String,
+    val orderedAt: String
+)
+
 data class UserProfile(
     val name: String,
     val email: String,
@@ -116,4 +139,25 @@ data class OnboardingPage(
     val emoji: String,
     val title: String,
     val description: String
+)
+
+/** Satu entri transaksi dari Mayar (paid / unpaid) */
+data class SalesTransaction(
+    val id: String,
+    val transactionId: String = "",
+    val status: String,          // "SUCCESS", "UNPAID", "EXPIRED", etc.
+    val mayarStatus: String,     // "paid" | "unpaid"  (set oleh backend)
+    val amount: Long,
+    val customerName: String = "",
+    val customerEmail: String = "",
+    val description: String = "",
+    val createdAt: String = ""
+)
+
+/** Ringkasan revenue dari Mayar */
+data class SalesSummary(
+    val totalTransactions: Int = 0,
+    val totalPaid: Int = 0,
+    val totalUnpaid: Int = 0,
+    val totalRevenue: Long = 0L
 )

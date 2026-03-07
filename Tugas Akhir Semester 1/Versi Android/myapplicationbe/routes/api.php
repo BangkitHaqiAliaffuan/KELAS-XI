@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\CartCheckoutController;
 use App\Http\Controllers\Api\CourierController;
 use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\OrderController;
@@ -56,11 +57,14 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Order routes
-    // GET  /api/orders              → list buyer's orders
-    // POST /api/orders              → create order (buy a listing)
-    // GET  /api/orders/{id}         → single order detail
-    // POST /api/orders/{id}/cancel  → cancel a pending order
     Route::prefix('orders')->group(function () {
+        Route::get('/sales-transactions',                          [OrderController::class, 'salesTransactions']);
+        // ── Cart checkout (multi-item, 1 Mayar payment) ─────────
+        Route::post('/checkout-cart',                              [CartCheckoutController::class, 'checkout']);
+        Route::get('/cart-checkouts',                              [CartCheckoutController::class, 'myCartCheckouts']);
+        Route::get('/cart-checkout/{cartCheckoutId}/payment-status', [CartCheckoutController::class, 'paymentStatus']);
+        Route::post('/cart-checkout/{cartCheckoutId}/cancel',      [CartCheckoutController::class, 'cancel']);
+        // ── Single order routes ──────────────────────────────────
         Route::get('/',                        [OrderController::class, 'index']);
         Route::post('/',                       [OrderController::class, 'store']);
         Route::get('/{id}',                    [OrderController::class, 'show'])->whereNumber('id');

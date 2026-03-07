@@ -24,6 +24,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.theme.*
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,13 +42,18 @@ fun MyShopScreen(
     val error            by viewModel.myListingsError.collectAsStateWithLifecycle()
     val isDeleting       by viewModel.isDeletingListing.collectAsStateWithLifecycle()
     val deleteSuccess    by viewModel.deleteSuccess.collectAsStateWithLifecycle()
+    val salesSummary     by viewModel.salesSummary.collectAsStateWithLifecycle()
+    val isLoadingSales   by viewModel.isLoadingSales.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
     // ID listing yang sedang minta konfirmasi hapus
     var pendingDeleteId by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(Unit) { viewModel.loadMyListings() }
+    LaunchedEffect(Unit) {
+        viewModel.loadMyListings()
+        viewModel.loadSalesTransactions()
+    }
 
     LaunchedEffect(error) {
         if (error != null) {
@@ -217,6 +226,15 @@ fun MyShopScreen(
                         MyShopStatsBanner(listings = myListings)
                     }
 
+                    // Revenue banner dari Mayar
+                    item {
+                        ShopRevenueBanner(
+                            summary       = salesSummary,
+                            isLoading     = isLoadingSales,
+                            onRefresh     = { viewModel.loadSalesTransactions() }
+                        )
+                    }
+
                     // Listing cards
                     items(myListings, key = { it.id }) { product ->
                         MyShopListingCard(
@@ -293,6 +311,172 @@ private fun ShopStatDivider() {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Revenue banner — keuntungan dari Mayar
+// ─────────────────────────────────────────────────────────────────
+@Composable
+private fun ShopRevenueBanner(
+    summary: SalesSummary,
+    isLoading: Boolean,
+    onRefresh: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("💰", fontSize = 18.sp)
+                    Text(
+                        "Pendapatan Penjualan",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = TextPrimary
+                    )
+                }
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = GreenDeep
+                    )
+                } else {
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            Icons.Outlined.Refresh,
+                            contentDescription = "Refresh",
+                            tint = TextHint,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Total revenue — angka besar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(GreenDeep, GreenMedium)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                Column {
+                    Text(
+                        "Total Pendapatan",
+                        fontSize = 11.sp,
+                        color = Color.White.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        formatRupiahShop(summary.totalRevenue),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 26.sp,
+                        color = Color.White
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            // Breakdown row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                RevenueStatItem(
+                    emoji  = "🧾",
+                    value  = "${summary.totalTransactions}",
+                    label  = "Total Transaksi",
+                    color  = TextPrimary
+                )
+                Box(
+                    modifier = Modifier
+                        .height(36.dp)
+                        .width(1.dp)
+                        .background(DividerColor)
+                )
+                RevenueStatItem(
+                    emoji  = "✅",
+                    value  = "${summary.totalPaid}",
+                    label  = "Lunas",
+                    color  = StatusDone
+                )
+                Box(
+                    modifier = Modifier
+                        .height(36.dp)
+                        .width(1.dp)
+                        .background(DividerColor)
+                )
+                RevenueStatItem(
+                    emoji  = "⏳",
+                    value  = "${summary.totalUnpaid}",
+                    label  = "Pending",
+                    color  = StatusPending
+                )
+            }
+
+            if (summary.totalTransactions == 0 && !isLoading) {
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Belum ada transaksi penjualan tercatat.",
+                    fontSize = 12.sp,
+                    color = TextHint,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RevenueStatItem(emoji: String, value: String, label: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        Text(emoji, fontSize = 16.sp)
+        Text(
+            value,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            color = color
+        )
+        Text(
+            label,
+            fontSize = 10.sp,
+            color = TextSecondary
+        )
+    }
+}
+
+private fun formatRupiahShop(amount: Long): String {
+    return try {
+        "Rp " + NumberFormat.getNumberInstance(Locale("in", "ID")).format(amount)
+    } catch (_: Exception) {
+        "Rp $amount"
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Listing card — one card per product
 // ─────────────────────────────────────────────────────────────────
 @Composable
@@ -315,7 +499,7 @@ fun MyShopListingCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.Top
             ) {
-                // Product thumbnail (emoji placeholder)
+                // Product thumbnail
                 Box(
                     modifier = Modifier
                         .size(72.dp)
@@ -328,10 +512,19 @@ fun MyShopListingCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        product.category.shopEmoji(),
-                        fontSize = 32.sp
-                    )
+                    if (!product.imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model              = product.imageUrl,
+                            contentDescription = product.name,
+                            contentScale       = ContentScale.Crop,
+                            modifier           = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Text(
+                            product.category.shopEmoji(),
+                            fontSize = 32.sp
+                        )
+                    }
                 }
 
                 // Info column

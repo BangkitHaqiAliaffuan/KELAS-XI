@@ -36,6 +36,8 @@ import com.kelasxi.myapplication.ui.auth.RegisterScreen
 import com.kelasxi.myapplication.ui.home.HomeScreen
 import com.kelasxi.myapplication.ui.home.PickupDetailScreen
 import com.kelasxi.myapplication.ui.marketplace.AddListingScreen
+import com.kelasxi.myapplication.ui.marketplace.CartScreen
+import com.kelasxi.myapplication.ui.marketplace.CartCheckoutScreen
 import com.kelasxi.myapplication.ui.marketplace.EditListingScreen
 import com.kelasxi.myapplication.ui.marketplace.MarketplaceScreen
 import com.kelasxi.myapplication.ui.marketplace.PaymentScreen
@@ -266,6 +268,57 @@ fun TrashCareNavGraph() {
                     onProductClick = { product ->
                         marketplaceViewModel.selectProduct(product)
                         navController.navigate(Screen.ProductDetail.createRoute(product.id))
+                    },
+                    onCartClick = { navController.navigate(Screen.Cart.route) }
+                )
+            }
+            composable(Screen.Cart.route) {
+                CartScreen(
+                    viewModel = marketplaceViewModel,
+                    onBack = { navController.popBackStack() },
+                    onCheckout = { _ ->
+                        // CartCheckoutScreen handles address + calls checkoutCart()
+                        // We navigate to a pre-checkout address screen
+                        navController.navigate("cart_checkout_address")
+                    }
+                )
+            }
+            // Cart checkout address+review screen
+            composable("cart_checkout_address") {
+                CartCheckoutScreen(
+                    viewModel = marketplaceViewModel,
+                    onBack    = { navController.popBackStack() },
+                    onPaymentReady = { cartCheckoutId, paymentLink ->
+                        // Navigate to CartCheckout payment-poll screen
+                        navController.navigate(
+                            Screen.CartCheckout.createRoute(cartCheckoutId, paymentLink)
+                        ) {
+                            popUpTo("cart_checkout_address") { inclusive = true }
+                        }
+                    }
+                )
+            }
+            // CartCheckout payment screen: polls status after Mayar link opened
+            composable(
+                route = Screen.CartCheckout.route,
+                arguments = listOf(
+                    navArgument("cartCheckoutId") { type = NavType.StringType },
+                    navArgument("paymentLink")    { type = NavType.StringType }
+                )
+            ) { backEntry ->
+                val cartCheckoutId  = backEntry.arguments?.getString("cartCheckoutId") ?: ""
+                val encodedLink     = backEntry.arguments?.getString("paymentLink") ?: ""
+                val paymentLink     = java.net.URLDecoder.decode(encodedLink, "UTF-8")
+                CartCheckoutScreen(
+                    viewModel       = marketplaceViewModel,
+                    onBack          = { navController.popBackStack() },
+                    cartCheckoutId  = cartCheckoutId,
+                    paymentLink     = paymentLink,
+                    onPaymentReady  = { _, _ -> },
+                    onPaid          = {
+                        navController.navigate(Screen.MyOrders.route) {
+                            popUpTo(Screen.Cart.route) { inclusive = true }
+                        }
                     }
                 )
             }
@@ -299,6 +352,11 @@ fun TrashCareNavGraph() {
                     onPayOrder = { orderId, paymentLink, paymentId ->
                         navController.navigate(
                             Screen.Payment.createRoute(orderId, paymentLink, paymentId)
+                        )
+                    },
+                    onPayCartCheckout = { cartCheckoutId, paymentLink ->
+                        navController.navigate(
+                            Screen.CartCheckout.createRoute(cartCheckoutId, paymentLink)
                         )
                     }
                 )

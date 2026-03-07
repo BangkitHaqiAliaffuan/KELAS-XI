@@ -36,6 +36,7 @@ import com.kelasxi.myapplication.ui.auth.RegisterScreen
 import com.kelasxi.myapplication.ui.home.HomeScreen
 import com.kelasxi.myapplication.ui.home.PickupDetailScreen
 import com.kelasxi.myapplication.ui.marketplace.AddListingScreen
+import com.kelasxi.myapplication.ui.marketplace.CartScreen
 import com.kelasxi.myapplication.ui.marketplace.EditListingScreen
 import com.kelasxi.myapplication.ui.marketplace.MarketplaceScreen
 import com.kelasxi.myapplication.ui.marketplace.PaymentScreen
@@ -266,6 +267,21 @@ fun TrashCareNavGraph() {
                     onProductClick = { product ->
                         marketplaceViewModel.selectProduct(product)
                         navController.navigate(Screen.ProductDetail.createRoute(product.id))
+                    },
+                    onCartClick = { navController.navigate(Screen.Cart.route) }
+                )
+            }
+            composable(Screen.Cart.route) {
+                CartScreen(
+                    viewModel = marketplaceViewModel,
+                    onBack = { navController.popBackStack() },
+                    onCheckout = { cartItems ->
+                        // Ambil item pertama dari cart dan arahkan ke ProductDetail untuk checkout
+                        val first = cartItems.firstOrNull()
+                        if (first != null) {
+                            marketplaceViewModel.selectProduct(first.product)
+                            navController.navigate(Screen.ProductDetail.createRoute(first.product.id))
+                        }
                     }
                 )
             }

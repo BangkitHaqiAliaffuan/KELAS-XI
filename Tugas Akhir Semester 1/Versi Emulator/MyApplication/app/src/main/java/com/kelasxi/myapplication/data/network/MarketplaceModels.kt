@@ -125,3 +125,31 @@ data class ToggleWishlistResponse(
     @SerializedName("wishlisted") val wishlisted: Boolean,
     @SerializedName("message")    val message: String
 )
+
+// ─────────────────────────────────────────────────────────────────
+// Mayar Sales Transactions  (GET /api/orders/sales-transactions)
+// ─────────────────────────────────────────────────────────────────
+
+data class SalesTransactionDto(
+    @SerializedName("id")             val id: String,
+    @SerializedName("transactionId")  val transactionId: String? = null,
+    @SerializedName("status")         val status: String = "",
+    @SerializedName("mayar_status")   val mayarStatus: String = "unpaid",
+    @SerializedName("amount")         val amount: Long = 0L,
+    @SerializedName("customerName")   val customerName: String = "",
+    @SerializedName("customerEmail")  val customerEmail: String? = null,
+    @SerializedName("description")    val description: String? = null,
+    @SerializedName("createdAt")      val createdAt: String? = null
+)
+
+data class SalesSummaryDto(
+    @SerializedName("total_transactions") val totalTransactions: Int = 0,
+    @SerializedName("total_paid")         val totalPaid: Int = 0,
+    @SerializedName("total_unpaid")       val totalUnpaid: Int = 0,
+    @SerializedName("total_revenue")      val totalRevenue: Long = 0L
+)
+
+data class SalesTransactionsResponse(
+    @SerializedName("data")    val data: List<SalesTransactionDto>,
+    @SerializedName("summary") val summary: SalesSummaryDto
+)

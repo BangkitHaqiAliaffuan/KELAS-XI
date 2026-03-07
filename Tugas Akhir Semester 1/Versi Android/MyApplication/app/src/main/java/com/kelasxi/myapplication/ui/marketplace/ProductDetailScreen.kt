@@ -16,12 +16,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.common.AddressPickerField
 import com.kelasxi.myapplication.ui.theme.*
@@ -43,6 +45,7 @@ fun ProductDetailScreen(
     val orderSuccess    by viewModel.orderSuccess.collectAsStateWithLifecycle()
     val orderError      by viewModel.orderError.collectAsStateWithLifecycle()
     val wishlistError   by viewModel.wishlistError.collectAsStateWithLifecycle()
+    val cartAddedMessage by viewModel.cartAddedMessage.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var quantity          by remember { mutableIntStateOf(1) }
@@ -67,6 +70,12 @@ fun ProductDetailScreen(
         if (wishlistError != null) {
             snackbarHostState.showSnackbar(wishlistError!!)
             viewModel.dismissWishlistError()
+        }
+    }
+    LaunchedEffect(cartAddedMessage) {
+        if (cartAddedMessage != null) {
+            snackbarHostState.showSnackbar(cartAddedMessage!!)
+            viewModel.dismissCartMessage()
         }
     }
 
@@ -268,6 +277,27 @@ fun ProductDetailScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
 
+                        // Add to Cart Button
+                        OutlinedButton(
+                            onClick = { viewModel.addToCart(p) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.5.dp, GreenDeep)
+                        ) {
+                            Icon(Icons.Filled.AddShoppingCart, contentDescription = null, tint = GreenDeep)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Masukkan Keranjang",
+                                color = GreenDeep,
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         // Buy Now Button
                         Button(
                             onClick = { showBuyDialog = true },
@@ -416,6 +446,40 @@ fun ProductDetailScreen(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductImageCarousel(product: Product) {
+    if (!product.imageUrl.isNullOrBlank()) {
+        // Show uploaded image
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(280.dp)
+                .background(Color.White)
+        ) {
+            AsyncImage(
+                model              = product.imageUrl,
+                contentDescription = product.name,
+                contentScale       = ContentScale.Crop,
+                modifier           = Modifier.fillMaxSize()
+            )
+            // Condition badge
+            Surface(
+                color  = GreenDeep.copy(alpha = 0.85f),
+                shape  = RoundedCornerShape(8.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp)
+            ) {
+                Text(
+                    text     = product.condition.label,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    style    = MaterialTheme.typography.labelMedium,
+                    color    = Color.White
+                )
+            }
+        }
+        return
+    }
+
+    // Fallback: emoji pager
     val pagerState = rememberPagerState(pageCount = { 3 })
 
     Box(

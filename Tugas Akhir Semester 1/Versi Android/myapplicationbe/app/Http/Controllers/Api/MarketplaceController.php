@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\MarketplaceListing;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MarketplaceController extends Controller
 {
@@ -65,7 +66,7 @@ class MarketplaceController extends Controller
     // ─────────────────────────────────────────────────────────────
     // POST /api/marketplace
     // Create a new listing (seller creates product)
-    // Body: { name, description, price, category, condition, seller_name? }
+    // Body: multipart/form-data — { name, description, price, category, condition, image? }
     // ─────────────────────────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
@@ -77,13 +78,30 @@ class MarketplaceController extends Controller
             'price'       => ['required', 'integer', 'min:1000'],
             'category'    => ['required', 'in:furniture,electronics,clothing,books,others'],
             'condition'   => ['required', 'in:like_new,good,fair'],
+            'stock'       => ['nullable', 'integer', 'min:1', 'max:9999'],
+            'image'       => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('listings', 'public');
+        }
+
+        $stock = $validated['stock'] ?? 1;
 
         $listing = MarketplaceListing::create([
             'seller_id'    => $user->id,
             'seller_name'  => $user->name,
             'seller_rating' => 5.0,
-            ...$validated,
+            'name'         => $validated['name'],
+            'description'  => $validated['description'],
+            'price'        => $validated['price'],
+            'category'     => $validated['category'],
+            'condition'    => $validated['condition'],
+            'stock'        => $stock,
+            'is_sold'      => false,
+            'is_active'    => true,
+            'image_path'   => $imagePath,
         ]);
 
         $user->increment('items_sold');
@@ -145,8 +163,31 @@ class MarketplaceController extends Controller
             'price'       => ['sometimes', 'integer', 'min:1000'],
             'category'    => ['sometimes', 'in:furniture,electronics,clothing,books,others'],
             'condition'   => ['sometimes', 'in:like_new,good,fair'],
+            'stock'       => ['sometimes', 'integer', 'min:0', 'max:9999'],
+            'image'       => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ]);
 
+        if ($request->hasFile('image')) {
+            // Delete old image if exists
+            if ($listing->image_path) {
+                Storage::disk('public')->delete($listing->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('listings', 'public');
+        }
+
+        // When stock is set to 0 → auto mark as sold out
+        if (isset($validated['stock'])) {
+            if ($validated['stock'] === 0) {
+                $validated['is_sold']   = true;
+                $validated['is_active'] = false;
+            } else {
+                // Restoring stock → reactivate listing
+                $validated['is_sold']   = false;
+                $validated['is_active'] = true;
+            }
+        }
+
+        unset($validated['image']); // remove file key before mass-assign
         $listing->update($validated);
 
         return response()->json([
@@ -195,6 +236,8 @@ class MarketplaceController extends Controller
                 : null,
             'is_wishlisted' => in_array($listing->id, $wishlistedIds),
             'is_sold'       => $listing->is_sold,
+            'is_active'     => $listing->is_active,
+            'stock'         => $listing->stock,
             'views_count'   => $listing->views_count,
             'created_at'    => $listing->created_at?->toDateTimeString(),
         ];

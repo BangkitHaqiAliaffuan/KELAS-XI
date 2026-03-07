@@ -1,5 +1,8 @@
 package com.kelasxi.myapplication.ui.marketplace
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
@@ -11,7 +14,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.kelasxi.myapplication.model.Product
 import com.kelasxi.myapplication.model.ProductCategory
 import com.kelasxi.myapplication.model.ProductCondition
@@ -86,6 +92,7 @@ fun EditListingScreen(
     var name        by remember(product) { mutableStateOf(product?.name ?: "") }
     var description by remember(product) { mutableStateOf(product?.description ?: "") }
     var priceRaw    by remember(product) { mutableStateOf(product?.price?.toString() ?: "") }
+    var stockValue  by remember(product) { mutableIntStateOf(product?.stock ?: 1) }
 
     // Default category dari produk, fallback ke index 0
     var category by remember(product) {
@@ -101,6 +108,12 @@ fun EditListingScreen(
                 ?: editConditionOptions[0]
         )
     }
+
+    // Image picker — starts null (keep existing), set to new Uri if user picks
+    var imageUri    by remember { mutableStateOf<Uri?>(null) }
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent()
+    ) { uri -> uri?.let { imageUri = it } }
 
     // Validation errors
     var nameError   by remember { mutableStateOf<String?>(null) }
@@ -274,6 +287,79 @@ fun EditListingScreen(
                 }
             }
 
+            // ── Section: Foto Barang ──────────────────────────────
+            EditFormSectionCard(title = "📷 Foto Barang") {
+                val displayImageModel: Any? = imageUri ?: product?.imageUrl?.takeIf { it.isNotBlank() }
+                if (displayImageModel != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { imagePicker.launch("image/*") }
+                    ) {
+                        AsyncImage(
+                            model              = displayImageModel,
+                            contentDescription = "Foto barang",
+                            contentScale       = ContentScale.Crop,
+                            modifier           = Modifier.fillMaxSize()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .background(Color.Black.copy(alpha = 0.4f))
+                                .padding(vertical = 6.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Tap untuk ganti foto",
+                                fontSize = 12.sp,
+                                color    = Color.White
+                            )
+                        }
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(
+                                width = 2.dp,
+                                color = GreenDeep.copy(alpha = 0.4f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .background(GreenDeep.copy(alpha = 0.05f))
+                            .clickable { imagePicker.launch("image/*") },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.AddPhotoAlternate,
+                                contentDescription = null,
+                                modifier = Modifier.size(40.dp),
+                                tint     = GreenDeep
+                            )
+                            Text(
+                                "Tambah Foto",
+                                fontWeight = FontWeight.SemiBold,
+                                color      = GreenDeep,
+                                fontSize   = 14.sp
+                            )
+                            Text(
+                                "JPEG / PNG / WebP · Maks 5 MB",
+                                fontSize = 11.sp,
+                                color    = TextHint
+                            )
+                        }
+                    }
+                }
+            }
+
             // ── Section: Info Barang ──────────────────────────────
             EditFormSectionCard(title = "📦 Info Barang") {
                 // Nama barang
@@ -331,6 +417,52 @@ fun EditListingScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         prefix = { Text("Rp ", color = TextSecondary, fontWeight = FontWeight.SemiBold) }
                     )
+                }
+
+                // Stok
+                EditFormField(label = "📦 Stok") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        FilledIconButton(
+                            onClick  = { if (stockValue > 0) stockValue-- },
+                            enabled  = stockValue > 0,
+                            colors   = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = if (stockValue > 0) GreenDeep else DividerColor
+                            ),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Text("-", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = if (stockValue == 0) "Sold Out" else stockValue.toString(),
+                                fontSize = 22.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (stockValue == 0) MaterialTheme.colorScheme.error else GreenDeep
+                            )
+                            Text(
+                                text = if (stockValue == 0) "Stok habis — listing dinonaktifkan" else "unit tersedia",
+                                fontSize = 11.sp,
+                                color = TextHint
+                            )
+                        }
+                        FilledIconButton(
+                            onClick  = { if (stockValue < 9999) stockValue++ },
+                            enabled  = stockValue < 9999,
+                            colors   = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = GreenDeep
+                            ),
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Text("+", fontSize = 20.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
 
@@ -429,7 +561,9 @@ fun EditListingScreen(
                             description = description.trim(),
                             price       = priceRaw.toLong(),
                             category    = category.second,
-                            condition   = condition.second
+                            condition   = condition.second,
+                            imageUri    = imageUri,
+                            stock       = stockValue
                         )
                     }
                 },
