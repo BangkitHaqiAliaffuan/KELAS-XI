@@ -344,7 +344,7 @@ fun CourierHomeScreen(
                         }
                     }
                 }
-                val activeOrders = uiState.myOrders.filter { it.status == "pending" || it.status == "shipped" }
+                val activeOrders = uiState.myOrders.filter { it.status == "confirmed" || it.status == "shipped" }
                 val doneOrders = uiState.myOrders.filter { it.status == "completed" || it.status == "cancelled" }
                 if (activeOrders.isNotEmpty()) {
                     item {
@@ -1175,6 +1175,7 @@ fun CourierOrderCard(
     modifier: Modifier = Modifier
 ) {
     val statusColor = when (order.status) {
+        "confirmed" -> StatusPending
         "pending"   -> StatusPending
         "shipped"   -> StatusOnTheWay
         "completed" -> StatusDone
@@ -1182,6 +1183,7 @@ fun CourierOrderCard(
         else        -> TextHint
     }
     val statusLabel = when (order.status) {
+        "confirmed" -> "Siap Dikirim"
         "pending"   -> "Menunggu Pengiriman"
         "shipped"   -> "Sedang Dikirim"
         "completed" -> "Selesai"
@@ -1299,7 +1301,7 @@ fun CourierOrderCard(
             }
 
             // ── Action Buttons (only for active statuses) ────────
-            if (order.status == "pending" || order.status == "shipped") {
+            if (order.status == "confirmed" || order.status == "shipped") {
                 Spacer(modifier = Modifier.height(12.dp))
                 HorizontalDivider(color = SurfaceVariant)
                 Spacer(modifier = Modifier.height(10.dp))
@@ -1336,8 +1338,8 @@ fun CourierOrderCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (order.status == "pending") {
-                            // Lihat Rute (pending — before shipped)
+                        if (order.status == "confirmed") {
+                            // Lihat Rute (confirmed — before shipped)
                             if (order.latitude != null && order.longitude != null) {
                                 OutlinedButton(
                                     onClick = {

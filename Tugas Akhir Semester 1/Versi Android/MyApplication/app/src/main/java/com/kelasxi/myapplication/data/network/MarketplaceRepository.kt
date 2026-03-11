@@ -332,11 +332,11 @@ class MarketplaceRepository(private val context: Context) {
     }
 
     private fun String.toOrderStatus(): OrderStatus = when (this.lowercase()) {
-        "searching"  -> OrderStatus.SEARCHING
-        "confirmed"  -> OrderStatus.PROCESSING
-        "pending"    -> OrderStatus.PROCESSING
-        "shipped"    -> OrderStatus.SHIPPED
-        "completed"  -> OrderStatus.DELIVERED
+        "pending"    -> OrderStatus.WAITING_PAYMENT  // belum bayar
+        "searching"  -> OrderStatus.SEARCHING        // sudah bayar, cari kurir
+        "confirmed"  -> OrderStatus.PROCESSING       // kurir sudah assign, siap kirim
+        "shipped"    -> OrderStatus.SHIPPED          // sedang dikirim
+        "completed"  -> OrderStatus.DELIVERED        // selesai
         "cancelled"  -> OrderStatus.CANCELLED
         else         -> OrderStatus.WAITING_PAYMENT
     }

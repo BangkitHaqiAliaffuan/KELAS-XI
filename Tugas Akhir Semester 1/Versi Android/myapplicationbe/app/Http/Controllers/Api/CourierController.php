@@ -238,7 +238,7 @@ class CourierController extends Controller
 
         $orders = Order::with(['listing', 'buyer'])
             ->where('courier_id', $courier->id)
-            ->orderByRaw("FIELD(status, 'shipped', 'pending', 'completed', 'cancelled')")
+            ->orderByRaw("FIELD(status, 'shipped', 'confirmed', 'completed', 'cancelled')")
             ->latest()
             ->get()
             ->map(fn($o) => $this->formatOrder($o));
@@ -262,8 +262,9 @@ class CourierController extends Controller
 
         DB::transaction(function () use ($order, $courier) {
             $order->update([
-                'courier_id' => $courier->id,
-                'status'     => 'pending',
+                'courier_id'   => $courier->id,
+                'status'       => 'confirmed',  // confirmed = kurir sudah assign, siap kirim
+                'confirmed_at' => now(),
             ]);
         });
 
@@ -291,6 +292,15 @@ class CourierController extends Controller
         ]);
 
         $newStatus = $validated['status'];
+
+        // Guard: shipped only allowed from confirmed, completed only from shipped
+        if ($newStatus === 'shipped' && !in_array($order->status, ['confirmed', 'pending'])) {
+            return response()->json(['message' => 'Pesanan harus dikonfirmasi sebelum dikirim.'], 422);
+        }
+        if ($newStatus === 'completed' && $order->status !== 'shipped') {
+            return response()->json(['message' => 'Pesanan harus dalam status dikirim untuk diselesaikan.'], 422);
+        }
+
         $updates   = ['status' => $newStatus];
 
         if ($newStatus === 'shipped') {
