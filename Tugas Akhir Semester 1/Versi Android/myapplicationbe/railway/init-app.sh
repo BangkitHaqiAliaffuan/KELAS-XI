@@ -17,15 +17,22 @@ sed -i "s/__PORT__/$APP_PORT/g" /etc/nginx/nginx.conf
 mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache
 chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 
-# Run Laravel optimizations
-echo "==> [Railway] Clearing old cache..."
-php artisan optimize:clear
+# Clear only file-based cache first (safe before DB exists)
+echo "==> [Railway] Clearing file-based cache..."
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+php artisan event:clear
 
 echo "==> [Railway] Creating storage symlink..."
 php artisan storage:link --quiet || true
 
 echo "==> [Railway] Running database migrations..."
 php artisan migrate --force
+
+# Now safe to clear DB-based cache (table exists after migrate)
+echo "==> [Railway] Clearing app cache (post-migrate)..."
+php artisan cache:clear || true
 
 echo "==> [Railway] Publishing Filament and Livewire assets..."
 php artisan vendor:publish --tag=livewire:assets --force
