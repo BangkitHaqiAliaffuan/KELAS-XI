@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MarketplaceController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PickupController;
 use App\Http\Controllers\Api\WishlistController;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,40 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login',    [AuthController::class, 'login']);
     Route::post('/google',   [AuthController::class, 'googleLogin']);
+});
+
+// ─────────────────────────────────────────────────────────────────
+// One-time admin setup — disabled automatically after first admin exists
+// POST /api/setup/create-admin
+// Body: { "secret": "SETUP_SECRET", "name": "...", "email": "...", "password": "..." }
+// ─────────────────────────────────────────────────────────────────
+Route::post('/setup/create-admin', function (Request $request) {
+    $secret = config('app.setup_secret', env('SETUP_SECRET', 'trashcare-setup-2026'));
+
+    if ($request->input('secret') !== $secret) {
+        return response()->json(['message' => 'Unauthorized.'], 401);
+    }
+
+    if (Admin::count() > 0) {
+        return response()->json(['message' => 'Admin already exists. Endpoint disabled.'], 403);
+    }
+
+    $validated = $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:admins,email',
+        'password' => 'required|string|min:8',
+    ]);
+
+    $admin = Admin::create([
+        'name'     => $validated['name'],
+        'email'    => $validated['email'],
+        'password' => bcrypt($validated['password']),
+    ]);
+
+    return response()->json([
+        'message' => 'Admin created successfully. This endpoint is now disabled.',
+        'admin'   => ['id' => $admin->id, 'name' => $admin->name, 'email' => $admin->email],
+    ], 201);
 });
 
 // ─────────────────────────────────────────────────────────────────
