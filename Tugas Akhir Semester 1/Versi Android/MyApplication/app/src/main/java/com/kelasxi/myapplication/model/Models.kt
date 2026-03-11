@@ -98,7 +98,13 @@ data class Order(
     val paymentStatus: String = "unpaid",
     val mayarPaymentLink: String? = null,
     val mayarPaymentId: String? = null,
-    val paidAt: String? = null
+    val paidAt: String? = null,
+    // ── Rating ────────────────────────────────────────────────────
+    val courierRating: Int? = null,
+    val courierReview: String? = null,
+    val listingRating: Int? = null,
+    val listingReview: String? = null,
+    val ratedAt: String? = null
 )
 
 // ── Cart ──────────────────────────────────────────────────────────

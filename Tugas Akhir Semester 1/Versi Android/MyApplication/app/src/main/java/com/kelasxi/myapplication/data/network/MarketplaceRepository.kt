@@ -227,6 +227,40 @@ class MarketplaceRepository(private val context: Context) {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // POST /api/orders/{id}/rate  →  updated Order
+    // Body: courier_rating, courier_review?, listing_rating, listing_review?
+    // ─────────────────────────────────────────────────────────────
+    suspend fun rateOrder(
+        id: Long,
+        courierRating: Int,
+        courierReview: String?,
+        listingRating: Int,
+        listingReview: String?
+    ): AuthResult<Order> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login. Silakan login kembali.")
+
+            val body = RateOrderRequest(
+                courier_rating = courierRating,
+                courier_review = courierReview?.ifBlank { null },
+                listing_rating = listingRating,
+                listing_review = listingReview?.ifBlank { null }
+            )
+            val response = api.rateOrder("Bearer $token", id, body)
+            if (response.isSuccessful) {
+                val data = response.body()!!.data
+                if (data != null) AuthResult.Success(data.toDomain())
+                else AuthResult.Error("Rating berhasil tetapi data tidak tersedia.")
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // GET /api/wishlist  →  list of Product
     // ─────────────────────────────────────────────────────────────
     suspend fun getWishlist(): AuthResult<List<Product>> {
@@ -313,7 +347,12 @@ class MarketplaceRepository(private val context: Context) {
             paymentStatus    = payment_status ?: "unpaid",
             mayarPaymentLink = mayar_payment_link,
             mayarPaymentId   = mayar_payment_id,
-            paidAt           = paid_at
+            paidAt           = paid_at,
+            courierRating    = courier_rating,
+            courierReview    = courier_review,
+            listingRating    = listing_rating,
+            listingReview    = listing_review,
+            ratedAt          = rated_at
         )
     }
 

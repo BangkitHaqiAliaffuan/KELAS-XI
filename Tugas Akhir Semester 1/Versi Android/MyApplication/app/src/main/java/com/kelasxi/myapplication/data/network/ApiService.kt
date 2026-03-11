@@ -167,6 +167,14 @@ interface ApiService {
         @Body body: CancelOrderRequest = CancelOrderRequest()
     ): Response<OrderSingleResponse>
 
+    /** POST /api/orders/{id}/rate — buyer rates courier + listing after completed */
+    @POST("orders/{id}/rate")
+    suspend fun rateOrder(
+        @Header("Authorization") bearer: String,
+        @Path("id") id: Long,
+        @Body body: RateOrderRequest
+    ): Response<MessageResponse>
+
     /** GET /api/orders/sales-transactions — Mayar paid+unpaid history (seller) */
     @GET("orders/sales-transactions")
     suspend fun getSalesTransactions(

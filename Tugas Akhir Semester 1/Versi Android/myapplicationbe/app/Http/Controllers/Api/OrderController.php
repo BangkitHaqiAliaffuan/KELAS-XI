@@ -307,6 +307,77 @@ class OrderController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // POST /api/orders/{id}/rate
+    // Buyer rates courier + listing after order completed
+    // Body: { courier_rating, courier_review?, listing_rating, listing_review? }
+    // ─────────────────────────────────────────────────────────────
+    public function rate(Request $request, int $id): JsonResponse
+    {
+        $order = $request->user()->orders()->with(['listing', 'courier'])->findOrFail($id);
+
+        if ($order->status !== 'completed') {
+            return response()->json([
+                'message' => 'Pesanan harus selesai sebelum dapat diberi rating.',
+            ], 422);
+        }
+
+        if ($order->isRated()) {
+            return response()->json([
+                'message' => 'Pesanan ini sudah diberi rating.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'courier_rating'  => ['required', 'integer', 'min:1', 'max:5'],
+            'courier_review'  => ['nullable', 'string', 'max:500'],
+            'listing_rating'  => ['required', 'integer', 'min:1', 'max:5'],
+            'listing_review'  => ['nullable', 'string', 'max:500'],
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $order->update([
+                'courier_rating'  => $validated['courier_rating'],
+                'courier_review'  => $validated['courier_review'] ?? null,
+                'listing_rating'  => $validated['listing_rating'],
+                'listing_review'  => $validated['listing_review'] ?? null,
+                'rated_at'        => now(),
+            ]);
+
+            // Update courier rolling average rating
+            if ($order->courier) {
+                $courier = $order->courier;
+                $ratedCount = Order::where('courier_id', $courier->id)
+                    ->whereNotNull('courier_rating')
+                    ->count();
+                $avgRating = Order::where('courier_id', $courier->id)
+                    ->whereNotNull('courier_rating')
+                    ->avg('courier_rating');
+                $courier->update(['rating' => round($avgRating, 2)]);
+            }
+
+            // Update listing seller_rating (rolling average)
+            if ($order->listing) {
+                $listing = $order->listing;
+                $avgListingRating = Order::where('listing_id', $listing->id)
+                    ->whereNotNull('listing_rating')
+                    ->avg('listing_rating');
+                $listing->update(['seller_rating' => round($avgListingRating, 2)]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Rating berhasil diberikan.',
+                'data'    => $this->formatOrder($order->fresh(['listing'])),
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Terjadi kesalahan. Silakan coba lagi.'], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Helper: format order into consistent array shape
     // ─────────────────────────────────────────────────────────────
     private function formatOrder(Order $order): array
@@ -335,6 +406,11 @@ class OrderController extends Controller
             'estimated_arrival'  => $order->shipped_at
                 ? $order->shipped_at->addDays(3)->format('d M Y')
                 : null,
+            'courier_rating'     => $order->courier_rating,
+            'courier_review'     => $order->courier_review,
+            'listing_rating'     => $order->listing_rating,
+            'listing_review'     => $order->listing_review,
+            'rated_at'           => $order->rated_at?->format('d M Y'),
             'listing' => $listing ? [
                 'id'            => (string) $listing->id,
                 'name'          => $listing->name,

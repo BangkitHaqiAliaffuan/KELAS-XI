@@ -507,6 +507,41 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Rate order — buyer rates courier + listing after completed
+    // ─────────────────────────────────────────────────────────────
+    private val _isRatingOrder = MutableStateFlow(false)
+    val isRatingOrder: StateFlow<Boolean> = _isRatingOrder.asStateFlow()
+
+    private val _rateOrderSuccess = MutableStateFlow<String?>(null)
+    val rateOrderSuccess: StateFlow<String?> = _rateOrderSuccess.asStateFlow()
+
+    fun rateOrder(
+        orderId: String,
+        courierRating: Int,
+        courierReview: String?,
+        listingRating: Int,
+        listingReview: String?
+    ) {
+        val id = orderId.toLongOrNull() ?: return
+        viewModelScope.launch {
+            _isRatingOrder.value = true
+            when (val result = repository.rateOrder(id, courierRating, courierReview, listingRating, listingReview)) {
+                is AuthResult.Success -> {
+                    _orders.value = _orders.value.map { o ->
+                        if (o.id == orderId) result.data else o
+                    }
+                    _rateOrderSuccess.value = "Rating berhasil diberikan! ⭐"
+                }
+                is AuthResult.Error -> _ordersError.value = result.message
+                else -> {}
+            }
+            _isRatingOrder.value = false
+        }
+    }
+
+    fun dismissRateOrderSuccess() { _rateOrderSuccess.value = null }
+
+    // ─────────────────────────────────────────────────────────────
     // My Shop — load seller's own listings
     // ─────────────────────────────────────────────────────────────
     fun loadMyListings() {

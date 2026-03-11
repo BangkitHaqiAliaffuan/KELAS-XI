@@ -32,6 +32,11 @@ class Order extends Model
         'completed_at',
         'cancelled_at',
         'cancellation_reason',
+        'courier_rating',
+        'courier_review',
+        'listing_rating',
+        'listing_review',
+        'rated_at',
     ];
 
     protected $casts = [
@@ -39,17 +44,21 @@ class Order extends Model
         'quantity'       => 'integer',
         'latitude'       => 'float',
         'longitude'      => 'float',
+        'courier_rating' => 'integer',
+        'listing_rating' => 'integer',
         'paid_at'        => 'datetime',
         'confirmed_at'   => 'datetime',
         'searching_at'   => 'datetime',
         'shipped_at'     => 'datetime',
         'completed_at'   => 'datetime',
         'cancelled_at'   => 'datetime',
+        'rated_at'       => 'datetime',
     ];
 
     // ── Payment helpers ────────────────────────────────────────────
     public function isPaid(): bool          { return $this->payment_status === 'paid'; }
     public function isPaymentClosed(): bool { return $this->payment_status === 'closed'; }
+    public function isRated(): bool         { return $this->rated_at !== null; }
 
     // ── Relationships ─────────────────────────────────────────────
 

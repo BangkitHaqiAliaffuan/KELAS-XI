@@ -40,6 +40,8 @@ fun MyOrdersScreen(
     val ordersError   by viewModel.ordersError.collectAsStateWithLifecycle()
     val isPayingOrder by viewModel.isPayingOrder.collectAsStateWithLifecycle()
     val paySuccess    by viewModel.paySuccess.collectAsStateWithLifecycle()
+    val isRatingOrder by viewModel.isRatingOrder.collectAsStateWithLifecycle()
+    val rateSuccess   by viewModel.rateOrderSuccess.collectAsStateWithLifecycle()
 
     val salesTransactions by viewModel.salesTransactions.collectAsStateWithLifecycle()
     val salesSummary      by viewModel.salesSummary.collectAsStateWithLifecycle()
@@ -72,6 +74,12 @@ fun MyOrdersScreen(
         if (paySuccess != null) {
             snackbarHostState.showSnackbar(paySuccess!!)
             viewModel.dismissPaySuccess()
+        }
+    }
+    LaunchedEffect(rateSuccess) {
+        if (rateSuccess != null) {
+            snackbarHostState.showSnackbar(rateSuccess!!)
+            viewModel.dismissRateOrderSuccess()
         }
     }
 
@@ -167,6 +175,7 @@ fun MyOrdersScreen(
                     onStatusSelected = { selectedStatus = if (selectedStatus == it) null else it },
                     viewModel     = viewModel,
                     isPayingOrder = isPayingOrder,
+                    isRatingOrder = isRatingOrder,
                     onPayOrder    = onPayOrder,
                     cartCheckoutGroups   = cartCheckoutGroups,
                     onPayCartCheckout    = onPayCartCheckout
@@ -194,6 +203,7 @@ private fun PembelianTab(
     onStatusSelected: (OrderStatus) -> Unit,
     viewModel: MarketplaceViewModel,
     isPayingOrder: Boolean,
+    isRatingOrder: Boolean = false,
     onPayOrder: (Long, String, String) -> Unit,
     cartCheckoutGroups: List<CartCheckoutGroup> = emptyList(),
     onPayCartCheckout: (String, String) -> Unit = { _, _ -> }
@@ -213,6 +223,28 @@ private fun PembelianTab(
     var selectedOrder by remember { mutableStateOf<Order?>(null) }
     val sheetState    = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Order yang sedang akan dirating
+    var ratingOrder by remember { mutableStateOf<Order?>(null) }
+
+    // Rating dialog
+    ratingOrder?.let { order ->
+        RatingDialog(
+            order       = order,
+            isLoading   = isRatingOrder,
+            onDismiss   = { ratingOrder = null },
+            onSubmit    = { courierRating, courierReview, listingRating, listingReview ->
+                viewModel.rateOrder(
+                    orderId       = order.id,
+                    courierRating = courierRating,
+                    courierReview = courierReview,
+                    listingRating = listingRating,
+                    listingReview = listingReview
+                )
+                ratingOrder = null
+            }
+        )
+    }
+
     // Tampilkan bottom sheet detail jika ada order yang dipilih
     selectedOrder?.let { order ->
         OrderDetailBottomSheet(
@@ -228,6 +260,10 @@ private fun PembelianTab(
             onCancel      = {
                 viewModel.cancelOrder(order.id)
                 selectedOrder = null
+            },
+            onRate        = {
+                selectedOrder = null
+                ratingOrder = order
             },
             isPayingThis  = isPayingOrder && order.status == OrderStatus.WAITING_PAYMENT
         )
@@ -283,6 +319,7 @@ private fun PembelianTab(
                             }
                         },
                         onCancel     = { viewModel.cancelOrder(order.id) },
+                        onRate       = { ratingOrder = order },
                         isPayingThis = isPayingOrder && order.status == OrderStatus.WAITING_PAYMENT
                     )
                 }
@@ -585,6 +622,7 @@ private fun OrderDetailBottomSheet(
     onDismiss: () -> Unit,
     onPay: () -> Unit,
     onCancel: () -> Unit,
+    onRate: () -> Unit = {},
     isPayingThis: Boolean
 ) {
     ModalBottomSheet(
@@ -717,7 +755,6 @@ private fun OrderDetailBottomSheet(
             Spacer(Modifier.height(20.dp))
 
             // ── Tombol Aksi ───────────────────────────────────────
-            @Suppress("UNUSED_EXPRESSION")
             when (order.status) {
                 OrderStatus.WAITING_PAYMENT -> {
                     Column {
@@ -799,13 +836,44 @@ private fun OrderDetailBottomSheet(
                     }
                 }
                 OrderStatus.DELIVERED -> {
-                    Button(
-                        onClick  = onDismiss,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape    = RoundedCornerShape(14.dp),
-                        colors   = ButtonDefaults.buttonColors(containerColor = GreenDeep)
-                    ) {
-                        Text("✅  Pesanan Selesai", color = Color.White, fontWeight = FontWeight.Bold)
+                    if (order.ratedAt == null) {
+                        Button(
+                            onClick  = onRate,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape    = RoundedCornerShape(14.dp),
+                            colors   = ButtonDefaults.buttonColors(containerColor = GreenDeep)
+                        ) {
+                            Text("⭐  Beri Rating", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        // Already rated — show the submitted ratings
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = GreenDeep.copy(alpha = 0.07f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                "✅ Rating sudah diberikan",
+                                fontWeight = FontWeight.SemiBold,
+                                color      = GreenDeep,
+                                fontSize   = 13.sp
+                            )
+                            Text(
+                                "🚚 Kurir: ${order.courierRating ?: "-"}/5${if (!order.courierReview.isNullOrBlank()) " — ${order.courierReview}" else ""}",
+                                fontSize = 12.sp,
+                                color    = TextSecondary
+                            )
+                            Text(
+                                "📦 Produk: ${order.listingRating ?: "-"}/5${if (!order.listingReview.isNullOrBlank()) " — ${order.listingReview}" else ""}",
+                                fontSize = 12.sp,
+                                color    = TextSecondary
+                            )
+                        }
                     }
                 }
                 OrderStatus.CANCELLED -> {
@@ -827,7 +895,6 @@ private fun OrderDetailBottomSheet(
                         )
                     }
                 }
-                else -> {}
             }
         }
     }
@@ -1140,6 +1207,7 @@ fun OrderCard(
     order: Order,
     onPay: () -> Unit = {},
     onCancel: () -> Unit = {},
+    onRate: () -> Unit = {},
     onOrderClick: () -> Unit = {},
     isPayingThis: Boolean = false
 ) {
@@ -1282,7 +1350,7 @@ fun OrderCard(
                 }
 
                 // Action button per status
-                OrderActionButton(status = order.status, onPay = onPay, onCancel = onCancel, isPayingThis = isPayingThis)
+                OrderActionButton(order = order, onPay = onPay, onCancel = onCancel, onRate = onRate, isPayingThis = isPayingThis)
             }
         }
     }
@@ -1317,11 +1385,13 @@ fun OrderStatusBadge(status: OrderStatus) {
 // ─────────────────────────────────────────────────────────────────
 @Composable
 fun OrderActionButton(
-    status: OrderStatus,
+    order: Order,
     onPay: () -> Unit = {},
     onCancel: () -> Unit = {},
+    onRate: () -> Unit = {},
     isPayingThis: Boolean = false
 ) {
+    val status = order.status
     when (status) {
         OrderStatus.WAITING_PAYMENT ->
             Column(horizontalAlignment = Alignment.End) {
@@ -1359,15 +1429,168 @@ fun OrderActionButton(
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
             ) { Text("Lacak", style = MaterialTheme.typography.labelSmall, color = GreenDeep) }
 
-        OrderStatus.DELIVERED ->
-            OutlinedButton(
-                onClick = {},
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, GreenDeep),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-            ) { Text("Beli Lagi", style = MaterialTheme.typography.labelSmall, color = GreenDeep) }
+        OrderStatus.DELIVERED -> {
+            if (order.ratedAt == null) {
+                Button(
+                    onClick = onRate,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = GreenDeep),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                ) { Text("⭐ Beri Rating", style = MaterialTheme.typography.labelSmall, color = Color.White) }
+            } else {
+                Surface(
+                    color = GreenDeep.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(20.dp)
+                ) {
+                    Text(
+                        "⭐ Sudah Dirating",
+                        modifier  = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        fontSize  = 11.sp,
+                        color     = GreenDeep,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
 
         else -> Spacer(modifier = Modifier.width(0.dp))
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Rating Dialog — buyer rates courier + listing after order completed
+// ─────────────────────────────────────────────────────────────────
+@Composable
+private fun RatingDialog(
+    order: Order,
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    onSubmit: (courierRating: Int, courierReview: String?, listingRating: Int, listingReview: String?) -> Unit
+) {
+    var courierRating  by remember { mutableIntStateOf(0) }
+    var courierReview  by remember { mutableStateOf("") }
+    var listingRating  by remember { mutableIntStateOf(0) }
+    var listingReview  by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        shape            = RoundedCornerShape(20.dp),
+        containerColor   = SurfaceWhite,
+        title = {
+            Text(
+                "⭐ Beri Rating",
+                fontWeight = FontWeight.ExtraBold,
+                color      = TextPrimary
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Product brief
+                Text(
+                    order.product.name,
+                    style    = MaterialTheme.typography.bodySmall,
+                    color    = TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                HorizontalDivider(color = DividerColor)
+
+                // ── Kurir Rating ──────────────────────────────────
+                Text(
+                    "🚚 Rating Kurir",
+                    fontWeight = FontWeight.SemiBold,
+                    color      = TextPrimary,
+                    style      = MaterialTheme.typography.bodyMedium
+                )
+                StarRatingRow(
+                    rating    = courierRating,
+                    onSelect  = { courierRating = it }
+                )
+                OutlinedTextField(
+                    value         = courierReview,
+                    onValueChange = { courierReview = it },
+                    placeholder   = { Text("Tulis ulasan kurir (opsional)", color = TextHint, fontSize = 13.sp) },
+                    modifier      = Modifier.fillMaxWidth(),
+                    shape         = RoundedCornerShape(10.dp),
+                    maxLines      = 3,
+                    textStyle     = MaterialTheme.typography.bodySmall
+                )
+
+                HorizontalDivider(color = DividerColor)
+
+                // ── Produk Rating ─────────────────────────────────
+                Text(
+                    "📦 Rating Produk",
+                    fontWeight = FontWeight.SemiBold,
+                    color      = TextPrimary,
+                    style      = MaterialTheme.typography.bodyMedium
+                )
+                StarRatingRow(
+                    rating   = listingRating,
+                    onSelect = { listingRating = it }
+                )
+                OutlinedTextField(
+                    value         = listingReview,
+                    onValueChange = { listingReview = it },
+                    placeholder   = { Text("Tulis ulasan produk (opsional)", color = TextHint, fontSize = 13.sp) },
+                    modifier      = Modifier.fillMaxWidth(),
+                    shape         = RoundedCornerShape(10.dp),
+                    maxLines      = 3,
+                    textStyle     = MaterialTheme.typography.bodySmall
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick  = {
+                    onSubmit(
+                        courierRating,
+                        courierReview.ifBlank { null },
+                        listingRating,
+                        listingReview.ifBlank { null }
+                    )
+                },
+                enabled  = courierRating > 0 && listingRating > 0 && !isLoading,
+                shape    = RoundedCornerShape(12.dp),
+                colors   = ButtonDefaults.buttonColors(containerColor = GreenDeep)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier    = Modifier.size(16.dp),
+                        color       = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text("Mengirim...", color = Color.White)
+                } else {
+                    Text("Kirim Rating ⭐", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick  = onDismiss,
+                enabled  = !isLoading
+            ) { Text("Batal", color = TextSecondary) }
+        }
+    )
+}
+
+@Composable
+private fun StarRatingRow(
+    rating: Int,
+    onSelect: (Int) -> Unit
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (i in 1..5) {
+            val filled = i <= rating
+            Text(
+                text     = if (filled) "⭐" else "☆",
+                fontSize = 28.sp,
+                color    = if (filled) Color(0xFFFFC107) else TextHint,
+                modifier = Modifier.clickable { onSelect(i) }
+            )
+        }
     }
 }
 

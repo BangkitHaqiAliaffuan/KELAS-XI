@@ -106,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/pay',               [OrderController::class, 'pay'])->whereNumber('id');
         Route::get('/{id}/payment-status',     [OrderController::class, 'paymentStatus'])->whereNumber('id');
         Route::post('/{id}/cancel',            [OrderController::class, 'cancel'])->whereNumber('id');
+        Route::post('/{id}/rate',              [OrderController::class, 'rate'])->whereNumber('id');
     });    // Wishlist routes
     // GET  /api/wishlist         → list user's wishlisted items
     // POST /api/wishlist/toggle  → toggle wishlist (add or remove)
