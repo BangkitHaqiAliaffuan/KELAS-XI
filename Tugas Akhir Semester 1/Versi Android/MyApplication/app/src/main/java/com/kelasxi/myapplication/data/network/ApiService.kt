@@ -286,5 +286,35 @@ interface ApiService {
         @Header("Authorization") bearer: String,
         @Body body: CourierAvailabilityRequest
     ): Response<CourierAvailabilityResponse>
+
+    // ── Courier Order (marketplace delivery) endpoints ────────────
+
+    /** GET /api/courier/available-orders — paid orders awaiting a courier */
+    @GET("courier/available-orders")
+    suspend fun getAvailableOrders(
+        @Header("Authorization") bearer: String
+    ): Response<CourierOrderListResponse>
+
+    /** GET /api/courier/orders — orders assigned to this courier */
+    @GET("courier/orders")
+    suspend fun getCourierOrders(
+        @Header("Authorization") bearer: String
+    ): Response<CourierOrderListResponse>
+
+    /** POST /api/courier/orders/{id}/accept — accept an order delivery */
+    @POST("courier/orders/{id}/accept")
+    suspend fun acceptOrder(
+        @Header("Authorization") bearer: String,
+        @Path("id") id: Long,
+        @Body body: EmptyRequest = EmptyRequest()
+    ): Response<CourierOrderSingleResponse>
+
+    /** PATCH /api/courier/orders/{id}/status — update order delivery status */
+    @PATCH("courier/orders/{id}/status")
+    suspend fun updateOrderStatus(
+        @Header("Authorization") bearer: String,
+        @Path("id") id: Long,
+        @Body body: UpdatePickupStatusRequest
+    ): Response<CourierOrderSingleResponse>
 }
 

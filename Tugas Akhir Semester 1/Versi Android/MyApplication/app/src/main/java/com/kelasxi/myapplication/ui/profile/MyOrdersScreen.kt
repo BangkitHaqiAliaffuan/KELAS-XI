@@ -47,6 +47,7 @@ fun MyOrdersScreen(
     val salesError        by viewModel.salesError.collectAsStateWithLifecycle()
 
     val cartCheckoutGroups    by viewModel.cartCheckoutGroups.collectAsStateWithLifecycle()
+    @Suppress("UNUSED_VARIABLE")
     val isLoadingCartCheckouts by viewModel.isLoadingCartCheckouts.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -716,42 +717,63 @@ private fun OrderDetailBottomSheet(
             Spacer(Modifier.height(20.dp))
 
             // ── Tombol Aksi ───────────────────────────────────────
+            @Suppress("UNUSED_EXPRESSION")
             when (order.status) {
                 OrderStatus.WAITING_PAYMENT -> {
-                    Button(
-                        onClick  = onPay,
-                        enabled  = !isPayingThis,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape    = RoundedCornerShape(14.dp),
-                        colors   = ButtonDefaults.buttonColors(containerColor = GreenDeep)
-                    ) {
-                        if (isPayingThis) {
-                            CircularProgressIndicator(
-                                modifier    = Modifier.size(18.dp),
-                                color       = Color.White,
-                                strokeWidth = 2.dp
+                    Column {
+                        Button(
+                            onClick  = onPay,
+                            enabled  = !isPayingThis,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape    = RoundedCornerShape(14.dp),
+                            colors   = ButtonDefaults.buttonColors(containerColor = GreenDeep)
+                        ) {
+                            if (isPayingThis) {
+                                CircularProgressIndicator(
+                                    modifier    = Modifier.size(18.dp),
+                                    color       = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text("Memproses...", color = Color.White, fontWeight = FontWeight.Bold)
+                            } else {
+                                Text("💳  Bayar Sekarang", color = Color.White, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick  = onCancel,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape    = RoundedCornerShape(14.dp),
+                            border   = BorderStroke(1.dp, StatusCancelled)
+                        ) {
+                            Text(
+                                "❌  Batalkan Pesanan",
+                                color      = StatusCancelled,
+                                fontWeight = FontWeight.SemiBold
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Memproses...", color = Color.White, fontWeight = FontWeight.Bold)
-                        } else {
-                            Text("💳  Bayar Sekarang", color = Color.White, fontWeight = FontWeight.Bold)
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick  = onCancel,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape    = RoundedCornerShape(14.dp),
-                        border   = BorderStroke(1.dp, StatusCancelled)
+                }
+                OrderStatus.SEARCHING -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = Color(0xFF1565C0).copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .padding(12.dp),
+                        contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "❌  Batalkan Pesanan",
-                            color      = StatusCancelled,
+                            "🔍 Sedang mencari kurir terdekat...",
+                            color      = Color(0xFF1565C0),
+                            fontSize   = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
                 }
-
                 OrderStatus.PROCESSING -> {
                     OutlinedButton(
                         onClick  = onCancel,
@@ -766,7 +788,6 @@ private fun OrderDetailBottomSheet(
                         )
                     }
                 }
-
                 OrderStatus.SHIPPED -> {
                     Button(
                         onClick  = {},
@@ -777,7 +798,6 @@ private fun OrderDetailBottomSheet(
                         Text("🚚  Lacak Pengiriman", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
-
                 OrderStatus.DELIVERED -> {
                     Button(
                         onClick  = onDismiss,
@@ -788,7 +808,6 @@ private fun OrderDetailBottomSheet(
                         Text("✅  Pesanan Selesai", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
-
                 OrderStatus.CANCELLED -> {
                     Box(
                         modifier = Modifier
@@ -808,6 +827,7 @@ private fun OrderDetailBottomSheet(
                         )
                     }
                 }
+                else -> {}
             }
         }
     }
@@ -1026,7 +1046,7 @@ private fun CartGroupCard(
 @Composable
 fun OrderSummaryBanner(orders: List<Order>) {
     val total     = orders.size
-    val active    = orders.count { it.status in listOf(OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.WAITING_PAYMENT) }
+    val active    = orders.count { it.status in listOf(OrderStatus.SEARCHING, OrderStatus.PROCESSING, OrderStatus.SHIPPED, OrderStatus.WAITING_PAYMENT) }
     val completed = orders.count { it.status == OrderStatus.DELIVERED }
 
     Box(
@@ -1275,6 +1295,7 @@ fun OrderCard(
 fun OrderStatusBadge(status: OrderStatus) {
     val (bg, fg) = when (status) {
         OrderStatus.WAITING_PAYMENT -> Pair(StatusPending.copy(alpha = 0.15f),   StatusPending)
+        OrderStatus.SEARCHING       -> Pair(Color(0xFF1565C0).copy(alpha = 0.12f), Color(0xFF1565C0))
         OrderStatus.PROCESSING      -> Pair(StatusOnTheWay.copy(alpha = 0.15f),  StatusOnTheWay)
         OrderStatus.SHIPPED         -> Pair(GreenDeep.copy(alpha = 0.12f),       GreenDeep)
         OrderStatus.DELIVERED       -> Pair(StatusDone.copy(alpha = 0.15f),      StatusDone)

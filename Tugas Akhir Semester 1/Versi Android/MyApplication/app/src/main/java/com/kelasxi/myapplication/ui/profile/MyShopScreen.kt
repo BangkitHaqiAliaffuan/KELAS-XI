@@ -24,10 +24,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kelasxi.myapplication.model.*
 import com.kelasxi.myapplication.ui.theme.*
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale as JavaLocale
+import java.util.Locale.forLanguageTag
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import java.text.NumberFormat
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,8 +44,9 @@ fun MyShopScreen(
     val error            by viewModel.myListingsError.collectAsStateWithLifecycle()
     val isDeleting       by viewModel.isDeletingListing.collectAsStateWithLifecycle()
     val deleteSuccess    by viewModel.deleteSuccess.collectAsStateWithLifecycle()
-    val salesSummary     by viewModel.salesSummary.collectAsStateWithLifecycle()
-    val isLoadingSales   by viewModel.isLoadingSales.collectAsStateWithLifecycle()
+    val salesSummary        by viewModel.salesSummary.collectAsStateWithLifecycle()
+    val salesTransactions  by viewModel.salesTransactions.collectAsStateWithLifecycle()
+    val isLoadingSales     by viewModel.isLoadingSales.collectAsStateWithLifecycle()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -233,6 +236,22 @@ fun MyShopScreen(
                             isLoading     = isLoadingSales,
                             onRefresh     = { viewModel.loadSalesTransactions() }
                         )
+                    }
+
+                    // Riwayat Transaksi
+                    if (salesTransactions.isNotEmpty()) {
+                        item {
+                            Text(
+                                "📋 Riwayat Transaksi",
+                                fontWeight = FontWeight.Bold,
+                                fontSize   = 14.sp,
+                                color      = TextPrimary,
+                                modifier   = Modifier.padding(top = 4.dp, bottom = 4.dp)
+                            )
+                        }
+                        items(salesTransactions, key = { it.id }) { trx ->
+                            ShopTransactionCard(trx = trx)
+                        }
                     }
 
                     // Listing cards
@@ -470,7 +489,7 @@ private fun RevenueStatItem(emoji: String, value: String, label: String, color: 
 
 private fun formatRupiahShop(amount: Long): String {
     return try {
-        "Rp " + NumberFormat.getNumberInstance(Locale("in", "ID")).format(amount)
+        "Rp " + NumberFormat.getNumberInstance(forLanguageTag("id-ID")).format(amount)
     } catch (_: Exception) {
         "Rp $amount"
     }
@@ -662,6 +681,111 @@ fun MyShopListingCard(
                     )
                 }
             }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Transaction card — riwayat transaksi penjualan
+// ─────────────────────────────────────────────────────────────────
+@Composable
+fun ShopTransactionCard(trx: SalesTransaction) {
+    val isPaid = trx.mayarStatus == "paid"
+    val statusColor  = if (isPaid) Color(0xFF2E7D32) else Color(0xFFE65100)
+    val statusBg     = if (isPaid) Color(0xFFE8F5E9) else Color(0xFFFFF3E0)
+    val statusLabel  = if (isPaid) "✅ Lunas" else "⏳ Belum Bayar"
+
+    Card(
+        modifier  = Modifier.fillMaxWidth(),
+        shape     = RoundedCornerShape(14.dp),
+        colors    = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        elevation = CardDefaults.cardElevation(1.dp)
+    ) {
+        Row(
+            modifier  = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment     = Alignment.Top
+        ) {
+            // Status indicator
+            Box(
+                modifier          = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(statusBg),
+                contentAlignment  = Alignment.Center
+            ) {
+                Text(if (isPaid) "✅" else "⏳", fontSize = 20.sp)
+            }
+
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                // Product / description
+                Text(
+                    trx.description.ifBlank { "Produk" },
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize   = 13.sp,
+                    color      = TextPrimary,
+                    maxLines   = 1,
+                    overflow   = TextOverflow.Ellipsis
+                )
+                // Customer name
+                Text(
+                    "Pembeli: ${trx.customerName.ifBlank { "-" }}",
+                    fontSize = 11.sp,
+                    color    = TextSecondary
+                )
+                // Date
+                if (trx.createdAt.isNotBlank()) {
+                    Text(
+                        formatTrxDate(trx.createdAt),
+                        fontSize = 10.sp,
+                        color    = TextHint
+                    )
+                }
+            }
+
+            Column(
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Amount
+                Text(
+                    formatRupiahShop(trx.amount),
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize   = 13.sp,
+                    color      = GreenDeep
+                )
+                // Status badge
+                Surface(
+                    shape = RoundedCornerShape(6.dp),
+                    color = statusBg
+                ) {
+                    Text(
+                        statusLabel,
+                        fontSize  = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color     = statusColor,
+                        modifier  = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun formatTrxDate(isoDate: String): String {
+    return try {
+        val input  = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", JavaLocale.US)
+        val output = SimpleDateFormat("dd MMM yyyy, HH:mm", forLanguageTag("id-ID"))
+        output.format(input.parse(isoDate)!!)
+    } catch (_: Exception) {
+        try {
+            val input  = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", JavaLocale.US)
+            val output = SimpleDateFormat("dd MMM yyyy", forLanguageTag("id-ID"))
+            output.format(input.parse(isoDate)!!)
+        } catch (_: Exception) {
+            isoDate.take(10)
         }
     }
 }

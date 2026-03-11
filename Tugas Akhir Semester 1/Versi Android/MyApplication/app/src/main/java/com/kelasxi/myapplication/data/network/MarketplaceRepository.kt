@@ -140,7 +140,9 @@ class MarketplaceRepository(private val context: Context) {
         listingId: Long,
         quantity: Int = 1,
         shippingAddress: String,
-        notes: String? = null
+        notes: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null
     ): AuthResult<Order> {
         return try {
             val token = TokenStore.getToken(context)
@@ -150,7 +152,9 @@ class MarketplaceRepository(private val context: Context) {
                 listing_id       = listingId,
                 quantity         = quantity,
                 notes            = notes?.ifBlank { null },
-                shipping_address = shippingAddress
+                shipping_address = shippingAddress,
+                latitude         = latitude,
+                longitude        = longitude
             )
 
             val response = api.createOrder("Bearer $token", body)
@@ -304,6 +308,8 @@ class MarketplaceRepository(private val context: Context) {
             orderedAt        = ordered_at,
             estimatedArrival = estimated_arrival ?: "",
             shippingAddress  = shipping_address,
+            latitude         = latitude,
+            longitude        = longitude,
             paymentStatus    = payment_status ?: "unpaid",
             mayarPaymentLink = mayar_payment_link,
             mayarPaymentId   = mayar_payment_id,
@@ -326,24 +332,28 @@ class MarketplaceRepository(private val context: Context) {
     }
 
     private fun String.toOrderStatus(): OrderStatus = when (this.lowercase()) {
+        "searching"  -> OrderStatus.SEARCHING
         "confirmed"  -> OrderStatus.PROCESSING
+        "pending"    -> OrderStatus.PROCESSING
         "shipped"    -> OrderStatus.SHIPPED
         "completed"  -> OrderStatus.DELIVERED
         "cancelled"  -> OrderStatus.CANCELLED
-        else         -> OrderStatus.WAITING_PAYMENT   // pending
+        else         -> OrderStatus.WAITING_PAYMENT
     }
 
     private fun CartCheckoutGroupDto.toDomain(): CartCheckoutGroup {
         return CartCheckoutGroup(
-            cartCheckoutId = cart_checkout_id,
-            orders         = orders.map { it.toDomain() },
-            total          = total,
-            paymentStatus  = payment_status,
-            orderStatus    = order_status.toOrderStatus(),
-            paymentLink    = payment_link,
-            paymentId      = payment_id,
+            cartCheckoutId  = cart_checkout_id,
+            orders          = orders.map { it.toDomain() },
+            total           = total,
+            paymentStatus   = payment_status,
+            orderStatus     = order_status.toOrderStatus(),
+            paymentLink     = payment_link,
+            paymentId       = payment_id,
             shippingAddress = shipping_address,
-            orderedAt      = ordered_at
+            latitude        = latitude,
+            longitude       = longitude,
+            orderedAt       = ordered_at
         )
     }
 
@@ -464,7 +474,9 @@ class MarketplaceRepository(private val context: Context) {
     suspend fun cartCheckout(
         shippingAddress: String,
         notes: String?,
-        items: List<CartCheckoutItemRequest>
+        items: List<CartCheckoutItemRequest>,
+        latitude: Double? = null,
+        longitude: Double? = null
     ): AuthResult<CartCheckoutResponse> {
         val token = TokenStore.getToken(context)
             ?: return AuthResult.Error("Belum login. Silakan login kembali.")
@@ -472,7 +484,9 @@ class MarketplaceRepository(private val context: Context) {
             val body = CartCheckoutRequest(
                 shipping_address = shippingAddress,
                 notes            = notes?.ifBlank { null },
-                items            = items
+                items            = items,
+                latitude         = latitude,
+                longitude        = longitude
             )
             val response = api.cartCheckout("Bearer $token", body)
             if (response.isSuccessful) {

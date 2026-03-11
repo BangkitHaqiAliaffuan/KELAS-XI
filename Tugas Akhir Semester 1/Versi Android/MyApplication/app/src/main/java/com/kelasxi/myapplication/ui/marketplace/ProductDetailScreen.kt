@@ -36,6 +36,7 @@ fun ProductDetailScreen(
     viewModel: MarketplaceViewModel = viewModel(),
     addressViewModel: AddressViewModel = viewModel(),
     onBack: () -> Unit = {},
+    onPickLocationClick: () -> Unit = {},
     onOrderSuccess: () -> Unit = {}
 ) {
     val product         by viewModel.selectedProduct.collectAsStateWithLifecycle()
@@ -47,10 +48,28 @@ fun ProductDetailScreen(
     val wishlistError   by viewModel.wishlistError.collectAsStateWithLifecycle()
     val cartAddedMessage by viewModel.cartAddedMessage.collectAsStateWithLifecycle()
 
+    val buyNowLat        by viewModel.buyNowLat.collectAsStateWithLifecycle()
+    val buyNowLng        by viewModel.buyNowLng.collectAsStateWithLifecycle()
+    val buyNowAddress    by viewModel.buyNowAddress.collectAsStateWithLifecycle()
+
     val snackbarHostState = remember { SnackbarHostState() }
     var quantity          by remember { mutableIntStateOf(1) }
     var showBuyDialog     by remember { mutableStateOf(false) }
     var shippingAddress   by remember { mutableStateOf("") }
+
+    // Isi shippingAddress otomatis dari alamat hasil MapPicker
+    LaunchedEffect(buyNowAddress) {
+        if (!buyNowAddress.isNullOrBlank()) {
+            shippingAddress = buyNowAddress!!
+        }
+    }
+
+    // Buka ulang dialog otomatis ketika kembali dari MapPicker (lat/lng baru masuk)
+    LaunchedEffect(buyNowLat, buyNowLng) {
+        if (buyNowLat != null && buyNowLng != null && !showBuyDialog) {
+            showBuyDialog = true
+        }
+    }
 
     // Clear any stale order success state from a previous order when this screen opens.
     // Without this, re-entering ProductDetail would immediately re-trigger navigation to MyOrders.
@@ -367,7 +386,7 @@ fun ProductDetailScreen(
         // ── Shipping Address Dialog ──────────────────────────────
         if (showBuyDialog) {
             AlertDialog(
-                onDismissRequest = { if (!isSubmitting) showBuyDialog = false },
+                onDismissRequest = { if (!isSubmitting) { showBuyDialog = false; viewModel.clearBuyNowLocation() } },
                 icon = { Text("🛒", fontSize = 40.sp) },
                 title = {
                     Text(
@@ -391,12 +410,77 @@ fun ProductDetailScreen(
                             color = OrangeDark
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        AddressPickerField(
-                            value = shippingAddress,
-                            onValueChange = { shippingAddress = it },
-                            addressViewModel = addressViewModel,
-                            label = "Alamat Pengiriman"
-                        )
+                        // Jika belum pilih dari peta, tampilkan input manual
+                        if (buyNowLat == null || buyNowLng == null) {
+                            AddressPickerField(
+                                value = shippingAddress,
+                                onValueChange = { shippingAddress = it },
+                                addressViewModel = addressViewModel,
+                                label = "Alamat Pengiriman"
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        // Badge lokasi peta bila sudah dipilih
+                        if (buyNowLat != null && buyNowLng != null) {
+                            Surface(
+                                color = GreenDeep.copy(alpha = 0.08f),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PinDrop,
+                                        contentDescription = null,
+                                        tint = GreenDeep,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "📍 Alamat dari Peta",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = GreenDeep,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = if (!shippingAddress.isNullOrBlank()) shippingAddress
+                                                   else "${"%.5f".format(buyNowLat)}, ${"%.5f".format(buyNowLng)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = TextPrimary
+                                        )
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            viewModel.clearBuyNowLocation()
+                                            shippingAddress = ""
+                                        },
+                                        contentPadding = PaddingValues(0.dp)
+                                    ) {
+                                        Text("Ganti", color = OrangeAccent, fontSize = 11.sp)
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(6.dp))
+                        }
+                        // Tombol buka map picker
+                        OutlinedButton(
+                            onClick = onPickLocationClick,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenDeep),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, GreenDeep)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Map,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text("📍 Pilih Lokasi di Peta", fontWeight = FontWeight.Medium)
+                        }
                     }
                 },
                 confirmButton = {
@@ -419,7 +503,7 @@ fun ProductDetailScreen(
                     }
                 },
                 dismissButton = {
-                    TextButton(onClick = { showBuyDialog = false }) {
+                    TextButton(onClick = { showBuyDialog = false; viewModel.clearBuyNowLocation() }) {
                         Text("Batal", color = TextSecondary)
                     }
                 },

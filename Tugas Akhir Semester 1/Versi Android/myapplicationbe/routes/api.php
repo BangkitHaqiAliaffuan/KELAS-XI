@@ -108,4 +108,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\EnsureIsCourier::class])
         Route::get('/pickups',                         [CourierController::class, 'pickups']);
         Route::patch('/pickups/{id}/status',           [CourierController::class, 'updateStatus'])->whereNumber('id');
         Route::patch('/availability',                  [CourierController::class, 'availability']);
+        // ── Marketplace order delivery ────────────────────────────
+        Route::get('/available-orders',                [CourierController::class, 'availableOrders']);
+        Route::get('/orders',                          [CourierController::class, 'courierOrders']);
+        Route::post('/orders/{id}/accept',             [CourierController::class, 'acceptOrder'])->whereNumber('id');
+        Route::patch('/orders/{id}/status',            [CourierController::class, 'updateOrderStatus'])->whereNumber('id');
     });

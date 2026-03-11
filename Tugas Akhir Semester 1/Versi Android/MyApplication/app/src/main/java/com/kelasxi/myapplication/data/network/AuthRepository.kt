@@ -257,12 +257,57 @@ class AuthRepository(private val context: Context) {
         }
     }
 
-    // ── Parse Laravel validation errors e.g. {"message":"...","errors":{...}} ──
+    // ── Courier Order (marketplace delivery) ─────────────────────
+
+    suspend fun getAvailableOrders(): AuthResult<List<CourierOrderDto>> {
+        return try {
+            val token = TokenStore.getToken(context) ?: return AuthResult.Error("Belum login.")
+            val response = api.getAvailableOrders("Bearer $token")
+            if (response.isSuccessful) AuthResult.Success(response.body()!!.data)
+            else AuthResult.Error(parseError(response.errorBody()?.string()))
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun getCourierOrders(): AuthResult<List<CourierOrderDto>> {
+        return try {
+            val token = TokenStore.getToken(context) ?: return AuthResult.Error("Belum login.")
+            val response = api.getCourierOrders("Bearer $token")
+            if (response.isSuccessful) AuthResult.Success(response.body()!!.data)
+            else AuthResult.Error(parseError(response.errorBody()?.string()))
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun acceptOrder(id: Long): AuthResult<CourierOrderDto> {
+        return try {
+            val token = TokenStore.getToken(context) ?: return AuthResult.Error("Belum login.")
+            val response = api.acceptOrder("Bearer $token", id)
+            if (response.isSuccessful) AuthResult.Success(response.body()!!.data)
+            else AuthResult.Error(parseError(response.errorBody()?.string()))
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    suspend fun updateOrderStatus(id: Long, status: String): AuthResult<CourierOrderDto> {
+        return try {
+            val token = TokenStore.getToken(context) ?: return AuthResult.Error("Belum login.")
+            val response = api.updateOrderStatus("Bearer $token", id, UpdatePickupStatusRequest(status))
+            if (response.isSuccessful) AuthResult.Success(response.body()!!.data)
+            else AuthResult.Error(parseError(response.errorBody()?.string()))
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    // ── Parse Laravel validation errors ──────────────────────────
     private fun parseError(raw: String?): String {
         if (raw.isNullOrBlank()) return "Terjadi kesalahan."
         return try {
             val json = org.json.JSONObject(raw)
-            // Try to pull first validation error message
             val errors = json.optJSONObject("errors")
             if (errors != null) {
                 val firstKey = errors.keys().next()

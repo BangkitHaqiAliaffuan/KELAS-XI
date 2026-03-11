@@ -136,3 +136,33 @@ data class AcceptPickupResponse(
     val message: String,
     val data: CourierPickupDto
 )
+
+// ─────────────────────────────────────────────────────────────────
+// Courier Order DTOs  (marketplace delivery)
+// ─────────────────────────────────────────────────────────────────
+
+/** Order as seen by the courier — includes buyer info and product snapshot */
+data class CourierOrderDto(
+    val id: Long,
+    val status: String,           // pending | confirmed | shipped | completed | cancelled
+    val shipping_address: String,
+    val latitude: Double?,
+    val longitude: Double?,
+    val notes: String?,
+    val quantity: Int,
+    val total_price: Long,
+    val created_at: String?,
+    val buyer: CustomerDto?,       // reuse CustomerDto (id, name, phone)
+    val product_name: String?,     // snapshot name from listing
+    val product_image_url: String? = null,
+    val cart_checkout_id: String? = null
+)
+
+data class CourierOrderListResponse(
+    val data: List<CourierOrderDto>
+)
+
+data class CourierOrderSingleResponse(
+    val message: String? = null,
+    val data: CourierOrderDto
+)

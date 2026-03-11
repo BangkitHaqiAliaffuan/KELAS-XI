@@ -7,6 +7,7 @@ use App\Models\MarketplaceListing;
 use App\Models\Wishlist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class WishlistController extends Controller
 {
@@ -87,7 +88,7 @@ class WishlistController extends Controller
             'category'      => $listing->category,
             'condition'     => $listing->condition,
             'image_url'     => $listing->image_path
-                ? asset('storage/' . $listing->image_path)
+                ? Storage::disk('public')->url($listing->image_path)
                 : null,
             'is_wishlisted' => in_array($listing->id, $wishlistedIds),
             'is_sold'       => $listing->is_sold,

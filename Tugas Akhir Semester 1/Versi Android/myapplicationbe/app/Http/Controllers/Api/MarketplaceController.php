@@ -177,7 +177,9 @@ class MarketplaceController extends Controller
 
         // When stock is set to 0 → auto mark as sold out
         if (isset($validated['stock'])) {
-            if ($validated['stock'] === 0) {
+            $stockVal = (int) $validated['stock'];
+            if ($stockVal <= 0) {
+                $validated['stock']     = 0;
                 $validated['is_sold']   = true;
                 $validated['is_active'] = false;
             } else {
@@ -232,7 +234,7 @@ class MarketplaceController extends Controller
             'category'      => $listing->category,
             'condition'     => $listing->condition,
             'image_url'     => $listing->image_path
-                ? asset('storage/' . $listing->image_path)
+                ? Storage::disk('public')->url($listing->image_path)
                 : null,
             'is_wishlisted' => in_array($listing->id, $wishlistedIds),
             'is_sold'       => $listing->is_sold,

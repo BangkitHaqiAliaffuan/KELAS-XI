@@ -10,6 +10,7 @@ use App\Services\MayarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -43,7 +44,7 @@ class OrderController extends Controller
     // ─────────────────────────────────────────────────────────────
     // POST /api/orders
     // Create an order (buy a listing)
-    // Body: { listing_id, quantity?, notes?, shipping_address }
+    // Body: { listing_id, quantity?, notes?, shipping_address, latitude?, longitude? }
     // ─────────────────────────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
@@ -52,6 +53,8 @@ class OrderController extends Controller
             'quantity'         => ['nullable', 'integer', 'min:1', 'max:10'],
             'notes'            => ['nullable', 'string', 'max:500'],
             'shipping_address' => ['required', 'string', 'max:500'],
+            'latitude'         => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'        => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
         $listing = MarketplaceListing::active()->findOrFail($validated['listing_id']);
@@ -81,6 +84,8 @@ class OrderController extends Controller
                 'quantity'         => $quantity,
                 'notes'            => $validated['notes'] ?? null,
                 'shipping_address' => $validated['shipping_address'],
+                'latitude'         => $validated['latitude'] ?? null,
+                'longitude'        => $validated['longitude'] ?? null,
                 'payment_status'   => 'unpaid',
             ]);
 
@@ -212,16 +217,15 @@ class OrderController extends Controller
             $status = $detail['status'] ?? 'unpaid';
 
             if ($status === 'paid' && $order->payment_status !== 'paid') {
-                // Payment confirmed by Mayar → update order
+                // Payment confirmed by Mayar → set searching (waiting for courier)
+                $now = now();
                 $order->update([
                     'payment_status' => 'paid',
-                    'paid_at'        => now(),
-                    'status'         => 'confirmed',
-                    'confirmed_at'   => now(),
+                    'paid_at'        => $now,
+                    'status'         => 'searching',
+                    'confirmed_at'   => $now,
+                    'searching_at'   => $now,
                 ]);
-
-                // Auto-complete after processing time
-                AutoCompleteOrder::dispatch($order)->delay(now()->addMinutes(2));
 
                 $order->refresh()->load('listing');
             }
@@ -319,6 +323,8 @@ class OrderController extends Controller
             'quantity'           => $order->quantity,
             'notes'              => $order->notes,
             'shipping_address'   => $order->shipping_address,
+            'latitude'           => $order->latitude,
+            'longitude'          => $order->longitude,
             'cancellation_reason'=> $order->cancellation_reason,
             'ordered_at'         => $order->created_at?->format('d M Y'),
             'paid_at'            => $order->paid_at?->format('d M Y'),
@@ -339,7 +345,7 @@ class OrderController extends Controller
                 'category'      => $listing->category,
                 'condition'     => $listing->condition,
                 'image_url'     => $listing->image_path
-                    ? asset('storage/' . $listing->image_path)
+                    ? Storage::disk('public')->url($listing->image_path)
                     : null,
                 'is_wishlisted' => false,
                 'is_sold'       => $listing->is_sold,

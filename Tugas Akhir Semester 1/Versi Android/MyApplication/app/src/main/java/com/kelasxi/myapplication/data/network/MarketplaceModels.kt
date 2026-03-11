@@ -8,7 +8,9 @@ data class CreateOrderRequest(
     @SerializedName("listing_id")       val listing_id: Long,
     @SerializedName("quantity")         val quantity: Int = 1,
     @SerializedName("notes")            val notes: String? = null,
-    @SerializedName("shipping_address") val shipping_address: String
+    @SerializedName("shipping_address") val shipping_address: String,
+    @SerializedName("latitude")         val latitude: Double? = null,
+    @SerializedName("longitude")        val longitude: Double? = null
 )
 
 data class CancelOrderRequest(
@@ -92,6 +94,8 @@ data class OrderDto(
     @SerializedName("notes")                val notes: String? = null,
     @SerializedName("shipping_address")     val shipping_address: String,
     @SerializedName("cancellation_reason")  val cancellation_reason: String? = null,
+    @SerializedName("latitude")             val latitude: Double? = null,
+    @SerializedName("longitude")            val longitude: Double? = null,
     @SerializedName("ordered_at")           val ordered_at: String,
     @SerializedName("confirmed_at")         val confirmed_at: String? = null,
     @SerializedName("shipped_at")           val shipped_at: String? = null,
@@ -170,7 +174,9 @@ data class CartCheckoutItemRequest(
 data class CartCheckoutRequest(
     @SerializedName("shipping_address") val shipping_address: String,
     @SerializedName("notes")            val notes: String? = null,
-    @SerializedName("items")            val items: List<CartCheckoutItemRequest>
+    @SerializedName("items")            val items: List<CartCheckoutItemRequest>,
+    @SerializedName("latitude")         val latitude: Double? = null,
+    @SerializedName("longitude")        val longitude: Double? = null
 )
 
 data class CartCheckoutResponse(
@@ -190,6 +196,8 @@ data class CartCheckoutGroupDto(
     @SerializedName("order_status")     val order_status: String = "pending",
     @SerializedName("total")            val total: Long = 0L,
     @SerializedName("shipping_address") val shipping_address: String = "",
+    @SerializedName("latitude")         val latitude: Double? = null,
+    @SerializedName("longitude")        val longitude: Double? = null,
     @SerializedName("ordered_at")       val ordered_at: String = "",
     @SerializedName("orders")           val orders: List<OrderDto>
 )

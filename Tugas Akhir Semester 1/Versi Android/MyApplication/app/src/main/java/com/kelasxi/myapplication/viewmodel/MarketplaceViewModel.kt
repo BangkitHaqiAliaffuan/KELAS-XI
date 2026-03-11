@@ -169,6 +169,45 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
     private val _cartCheckoutPolledStatus = MutableStateFlow<String?>(null)
     val cartCheckoutPolledStatus: StateFlow<String?> = _cartCheckoutPolledStatus.asStateFlow()
 
+    // ── Checkout location (lat/lng from MapPicker) ────────────────
+    private val _checkoutLat = MutableStateFlow<Double?>(null)
+    val checkoutLat: StateFlow<Double?> = _checkoutLat.asStateFlow()
+
+    private val _checkoutLng = MutableStateFlow<Double?>(null)
+    val checkoutLng: StateFlow<Double?> = _checkoutLng.asStateFlow()
+
+    fun updateCheckoutLocation(lat: Double, lng: Double) {
+        _checkoutLat.value = lat
+        _checkoutLng.value = lng
+    }
+
+    fun clearCheckoutLocation() {
+        _checkoutLat.value = null
+        _checkoutLng.value = null
+    }
+
+    // ── Buy Now location (lat/lng from MapPicker on ProductDetail) ──
+    private val _buyNowLat = MutableStateFlow<Double?>(null)
+    val buyNowLat: StateFlow<Double?> = _buyNowLat.asStateFlow()
+
+    private val _buyNowLng = MutableStateFlow<Double?>(null)
+    val buyNowLng: StateFlow<Double?> = _buyNowLng.asStateFlow()
+
+    private val _buyNowAddress = MutableStateFlow<String?>(null)
+    val buyNowAddress: StateFlow<String?> = _buyNowAddress.asStateFlow()
+
+    fun updateBuyNowLocation(lat: Double, lng: Double, address: String? = null) {
+        _buyNowLat.value = lat
+        _buyNowLng.value = lng
+        if (!address.isNullOrBlank()) _buyNowAddress.value = address
+    }
+
+    fun clearBuyNowLocation() {
+        _buyNowLat.value = null
+        _buyNowLng.value = null
+        _buyNowAddress.value = null
+    }
+
     // ── Sales Transactions (Mayar) ───────────────────────────────
     private val _salesTransactions = MutableStateFlow<List<SalesTransaction>>(emptyList())
     val salesTransactions: StateFlow<List<SalesTransaction>> = _salesTransactions.asStateFlow()
@@ -360,13 +399,24 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
+        val lat = _buyNowLat.value
+        val lng = _buyNowLng.value
+
         viewModelScope.launch {
             _isSubmittingOrder.value = true
             _orderError.value = null
 
-            when (val result = repository.createOrder(listingId, quantity, shippingAddress, notes)) {
+            when (val result = repository.createOrder(
+                listingId       = listingId,
+                quantity        = quantity,
+                shippingAddress = shippingAddress,
+                notes           = notes,
+                latitude        = lat,
+                longitude       = lng
+            )) {
                 is AuthResult.Success -> {
                     _orderSuccess.value = result.data
+                    clearBuyNowLocation()
                     // Clear ordered product from cart if present
                     removeFromCart(productId)
 
@@ -650,11 +700,17 @@ class MarketplaceViewModel(application: Application) : AndroidViewModel(applicat
                 return@launch
             }
 
-            when (val result = repository.cartCheckout(shippingAddress, notes, items)) {
+            when (val result = repository.cartCheckout(
+                shippingAddress = shippingAddress,
+                notes           = notes,
+                items           = items,
+                latitude        = _checkoutLat.value,
+                longitude       = _checkoutLng.value
+            )) {
                 is AuthResult.Success -> {
                     _checkoutResult.value = result.data
-                    // Clear cart after successful checkout
                     clearCart()
+                    clearCheckoutLocation()
                     onSuccess(result.data.payment_link, result.data.cart_checkout_id)
                 }
                 is AuthResult.Error -> _checkoutError.value = result.message

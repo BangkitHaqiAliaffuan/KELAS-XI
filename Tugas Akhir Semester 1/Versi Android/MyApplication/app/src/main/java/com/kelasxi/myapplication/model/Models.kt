@@ -76,6 +76,7 @@ enum class ProductCondition(val label: String) {
 
 enum class OrderStatus(val label: String, val emoji: String) {
     WAITING_PAYMENT("Menunggu Pembayaran", "⏳"),
+    SEARCHING("Mencari Kurir", "🔍"),
     PROCESSING("Diproses", "🔄"),
     SHIPPED("Dikirim", "🚚"),
     DELIVERED("Selesai", "✅"),
@@ -91,6 +92,8 @@ data class Order(
     val orderedAt: String,
     val estimatedArrival: String = "",
     val shippingAddress: String = "",
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     // ── Mayar payment ─────────────────────────────────────────────
     val paymentStatus: String = "unpaid",
     val mayarPaymentLink: String? = null,
@@ -116,6 +119,8 @@ data class CartCheckoutGroup(
     val paymentLink: String?,
     val paymentId: String?,
     val shippingAddress: String,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val orderedAt: String
 )
 

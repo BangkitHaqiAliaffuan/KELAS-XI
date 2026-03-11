@@ -284,12 +284,31 @@ fun TrashCareNavGraph() {
                 )
             }
             // Cart checkout address+review screen
-            composable("cart_checkout_address") {
+            composable("cart_checkout_address") { backEntry ->
+                // Observe MapPicker results returned via savedStateHandle
+                val mapLat = backEntry.savedStateHandle
+                    .getStateFlow<Double?>(MapPickerResult.KEY_LAT, null)
+                    .collectAsState().value
+                val mapLng = backEntry.savedStateHandle
+                    .getStateFlow<Double?>(MapPickerResult.KEY_LNG, null)
+                    .collectAsState().value
+
+                LaunchedEffect(mapLat, mapLng) {
+                    if (mapLat != null && mapLng != null) {
+                        marketplaceViewModel.updateCheckoutLocation(mapLat, mapLng)
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LAT)
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LNG)
+                        backEntry.savedStateHandle.remove<String>(MapPickerResult.KEY_ADDRESS)
+                    }
+                }
+
                 CartCheckoutScreen(
                     viewModel = marketplaceViewModel,
                     onBack    = { navController.popBackStack() },
+                    onPickLocationClick = {
+                        navController.navigate(Screen.MapPicker.route)
+                    },
                     onPaymentReady = { cartCheckoutId, paymentLink ->
-                        // Navigate to CartCheckout payment-poll screen
                         navController.navigate(
                             Screen.CartCheckout.createRoute(cartCheckoutId, paymentLink)
                         ) {
@@ -322,11 +341,23 @@ fun TrashCareNavGraph() {
                     }
                 )
             }
-            composable(Screen.ProductDetail.route) {
+            composable(Screen.ProductDetail.route) { backEntry ->
+                val mapLat     = backEntry.savedStateHandle.get<Double>(MapPickerResult.KEY_LAT)
+                val mapLng     = backEntry.savedStateHandle.get<Double>(MapPickerResult.KEY_LNG)
+                val mapAddress = backEntry.savedStateHandle.get<String>(MapPickerResult.KEY_ADDRESS)
+                LaunchedEffect(mapLat, mapLng) {
+                    if (mapLat != null && mapLng != null) {
+                        marketplaceViewModel.updateBuyNowLocation(mapLat, mapLng, mapAddress)
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LAT)
+                        backEntry.savedStateHandle.remove<Double>(MapPickerResult.KEY_LNG)
+                        backEntry.savedStateHandle.remove<String>(MapPickerResult.KEY_ADDRESS)
+                    }
+                }
                 ProductDetailScreen(
                     viewModel = marketplaceViewModel,
                     addressViewModel = addressViewModel,
                     onBack = { navController.popBackStack() },
+                    onPickLocationClick = { navController.navigate(Screen.MapPicker.route) },
                     onOrderSuccess = {
                         navController.navigate(Screen.MyOrders.route) {
                             popUpTo(Screen.ProductDetail.route) { inclusive = true }

@@ -10,6 +10,7 @@ use App\Services\MayarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CartCheckoutController extends Controller
@@ -21,6 +22,8 @@ class CartCheckoutController extends Controller
     // Body:
     // {
     //   "shipping_address": "...",
+    //   "latitude": -6.200000,   // optional, from map picker
+    //   "longitude": 106.816666, // optional, from map picker
     //   "notes": "...",          // optional, applied to all orders
     //   "items": [
     //     { "listing_id": 1, "quantity": 2 },
@@ -42,6 +45,8 @@ class CartCheckoutController extends Controller
         $validated = $request->validate([
             'shipping_address'       => ['required', 'string', 'max:500'],
             'notes'                  => ['nullable', 'string', 'max:500'],
+            'latitude'               => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'              => ['nullable', 'numeric', 'between:-180,180'],
             'items'                  => ['required', 'array', 'min:1', 'max:20'],
             'items.*.listing_id'     => ['required', 'integer', 'exists:marketplace_listings,id'],
             'items.*.quantity'       => ['nullable', 'integer', 'min:1', 'max:10'],
@@ -95,6 +100,8 @@ class CartCheckoutController extends Controller
                     'notes'            => $validated['notes'] ?? null,
                     'cart_checkout_id' => $cartId,
                     'shipping_address' => $validated['shipping_address'],
+                    'latitude'         => $validated['latitude'] ?? null,
+                    'longitude'        => $validated['longitude'] ?? null,
                     'payment_status'   => 'unpaid',
                 ]);
 
@@ -208,14 +215,13 @@ class CartCheckoutController extends Controller
                 Order::where('cart_checkout_id', $cartCheckoutId)->update([
                     'payment_status' => 'paid',
                     'paid_at'        => $now,
-                    'status'         => 'confirmed',
+                    'status'         => 'searching',  // waiting for a courier to accept
                     'confirmed_at'   => $now,
+                    'searching_at'   => $now,
                 ]);
 
-                // Dispatch auto-complete for each order
-                $orders->each(function ($o) {
-                    AutoCompleteOrder::dispatch($o->fresh())->delay(now()->addMinutes(2));
-                });
+                // AutoComplete is not dispatched immediately — order goes to courier first
+                // It will be dispatched when courier marks order 'completed'
 
                 $orders = Order::with('listing')
                     ->where('cart_checkout_id', $cartCheckoutId)
@@ -359,6 +365,8 @@ class CartCheckoutController extends Controller
             'quantity'           => $order->quantity,
             'notes'              => $order->notes,
             'shipping_address'   => $order->shipping_address,
+            'latitude'           => $order->latitude,
+            'longitude'          => $order->longitude,
             'cancellation_reason'=> $order->cancellation_reason,
             'ordered_at'         => $order->created_at?->format('d M Y'),
             'paid_at'            => $order->paid_at?->format('d M Y'),
@@ -375,7 +383,7 @@ class CartCheckoutController extends Controller
                 'category'      => $listing->category,
                 'condition'     => $listing->condition,
                 'image_url'     => $listing->image_path
-                    ? asset('storage/' . $listing->image_path)
+                    ? Storage::disk('public')->url($listing->image_path)
                     : null,
                 'is_wishlisted' => false,
                 'is_sold'       => $listing->is_sold,

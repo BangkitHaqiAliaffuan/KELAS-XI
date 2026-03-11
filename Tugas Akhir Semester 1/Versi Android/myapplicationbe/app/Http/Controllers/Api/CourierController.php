@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Courier;
+use App\Models\Order;
 use App\Models\PickupRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class CourierController extends Controller
@@ -201,8 +203,154 @@ class CourierController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────
+    // GET /api/courier/available-orders
+    // Returns paid marketplace orders with status='searching' (no courier yet).
+    // Only visible when the courier is online.
+    // ─────────────────────────────────────────────────────────────
+    public function availableOrders(Request $request): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        if (! $courier->is_available) {
+            return response()->json(['data' => []]);
+        }
+
+        $orders = Order::with(['listing', 'buyer'])
+            ->whereNull('courier_id')
+            ->where('status', 'searching')
+            ->where('payment_status', 'paid')
+            ->orderBy('searching_at', 'asc')
+            ->get()
+            ->map(fn($o) => $this->formatOrder($o));
+
+        return response()->json(['data' => $orders]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // GET /api/courier/orders
+    // Returns all marketplace orders assigned to this courier.
+    // ─────────────────────────────────────────────────────────────
+    public function courierOrders(Request $request): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        $orders = Order::with(['listing', 'buyer'])
+            ->where('courier_id', $courier->id)
+            ->orderByRaw("FIELD(status, 'shipped', 'pending', 'completed', 'cancelled')")
+            ->latest()
+            ->get()
+            ->map(fn($o) => $this->formatOrder($o));
+
+        return response()->json(['data' => $orders]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/courier/orders/{id}/accept
+    // Courier accepts a 'searching' order → assigns self, status → pending
+    // ─────────────────────────────────────────────────────────────
+    public function acceptOrder(Request $request, int $id): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        $order = Order::whereNull('courier_id')
+            ->where('status', 'searching')
+            ->where('payment_status', 'paid')
+            ->findOrFail($id);
+
+        DB::transaction(function () use ($order, $courier) {
+            $order->update([
+                'courier_id' => $courier->id,
+                'status'     => 'pending',
+            ]);
+        });
+
+        $order->load(['listing', 'buyer']);
+
+        return response()->json([
+            'message' => 'Order berhasil diterima! Segera kirim ke pembeli.',
+            'data'    => $this->formatOrder($order),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // PATCH /api/courier/orders/{id}/status
+    // Body: { status: "shipped" | "completed" | "cancelled" }
+    // ─────────────────────────────────────────────────────────────
+    public function updateOrderStatus(Request $request, int $id): JsonResponse
+    {
+        /** @var Courier $courier */
+        $courier = $request->user();
+
+        $order = Order::where('courier_id', $courier->id)->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['shipped', 'completed', 'cancelled'])],
+        ]);
+
+        $newStatus = $validated['status'];
+        $updates   = ['status' => $newStatus];
+
+        if ($newStatus === 'shipped') {
+            $updates['shipped_at'] = now();
+        }
+
+        if ($newStatus === 'completed') {
+            $updates['completed_at'] = now();
+            // Award 5 points to buyer for receiving the order
+            $order->buyer()->increment('points_balance', 5);
+        }
+
+        if ($newStatus === 'cancelled') {
+            // Re-queue for another courier instead of fully cancelling
+            $updates['status']       = 'searching';
+            $updates['courier_id']   = null;
+            $updates['cancelled_at'] = now();
+            $updates['searching_at'] = now();
+        }
+
+        $order->update($updates);
+
+        return response()->json([
+            'message' => 'Status order berhasil diperbarui.',
+            'data'    => $this->formatOrder($order->fresh(['listing', 'buyer'])),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Private helpers
     // ─────────────────────────────────────────────────────────────
+
+    private function formatOrder(Order $order): array
+    {
+        $listing = $order->listing;
+        $buyer   = $order->buyer;
+
+        return [
+            'id'                => $order->id,
+            'status'            => $order->status,
+            'shipping_address'  => $order->shipping_address,
+            'latitude'          => $order->latitude,
+            'longitude'         => $order->longitude,
+            'notes'             => $order->notes,
+            'quantity'          => (int) $order->quantity,
+            'total_price'       => (int) $order->total_price,
+            'cart_checkout_id'  => $order->cart_checkout_id,
+            'created_at'        => $order->created_at?->toIso8601String(),
+            'product_name'      => $listing?->name,
+            'product_image_url' => $listing?->image_path
+                ? Storage::disk('public')->url($listing->image_path)
+                : null,
+            'buyer' => $buyer ? [
+                'id'    => $buyer->id,
+                'name'  => $buyer->name,
+                'phone' => $buyer->phone,
+            ] : null,
+        ];
+    }
+
 
     private function courierResource(Courier $courier): array
     {

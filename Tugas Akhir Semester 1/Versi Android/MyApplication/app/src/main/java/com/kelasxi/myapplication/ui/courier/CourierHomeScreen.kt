@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kelasxi.myapplication.data.network.CourierOrderDto
 import com.kelasxi.myapplication.data.network.CourierPickupDto
 import com.kelasxi.myapplication.data.network.CourierProfileDto
 import com.kelasxi.myapplication.ui.theme.*
@@ -251,6 +252,137 @@ fun CourierHomeScreen(
                         onUpdateStatus = {},
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     )
+                }
+            }
+
+            // ── Divider before order sections ─────────────────────────
+            if (uiState.availableOrders.isNotEmpty() || uiState.myOrders.isNotEmpty()) {
+                item {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = SurfaceVariant
+                    )
+                }
+            }
+
+            // ── Available Orders (mencari kurir) ─────────────────────────
+            if (uiState.availableOrders.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(StatusOnTheWay, CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Order Menunggu Kurir",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = TextPrimary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = StatusOnTheWay.copy(alpha = 0.15f)
+                            ) {
+                                Text(
+                                    text = "${uiState.availableOrders.size}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = StatusOnTheWay,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        IconButton(onClick = { viewModel.loadAvailableOrders() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = StatusOnTheWay)
+                        }
+                    }
+                }
+                items(uiState.availableOrders, key = { "avail_order_${it.id}" }) { order ->
+                    AvailableOrderCard(
+                        order = order,
+                        onAccept = { viewModel.acceptOrder(order.id) },
+                        onIgnore = { viewModel.ignoreOrder(order.id) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                    )
+                }
+                item {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        color = SurfaceVariant
+                    )
+                }
+            }
+
+            // ── My Orders section ────────────────────────────────────────
+            if (uiState.myOrders.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Order Saya",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = TextPrimary
+                        )
+                        IconButton(onClick = { viewModel.loadMyOrders() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = GreenDeep)
+                        }
+                    }
+                }
+                val activeOrders = uiState.myOrders.filter { it.status == "pending" || it.status == "shipped" }
+                val doneOrders = uiState.myOrders.filter { it.status == "completed" || it.status == "cancelled" }
+                if (activeOrders.isNotEmpty()) {
+                    item {
+                        Text(
+                            "  Aktif",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+                        )
+                    }
+                    items(activeOrders, key = { "order_${it.id}" }) { order ->
+                        CourierOrderCard(
+                            order = order,
+                            onUpdateStatus = { newStatus -> viewModel.updateOrderStatus(order.id, newStatus) },
+                            onNavigateRoute = onNavigateRoute,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+                if (doneOrders.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "  Selesai / Dibatalkan",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+                        )
+                    }
+                    items(doneOrders, key = { "order_done_${it.id}" }) { order ->
+                        CourierOrderCard(
+                            order = order,
+                            onUpdateStatus = {},
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                        )
+                    }
                 }
             }
 
@@ -864,6 +996,405 @@ fun AvailablePickupCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text("Terima Pickup", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Available Order Card — marketplace orders waiting for a courier
+// ─────────────────────────────────────────────────────────────────
+@Composable
+fun AvailableOrderCard(
+    order: CourierOrderDto,
+    onAccept: () -> Unit,
+    onIgnore: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, StatusOnTheWay.copy(alpha = 0.4f))
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // ── Header row ──────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.ShoppingBag,
+                        contentDescription = null,
+                        tint = StatusOnTheWay,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        "Mencari Kurir",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = StatusOnTheWay
+                    )
+                }
+                Text(text = "#${order.id}", fontSize = 12.sp, color = TextHint)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── Product name ────────────────────────────────────
+            if (!order.product_name.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Inventory,
+                        contentDescription = null,
+                        tint = GreenMedium,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = order.product_name,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // ── Buyer ───────────────────────────────────────────
+            if (order.buyer != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = TextHint,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(
+                        text = order.buyer.name,
+                        fontSize = 13.sp,
+                        color = TextSecondary
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // ── Delivery address ────────────────────────────────
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = GreenMedium,
+                    modifier = Modifier.size(16.dp).padding(top = 1.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = order.shipping_address,
+                    fontSize = 13.sp,
+                    color = TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // ── Qty + Price ─────────────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Numbers,
+                    contentDescription = null,
+                    tint = TextHint,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "${order.quantity} item", fontSize = 12.sp, color = TextHint)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Rp ${"%,d".format(order.total_price)}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GreenDeep
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = SurfaceVariant)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── Action Buttons ───────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onIgnore,
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TextHint),
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(vertical = 10.dp)
+                ) {
+                    Text("Lewati", fontSize = 13.sp)
+                }
+                Button(
+                    onClick = onAccept,
+                    colors = ButtonDefaults.buttonColors(containerColor = StatusOnTheWay),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.weight(2f),
+                    contentPadding = PaddingValues(vertical = 10.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Terima Order", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Courier Order Card — for assigned marketplace delivery orders
+// ─────────────────────────────────────────────────────────────────
+@Composable
+fun CourierOrderCard(
+    order: CourierOrderDto,
+    onUpdateStatus: (String) -> Unit,
+    onNavigateRoute: (lat: Double, lng: Double, address: String) -> Unit = { _, _, _ -> },
+    modifier: Modifier = Modifier
+) {
+    val statusColor = when (order.status) {
+        "pending"   -> StatusPending
+        "shipped"   -> StatusOnTheWay
+        "completed" -> StatusDone
+        "cancelled" -> StatusCancelled
+        else        -> TextHint
+    }
+    val statusLabel = when (order.status) {
+        "pending"   -> "Menunggu Pengiriman"
+        "shipped"   -> "Sedang Dikirim"
+        "completed" -> "Selesai"
+        "cancelled" -> "Dibatalkan"
+        else        -> order.status
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = SurfaceWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            // ── Header ──────────────────────────────────────────
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.ShoppingBag,
+                        contentDescription = null,
+                        tint = statusColor,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = statusLabel,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        color = statusColor
+                    )
+                }
+                Text(text = "#${order.id}", fontSize = 12.sp, color = TextHint)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ── Product name ────────────────────────────────────
+            if (!order.product_name.isNullOrBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Inventory,
+                        contentDescription = null,
+                        tint = GreenMedium,
+                        modifier = Modifier.size(15.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = order.product_name,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // ── Buyer ───────────────────────────────────────────
+            if (order.buyer != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = TextHint,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Text(text = order.buyer.name, fontSize = 13.sp, color = TextSecondary)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // ── Address ─────────────────────────────────────────
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(
+                    Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = GreenMedium,
+                    modifier = Modifier.size(16.dp).padding(top = 1.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = order.shipping_address,
+                    fontSize = 13.sp,
+                    color = TextSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // ── Qty + Price ─────────────────────────────────────
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.Numbers,
+                    contentDescription = null,
+                    tint = TextHint,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(text = "${order.quantity} item", fontSize = 12.sp, color = TextHint)
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Rp ${"%,d".format(order.total_price)}",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = GreenDeep
+                )
+            }
+
+            // ── Action Buttons (only for active statuses) ────────
+            if (order.status == "pending" || order.status == "shipped") {
+                Spacer(modifier = Modifier.height(12.dp))
+                HorizontalDivider(color = SurfaceVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // Lihat Rute button (only when shipped + has coords)
+                    if (order.status == "shipped" &&
+                        order.latitude != null && order.longitude != null
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                onNavigateRoute(
+                                    order.latitude,
+                                    order.longitude,
+                                    order.shipping_address
+                                )
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenDeep),
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Map,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Lihat Rute", fontSize = 13.sp)
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        if (order.status == "pending") {
+                            // Lihat Rute (pending — before shipped)
+                            if (order.latitude != null && order.longitude != null) {
+                                OutlinedButton(
+                                    onClick = {
+                                        onNavigateRoute(
+                                            order.latitude,
+                                            order.longitude,
+                                            order.shipping_address
+                                        )
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenDeep),
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(vertical = 8.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Map,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Rute", fontSize = 13.sp)
+                                }
+                            }
+                            Button(
+                                onClick = { onUpdateStatus("shipped") },
+                                colors = ButtonDefaults.buttonColors(containerColor = StatusOnTheWay),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.weight(if (order.latitude != null) 2f else 1f),
+                                contentPadding = PaddingValues(vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.LocalShipping,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Mulai Kirim", fontSize = 13.sp)
+                            }
+                        }
+                        if (order.status == "shipped") {
+                            Button(
+                                onClick = { onUpdateStatus("completed") },
+                                colors = ButtonDefaults.buttonColors(containerColor = StatusDone),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                contentPadding = PaddingValues(vertical = 8.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Selesaikan Pengiriman", fontSize = 13.sp)
+                            }
+                        }
+                    }
                 }
             }
         }

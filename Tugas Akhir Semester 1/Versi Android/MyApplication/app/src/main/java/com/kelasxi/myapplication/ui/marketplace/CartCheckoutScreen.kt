@@ -3,6 +3,7 @@ package com.kelasxi.myapplication.ui.marketplace
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -12,6 +13,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.PinDrop
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.kelasxi.myapplication.model.CartItem
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
@@ -46,7 +50,8 @@ fun CartCheckoutScreen(
     cartCheckoutId: String? = null,
     paymentLink: String? = null,
     onPaymentReady: (cartCheckoutId: String, paymentLink: String) -> Unit = { _, _ -> },
-    onPaid: () -> Unit = {}
+    onPaid: () -> Unit = {},
+    onPickLocationClick: () -> Unit = {}
 ) {
     val context          = LocalContext.current
     val cartItems        by viewModel.cartItems.collectAsState()
@@ -54,6 +59,8 @@ fun CartCheckoutScreen(
     val isCheckingOut    by viewModel.isCheckingOut.collectAsState()
     val checkoutError    by viewModel.checkoutError.collectAsState()
     val polledStatus     by viewModel.cartCheckoutPolledStatus.collectAsState()
+    val checkoutLat      by viewModel.checkoutLat.collectAsState()
+    val checkoutLng      by viewModel.checkoutLng.collectAsState()
 
     val isPollingMode    = !cartCheckoutId.isNullOrBlank() && !paymentLink.isNullOrBlank()
 
@@ -143,6 +150,43 @@ fun CartCheckoutScreen(
                                 Spacer(Modifier.width(8.dp))
                                 Text("Alamat Pengiriman", fontWeight = FontWeight.SemiBold)
                             }
+
+                            // ── Map pin badge ─────────────────────────────
+                            if (checkoutLat != null && checkoutLng != null) {
+                                Surface(
+                                    shape  = RoundedCornerShape(8.dp),
+                                    color  = GreenLight,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(Icons.Filled.PinDrop, null, tint = GreenPrimary, modifier = Modifier.size(18.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text(
+                                                "Lokasi dipilih dari peta ✅",
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = GreenPrimary
+                                            )
+                                            Text(
+                                                "%.5f, %.5f".format(checkoutLat, checkoutLng),
+                                                fontSize = 11.sp,
+                                                color = Color.Gray
+                                            )
+                                        }
+                                        TextButton(
+                                            onClick = { viewModel.clearCheckoutLocation() },
+                                            contentPadding = PaddingValues(0.dp)
+                                        ) {
+                                            Text("Hapus", fontSize = 11.sp, color = MaterialTheme.colorScheme.error)
+                                        }
+                                    }
+                                }
+                            }
+
                             OutlinedTextField(
                                 value = shippingAddress,
                                 onValueChange = { shippingAddress = it; addressError = null },
@@ -155,6 +199,23 @@ fun CartCheckoutScreen(
                                 isError = addressError != null,
                                 supportingText = addressError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } }
                             )
+
+                            // ── Pick on map button ────────────────────
+                            OutlinedButton(
+                                onClick = onPickLocationClick,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape  = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = GreenPrimary),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, GreenPrimary)
+                            ) {
+                                Icon(Icons.Filled.Map, null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    if (checkoutLat != null) "Ubah Lokasi di Peta" else "📍  Pilih Lokasi di Peta",
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
                             OutlinedTextField(
                                 value = notes,
                                 onValueChange = { notes = it },
