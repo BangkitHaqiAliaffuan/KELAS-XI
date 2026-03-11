@@ -249,9 +249,7 @@ class MarketplaceRepository(private val context: Context) {
             )
             val response = api.rateOrder("Bearer $token", id, body)
             if (response.isSuccessful) {
-                val data = response.body()!!.data
-                if (data != null) AuthResult.Success(data.toDomain())
-                else AuthResult.Error("Rating berhasil tetapi data tidak tersedia.")
+                AuthResult.Success(response.body()!!.data.toDomain())
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))
             }

@@ -116,17 +116,12 @@ data class OrderDto(
     @SerializedName("rated_at")             val rated_at: String? = null
 )
 
-// ── Rating request ────────────────────────────────────────────────
+// ── Rating request ────────────────────────────────────────────────────────────────
 data class RateOrderRequest(
     @SerializedName("courier_rating")  val courier_rating: Int,
     @SerializedName("courier_review")  val courier_review: String?,
     @SerializedName("listing_rating")  val listing_rating: Int,
     @SerializedName("listing_review")  val listing_review: String?
-)
-
-data class MessageResponse(
-    @SerializedName("message") val message: String,
-    @SerializedName("data")    val data: OrderDto? = null
 )
 
 /** Response from POST /orders/{id}/pay — contains Mayar payment link */

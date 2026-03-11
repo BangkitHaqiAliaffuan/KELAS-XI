@@ -13,7 +13,7 @@ object RetrofitClient {
     // Emulator        → http://10.0.2.2:8000/api/
     // ── Physical device (USB debug): PC WiFi IP on the same network ──
     // Physical device → http://192.168.30.212:8000/api/  (php artisan serve --host=0.0.0.0 --port=8000)
-    const val BASE_URL = "https://trashcarebackend-production.up.railway.app/api/"
+    const val BASE_URL = "https://giving-rebirth-production-b635.up.railway.app/api/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

@@ -173,7 +173,7 @@ interface ApiService {
         @Header("Authorization") bearer: String,
         @Path("id") id: Long,
         @Body body: RateOrderRequest
-    ): Response<MessageResponse>
+    ): Response<OrderSingleResponse>
 
     /** GET /api/orders/sales-transactions — Mayar paid+unpaid history (seller) */
     @GET("orders/sales-transactions")
