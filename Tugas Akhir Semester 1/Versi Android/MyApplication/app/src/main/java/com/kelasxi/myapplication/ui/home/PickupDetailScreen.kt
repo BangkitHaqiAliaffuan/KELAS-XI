@@ -716,7 +716,7 @@ fun RatingDialog(
                 Text("Batal")
             }
         },
-        containerColor = CardGreen
+        containerColor = SurfaceVariant
     )
 }
 
