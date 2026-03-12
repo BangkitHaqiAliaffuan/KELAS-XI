@@ -1,6 +1,7 @@
 package com.kelasxi.myapplication.ui.home
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,9 +31,24 @@ import com.kelasxi.myapplication.ui.theme.*
 @Composable
 fun PickupDetailScreen(
     pickup: PickupRequest,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onRatePickup: (courierRating: Int, courierReview: String?) -> Unit = { _, _ -> },
+    isRatingPickup: Boolean = false,
+    rateSuccessMessage: String? = null,
+    onRateSuccessDismissed: () -> Unit = {}
 ) {
+    var showRatingDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(rateSuccessMessage) {
+        if (rateSuccessMessage != null) {
+            snackbarHostState.showSnackbar(rateSuccessMessage)
+            onRateSuccessDismissed()
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -210,6 +226,48 @@ fun PickupDetailScreen(
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (pickup.ratedAt == null) {
+                        // Show rating button
+                        Button(
+                            onClick = { showRatingDialog = true },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = GreenDeep)
+                        ) {
+                            Text("⭐ Beri Rating Kurir", fontWeight = FontWeight.SemiBold)
+                        }
+                    } else {
+                        // Show rating summary
+                        DetailCard(title = "Rating Kurir", emoji = "⭐") {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                repeat(5) { index ->
+                                    Text(
+                                        text = if (index < (pickup.courierRating ?: 0)) "⭐" else "☆",
+                                        fontSize = 22.sp
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "${pickup.courierRating}/5",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GreenDeep
+                                )
+                            }
+                            if (!pickup.courierReview.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = "\"${pickup.courierReview}\"",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = TextSecondary,
+                                    lineHeight = 20.sp
+                                )
+                            }
+                        }
+                    }
                 }
                 PickupStatus.CANCELLED -> {
                     DetailCard(title = "Informasi Pembatalan", emoji = "❌") {
@@ -243,6 +301,18 @@ fun PickupDetailScreen(
                 else -> Unit
             }
         }
+    }
+
+    // Rating Dialog
+    if (showRatingDialog) {
+        RatingDialog(
+            onDismiss = { showRatingDialog = false },
+            onConfirm = { rating, review ->
+                showRatingDialog = false
+                onRatePickup(rating, review)
+            },
+            isLoading = isRatingPickup
+        )
     }
 }
 
@@ -577,6 +647,103 @@ private fun WeightPointChip(
             color = TextSecondary,
             textAlign = TextAlign.Center
         )
+    }
+}
+
+// ─── Rating Dialog ───────────────────────────────────────────────────────────
+
+@Composable
+fun RatingDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (rating: Int, review: String?) -> Unit,
+    isLoading: Boolean = false
+) {
+    var rating by remember { mutableIntStateOf(0) }
+    var review by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        title = {
+            Text(
+                text = "Beri Rating Kurir",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "Bagaimana pelayanan kurir?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+                StarRatingRow(rating = rating, onRatingChange = { rating = it })
+                OutlinedTextField(
+                    value = review,
+                    onValueChange = { review = it },
+                    label = { Text("Ulasan (opsional)") },
+                    placeholder = { Text("Tulis ulasan singkat...") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    maxLines = 3,
+                    enabled = !isLoading
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (rating > 0) {
+                        onConfirm(rating, review.trim().ifBlank { null })
+                    }
+                },
+                enabled = rating > 0 && !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = GreenDeep)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Kirim Rating")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
+                Text("Batal")
+            }
+        },
+        containerColor = CardGreen
+    )
+}
+
+@Composable
+fun StarRatingRow(
+    rating: Int,
+    onRatingChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        (1..5).forEach { star ->
+            Text(
+                text = if (star <= rating) "⭐" else "☆",
+                fontSize = 32.sp,
+                modifier = Modifier
+                    .size(44.dp)
+                    .wrapContentSize(Alignment.Center)
+                    .let { mod ->
+                        mod.then(
+                            Modifier.clickable { onRatingChange(star) }
+                        )
+                    }
+            )
+        }
     }
 }
 

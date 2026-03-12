@@ -11,8 +11,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Locale
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -56,16 +54,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _notes = MutableStateFlow("")
     val notes: StateFlow<String> = _notes.asStateFlow()
-
-    /** Display label shown in the button, e.g. "25 Feb 2026" */
-    private val _selectedDate = MutableStateFlow("Pilih Tanggal")
-    val selectedDate: StateFlow<String> = _selectedDate.asStateFlow()
-
-    /** API-ready value, e.g. "2026-02-25" */
-    private val _selectedDateRaw = MutableStateFlow("")
-
-    private val _selectedTime = MutableStateFlow("Pilih Waktu")
-    val selectedTime: StateFlow<String> = _selectedTime.asStateFlow()
 
     private val _estimatedWeightKg = MutableStateFlow<Double?>(null)
     val estimatedWeightKg: StateFlow<Double?> = _estimatedWeightKg.asStateFlow()
@@ -194,38 +182,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (resolvedAddress.isNotBlank()) _address.value = resolvedAddress
     }
 
-    /**
-     * Called from the DatePicker with the display-formatted string (e.g. "25 Feb 2026").
-     * We also derive the ISO yyyy-MM-dd value required by the API.
-     */
-    fun updateDate(displayValue: String) {
-        _selectedDate.value = displayValue
-        // Convert display label back to yyyy-MM-dd for the API
-        try {
-            val displayFmt = SimpleDateFormat("dd MMM yyyy", Locale.forLanguageTag("id-ID"))
-            val parsed = displayFmt.parse(displayValue)
-            _selectedDateRaw.value = if (parsed != null) {
-                SimpleDateFormat("yyyy-MM-dd", Locale.US).format(parsed)
-            } else displayValue
-        } catch (_: Exception) {
-            _selectedDateRaw.value = displayValue
-        }
-    }
-
-    fun updateTime(value: String) { _selectedTime.value = value }
-
     fun dismissError() { _submitError.value = null }
 
     // ── Submit pickup ─────────────────────────────────────────────
     fun submitPickup() {
-        val addr = _address.value.trim()
-        val date = _selectedDateRaw.value
-        val time = _selectedTime.value
+        val addr  = _address.value.trim()
         val types = _selectedTrashTypes.value.toList()
 
         if (addr.isBlank()) { _submitError.value = "Masukkan alamat penjemputan."; return }
-        if (date.isBlank() || date == "Pilih Tanggal") { _submitError.value = "Pilih tanggal penjemputan."; return }
-        if (time.isBlank() || time == "Pilih Waktu")   { _submitError.value = "Pilih waktu penjemputan."; return }
         if (types.isEmpty()) { _submitError.value = "Pilih minimal satu jenis sampah."; return }
 
         viewModelScope.launch {
@@ -234,8 +198,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             when (val result = repository.createPickup(
                 address             = addr,
-                pickupDate          = date,
-                pickupTime          = time,
                 trashTypes          = types,
                 notes               = _notes.value.ifBlank { null },
                 estimatedWeightKg   = _estimatedWeightKg.value,
@@ -261,10 +223,42 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _selectedTrashTypes.value = emptySet()
         _notes.value = ""
         _estimatedWeightKg.value = null
-        _selectedDate.value    = "Pilih Tanggal"
-        _selectedDateRaw.value = ""
-        _selectedTime.value    = "Pilih Waktu"
         _latitude.value  = null
         _longitude.value = null
+    }
+
+    // ── Rate pickup courier ─────────────────────────────────────
+    private val _isRatingPickup = MutableStateFlow(false)
+    val isRatingPickup: StateFlow<Boolean> = _isRatingPickup.asStateFlow()
+
+    private val _ratePickupSuccess = MutableStateFlow<String?>(null)
+    val ratePickupSuccess: StateFlow<String?> = _ratePickupSuccess.asStateFlow()
+
+    fun dismissRatePickupSuccess() { _ratePickupSuccess.value = null }
+
+    fun ratePickup(pickupId: String, courierRating: Int, courierReview: String?) {
+        viewModelScope.launch {
+            _isRatingPickup.value = true
+            when (val result = repository.ratePickup(
+                id            = pickupId.toLong(),
+                courierRating = courierRating,
+                courierReview = courierReview
+            )) {
+                is AuthResult.Success -> {
+                    // Update the local list so the detail screen refreshes
+                    _recentPickups.value = _recentPickups.value.map {
+                        if (it.id == pickupId) result.data else it
+                    }
+                    // Also update selectedPickup if it's the same one
+                    if (_selectedPickup.value?.id == pickupId) {
+                        _selectedPickup.value = result.data
+                    }
+                    _ratePickupSuccess.value = "Rating berhasil diberikan! ⭐"
+                }
+                is AuthResult.Error -> _submitError.value = result.message
+                else -> Unit
+            }
+            _isRatingPickup.value = false
+        }
     }
 }

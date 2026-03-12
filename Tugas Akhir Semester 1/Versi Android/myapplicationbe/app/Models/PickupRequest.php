@@ -26,16 +26,28 @@ class PickupRequest extends Model
         'completed_at',
         'cancelled_at',
         'cancellation_reason',
+        'courier_rating',
+        'courier_review',
+        'rated_at',
     ];
 
     protected $casts = [
         'pickup_date'    => 'date:Y-m-d',
         'completed_at'   => 'datetime',
         'cancelled_at'   => 'datetime',
+        'rated_at'       => 'datetime',
         'latitude'       => 'float',
         'longitude'      => 'float',
         'estimated_weight_kg' => 'float',
+        'courier_rating' => 'integer',
     ];
+
+    // ── Helpers ──────────────────────────────────────────────
+
+    public function isRated(): bool
+    {
+        return $this->rated_at !== null;
+    }
 
     // ── Relationships ─────────────────────────────────────────────
 

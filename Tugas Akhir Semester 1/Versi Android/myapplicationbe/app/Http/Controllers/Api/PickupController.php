@@ -7,6 +7,7 @@ use App\Models\PickupRequest;
 use App\Models\WasteCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
@@ -33,12 +34,8 @@ class PickupController extends Controller
 
     // ─────────────────────────────────────────────────────────────
     // POST /api/pickups
-    // Body: {
-    //   address, latitude?, longitude?,
-    //   pickup_date (Y-m-d), pickup_time (HH:MM),
-    //   notes?,
-    //   trash_types: ["organic","plastic","electronic","glass"]
-    // }
+    // Body: { address, latitude?, longitude?, notes?, estimated_weight_kg?, trash_types[] }
+    // pickup_date and pickup_time are set automatically to the current date/time.
     // ─────────────────────────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
@@ -48,8 +45,6 @@ class PickupController extends Controller
             'address'               => ['required', 'string', 'max:500'],
             'latitude'              => ['nullable', 'numeric', 'between:-90,90'],
             'longitude'             => ['nullable', 'numeric', 'between:-180,180'],
-            'pickup_date'           => ['required', 'date_format:Y-m-d', 'after_or_equal:today'],
-            'pickup_time'           => ['required', 'date_format:H:i'],
             'notes'                 => ['nullable', 'string', 'max:1000'],
             'estimated_weight_kg'   => ['nullable', 'numeric', 'min:0.1', 'max:9999'],
             'trash_types'           => ['required', 'array', 'min:1'],
@@ -74,16 +69,18 @@ class PickupController extends Controller
             ], 422);
         }
 
+        $now = Carbon::now();
+
         DB::beginTransaction();
         try {
-            // Create the pickup request — starts in 'searching' until a courier accepts
+            // Create the pickup request — pickup_date & pickup_time set to now
             $pickup = PickupRequest::create([
                 'user_id'               => $request->user()->id,
                 'address'               => $validated['address'],
                 'latitude'              => $validated['latitude'] ?? null,
                 'longitude'             => $validated['longitude'] ?? null,
-                'pickup_date'           => $validated['pickup_date'],
-                'pickup_time'           => $validated['pickup_time'],
+                'pickup_date'           => $now->format('Y-m-d'),
+                'pickup_time'           => $now->format('H:i'),
                 'status'                => 'searching',
                 'notes'                 => $validated['notes'] ?? null,
                 'estimated_weight_kg'   => $validated['estimated_weight_kg'] ?? null,
@@ -105,7 +102,7 @@ class PickupController extends Controller
             $pickup->load(['items.wasteCategory', 'courier']);
 
             return response()->json([
-                'message' => 'Pickup berhasil dijadwalkan! Mencari kurir...',
+                'message' => 'Pickup berhasil dibuat! Mencari kurir...',
                 'data'    => $this->formatPickup($pickup),
             ], 201);
         } catch (\Throwable $e) {
@@ -129,6 +126,61 @@ class PickupController extends Controller
 
         return response()->json([
             'data' => $this->formatPickup($pickup),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/pickups/{id}/rate
+    // User rates the courier after pickup is done.
+    // Body: { courier_rating (1-5), courier_review? }
+    // ─────────────────────────────────────────────────────────────
+    public function rate(Request $request, int $id): JsonResponse
+    {
+        $pickup = $request->user()
+            ->pickupRequests()
+            ->with(['courier'])
+            ->findOrFail($id);
+
+        if ($pickup->status !== 'done') {
+            return response()->json([
+                'message' => 'Pickup harus selesai sebelum dapat diberi rating.',
+            ], 422);
+        }
+
+        if ($pickup->isRated()) {
+            return response()->json([
+                'message' => 'Pickup ini sudah diberi rating.',
+            ], 422);
+        }
+
+        $validated = $request->validate([
+            'courier_rating'  => ['required', 'integer', 'min:1', 'max:5'],
+            'courier_review'  => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $pickup->update([
+            'courier_rating'  => $validated['courier_rating'],
+            'courier_review'  => $validated['courier_review'] ?? null,
+            'rated_at'        => Carbon::now(),
+        ]);
+
+        // Update courier rolling average rating
+        if ($pickup->courier) {
+            $courier = $pickup->courier;
+            $totalRated = PickupRequest::where('courier_id', $courier->id)
+                ->whereNotNull('courier_rating')
+                ->count();
+            $newAvg = PickupRequest::where('courier_id', $courier->id)
+                ->whereNotNull('courier_rating')
+                ->avg('courier_rating');
+            $courier->update(['rating' => round($newAvg, 2)]);
+        }
+
+        $pickup->load(['items.wasteCategory', 'courier']);
+
+        return response()->json([
+            'message' => 'Rating berhasil diberikan!',
+            'data'    => $this->formatPickup($pickup),
         ]);
     }
 
@@ -184,6 +236,9 @@ class PickupController extends Controller
             'cancelled_at'        => $pickup->cancelled_at?->toIso8601String(),
             'cancellation_reason' => $pickup->cancellation_reason,
             'created_at'   => $pickup->created_at?->toIso8601String(),
+            'courier_rating'  => $pickup->courier_rating,
+            'courier_review'  => $pickup->courier_review,
+            'rated_at'        => $pickup->rated_at?->toIso8601String(),
             'courier'      => $pickup->courier ? [
                 'id'            => $pickup->courier->id,
                 'name'          => $pickup->courier->name,

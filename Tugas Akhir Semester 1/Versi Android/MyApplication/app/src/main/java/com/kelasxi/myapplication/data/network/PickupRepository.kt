@@ -35,8 +35,6 @@ class PickupRepository(private val context: Context) {
     // ─────────────────────────────────────────────────────────────
     suspend fun createPickup(
         address: String,
-        pickupDate: String,   // yyyy-MM-dd
-        pickupTime: String,   // HH:mm
         trashTypes: List<TrashType>,
         notes: String?,
         estimatedWeightKg: Double? = null,
@@ -51,8 +49,6 @@ class PickupRepository(private val context: Context) {
                 address                = address,
                 latitude               = latitude,
                 longitude              = longitude,
-                pickup_date            = pickupDate,
-                pickup_time            = pickupTime,
                 notes                  = notes?.ifBlank { null },
                 estimated_weight_kg    = estimatedWeightKg,
                 trash_types            = trashTypes.map { it.name.lowercase() }
@@ -79,6 +75,33 @@ class PickupRepository(private val context: Context) {
                 ?: return AuthResult.Error("Belum login. Silakan login kembali.")
 
             val response = api.cancelPickup("Bearer $token", id, CancelPickupRequest(reason))
+            if (response.isSuccessful) {
+                AuthResult.Success(response.body()!!.data.toDomain())
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error("Tidak dapat terhubung ke server.")
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // POST /api/pickups/{id}/rate
+    // ─────────────────────────────────────────────────────────────
+    suspend fun ratePickup(
+        id: Long,
+        courierRating: Int,
+        courierReview: String?
+    ): AuthResult<PickupRequest> {
+        return try {
+            val token = TokenStore.getToken(context)
+                ?: return AuthResult.Error("Belum login. Silakan login kembali.")
+
+            val body = RatePickupRequest(
+                courier_rating = courierRating,
+                courier_review = courierReview?.ifBlank { null }
+            )
+            val response = api.ratePickup("Bearer $token", id, body)
             if (response.isSuccessful) {
                 AuthResult.Success(response.body()!!.data.toDomain())
             } else {
@@ -117,6 +140,9 @@ class PickupRepository(private val context: Context) {
             cancelledAt         = cancelled_at,
             cancellationReason  = cancellation_reason,
             createdAt           = created_at,
+            courierRating       = courier_rating,
+            courierReview       = courier_review,
+            ratedAt             = rated_at,
             courier             = courier?.let {
                 Courier(
                     id           = it.id,

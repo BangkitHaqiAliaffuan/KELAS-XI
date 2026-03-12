@@ -71,11 +71,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // POST /api/pickups            → create pickup
     // GET  /api/pickups/{id}       → show pickup
     // POST /api/pickups/{id}/cancel → cancel pickup
+    // POST /api/pickups/{id}/rate   → rate courier after done
     Route::prefix('pickups')->group(function () {
         Route::get('/',                 [PickupController::class, 'index']);
         Route::post('/',                [PickupController::class, 'store']);
         Route::get('/{id}',             [PickupController::class, 'show'])->whereNumber('id');
         Route::post('/{id}/cancel',     [PickupController::class, 'cancel'])->whereNumber('id');
+        Route::post('/{id}/rate',       [PickupController::class, 'rate'])->whereNumber('id');
     });
 
     // Marketplace routes

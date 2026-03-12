@@ -9,13 +9,12 @@ import com.google.gson.annotations.SerializedName
 /**
  * Sent to POST /api/pickups
  * trash_types must match WasteCategory.type values: organic, plastic, electronic, glass
+ * pickup_date and pickup_time are set automatically by the server to the current time.
  */
 data class CreatePickupRequest(
     val address: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val pickup_date: String,      // format: yyyy-MM-dd
-    val pickup_time: String,      // format: HH:mm
     val notes: String? = null,
     val estimated_weight_kg: Double? = null,
     val trash_types: List<String> // e.g. ["plastic","organic"]
@@ -23,6 +22,12 @@ data class CreatePickupRequest(
 
 data class CancelPickupRequest(
     val reason: String? = null
+)
+
+/** Sent to POST /api/pickups/{id}/rate */
+data class RatePickupRequest(
+    @SerializedName("courier_rating") val courier_rating: Int,
+    @SerializedName("courier_review") val courier_review: String? = null
 )
 
 // ─────────────────────────────────────────────────────────────────
@@ -53,6 +58,9 @@ data class PickupDto(
     val cancelled_at: String?,
     val cancellation_reason: String?,
     val created_at: String?,
+    val courier_rating: Int? = null,
+    val courier_review: String? = null,
+    val rated_at: String? = null,
     val courier: CourierDto?,
     val trash_types: List<TrashTypeDto>
 )

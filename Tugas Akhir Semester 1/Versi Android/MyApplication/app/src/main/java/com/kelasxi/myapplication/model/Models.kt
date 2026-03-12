@@ -14,7 +14,10 @@ data class PickupRequest(
     val cancelledAt: String? = null,
     val cancellationReason: String? = null,
     val createdAt: String? = null,
-    val courier: Courier? = null
+    val courier: Courier? = null,
+    val courierRating: Int? = null,
+    val courierReview: String? = null,
+    val ratedAt: String? = null
 )
 
 data class Courier(

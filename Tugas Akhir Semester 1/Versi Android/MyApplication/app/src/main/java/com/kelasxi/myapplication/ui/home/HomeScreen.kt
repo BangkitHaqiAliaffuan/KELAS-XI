@@ -15,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -42,8 +41,6 @@ fun HomeScreen(
     val selectedTrashTypes  by viewModel.selectedTrashTypes.collectAsStateWithLifecycle()
     val address             by viewModel.address.collectAsStateWithLifecycle()
     val notes               by viewModel.notes.collectAsStateWithLifecycle()
-    val selectedDate        by viewModel.selectedDate.collectAsStateWithLifecycle()
-    val selectedTime        by viewModel.selectedTime.collectAsStateWithLifecycle()
     val showSuccessDialog   by viewModel.showSuccessDialog.collectAsStateWithLifecycle()
     val isLoadingPickups    by viewModel.isLoadingPickups.collectAsStateWithLifecycle()
     val pickupsError        by viewModel.pickupsError.collectAsStateWithLifecycle()
@@ -88,10 +85,6 @@ fun HomeScreen(
                     addressViewModel = addressViewModel,
                     selectedTrashTypes = selectedTrashTypes,
                     onTrashTypeToggle = viewModel::toggleTrashType,
-                    selectedDate = selectedDate,
-                    selectedTime = selectedTime,
-                    onDateSelected = viewModel::updateDate,
-                    onTimeSelected = viewModel::updateTime,
                     notes = notes,
                     onNotesChange = viewModel::updateNotes,
                     estimatedWeightKg = estimatedWeightKg,
@@ -344,10 +337,6 @@ fun PickupRequestCard(
     addressViewModel: AddressViewModel = viewModel(),
     selectedTrashTypes: Set<TrashType>,
     onTrashTypeToggle: (TrashType) -> Unit,
-    selectedDate: String,
-    selectedTime: String,
-    onDateSelected: (String) -> Unit,
-    onTimeSelected: (String) -> Unit,
     notes: String,
     onNotesChange: (String) -> Unit,
     estimatedWeightKg: Double? = null,
@@ -358,9 +347,6 @@ fun PickupRequestCard(
     longitude: Double? = null,
     onPickLocationClick: () -> Unit = {}
 ) {
-    var showDatePicker by remember { mutableStateOf(false) }
-    var showTimePicker by remember { mutableStateOf(false) }
-
     // Weight picker local state
     val weightPresets = listOf(1.0, 2.0, 5.0, 10.0, 20.0)
     var showCustomWeight by remember { mutableStateOf(false) }
@@ -453,54 +439,6 @@ fun PickupRequestCard(
                             selectedLabelColor = Color.White
                         ),
                         shape = RoundedCornerShape(20.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Date & Time Row
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(
-                    onClick = { showDatePicker = true },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, GreenDeep)
-                ) {
-                    Icon(
-                        Icons.Outlined.DateRange,
-                        contentDescription = null,
-                        tint = GreenDeep,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = selectedDate,
-                        color = GreenDeep,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                OutlinedButton(
-                    onClick = { showTimePicker = true },
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, GreenDeep)
-                ) {
-                    Icon(
-                        Icons.Outlined.AccessTime,
-                        contentDescription = null,
-                        tint = GreenDeep,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = selectedTime,
-                        color = GreenDeep,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
                     )
                 }
             }
@@ -671,27 +609,6 @@ fun PickupRequestCard(
         }
     }
 
-    // Date Picker Dialog
-    if (showDatePicker) {
-        SimpleDatePickerDialog(
-            onDismiss = { showDatePicker = false },
-            onConfirm = { date ->
-                onDateSelected(date)
-                showDatePicker = false
-            }
-        )
-    }
-
-    // Time Picker Dialog
-    if (showTimePicker) {
-        SimpleTimePickerDialog(
-            onDismiss = { showTimePicker = false },
-            onConfirm = { time ->
-                onTimeSelected(time)
-                showTimePicker = false
-            }
-        )
-    }
 }
 
 @Composable
@@ -751,7 +668,6 @@ fun MapPlaceholderWithButton(onClick: () -> Unit = {}) {
 
 @Composable
 fun MapMiniPreview(lat: Double, lng: Double, onClick: () -> Unit = {}) {
-    val context = LocalContext.current
     Box(
         modifier = Modifier
             .fillMaxWidth()

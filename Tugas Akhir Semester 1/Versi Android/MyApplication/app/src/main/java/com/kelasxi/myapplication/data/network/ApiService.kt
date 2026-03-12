@@ -62,6 +62,14 @@ interface ApiService {
         @Body body: CancelPickupRequest = CancelPickupRequest()
     ): Response<PickupSingleResponse>
 
+    /** POST /api/pickups/{id}/rate — user rates courier after pickup is done */
+    @POST("pickups/{id}/rate")
+    suspend fun ratePickup(
+        @Header("Authorization") bearer: String,
+        @Path("id") id: Long,
+        @Body body: RatePickupRequest
+    ): Response<PickupSingleResponse>
+
     // ── Marketplace endpoints ─────────────────────────────────────
 
     /** GET /api/marketplace?category=&search= */

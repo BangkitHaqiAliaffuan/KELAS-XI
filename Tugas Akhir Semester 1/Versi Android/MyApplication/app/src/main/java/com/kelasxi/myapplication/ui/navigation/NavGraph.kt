@@ -460,14 +460,22 @@ fun TrashCareNavGraph() {
                 )
             }
             composable(Screen.PickupDetail.route) {
-                val pickup = homeViewModel.selectedPickup.collectAsState().value
+                val pickup         = homeViewModel.selectedPickup.collectAsState().value
+                val isRatingPickup = homeViewModel.isRatingPickup.collectAsState().value
+                val rateSuccess    = homeViewModel.ratePickupSuccess.collectAsState().value
                 if (pickup != null) {
                     PickupDetailScreen(
-                        pickup = pickup,
-                        onBack = {
+                        pickup         = pickup,
+                        onBack         = {
                             homeViewModel.clearSelectedPickup()
                             navController.popBackStack()
-                        }
+                        },
+                        onRatePickup   = { rating, review ->
+                            homeViewModel.ratePickup(pickup.id, rating, review)
+                        },
+                        isRatingPickup = isRatingPickup,
+                        rateSuccessMessage = rateSuccess,
+                        onRateSuccessDismissed = homeViewModel::dismissRatePickupSuccess
                     )
                 }
             }
