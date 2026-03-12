@@ -23,8 +23,51 @@ video{
 .main-container{
     position: relative;
     z-index: 999;
-    background-size: cover;
     height: 100vh;
+}
+
+.bg-wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.content-wrapper {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.bg-overlay {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+}
+
+/* Gambar lama: awalnya penuh, lalu slide out ke kiri */
+.bg-overlay.prev-bg {
+    z-index: 1;
+    clip-path: inset(0 0% 0 0);
+}
+
+.bg-overlay.prev-bg.slide-out {
+    clip-path: inset(0 0% 0 100%);
+    transition: clip-path 1s ease-in-out;
+}
+
+/* Gambar baru: awalnya tersembunyi dari kanan, lalu terbuka ke kiri */
+.bg-overlay.next-bg {
+    z-index: 2;
+    clip-path: inset(0 100% 0 0);
+}
+
+.bg-overlay.next-bg.slide-in {
+    clip-path: inset(0 0% 0 0);
+    transition: clip-path 1s ease-in-out;
 }
 
 .nav{

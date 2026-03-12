@@ -1,5 +1,7 @@
 package com.kelasxi.myapplication.ui.courier
 
+import android.Manifest
+import android.location.Location
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.kelasxi.myapplication.data.network.CourierOrderDto
 import com.kelasxi.myapplication.data.network.CourierPickupDto
 import com.kelasxi.myapplication.data.network.CourierProfileDto
@@ -35,6 +39,27 @@ fun CourierHomeScreen(
     onNavigateRoute: (lat: Double, lng: Double, address: String) -> Unit = { _, _, _ -> }
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // ── Courier's current location (for distance display) ────────
+    var courierLat by remember { mutableStateOf<Double?>(null) }
+    var courierLng by remember { mutableStateOf<Double?>(null) }
+
+    LaunchedEffect(Unit) {
+        val permGranted = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (permGranted) {
+            val client = com.google.android.gms.location.LocationServices
+                .getFusedLocationProviderClient(context)
+            client.lastLocation.addOnSuccessListener { loc: Location? ->
+                if (loc != null) {
+                    courierLat = loc.latitude
+                    courierLng = loc.longitude
+                }
+            }
+        }
+    }
 
     // Handle logout event
     LaunchedEffect(Unit) {
@@ -139,6 +164,8 @@ fun CourierHomeScreen(
                         pickup = pickup,
                         onAccept = { viewModel.acceptPickup(pickup.id) },
                         onIgnore = { viewModel.ignorePickup(pickup.id) },
+                        courierLat = courierLat,
+                        courierLng = courierLng,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
                     )
                 }
@@ -824,6 +851,21 @@ fun CourierPickupCard(
 }
 
 // ─────────────────────────────────────────────────────────────────
+// Helper — straight-line distance in km (Haversine)
+// ─────────────────────────────────────────────────────────────────
+private fun calcDistanceKm(fromLat: Double, fromLng: Double, toLat: Double, toLng: Double): Float {
+    val results = FloatArray(1)
+    Location.distanceBetween(fromLat, fromLng, toLat, toLng, results)
+    return results[0] / 1000f
+}
+
+private fun formatDistance(km: Float): String = when {
+    km < 1f  -> "${(km * 1000).toInt()} m"
+    km < 10f -> "${"%,.1f".format(km)} km"
+    else     -> "${km.toInt()} km"
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Available Pickup Card — for unassigned 'searching' pickups
 // ─────────────────────────────────────────────────────────────────
 @Composable
@@ -831,8 +873,19 @@ fun AvailablePickupCard(
     pickup: CourierPickupDto,
     onAccept: () -> Unit,
     onIgnore: () -> Unit,
+    courierLat: Double? = null,
+    courierLng: Double? = null,
     modifier: Modifier = Modifier
 ) {
+    // Compute distance only when all 4 coordinates are available
+    val distanceText: String? = remember(courierLat, courierLng, pickup.latitude, pickup.longitude) {
+        if (courierLat != null && courierLng != null &&
+            pickup.latitude != null && pickup.longitude != null
+        ) {
+            formatDistance(calcDistanceKm(courierLat, courierLng, pickup.latitude, pickup.longitude))
+        } else null
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
@@ -862,11 +915,40 @@ fun AvailablePickupCard(
                         color = OrangeAccent
                     )
                 }
-                Text(
-                    text = "#${pickup.id}",
-                    fontSize = 12.sp,
-                    color = TextHint
-                )
+                // ── ID + distance chip ───────────────────────────
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (distanceText != null) {
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = GreenMedium.copy(alpha = 0.12f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    Icons.Default.NearMe,
+                                    contentDescription = null,
+                                    tint = GreenDeep,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text(
+                                    text = distanceText,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = GreenDeep
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(6.dp))
+                    }
+                    Text(
+                        text = "#${pickup.id}",
+                        fontSize = 12.sp,
+                        color = TextHint
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))

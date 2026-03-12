@@ -4,16 +4,30 @@ import { assets } from "./assets/assets.js";
 const App = () => {
   const [text, setText] = useState("Dive into \n what you love");
   const [bg, setBg] = useState(assets.image1);
+  const [prevBg, setPrevBg] = useState(null);
   const [play, setPlay] = useState(false);
   const [active, setActive] = useState(1);
+  const [transitioning, setTransitioning] = useState(false);
 
+  const changeBg = (newText, newBg) => {
+    if (newBg === bg) return;
+    setPrevBg(bg);
+    setBg(newBg);
+    setText(newText);
+    setTransitioning(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTransitioning(true);
+      });
+    });
+  };
 
   useEffect(()=>{
     
-   active == 1 ? handleClick("Dive into \n what you love", assets.image1) : 
-   active == 2 ?  handleClick("Indulge \n your passions", assets.image2):
-   active == 3 ?  handleClick("Indulge \n your passions", assets.image3) : ""
-  })
+   active == 1 ? changeBg("Dive into \n what you love", assets.image1) : 
+   active == 2 ?  changeBg("Indulge \n your passions", assets.image2):
+   active == 3 ?  changeBg("Give in to \n your passions", assets.image3) : ""
+  }, [active])
 
   
 const useEffectActive = useEffect(()=>{
@@ -28,15 +42,25 @@ const useEffectActive = useEffect(()=>{
   
   
 
-  const handleClick = (text, url) => {
-    setText(text);
-    setBg(url);
-    // console.log(bg);
-  };
-
   return (
-    <div style={{ backgroundImage: `url(${bg})` }} className="main-container">
-      {play ? <video src={assets.video1} autoPlay muted loop/>:""}
+    <div className="main-container">
+      {/* Wrapper khusus background — selalu di belakang konten */}
+      <div className="bg-wrapper">
+        {prevBg && (
+          <div
+            style={{ backgroundImage: `url(${prevBg})` }}
+            className={`bg-overlay prev-bg ${transitioning ? "slide-out" : ""}`}
+          />
+        )}
+        <div
+          style={{ backgroundImage: `url(${bg})` }}
+          className={`bg-overlay next-bg ${transitioning ? "slide-in" : ""}`}
+        />
+      </div>
+
+      {/* Wrapper konten — selalu di atas background */}
+      <div className="content-wrapper">
+        {play ? <video src={assets.video1} autoPlay muted loop/>:""}
       <nav className="nav">
         <div className="logo">EV-olution</div>
 
@@ -73,8 +97,6 @@ const useEffectActive = useEffect(()=>{
         <div className="round-btns">
           <div
             onClick={() => {
-              handleClick("Dive into \n what you love", assets.image1);
-
               setActive(1)
             }}
             className={`btn ${active == 1 && "active"}`}
@@ -82,16 +104,14 @@ const useEffectActive = useEffect(()=>{
           
           <div
             onClick={() => {
-              handleClick("Indulge \n your passions", assets.image2);
-                            setActive(2)
+              setActive(2)
             }}
                         className={`btn ${active === 2 && "active"}`}
           ></div>
           
           <div
             onClick={() => {
-              handleClick("Give in to \n your passions", assets.image3);
-                            setActive(3)
+              setActive(3)
             }}
                         className={`btn ${active === 3 && "active"}`}
           ></div>
@@ -104,6 +124,7 @@ const useEffectActive = useEffect(()=>{
           </div>
           See the video
         </div>
+      </div>
       </div>
     </div>
   );
