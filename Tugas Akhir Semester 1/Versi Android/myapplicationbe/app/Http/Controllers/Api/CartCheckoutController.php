@@ -128,8 +128,7 @@ class CartCheckoutController extends Controller
             })->values()->toArray();
 
             $mayar  = new MayarService();
-            // Deep link untuk redirect ke Android app setelah payment (format: trashcare://payment/success?cartCheckoutId=...)
-            $redirectUrl = 'trashcare://payment/success?cartCheckoutId=' . urlencode($cartId);
+            $redirectUrl = route('payment.return', ['cartCheckoutId' => $cartId]);
             $result = $mayar->createPayment([
                 'name'        => $buyer->name,
                 'email'       => $buyer->email,
