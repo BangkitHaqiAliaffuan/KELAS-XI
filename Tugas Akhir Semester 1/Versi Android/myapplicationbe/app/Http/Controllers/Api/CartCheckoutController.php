@@ -128,13 +128,15 @@ class CartCheckoutController extends Controller
             })->values()->toArray();
 
             $mayar  = new MayarService();
+            // Deep link untuk redirect ke Android app setelah payment (format: trashcare://payment/success?cartCheckoutId=...)
+            $redirectUrl = 'trashcare://payment/success?cartCheckoutId=' . urlencode($cartId);
             $result = $mayar->createPayment([
                 'name'        => $buyer->name,
                 'email'       => $buyer->email,
                 'amount'      => $total,
                 'mobile'      => $buyer->phone ?? '',
                 'description' => 'Cart Checkout ' . $cartId . ' — ' . count($createdOrders) . ' produk',
-                'redirectUrl' => config('app.url') . '/payment/callback',
+                'redirectUrl' => $redirectUrl,
                 'expiredAt'   => now()->addHours(24)->toIso8601String(),
                 'items'       => $itemsPayload,
             ]);

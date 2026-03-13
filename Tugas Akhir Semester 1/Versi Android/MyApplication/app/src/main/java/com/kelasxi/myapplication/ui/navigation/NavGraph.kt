@@ -53,8 +53,8 @@ import com.kelasxi.myapplication.ui.courier.CourierHomeScreen
 import com.kelasxi.myapplication.ui.courier.CourierRouteScreen
 import com.kelasxi.myapplication.ui.map.MapPickerScreen
 import com.kelasxi.myapplication.ui.map.MapPickerResult
-import androidx.navigation.navArgument
-import androidx.navigation.NavType
+import androidx.navigation.navDeepLink
+import android.net.Uri
 import com.kelasxi.myapplication.viewmodel.AddressViewModel
 import com.kelasxi.myapplication.viewmodel.HomeViewModel
 import com.kelasxi.myapplication.viewmodel.MarketplaceViewModel
@@ -317,6 +317,47 @@ fun TrashCareNavGraph() {
                     }
                 )
             }
+
+            // ── Deep link payment callback handler (from Mayar redirect) ────────────────────
+            // Formats: trashcare://payment/success?orderId=123
+            //          trashcare://payment/success?cartCheckoutId=cc_xxx
+            composable(
+                route = "payment_success",
+                deepLinks = listOf(
+                    navDeepLink {
+                        uriPattern = "trashcare://payment/success?orderId={orderId}"
+                    },
+                    navDeepLink {
+                        uriPattern = "trashcare://payment/success?cartCheckoutId={cartCheckoutId}"
+                    }
+                ),
+                arguments = listOf(
+                    navArgument("orderId") { type = NavType.LongType; defaultValue = 0L },
+                    navArgument("cartCheckoutId") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backEntry ->
+                val orderId = backEntry.arguments?.getLong("orderId") ?: 0L
+                val cartCheckoutId = backEntry.arguments?.getString("cartCheckoutId") ?: ""
+                
+                LaunchedEffect(orderId, cartCheckoutId) {
+                    when {
+                        orderId > 0L -> {
+                            // Single order payment callback → navigate to MyOrders and poll
+                            marketplaceViewModel.pollPaymentStatus(orderId)
+                            navController.navigate(Screen.MyOrders.route) {
+                                popUpTo("payment_success") { inclusive = true }
+                            }
+                        }
+                        cartCheckoutId.isNotEmpty() -> {
+                            // Cart checkout payment callback → navigate to MyOrders
+                            navController.navigate(Screen.MyOrders.route) {
+                                popUpTo("payment_success") { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
+
             // CartCheckout payment screen: polls status after Mayar link opened
             composable(
                 route = Screen.CartCheckout.route,

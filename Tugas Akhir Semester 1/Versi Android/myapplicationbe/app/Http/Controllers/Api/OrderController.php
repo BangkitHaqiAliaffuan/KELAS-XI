@@ -154,13 +154,15 @@ class OrderController extends Controller
 
         try {
             $mayar   = new MayarService();
+            // Deep link untuk redirect ke Android app setelah payment (format: trashcare://payment/success?orderId=...)
+            $redirectUrl = 'trashcare://payment/success?orderId=' . $order->id;
             $result  = $mayar->createPayment([
                 'name'        => $user->name,
                 'email'       => $user->email,
                 'amount'      => $order->total_price,
                 'mobile'      => $user->phone ?? '',
                 'description' => 'Pembelian #' . $order->id . ' - ' . ($order->listing->name ?? 'Produk'),
-                'redirectUrl' => config('app.url') . '/payment/callback',
+                'redirectUrl' => $redirectUrl,
                 'expiredAt'   => now()->addHours(24)->toIso8601String(),
             ]);
 
