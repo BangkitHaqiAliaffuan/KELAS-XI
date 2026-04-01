@@ -1,0 +1,32 @@
+
+03-13 00:17:35.817  1347  2104 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.kelas.balancebook/.MainActivity} from uid 2000
+03-13 00:17:35.827  1347  2104 I ActivityTaskManager: needHookReparentToDefaultDisplay: sourceRecord = null,r = ActivityRecord{abd05e5 u0 com.kelas.balancebook/.MainActivity} t-1}, tda = null
+03-13 00:17:35.835  1347  2104 I PowerHalWrapper: <amsBoostResume> last:com.aniverseid.animelovers, next:com.kelas.balancebook 
+03-13 00:17:35.837  3696  5459 I SmartPanel_SmartPanelService: activityCheck pkgName: com.kelas.balancebook, className: com.kelas.balancebook.MainActivity isResume=false isInshow =true isDrawn = false
+03-13 00:17:35.839  1347  1380 I PowerHalWrapper: amsBoostProcessCreate package:com.kelas.balancebook 
+03-13 00:17:35.852  1347  4335 I PowerHalWrapper: <amsBoostResume> last:com.aniverseid.animelovers, next:com.kelas.balancebook 
+03-13 00:17:35.854  1347  1521 I ActivityManager: Start proc 18427:com.kelas.balancebook/u0a358 for next-top-activity {com.kelas.balancebook/com.kelas.balancebook.MainActivity}
+03-13 00:17:35.858  1347  4335 I PowerHalWrapper: amsBoostNotify pid:12456,activity:com.aniverseid.animelovers.MainActivity, package:com.aniverseid.animelovers, mProcessCreatePackcom.kelas.balancebook 
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30642): avc: denied { read } for name="u:object_r:vendor_memfusion_size_prop:s0" dev="tmpfs" ino=10537 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_size_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30643): avc: denied { read } for name="u:object_r:vendor_memfusion_state_prop:s0" dev="tmpfs" ino=10538 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_state_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30644): avc: denied { read } for name="u:object_r:vendor_memfusion_tranlog_prop:s0" dev="tmpfs" ino=10540 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_tranlog_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30645): avc: denied { read } for name="u:object_r:vendor_memfusion_ui_enable_prop:s0" dev="tmpfs" ino=10541 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_ui_enable_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.859 18427 18427 W main    : type=1400 audit(0.0:30646): avc: denied { read } for name="u:object_r:vendor_uxcompaction_enable_prop:s0" dev="tmpfs" ino=10780 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_uxcompaction_enable_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.865 18427 18427 I las.balancebook: Late-enabling -Xcheck:jni
+03-13 00:17:35.871   838   890 I BufferQueueDebug: [Splash Screen com.kelas.balancebook#11447](this:0xb400007d3f861308,id:-1,api:0,p:-1,c:-1) BufferQueue core=(838:/system/bin/surfaceflinger)
+03-13 00:17:35.894 18427 18427 I las.balancebook: Using CollectorTypeCC GC.
+03-13 00:17:35.936  1347  3355 I PowerHalWrapper: amsBoostNotify pid:18427,activity:com.kelas.balancebook.MainActivity, package:com.kelas.balancebook, mProcessCreatePackcom.kelas.balancebook 
+03-13 00:17:35.936  1347  3355 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.kelas.balancebook/com.kelas.balancebook.MainActivity pid=18427 state:1
+03-13 00:17:35.937  1347  3355 I game_scn: collectForegroundAppList packName=com.kelas.balancebook, actName=com.kelas.balancebook.MainActivity, pid=18427, uid=10358, state:RESUMED
+03-13 00:17:35.937  1347  3355 I game_scn: powerNotifyForegroundApp multi_resumed_app_info: pid: 18427, packname: com.kelas.balancebook, actname: com.kelas.balancebook.MainActivity
+03-13 00:17:35.937   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, act:com.kelas.balancebook.MainActivity, state:1, pid:18427, uid:10358, fps:120
+03-13 00:17:35.937   803   861 I libPowerHal: [perfNotifyAppState] foreground:com.kelas.balancebook, pid:18427, uid:10358
+03-13 00:17:35.937  3696  5459 I SmartPanel_SmartPanelService: activityCheck pkgName: com.kelas.balancebook, className: com.kelas.balancebook.MainActivity isResume=false isInshow =true isDrawn = false
+03-13 00:17:35.937  1347  3355 I TranSourceConnectManagerImpl: hookDisplayResumedActivityChanged displayId: 0 packageName: com.kelas.balancebook
+03-13 00:17:35.938   803   861 I UxUtility: notifyForegroundApp pack:com.kelas.balancebook, uid:10358
+03-13 00:17:35.939  1347  2056 I TranOptimizeRAImpl: Applaunch from com.aniverseid.animelovers to com.kelas.balancebook
+03-13 00:17:35.939  1347  2685 I TranTp/TranTpSwitchManagerImpl: Set [com.kelas.balancebook] is tp rate as default.
+03-13 00:17:35.939   803   825 I mtkpower@impl: [notifyAppState] pc:1, com.aniverseid.animelovers => com.kelas.balancebook
+03-13 00:17:35.939  1347  2057 I ActivityManager: Applaunch from com.aniverseid.animelovers to com.kelas.balancebook
+03-13 00:17:35.940  1347  2685 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+

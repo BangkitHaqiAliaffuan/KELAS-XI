@@ -1,0 +1,46 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.BalanceBook" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSurface">@color/colorSurface</item>
+        <item name="android:colorBackground">@color/colorBackground</item>
+        <item name="android:windowBackground">@color/colorBackground</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="materialButtonStyle">@style/Widget.BalanceBook.Button</item>
+        <item name="bottomNavigationStyle">@style/Widget.BalanceBook.BottomNavigation</item>
+    </style>
+
+    <style name="Theme.BalanceBook" parent="Base.Theme.BalanceBook" />
+
+    <!-- Toolbar theme for activities with toolbar -->
+    <style name="Theme.BalanceBook.AppBarOverlay" parent="ThemeOverlay.Material3.Dark.ActionBar" />
+
+    <!-- Fully circular ShapeableImageView -->
+    <style name="ShapeAppearanceOverlay.App.CircleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <!-- Modern rounded primary button -->
+    <style name="Widget.BalanceBook.Button" parent="Widget.Material3.Button">
+        <item name="cornerRadius">12dp</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <!-- Bottom nav – indicator pill shape -->
+    <style name="Widget.BalanceBook.BottomNavigation" parent="Widget.Material3.BottomNavigationView">
+        <item name="itemActiveIndicatorStyle">@style/Widget.BalanceBook.BottomNavIndicator</item>
+    </style>
+
+    <style name="Widget.BalanceBook.BottomNavIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="shapeAppearance">@style/ShapeAppearanceOverlay.BalanceBook.Pill</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.BalanceBook.Pill" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

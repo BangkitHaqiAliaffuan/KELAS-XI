@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/dashboardFragment"
+        android:icon="@drawable/ic_grid_view"
+        android:title="@string/nav_dashboard" />
+
+    <item
+        android:id="@+id/historyFragment"
+        android:icon="@drawable/ic_receipt_long"
+        android:title="@string/nav_ledger" />
+
+    <item
+        android:id="@+id/reportsFragment"
+        android:icon="@drawable/ic_analytics"
+        android:title="@string/nav_reports_label" />
+
+    <item
+        android:id="@+id/settingsFragment"
+        android:icon="@drawable/ic_person"
+        android:title="@string/nav_profile_label" />
+
+</menu>

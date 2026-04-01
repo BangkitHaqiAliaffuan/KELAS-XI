@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- BalanceBook Brand Colors – Modern Green Fintech -->
+    <color name="colorPrimary">#16A34A</color>
+    <color name="colorPrimaryDark">#15803D</color>
+    <color name="colorPrimaryLight">#4ADE80</color>
+    <color name="colorPrimaryAlpha10">#1A16A34A</color>
+    <color name="colorSecondary">#0EA5E9</color>
+    <color name="colorIncome">#22C55E</color>
+    <color name="colorExpense">#EF4444</color>
+    <color name="colorBackground">#F8FAFC</color>
+    <color name="colorSurface">#FFFFFF</color>
+    <color name="colorFooterBg">#F8FAFC</color>
+    <color name="colorTextPrimary">#111827</color>
+    <color name="colorTextSecondary">#6B7280</color>
+    <color name="colorDivider">#E5E7EB</color>
+    <color name="colorCardBackground">#FFFFFF</color>
+    <color name="colorIncomeLight">#DCFCE7</color>
+    <color name="colorExpenseLight">#FEE2E2</color>
+
+    <!-- Balance highlight (blue accent) -->
+    <color name="colorBalanceAccent">#0EA5E9</color>
+    <color name="colorBalanceAccentDark">#0284C7</color>
+    <color name="colorBalanceBg">#EFF6FF</color>
+
+    <!-- Donut chart segment colors -->
+    <color name="colorChartRent">#0EA5E9</color>
+    <color name="colorChartFood">#FB7185</color>
+    <color name="colorChartTravel">#FBBF24</color>
+    <color name="colorChartOthers">#818CF8</color>
+
+    <!-- Quick action secondary button -->
+    <color name="colorActionDark">#111827</color>
+
+    <!-- Category icon backgrounds -->
+    <color name="colorBgAmber">#FEF3C7</color>
+    <color name="colorBgIndigo">#EEF2FF</color>
+    <color name="colorAmber">#D97706</color>
+    <color name="colorIndigo">#4F46E5</color>
+
+    <!-- Extended category palette -->
+    <color name="colorBgOrange">#FFEDD5</color>
+    <color name="colorOrange">#EA580C</color>
+    <color name="colorBgEmerald">#D1FAE5</color>
+    <color name="colorEmerald">#059669</color>
+    <color name="colorBgBlue">#DBEAFE</color>
+    <color name="colorBlue">#2563EB</color>
+    <color name="colorBgPurple">#F3E8FF</color>
+    <color name="colorPurple">#9333EA</color>
+    <color name="colorBgCyan">#CFFAFE</color>
+    <color name="colorCyan">#0891B2</color>
+
+    <!-- Budget / Warning states -->
+    <color name="colorWarning">#F97316</color>
+    <color name="colorWarningBg">#FFF7ED</color>
+    <color name="colorDanger">#EF4444</color>
+    <color name="colorDangerBg">#FEF2F2</color>
+    <color name="colorBgRed">#FECACA</color>
+    <color name="colorBgOrangeLight">#FFEDD5</color>
+
+    <!-- Income / Savings bar chart -->
+    <color name="colorIncomeBar">#16A34A</color>
+    <color name="colorExpenseBar">#1A16A34A</color>
+    <color name="colorSavingsBar">#FDE68A</color>
+    <color name="colorNetPositive">#16A34A</color>
+    <color name="colorExpenseBadgeBg">#FEF2F2</color>
+    <color name="colorExpenseBadgeText">#EF4444</color>
+    <color name="colorIndigoBar">#6366F1</color>
+
+    <!-- Dark mode surface colors -->
+    <color name="colorSurfaceDark">#1E293B</color>
+    <color name="colorBackgroundDark">#0F172A</color>
+    <color name="colorDividerDark">#334155</color>
+    <color name="colorTextPrimaryDark">#F8FAFC</color>
+    <color name="colorTextSecondaryDark">#94A3B8</color>
+</resources>

@@ -1,0 +1,15 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Dark mode overrides -->
+    <style name="Base.Theme.BalanceBook" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryDark</item>
+        <item name="colorSecondary">@color/colorSecondary</item>
+        <item name="colorSurface">@color/colorSurfaceDark</item>
+        <item name="android:colorBackground">@color/colorBackgroundDark</item>
+        <item name="android:windowBackground">@color/colorBackgroundDark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="materialButtonStyle">@style/Widget.BalanceBook.Button</item>
+        <item name="bottomNavigationStyle">@style/Widget.BalanceBook.BottomNavigation</item>
+    </style>
+</resources>

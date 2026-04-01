@@ -1,0 +1,1051 @@
+--------- beginning of main
+03-13 00:17:34.615  8500  8803 I WM-WorkerWrapper: Worker result SUCCESS for Work [ id=6f274298-b06e-4f16-8896-28339c01365d, tags={ com.whatsapp.xmpp.messaging.XmppLifecycleWorker } ]
+03-13 00:17:34.626  1347  1370 W System  : A resource failed to call close. 
+--------- beginning of system
+03-13 00:17:34.638  1347  1377 W Looper  : Drained
+03-13 00:17:34.665   776  4967 W AudioALSACaptureDataProviderNormal: readThread, latency_in_s,0.000002,0.022165,0.000042, totalTime 0.022208 > logTimeout 0.022000 TIMEOUT!!
+03-13 00:17:34.680  1347  1370 W System  : A resource failed to call HardwareBuffer.close. 
+03-13 00:17:34.718   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=117.16 dur=1007.19 max=24.96 min=7.84
+03-13 00:17:34.726  4649  4666 I android.vending: Background concurrent copying GC freed 28MB AllocSpace bytes, 55(105MB) LOS objects, 75% free, 19MB/78MB, paused 81us,60us total 155.745ms
+03-13 00:17:34.795  1846  1846 I WifiHAL : Get link layer stats
+03-13 00:17:34.795  1846  1846 I WifiHAL : GetLinkStatsCommand::create
+03-13 00:17:34.795  1846  1846 I android.hardware.wifi@1.0-service-lazy: WifiCommand::requestResponse err=-14
+03-13 00:17:34.795  1846  1846 I WifiHAL : wifi_get_link_stats: result=-1
+03-13 00:17:34.796  1347  1752 E WifiVendorHal: getWifiLinkLayerStats_1_5_Internal(l.1176) failed {.code = ERROR_UNKNOWN, .description = unknown}
+03-13 00:17:34.807  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30637): avc: denied { ioctl } for comm=4173796E635461736B20233639 path="/data/app/~~auU9FUV0Oui_unV5QMP1Gw==/com.drilens.wamr-hVWDciRaOLHOt4sKbKg0WQ==/base.apk" dev="incremental-fs" ino=573468 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:34.807  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30638): avc: denied { ioctl } for comm=4173796E635461736B20233639 path="/data/app/~~auU9FUV0Oui_unV5QMP1Gw==/com.drilens.wamr-hVWDciRaOLHOt4sKbKg0WQ==/split_config.in.apk" dev="incremental-fs" ino=573606 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:34.869   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:117.179771,dur:1007.00,max:24.77,min:7.12  
+03-13 00:17:34.897  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.media.swcodec' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:34.972  1120  1120 I thermal_repeater: [recvMdThermalInfo] ret=24, strLen=127,  3, 41, -50, 0, 32767, 0
+03-13 00:17:35.004  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.adbd' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.009   838   838 I BufferQueueProducer: [StatusBar#94](this:0xb400007d3f7de328,id:-1,api:0,p:-1,c:838) queueBuffer: fps=0.20 dur=4993.81 max=4993.81 min=4993.81
+03-13 00:17:35.025  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.conscrypt' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.080  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.neuralnetworks' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.109  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.ipsec' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.135  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.ondevicepersonalization' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.195  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.extservices' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.235  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9af0de3 com.funbase.xradio}
+03-13 00:17:35.238  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.239  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.247  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.os.statsd' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.287  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{cf3af1f com.transsion.XOSLauncher}
+03-13 00:17:35.289  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.292  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.304  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{77bf0a5 com.transsion.healthlife}
+03-13 00:17:35.305  2861  2884 W ConsentManagerApiServic: Consent Manager API is not enabled. [CONTEXT service_id=460 ]
+03-13 00:17:35.306  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.309  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.316  4649  4649 W Finsky  : [2] STU: Failed to get storage stats for package 'com.google.android.scheduling' (1601: Error getting stats: android.content.pm.PackageManager.NameNotFoundException)
+03-13 00:17:35.320  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{5f561b com.transsion.smartpanel}
+03-13 00:17:35.322  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.326  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.363  4649  4649 I Finsky  : [2] App states replicator found 54 unowned apps
+03-13 00:17:35.367  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{a20f9f5 com.telkomsel.telkomselcm}
+03-13 00:17:35.369  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.372  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.390  4649  5677 I Finsky  : [60] AIM: AppInfoManager-Perf > getApps > data collection finished
+03-13 00:17:35.390  4649  5677 I Finsky  : [60] AIM: AppInfoManager-Perf > maybeDestroyAppInfoManager is called. actives = 1
+03-13 00:17:35.390  4649  5677 I Finsky  : [60] AIM: AppInfoManager-Perf > getApps > data collection finished
+03-13 00:17:35.390  4649  5677 I Finsky  : [60] AIM: AppInfoManager-Perf > maybeDestroyAppInfoManager is called. actives = 0
+03-13 00:17:35.403  4649  5674 I Finsky  : [59] Completed 0 account content syncs with 0 successful.
+03-13 00:17:35.404  4649  4649 I Finsky  : [2] [ContentSync] Installation state replication succeeded.
+03-13 00:17:35.404  4649  4649 I Finsky  : [2] SCH: jobFinished: 12-1. TimeElapsed: 5476ms.
+03-13 00:17:35.404  4649  4649 I Finsky  : [2] WM::SCH: Logging work end for 12-1
+03-13 00:17:35.417  4649  5674 I Finsky  : [59] SCH: Scheduling phonesky job Id: 1-1337, CT: 1773299729298, Constraints: [{ L: 42477620, D: 85677620, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+03-13 00:17:35.418  4649  5674 I Finsky  : [59] SCH: Scheduling phonesky job Id: 34-2166, CT: 1773299764771, Constraints: [{ L: 604800000, D: 2451313520, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+03-13 00:17:35.418  4649  5674 I Finsky  : [59] SCH: Scheduling phonesky job Id: 34-2171, CT: 1773299764771, Constraints: [{ L: 604800000, D: 2537722769, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+03-13 00:17:35.418  4649  5674 I Finsky  : [59] SCH: Scheduling phonesky job Id: 34-2174, CT: 1773324696190, Constraints: [{ L: 79197886, D: 1375197886, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+03-13 00:17:35.418  4649  5674 I Finsky  : [59] SCH: Scheduling phonesky job Id: 34-2175, CT: 1773324698385, Constraints: [{ L: 604800000, D: 2591999260, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+03-13 00:17:35.423  4649  5673 I Finsky  : [57] SCH: Scheduling 1 system job(s)
+03-13 00:17:35.424  4649  5673 I Finsky  : [57] SCH: Scheduling system job Id: 9287, L: 6351495, D: 49551495, C: false, I: false, N: 1
+03-13 00:17:35.431  4649 18277 I Finsky  : [747] SCH: job service finished with id 9280.
+03-13 00:17:35.440  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{df69389 com.infinix.xshare}
+03-13 00:17:35.442  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.445  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.459  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{2f0369f com.transsion.aivoiceassistant}
+03-13 00:17:35.461  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.465  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.502  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{1831787 com.transsnet.store}
+03-13 00:17:35.505  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.508  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.519  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{73e4d4d com.trassion.infinix.xclub}
+03-13 00:17:35.521  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.524  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.537  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{43a3eb9 net.bat.store}
+03-13 00:17:35.540  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.543  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.565  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{352d361 app.bpjs.mobile}
+03-13 00:17:35.568  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.568   803   841 I libPerfCtl: xgfGetFPS pid:1897 fps:-1
+03-13 00:17:35.569   803   841 I libPerfCtl: xgfGetFPS pid:12456 fps:120
+03-13 00:17:35.571  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.599  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{45c0f09 com.afkarstudios.icyfloes}
+03-13 00:17:35.602  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.606   776  4967 W AudioALSACaptureDataProviderNormal: readThread, latency_in_s,0.000002,0.020020,0.003075, totalTime 0.023097 > logTimeout 0.022000 TIMEOUT!!
+03-13 00:17:35.606  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.617  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{f93be1f com.aiany.astra}
+03-13 00:17:35.619  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.622  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.647  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{b3b4921 com.ammonite.goose}
+03-13 00:17:35.650  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.654  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.668  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{60a90cd com.aniverseid.animelovers}
+03-13 00:17:35.671  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.673  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.725   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=120.11 dur=1007.42 max=8.79 min=7.77
+03-13 00:17:35.809  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{ffa94db com.freereels.app}
+03-13 00:17:35.812  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.815  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:35.815  1347  2104 I mtkpower_client: perf_cus_lock_hint hint:54, dur:150
+03-13 00:17:35.816  1347  2104 I mtkpower_client: perf_cus_lock_hint, ret_hdl:0
+03-13 00:17:35.817  1347  2104 I ActivityTaskManager: START u0 {flg=0x10000000 cmp=com.kelas.balancebook/.MainActivity} from uid 2000
+03-13 00:17:35.817  1347  2104 I ActivityTaskManager: floatWindow: multiWindowId = 0
+03-13 00:17:35.826  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null, isMultiWindowTaskDisplayArea  = false
+03-13 00:17:35.826  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null
+03-13 00:17:35.826  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null, isMultiWindowTaskDisplayArea  = false
+03-13 00:17:35.826  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null
+03-13 00:17:35.827  1347  2104 I ActivityTaskManager: needHookReparentToDefaultDisplay: sourceRecord = null,r = ActivityRecord{abd05e5 u0 com.kelas.balancebook/.MainActivity} t-1}, tda = null
+03-13 00:17:35.829  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null, isMultiWindowTaskDisplayArea  = false
+03-13 00:17:35.829  1347  2104 I ActivityTaskManager: TaskLaunchParamsModifier: pkgName = null
+03-13 00:17:35.834   803   826 I mtkpower@impl: [setMode] type:5, enabled:1
+03-13 00:17:35.835  1347  2104 I PowerHalWrapper: <amsBoostResume> last:com.aniverseid.animelovers, next:com.kelas.balancebook 
+03-13 00:17:35.835   803   861 I libPowerHal: LAUNCH: cpu_ctrl set cpu freq: 2000000 -1 2500000 -1
+03-13 00:17:35.836  1347  2104 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:35.837  3696  5459 I SmartPanel_SmartPanelService: activityCheck pkgName: com.kelas.balancebook, className: com.kelas.balancebook.MainActivity isResume=false isInshow =true isDrawn = false
+03-13 00:17:35.839  1347  1380 I PowerHalWrapper: amsBoostProcessCreate package:com.kelas.balancebook 
+03-13 00:17:35.841  1347  4335 I ActivityManager: isUserAMonkey mUserIsMonkey = false
+03-13 00:17:35.841  1347  4335 I ActivityTaskManager: isControllerAMonkey mController = null,mControllerIsAMonkey = false
+03-13 00:17:35.846  3696  3696 W SmartPanel_OperateState: show
+03-13 00:17:35.847  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:35.852  1347  4335 I PowerHalWrapper: <amsBoostResume> last:com.aniverseid.animelovers, next:com.kelas.balancebook 
+03-13 00:17:35.852  4276  4822 I SimpleEventAdapt: onActivityEvent get com.aniverseid.animelovers, com.aniverseid.animelovers.MainActivity,false
+03-13 00:17:35.852  4276  4822 I SimpleEventAdapt: notifyEvent2  activity_event
+03-13 00:17:35.852  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:35.854  4276 16683 I CacheManager:  save new data to cache activity_event
+03-13 00:17:35.854  4276 16683 I bsc     : notifyDataChange in activity_event, 1
+03-13 00:17:35.854  1347  1521 I ActivityManager: Start proc 18427:com.kelas.balancebook/u0a358 for next-top-activity {com.kelas.balancebook/com.kelas.balancebook.MainActivity}
+03-13 00:17:35.855  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:35.855  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:activity_event
+03-13 00:17:35.855  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:35.855  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:35.855  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:35.856  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.856  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335855854,"data":"{\"className\":\"com.aniverseid.animelovers.MainActivity\",\"isResumed\":false,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.856  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:35.857  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.857  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = activity_event
+03-13 00:17:35.857  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:35.857  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote activity_event
+03-13 00:17:35.858  1347  4335 I PowerHalWrapper: amsBoostNotify pid:12456,activity:com.aniverseid.animelovers.MainActivity, package:com.aniverseid.animelovers, mProcessCreatePackcom.kelas.balancebook 
+03-13 00:17:35.858  1347  4335 I PowerHalWrapper: state: 0 
+03-13 00:17:35.858 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:35.858 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.858  1347  4335 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity pid=12456 state:0
+03-13 00:17:35.858  1347  4335 I game_scn: collectForegroundAppList packName=com.aniverseid.animelovers, actName=com.aniverseid.animelovers.MainActivity, pid=12456, uid=10369, state:PAUSED
+03-13 00:17:35.858  1347  4335 I PowerHalWrapper: amsBoostNotify AMS_BOOST_PROCESS_CREATE_BOOST:true 
+03-13 00:17:35.859  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:35.860  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30642): avc: denied { read } for name="u:object_r:vendor_memfusion_size_prop:s0" dev="tmpfs" ino=10537 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_size_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30643): avc: denied { read } for name="u:object_r:vendor_memfusion_state_prop:s0" dev="tmpfs" ino=10538 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_state_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30644): avc: denied { read } for name="u:object_r:vendor_memfusion_tranlog_prop:s0" dev="tmpfs" ino=10540 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_tranlog_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.855 18427 18427 W main    : type=1400 audit(0.0:30645): avc: denied { read } for name="u:object_r:vendor_memfusion_ui_enable_prop:s0" dev="tmpfs" ino=10541 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_memfusion_ui_enable_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.859 18427 18427 W main    : type=1400 audit(0.0:30646): avc: denied { read } for name="u:object_r:vendor_uxcompaction_enable_prop:s0" dev="tmpfs" ino=10780 scontext=u:r:untrusted_app:s0:c102,c257,c512,c768 tcontext=u:object_r:vendor_uxcompaction_enable_prop:s0 tclass=file permissive=0 app=com.kelas.balancebook
+03-13 00:17:35.863  2059  2989 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:35.863   803   861 I libPowerHal: [perfNotifyAppState] pack:com.aniverseid.animelovers, act:com.aniverseid.animelovers.MainActivity, state:0, pid:12456, uid:10369, fps:120
+03-13 00:17:35.863  2059  2989 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.863  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:35.865  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.865  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335855854,"data":"{\"className\":\"com.aniverseid.animelovers.MainActivity\",\"isResumed\":false,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.865  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:35.865 18427 18427 I las.balancebook: Late-enabling -Xcheck:jni
+03-13 00:17:35.865   776  4967 W AudioALSACaptureDataProviderNormal: readThread, latency_in_s,0.000001,0.022041,0.000042, totalTime 0.022085 > logTimeout 0.022000 TIMEOUT!!
+03-13 00:17:35.865  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.865  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:35.867  1347  1382 I mtkpower_client: perf_cus_lock_hint hint:48, dur:400
+03-13 00:17:35.869   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:118.985733,dur:1000.12,max:16.58,min:7.49  
+03-13 00:17:35.869  1347  2104 W libc    : Access denied finding property "ro.vendor.tgpa_resolution_tuner"
+03-13 00:17:35.871  1347  1382 I mtkpower_client: perf_cus_lock_hint, ret_hdl:23168
+03-13 00:17:35.871  1347  1382 I mtkpower_client: perf_cus_lock_hint hint:48, dur:400
+03-13 00:17:35.871  1347  1382 I mtkpower_client: perf_cus_lock_hint, ret_hdl:23169
+03-13 00:17:35.871   838   890 I BufferQueueDebug: [Splash Screen com.kelas.balancebook#11447](this:0xb400007d3f861308,id:-1,api:0,p:-1,c:-1) BufferQueue core=(838:/system/bin/surfaceflinger)
+03-13 00:17:35.877  1347  2104 W WindowManager: Changing focus from Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} to null displayId=0 Callers=com.android.server.wm.RootWindowContainer.updateFocusedWindowLocked:524 com.android.server.wm.WindowManagerService.updateFocusedWindowLocked:6379 com.android.server.wm.WindowManagerService.relayoutWindow:2641 com.android.server.wm.Session.relayout:267 
+03-13 00:17:35.877  1347  2104 I FloatWindow: hookFixedRotationLaunch appRotation=0displayRotation=1isEnterMultiWin:false
+03-13 00:17:35.878  1347  1381 I mtkpower_client: perf_cus_lock_hint hint:50, dur:1000
+03-13 00:17:35.878  1347  1381 I mtkpower_client: perf_cus_lock_hint, ret_hdl:0
+03-13 00:17:35.894 18427 18427 I las.balancebook: Using CollectorTypeCC GC.
+03-13 00:17:35.896 29414 29420 I adbd    : jdwp connection from 18427
+03-13 00:17:35.921  2861 18006 I AdvertisingIdClient: shouldSendLog 25363019
+03-13 00:17:35.923  2861 18006 I AdvertisingIdClient: GetInfoInternal elapse 11ms
+03-13 00:17:35.920  3696  3696 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show set = 0 userid = 0
+03-13 00:17:35.924  3696  3696 I SmartPanel_OperateState: clear, goto SlideState
+03-13 00:17:35.927  1347  3355 I FloatWindow: hookFixedRotationLaunch appRotation=0displayRotation=1isEnterMultiWin:false
+03-13 00:17:35.928  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:35.929  3696  3696 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1978 android.content.ContextWrapper.startService:817 com.transsion.smartpanel.presenter.SmartPanelPresenter$r.a:5 com.transsion.smartpanel.commands.e.onChange:1 android.database.ContentObserver.onChange:154 
+03-13 00:17:35.933  1347  3355 I FloatWindow: hookFixedRotationLaunch appRotation=0displayRotation=1isEnterMultiWin:false
+03-13 00:17:35.935  1897  1957 W Parcel  : Expecting binder but got null!
+03-13 00:17:35.936  1347  3355 I PowerHalWrapper: amsBoostNotify pid:18427,activity:com.kelas.balancebook.MainActivity, package:com.kelas.balancebook, mProcessCreatePackcom.kelas.balancebook 
+03-13 00:17:35.936  1347  3355 I PowerHalWrapper: state: 1 
+03-13 00:17:35.936  1347  3355 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.kelas.balancebook/com.kelas.balancebook.MainActivity pid=18427 state:1
+03-13 00:17:35.937  1347  3355 I game_scn: collectForegroundAppList packName=com.kelas.balancebook, actName=com.kelas.balancebook.MainActivity, pid=18427, uid=10358, state:RESUMED
+03-13 00:17:35.937  1347  3355 I game_scn: powerNotifyForegroundApp multi_resumed_app_info: pid: 18427, packname: com.kelas.balancebook, actname: com.kelas.balancebook.MainActivity
+03-13 00:17:35.937  1347  3355 I PowerHalWrapper: amsBoostNotify AMS_BOOST_PROCESS_CREATE_BOOST:true 
+03-13 00:17:35.937   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, act:com.kelas.balancebook.MainActivity, state:1, pid:18427, uid:10358, fps:120
+03-13 00:17:35.937   803   861 I libPowerHal: [perfNotifyAppState] foreground:com.kelas.balancebook, pid:18427, uid:10358
+03-13 00:17:35.937  3696  5459 I SmartPanel_SmartPanelService: activityCheck pkgName: com.kelas.balancebook, className: com.kelas.balancebook.MainActivity isResume=false isInshow =true isDrawn = false
+03-13 00:17:35.937  1347  3355 I TranSourceConnectManagerImpl: hookDisplayResumedActivityChanged displayId: 0 packageName: com.kelas.balancebook
+03-13 00:17:35.938  3696 30346 I SmartPanel_SmartPanelService: onTaskFocusChanged taskId: 130  focused: false
+03-13 00:17:35.938  3696 30346 I SmartPanel_SmartPanelService: onTaskFocusChanged taskId: 182  focused: true
+03-13 00:17:35.938   803   861 I UxUtility: notifyForegroundApp pack:com.kelas.balancebook, uid:10358
+03-13 00:17:35.938   803   861 I TouchUtility: notifyAppState error = NULL
+03-13 00:17:35.939  1347  2056 I TranOptimizeRAImpl: Applaunch from com.aniverseid.animelovers to com.kelas.balancebook
+03-13 00:17:35.939  1347  2685 I TranTp/TranTpSwitchManagerImpl: Set [com.kelas.balancebook] is tp rate as default.
+03-13 00:17:35.939   803   825 I mtkpower@impl: [notifyAppState] pc:1, com.aniverseid.animelovers => com.kelas.balancebook
+03-13 00:17:35.939  1347  2685 W System.err: java.io.FileNotFoundException: /proc/report_rate_switch: open failed: ENOENT (No such file or directory)
+03-13 00:17:35.939  1347  2685 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+03-13 00:17:35.939  1347  2685 W System.err: 	at java.io.FileOutputStream.<init>(FileOutputStream.java:259)
+03-13 00:17:35.939  1347  2685 W System.err: 	at java.io.FileOutputStream.<init>(FileOutputStream.java:147)
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.sendCommand(TranTpSwitchManagerImpl.java:311)
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.setDefaultTpRate(TranTpSwitchManagerImpl.java:267)
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.setTpRate(TranTpSwitchManagerImpl.java:293)
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.-$$Nest$msetTpRate(Unknown Source:0)
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl$1.onAppLaunch(TranTpSwitchManagerImpl.java:93)
+03-13 00:17:35.939  1347  2057 I ActivityManager: Applaunch from com.aniverseid.animelovers to com.kelas.balancebook
+03-13 00:17:35.939  1347  2685 W System.err: 	at com.transsion.griffin.core.HookerImpl$b.run(SourceFile:1)
+03-13 00:17:35.939  1347  2685 W System.err: 	at android.os.Handler.handleCallback(Handler.java:942)
+03-13 00:17:35.939  1347  2685 W System.err: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+03-13 00:17:35.939  1347  2685 W System.err: 	at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:35.939  1347  2685 W System.err: 	at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:35.939  1347  2685 W System.err: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+03-13 00:17:35.940  1347  2685 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+03-13 00:17:35.940  1347  2685 W System.err: 	at libcore.io.Linux.open(Native Method)
+03-13 00:17:35.940  1347  2685 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:574)
+03-13 00:17:35.940  1347  2685 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+03-13 00:17:35.940  1347  2685 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+03-13 00:17:35.940  1347  2685 W System.err: 	... 13 more
+03-13 00:17:35.948  1347  1381 I DreamAnimation:  hookAppTransitSuccess called, and doUnlockAnimation=0  mState=7
+03-13 00:17:35.955  4276  4822 I SimpleEventAdapt: onActivityEvent get com.kelas.balancebook, com.kelas.balancebook.MainActivity,true
+03-13 00:17:35.955  4276  4822 I SimpleEventAdapt: notifyEvent2  activity_event
+03-13 00:17:35.955  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:35.955  4276  4822 I SimpleEventAdapt: onAppForegroundEvent get com.aniverseid.animelovers, false
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: notifyEvent2  app_foreground
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: onAppForegroundEvent get com.kelas.balancebook, true
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: notifyEvent2  app_foreground
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:35.956  4276  4822 I SimpleEventAdapt: onAppStartEvent get com.kelas.balancebook,start true
+03-13 00:17:35.959  4276 16683 I CacheManager:  save new data to cache activity_event
+03-13 00:17:35.959  4276 16683 I bsc     : notifyDataChange in activity_event, 1
+03-13 00:17:35.959  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:35.959  4276 16683 I CacheManager:  save new data to cache app_foreground
+03-13 00:17:35.959  4276 16683 I bsc     : notifyDataChange in app_foreground, 1
+03-13 00:17:35.960  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:activity_event
+03-13 00:17:35.960  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:35.960  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:35.960  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:35.960  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.960  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335855958,"data":"{\"className\":\"com.kelas.balancebook.MainActivity\",\"isResumed\":true,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.960  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:35.960  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.965  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = activity_event
+03-13 00:17:35.966  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:35.969  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote activity_event
+03-13 00:17:35.969  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:35.969  4276 16683 I CacheManager:  save new data to cache app_foreground
+03-13 00:17:35.969  4276 16683 I bsc     : notifyDataChange in app_foreground, 1
+03-13 00:17:35.969  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:35.970  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:app_foreground
+03-13 00:17:35.971  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:35.971  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:35.971  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:35.971  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.971 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:35.971  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335855959,"data":"{\"isForeground\":false,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.971  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:35.971 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.971  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:35.971  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:35.971  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = app_foreground
+03-13 00:17:35.971  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:35.971  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote app_foreground
+03-13 00:17:35.971  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:app_foreground
+03-13 00:17:35.973  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:35.973  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:35.973  3696  3696 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show = 0
+03-13 00:17:35.974  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:35.974  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.974  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335855969,"data":"{\"isForeground\":true,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.974  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:35.974  4276  4276 I Kolun_AI: kj1:onBusEvent AppForegroundEvent   com.aniverseid.animelovers, false, kj1
+03-13 00:17:35.974  4276  4276 I Kolun_AI: kj1:checkGameOut  com.aniverseid.animelovers, 
+03-13 00:17:35.974  4276  4276 I Kolun_AI: AppPredictManager:onBusEvent com.aniverseid.animelovers false
+03-13 00:17:35.974  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:35.974  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = app_foreground
+03-13 00:17:35.975  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:35.975  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote app_foreground
+03-13 00:17:35.975  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:35.976  1347  1381 I WindowManager:   isAnimating=false  okToAnimate=true  win=Window{cb0bf74 u0 Splash Screen com.kelas.balancebook}
+03-13 00:17:35.976  4276  4276 I Kolun_AI: kj1:onBusEvent AppForegroundEvent   com.kelas.balancebook, true, kj1
+03-13 00:17:35.976  4276  4276 I Kolun_AI: kj1:checkGameIn  com.kelas.balancebook, 
+03-13 00:17:35.976  4276  4276 I Kolun_AI: AppPredictManager:onBusEvent com.kelas.balancebook true
+03-13 00:17:35.977  4276  4826 I Kolun_AI: AppPredictManager:onPackageChanged AppForegroundEvent com.aniverseid.animelovers false currentTime 2026-03-13 00:17:35
+03-13 00:17:35.977  4276  4826 I Kolun_AI: AppPredictManager:onPackageChanged AppForegroundEvent com.kelas.balancebook true currentTime 2026-03-13 00:17:35
+03-13 00:17:35.979  2059  2375 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:35.979  2059  2375 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.979  3696  3696 I SmartPanel_SmartPanelService: changeSmartPanelStatus :1,selfSet =true, mTouchView null false
+03-13 00:17:35.979  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:35.980  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.980  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335855958,"data":"{\"className\":\"com.kelas.balancebook.MainActivity\",\"isResumed\":true,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.980  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:35.980  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:35.980  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:35.982 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:35.982 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:35.983  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:35.984  1347  1382 I mtkpower_client: perf_cus_lock_hint hint:48, dur:450
+03-13 00:17:35.990   838   838 I SurfaceFlinger: operator()(), mtkRenderCntDebug 343, screenshot (Letterbox - left#1918)
+03-13 00:17:35.990   838   838 I SurfaceFlinger: operator()(), mtkRenderCntDebug 343, screenshot (Background for SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity]#11426)
+03-13 00:17:35.990   838   838 I SurfaceFlinger: operator()(), mtkRenderCntDebug 343, screenshot (SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425)
+03-13 00:17:35.990   838   838 I SurfaceFlinger: operator()(), mtkRenderCntDebug 343, screenshot (com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity#11309)
+03-13 00:17:35.992  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:35.993  2059  2375 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:35.993  2059  2375 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:35.994  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:35.994  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:35.994  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335855959,"data":"{\"isForeground\":false,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:35.994  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:35.995  4276  4276 I Kolun_AI: kj1:onBusEvent AppForegroundEvent   com.aniverseid.animelovers, false, kj1
+03-13 00:17:35.995  4276  4276 I Kolun_AI: kj1:checkGameOut  com.aniverseid.animelovers, 
+03-13 00:17:35.995  4276  4276 I Kolun_AI: AppPredictManager:onBusEvent com.aniverseid.animelovers false
+03-13 00:17:35.996  4276  4826 I Kolun_AI: AppPredictManager:onPackageChanged AppForegroundEvent com.aniverseid.animelovers false currentTime 2026-03-13 00:17:35
+03-13 00:17:36.001  1347  1381 I FloatWindow: hookFixedRotationLaunch appRotation=0displayRotation=1isEnterMultiWin:false
+03-13 00:17:36.001  1347  1382 I mtkpower_client: perf_cus_lock_hint, ret_hdl:23170
+03-13 00:17:36.006  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.006  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:36.008 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:36.009 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.009  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:36.023   838   838 I BufferQueueProducer: [FramebufferSurface](this:0xb400007cefc41bb0,id:-1,api:1,p:838,c:838) queueBuffer: fps=0.27 dur=78652.69 max=78485.75 min=6.56
+03-13 00:17:36.024  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:36.025  2059  2989 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:36.025  2059  2989 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.026  3696  5459 I SmartPanel_SmartPanelService: activityCheck pkgName: com.kelas.balancebook, className: com.kelas.balancebook.MainActivity isResume=true isInshow =true isDrawn = false
+03-13 00:17:36.027  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:36.027  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.027  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335855969,"data":"{\"isForeground\":true,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.027  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:36.027  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.028  4276  4276 I Kolun_AI: kj1:onBusEvent AppForegroundEvent   com.kelas.balancebook, true, kj1
+03-13 00:17:36.028  4276  4276 I Kolun_AI: kj1:checkGameIn  com.kelas.balancebook, 
+03-13 00:17:36.028  4276  4276 I Kolun_AI: AppPredictManager:onBusEvent com.kelas.balancebook true
+03-13 00:17:36.028  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:36.029  4276  4826 I Kolun_AI: AppPredictManager:onPackageChanged AppForegroundEvent com.kelas.balancebook true currentTime 2026-03-13 00:17:36
+03-13 00:17:36.034  3696  3696 I SmartPanel_SmartPanelService: do changeSmartPanelStatus show
+03-13 00:17:36.034  3696  3696 W SmartPanel_OperateState: show
+03-13 00:17:36.035  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.035   784   784 I hwcomposer: [HWCLayer] setHwlayerType(), id:3375, release queue sp, type 3 -> 0  
+03-13 00:17:36.036   803   826 I mtkpower@impl: [setMode] type:6, enabled:1
+03-13 00:17:36.036   803   826 E mtkpower@impl: [setMode] unknown type
+03-13 00:17:36.036   838  1000 I SurfaceFlinger: NotifyHwcComposition(), id 0, mode 0
+03-13 00:17:36.038   784  1006 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Buffer queue is destroyed, m_id(3375)  
+03-13 00:17:36.038   784  1006 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) ~DisplayBufferQueue(), m_id(3375), release buf  
+03-13 00:17:36.038   784  1006 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Free Slot(0), handle=0xb4000075e19f7fb0, 10627200 -> 0  
+03-13 00:17:36.039   784  1006 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Free Slot(1), handle=0xb4000075e1a01f30, 10627200 -> 0  
+03-13 00:17:36.039   784  1006 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Free Slot(2), handle=0xb4000075e1a033d0, 10627200 -> 0  
+03-13 00:17:36.044  1347  4340 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.045  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5976, 101=180.0, 102=72.0}
+03-13 00:17:36.049  1347  1715 I BaseFilesVerify: Base File verify start
+03-13 00:17:36.050  1347  1715 W BaseXMLFilesVerify: isGrammarAndSemanticsLegal file = /data/system/users/0/settings_global.xml
+03-13 00:17:36.050  1347  1715 W BaseXMLFilesVerify: format is normal
+03-13 00:17:36.050  1347  1715 W BaseXMLFilesVerify: verifyRuleGrammarFormat verifyRuleresult :true
+03-13 00:17:36.053  3696  3696 I SmartPanel_OperateState: clear, goto SlideState
+03-13 00:17:36.054  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5976, 101=180.0, 102=72.0}
+03-13 00:17:36.054  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.054  3696  3696 W SmartPanel_OperateState: show
+03-13 00:17:36.054  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.055  1347  1715 W BaseXMLFilesVerify: isGrammarAndSemanticsLegal file = /data/system/users/0/settings_global.xmlsecnew.bak
+03-13 00:17:36.057  1347  1715 W BaseXMLFilesVerify: format is normal
+03-13 00:17:36.057  1347  1715 W BaseXMLFilesVerify: verifyRuleGrammarFormat verifyRuleresult :true
+03-13 00:17:36.073  3696  3696 I SmartPanel_OperateState: clear, goto SlideState
+03-13 00:17:36.073  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.075  3696  3696 I SmartPanel_SmartPanelService: onTaskFocusChanged isSplitScreen: false
+03-13 00:17:36.076  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{854d9b4 com.k24klik.android}
+03-13 00:17:36.082  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.085  1347  4337 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.087  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5976, 101=180.0, 102=72.0}
+03-13 00:17:36.087  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.090  3696  3696 I SmartPanel_SmartPanelService: checkAndHandleAPP curosr: count = 0
+03-13 00:17:36.090  3696  3696 I SmartPanel_SmartPanelService: checkVideoApp curosr: count = 0
+03-13 00:17:36.090  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5976, 101=180.0, 102=72.0}
+03-13 00:17:36.125  1347  1715 I BaseFilesVerify: Base File verify start
+03-13 00:17:36.125  1347  1715 W BaseFilesVerify: settings_secure.xmlis not in fileProtect list,can not protect this file
+03-13 00:17:36.155 18427 18427 I LoadedApk: No resource references to update in package com.transsion.theme.icon
+03-13 00:17:36.176  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9e07c13 com.kcatta.fwcoupleonline}
+03-13 00:17:36.179  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.180 18427 18449 W QT      : qt_process_init() called
+03-13 00:17:36.181 18427 18449 E QT      : [QT]file does not exist
+03-13 00:17:36.181 18427 18449 W QT      : Support!!
+03-13 00:17:36.181  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.184 18427 18449 I libMEOW_gift: open /data/performance/gift/arc.ini
+03-13 00:17:36.184 18427 18449 E QT      : [QT]file does not exist
+03-13 00:17:36.250 18427 18427 W libc    : Access denied finding property "vendor.transsion.scroll_adjust.support"
+03-13 00:17:36.259  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{54e284f com.kitalulus}
+03-13 00:17:36.264  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.270  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.273   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23168
+03-13 00:17:36.275   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23169
+03-13 00:17:36.302  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{fbcdb37 com.lemon.lvoverseas}
+03-13 00:17:36.308  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.314  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.334  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9ee9c7d com.linkdokter.halodoc.android}
+03-13 00:17:36.337  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.343  3696 18330 I TranIconHelper: Destory assetMAnager
+--------- beginning of crash
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: FATAL EXCEPTION: main
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: Process: com.kelas.balancebook, PID: 18427
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: java.lang.RuntimeException: Unable to start activity ComponentInfo{com.kelas.balancebook/com.kelas.balancebook.MainActivity}: android.view.InflateException: Binary XML file line #31 in com.kelas.balancebook:layout/activity_main: Binary XML file line #31 in com.kelas.balancebook:layout/activity_main: Error inflating class com.google.android.material.bottomnavigation.BottomNavigationView
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3833)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3970)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:101)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:145)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:105)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2393)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:8134)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:601)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1136)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: Caused by: android.view.InflateException: Binary XML file line #31 in com.kelas.balancebook:layout/activity_main: Binary XML file line #31 in com.kelas.balancebook:layout/activity_main: Error inflating class com.google.android.material.bottomnavigation.BottomNavigationView
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: Caused by: android.view.InflateException: Binary XML file line #31 in com.kelas.balancebook:layout/activity_main: Error inflating class com.google.android.material.bottomnavigation.BottomNavigationView
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: Caused by: java.lang.reflect.InvocationTargetException
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createView(LayoutInflater.java:858)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:1014)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:965)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1144)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1105)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:686)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:538)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:56)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:50)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.MainActivity.onCreate(MainActivity.kt:16)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:8338)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:8317)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1388)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3756)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3970)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:101)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:145)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:105)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2393)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:8134)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:601)
+03-13 00:17:36.349 18427 18427 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1136)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: Caused by: android.view.InflateException: Binary XML file line #75 in com.kelas.balancebook:layout/design_bottom_navigation_item: Binary XML file line #75 in com.kelas.balancebook:layout/design_bottom_navigation_item: Error inflating class TextView
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: Caused by: android.view.InflateException: Binary XML file line #75 in com.kelas.balancebook:layout/design_bottom_navigation_item: Error inflating class TextView
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: Caused by: java.lang.IllegalArgumentException: bad base-64
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.util.Base64.decode(Base64.java:163)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.util.Base64.decode(Base64.java:138)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.util.Base64.decode(Base64.java:120)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.FontResourcesParserCompat.toByteArrayList(FontResourcesParserCompat.java:348)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.FontResourcesParserCompat.readCerts(FontResourcesParserCompat.java:332)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.FontResourcesParserCompat.readFamily(FontResourcesParserCompat.java:240)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.FontResourcesParserCompat.readFamilies(FontResourcesParserCompat.java:212)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.FontResourcesParserCompat.parse(FontResourcesParserCompat.java:204)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.ResourcesCompat.loadFont(ResourcesCompat.java:618)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.ResourcesCompat.loadFont(ResourcesCompat.java:558)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.core.content.res.ResourcesCompat.getFont(ResourcesCompat.java:534)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.widget.TintTypedArray.getFont(TintTypedArray.java:126)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.widget.AppCompatTextHelper.updateTypefaceAndStyle(AppCompatTextHelper.java:398)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.widget.AppCompatTextHelper.loadFromAttributes(AppCompatTextHelper.java:212)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.widget.AppCompatTextView.<init>(AppCompatTextView.java:123)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.textview.MaterialTextView.<init>(MaterialTextView.java:92)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.textview.MaterialTextView.<init>(MaterialTextView.java:87)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.theme.MaterialComponentsViewInflater.createTextView(MaterialComponentsViewInflater.java:61)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.app.AppCompatViewInflater.createView(AppCompatViewInflater.java:148)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.app.AppCompatDelegateImpl.createView(AppCompatDelegateImpl.java:1654)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at androidx.appcompat.app.AppCompatDelegateImpl.onCreateView(AppCompatDelegateImpl.java:1705)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.tryCreateView(LayoutInflater.java:1071)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:1001)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:965)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1144)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1105)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1147)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1105)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1147)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:660)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:538)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarItemView.<init>(NavigationBarItemView.java:175)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.bottomnavigation.BottomNavigationItemView.<init>(BottomNavigationItemView.java:34)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.bottomnavigation.BottomNavigationMenuView.createNavigationBarItemView(BottomNavigationMenuView.java:223)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarMenuView.getNewItem(NavigationBarMenuView.java:1334)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarMenuView.createMenuItem(NavigationBarMenuView.java:1124)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarMenuView.buildMenuView(NavigationBarMenuView.java:1245)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarPresenter.updateMenuView(NavigationBarPresenter.java:70)
+03-13 00:17:36.352 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarView.inflateMenu(NavigationBarView.java:546)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.google.android.material.navigation.NavigationBarView.<init>(NavigationBarView.java:432)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.google.android.material.bottomnavigation.BottomNavigationView.<init>(BottomNavigationView.java:108)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.google.android.material.bottomnavigation.BottomNavigationView.<init>(BottomNavigationView.java:103)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.google.android.material.bottomnavigation.BottomNavigationView.<init>(BottomNavigationView.java:98)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Constructor.newInstance0(Native Method)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Constructor.newInstance(Constructor.java:343)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createView(LayoutInflater.java:858)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:1014)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.createViewFromTag(LayoutInflater.java:965)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflate(LayoutInflater.java:1144)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.rInflateChildren(LayoutInflater.java:1105)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:686)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.view.LayoutInflater.inflate(LayoutInflater.java:538)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:56)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.databinding.ActivityMainBinding.inflate(ActivityMainBinding.java:50)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.kelas.balancebook.MainActivity.onCreate(MainActivity.kt:16)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:8338)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.Activity.performCreate(Activity.java:8317)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1388)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3756)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3970)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:101)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:145)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:105)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2393)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.os.Handler.dispatchMessage(Handler.java:106)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:8134)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at java.lang.reflect.Method.invoke(Native Method)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:601)
+03-13 00:17:36.354 18427 18427 E AndroidRuntime: 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1136)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.ActivityThread.performLaunchActivity(ActivityThread.java:3833)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:3970)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.servertransaction.LaunchActivityItem.execute(LaunchActivityItem.java:101)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.servertransaction.TransactionExecutor.executeCallbacks(TransactionExecutor.java:145)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.servertransaction.TransactionExecutor.execute(TransactionExecutor.java:105)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.ActivityThread$H.handleMessage(ActivityThread.java:2393)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.os.Handler.dispatchMessage(Handler.java:106)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at android.app.ActivityThread.main(ActivityThread.java:8134)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at java.lang.reflect.Method.invoke(Native Method)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:601)
+03-13 00:17:36.354 18427 18427 I ExceptionHandle: at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1136)
+03-13 00:17:36.360  1347  4340 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.kelas.balancebook/com.kelas.balancebook pid=18427 state:3
+03-13 00:17:36.360  1347  4340 I game_scn: collectForegroundAppList packName=com.kelas.balancebook, actName=com.kelas.balancebook, pid=18427, uid=10358, state:DEAD
+03-13 00:17:36.361   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, act:com.kelas.balancebook, state:3, pid:18427, uid:10358, fps:120
+03-13 00:17:36.361   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, pid:18427, STATE_DEAD
+03-13 00:17:36.361  1347  4340 I TranTabeComponentImpl: [com.kelas.balancebook,1.0,0,3]
+03-13 00:17:36.362 17301 17301 I EngineService: tranfs availSize = 23
+03-13 00:17:36.362 17301 17301 I EngineService: mIsTranFsExist = true
+03-13 00:17:36.362 17301 17301 W TranVersion: THUBCore No support Call!!! method version = 33181, >>> ThubCore vserion = 33161
+03-13 00:17:36.362 17301 17301 W TranVersion:  mthod version must <= ThubCore version.
+03-13 00:17:36.362 17301 17301 W TranVersion:  ---java.lang.Throwable
+03-13 00:17:36.362 17301 17301 W TranVersion: #com.transsion.hubsdk.common.version.TranVersion.isIntegratedThubCore[62]
+03-13 00:17:36.362 17301 17301 W TranVersion: #com.transsion.hubsdk.api.os.TranSystemProperties.getService[0]
+03-13 00:17:36.362 17301 17301 W TranVersion: #com.transsion.hubsdk.api.os.TranSystemProperties.get[2]
+03-13 00:17:36.362 17301 17301 W TranVersion: #com.transsion.tranengine.EngineService.onStartCommand[12]
+03-13 00:17:36.362 17301 17301 I TranSystemProperties: TranAospSystemProperties
+03-13 00:17:36.365  1347  4340 W ActivityTaskManager:   Force finishing activity com.kelas.balancebook/.MainActivity
+03-13 00:17:36.365  1347 18452 I DropBoxManagerService: add tag=data_app_crash isTagEnabled=true flags=0x2
+03-13 00:17:36.368  1347  1378 W ActivityManager: Skipping crash dialog of ProcessRecord{fce7ec8 18427:com.kelas.balancebook/u0a358}: background
+03-13 00:17:36.368 18427 18427 I Process : Sending signal. PID: 18427 SIG: 9
+03-13 00:17:36.371  1347  1416 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.sendBroadcast:1239 com.transsion.hubcore.server.tabe.TranTabeComponentImpl.sendExceptionDataToTabe:235 com.transsion.hubcore.server.tabe.TranTabeComponentImpl.access$100:38 com.transsion.hubcore.server.tabe.TranTabeComponentImpl$TranTabeComponentImplHandler.handleMessage:140 android.os.Handler.dispatchMessage:106 
+03-13 00:17:36.375  1347 18452 W AES     : Exception Log handling...data_app_crash
+03-13 00:17:36.379  1347 18452 W AES     : skip for Exp level 0
+03-13 00:17:36.386  1347  3355 I ActivityManager: Process com.kelas.balancebook (pid 18427) has died: fg  TOP 
+03-13 00:17:36.386 29414 29414 I adbd    : Remote process closed the socket (on MSG_PEEK)
+03-13 00:17:36.387   768   768 I Zygote  : Process 18427 exited due to signal 9 (Killed)
+03-13 00:17:36.387  1347  1522 I libprocessgroup: Successfully killed process cgroup uid 10358 pid 18427 in 0ms
+03-13 00:17:36.389  1347  3355 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.kelas.balancebook/com.kelas.balancebook pid=18427 state:3
+03-13 00:17:36.389  1347  3355 I game_scn: collectForegroundAppList packName=com.kelas.balancebook, actName=com.kelas.balancebook, pid=18427, uid=10358, state:DEAD
+03-13 00:17:36.389   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, act:com.kelas.balancebook, state:3, pid:18427, uid:10358, fps:120
+03-13 00:17:36.389   803   861 I libPowerHal: [perfNotifyAppState] pack:com.kelas.balancebook, pid:18427, STATE_DEAD
+03-13 00:17:36.390  4276  4822 I SimpleEventAdapt: onAppStartEvent get com.kelas.balancebook,start false
+03-13 00:17:36.400  1347  1382 I mtkpower_client: perf_cus_lock_hint hint:48, dur:500
+03-13 00:17:36.400  1347  1382 I mtkpower_client: perf_cus_lock_hint, ret_hdl:23171
+03-13 00:17:36.400  1347  1382 I mtkpower_client: perf_cus_lock_hint hint:48, dur:500
+03-13 00:17:36.401  1347  1382 I mtkpower_client: perf_cus_lock_hint, ret_hdl:23172
+03-13 00:17:36.401  1347  3355 I PowerHalWrapper: <amsBoostResume> last:com.kelas.balancebook, next:com.aniverseid.animelovers 
+03-13 00:17:36.406 17301 17301 I TranTrancareNative: TranThubTrancareNative
+03-13 00:17:36.408  1347  3355 E WindowManager: isFocusOnThunderbackWindow false mFocusMultiWindowId: -1 newFocus: 0 thunderback: false
+03-13 00:17:36.421  1347  3355 W WindowManager: Changing focus from null to Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} displayId=0 Callers=com.android.server.wm.RootWindowContainer.updateFocusedWindowLocked:524 com.android.server.wm.WindowManagerService.updateFocusedWindowLocked:6379 com.android.server.wm.ActivityTaskManagerService.setResumedActivityUncheckLocked:5096 com.android.server.wm.TaskFragment.onActivityStateChanged:845 
+03-13 00:17:36.423  1347  3355 I TranSourceConnectManagerImpl: hookDisplayResumedActivityChanged displayId: 0 packageName: com.aniverseid.animelovers
+03-13 00:17:36.424  3696  5459 I SmartPanel_SmartPanelService: onTaskFocusChanged taskId: 182  focused: false
+03-13 00:17:36.424  3696  5159 I SmartPanel_SmartPanelService: onTaskFocusChanged taskId: 130  focused: true
+03-13 00:17:36.425  1347  2056 I TranOptimizeRAImpl: Applaunch from com.kelas.balancebook to com.aniverseid.animelovers
+03-13 00:17:36.425  1347  2685 I TranTp/TranTpSwitchManagerImpl: Set [com.aniverseid.animelovers] is tp rate as default.
+03-13 00:17:36.425  1347  2685 W System.err: java.io.FileNotFoundException: /proc/report_rate_switch: open failed: ENOENT (No such file or directory)
+03-13 00:17:36.425  1347  2685 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:574)
+03-13 00:17:36.425  1347  2685 W System.err: 	at java.io.FileOutputStream.<init>(FileOutputStream.java:259)
+03-13 00:17:36.425  1347  2685 W System.err: 	at java.io.FileOutputStream.<init>(FileOutputStream.java:147)
+03-13 00:17:36.425  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.sendCommand(TranTpSwitchManagerImpl.java:311)
+03-13 00:17:36.425  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.setDefaultTpRate(TranTpSwitchManagerImpl.java:267)
+03-13 00:17:36.425  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.setTpRate(TranTpSwitchManagerImpl.java:293)
+03-13 00:17:36.425  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl.-$$Nest$msetTpRate(Unknown Source:0)
+03-13 00:17:36.425  1347  2685 W System.err: 	at com.transsion.server.tpswitch.TranTpSwitchManagerImpl$1.onAppLaunch(TranTpSwitchManagerImpl.java:93)
+03-13 00:17:36.426  1347  2685 W System.err: 	at com.transsion.griffin.core.HookerImpl$b.run(SourceFile:1)
+03-13 00:17:36.426  1347  2685 W System.err: 	at android.os.Handler.handleCallback(Handler.java:942)
+03-13 00:17:36.426  1347  2685 W System.err: 	at android.os.Handler.dispatchMessage(Handler.java:99)
+03-13 00:17:36.426  1347  2685 W System.err: 	at android.os.Looper.loopOnce(Looper.java:204)
+03-13 00:17:36.426  1347  2685 W System.err: 	at android.os.Looper.loop(Looper.java:291)
+03-13 00:17:36.426  1347  2685 W System.err: 	at android.os.HandlerThread.run(HandlerThread.java:67)
+03-13 00:17:36.426  1347  2685 W System.err: Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+03-13 00:17:36.426  1347  2685 W System.err: 	at libcore.io.Linux.open(Native Method)
+03-13 00:17:36.426  1347  2685 W System.err: 	at libcore.io.ForwardingOs.open(ForwardingOs.java:574)
+03-13 00:17:36.426  1347  2685 W System.err: 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+03-13 00:17:36.426  1347  2685 W System.err: 	at libcore.io.IoBridge.open(IoBridge.java:560)
+03-13 00:17:36.426  1347  2685 W System.err: 	... 13 more
+03-13 00:17:36.426  1347  2057 I ActivityManager: Applaunch from com.kelas.balancebook to com.aniverseid.animelovers
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: onActivityEvent get com.aniverseid.animelovers, com.aniverseid.animelovers.MainActivity,true
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent2  activity_event
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: onAppForegroundEvent get com.kelas.balancebook, false
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent2  app_foreground
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: onAppForegroundEvent get com.aniverseid.animelovers, true
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent2  app_foreground
+03-13 00:17:36.426  4276  4822 I SimpleEventAdapt: notifyEvent  1
+03-13 00:17:36.426  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{ee072f6 com.sangkode.hitunghpp}
+03-13 00:17:36.426  3696  5159 I SmartPanel_SmartPanelService: activityCheck pkgName: com.aniverseid.animelovers, className: com.aniverseid.animelovers.MainActivity isResume=true isInshow =true isDrawn = true
+03-13 00:17:36.427  4276 16683 I CacheManager:  save new data to cache activity_event
+03-13 00:17:36.427  4276 16683 I bsc     : notifyDataChange in activity_event, 1
+03-13 00:17:36.427  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:36.427  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:activity_event
+03-13 00:17:36.428  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:36.428  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:36.428  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:36.428  4276 16683 I CacheManager:  save new data to cache app_foreground
+03-13 00:17:36.428  4276 16683 I bsc     : notifyDataChange in app_foreground, 1
+03-13 00:17:36.428  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:36.428  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.428  4276 16683 I CacheManager:  save new data to cache app_foreground
+03-13 00:17:36.428  4276 16683 I bsc     : notifyDataChange in app_foreground, 1
+03-13 00:17:36.428  4276 16683 I DataServiceImplV2: StandardDataService notifyDataChange  in 
+03-13 00:17:36.429  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.429  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335856426,"data":"{\"className\":\"com.aniverseid.animelovers.MainActivity\",\"isResumed\":true,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.429  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:36.429  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:36.429  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = activity_event
+03-13 00:17:36.431  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.431 29414 29414 W adbd    : search for pid 18427 failed !!
+03-13 00:17:36.432  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:36.433  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote activity_event
+03-13 00:17:36.434  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:app_foreground
+03-13 00:17:36.434  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:36.434  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:36.434  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:36.434  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.435  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335856428,"data":"{\"isForeground\":false,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.435  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:36.435  4276  4276 I Kolun_AI: kj1:onBusEvent AppForegroundEvent   com.kelas.balancebook, false, kj1
+03-13 00:17:36.435  4276  4276 I Kolun_AI: kj1:checkGameOut  com.kelas.balancebook, 
+03-13 00:17:36.435  4276  4276 I Kolun_AI: AppPredictManager:onBusEvent com.kelas.balancebook false
+03-13 00:17:36.435 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:36.435 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:36.435  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:36.435  4276  4826 I Kolun_AI: AppPredictManager:onPackageChanged AppForegroundEvent com.kelas.balancebook false currentTime 2026-03-13 00:17:36
+03-13 00:17:36.436  4276  4826 I Kolun_AI: ModelPredictTrigger:on app background duration 407 too short 3000
+03-13 00:17:36.439  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:36.439  1347  3355 I TranSourceConnectManagerImpl: hookDisplayResumedActivityChanged displayId: 0 packageName: com.aniverseid.animelovers
+03-13 00:17:36.439  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.439  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = app_foreground
+03-13 00:17:36.439  2059  2397 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:36.440  2059  2397 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:36.440  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:36.440  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote app_foreground
+03-13 00:17:36.440  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:36.440  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.440  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"activity_event","time":1773335856426,"data":"{\"className\":\"com.aniverseid.animelovers.MainActivity\",\"isResumed\":true,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.440  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() activity_event
+03-13 00:17:36.440  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher activity_event
+03-13 00:17:36.440  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:36.441 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:36.441 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.442  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:36.443  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:36.444  2059  2397 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:36.444  2059  2397 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.444  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:36.444  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.445  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335856428,"data":"{\"isForeground\":false,\"packageName\":\"com.kelas.balancebook\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.445  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:36.445  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.445  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:36.446  1347  3355 I DreamAnimation:  hookAppTransitSuccess called, and doUnlockAnimation=0  mState=7
+03-13 00:17:36.446  4276 15721 I DataServiceImplV2: StandardDataService notifyDataChange  curServiceName StandardDataService type:app_foreground
+03-13 00:17:36.447  4276 15721 I ApiInvoke: ApiChannel1.2.172: found local channel DataCenter
+03-13 00:17:36.447  4276 15721 I ApiInvoke: ApiChannel1.2.172: found remote channel DataCenter
+03-13 00:17:36.447  4276 15721 I ApiInvoke: ApiRequest1.2.172: channels size , 2
+03-13 00:17:36.447  4276 15721 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.447  4276 15721 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335856428,"data":"{\"isForeground\":true,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.447  4276 15721 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:36.447  4276 15721 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.447  4276 15721 I ApiInvoke: ApiRequest1.2.172: do publishData to local, matcher = app_foreground
+03-13 00:17:36.447  4276 15721 W ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData, GLOBAL_SUBSCRIBE size 5
+03-13 00:17:36.447  4276 15721 W ApiInvoke: ApiRequest1.2.172: do publishData to remote app_foreground
+03-13 00:17:36.449 13512 22260 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 11
+03-13 00:17:36.449 13512 22260 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.449  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 13512,"channels": [AssistantChannel]} success 
+03-13 00:17:36.450   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23170
+03-13 00:17:36.451  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 1347,"channels": [system]} success 
+03-13 00:17:36.453  2059  2397 I ApiInvoke: SubscribeManager1.2.65: copy subscriber size = 0
+03-13 00:17:36.453  2059  2397 I ApiInvoke: SubscribeManager1.2.65: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.453  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 2059,"channels": [com.android.phone]} success 
+03-13 00:17:36.454  4276  4529 I ApiInvoke: SubscribeManager1.2.172: copy subscriber size = 12
+03-13 00:17:36.454  4276  4529 I Kolun_AI: SystemEventSubscribe: onPublishData {"type":"app_foreground","time":1773335856428,"data":"{\"isForeground\":true,\"packageName\":\"com.aniverseid.animelovers\"}","provider":"dc","dc_version":2030200000,"data_version":1,"user_id":0}
+03-13 00:17:36.454  4276  4529 I Kolun_AI: SystemEventSubscribe: publisher.getMatcher() app_foreground
+03-13 00:17:36.454  4276  4529 I ApiInvoke: SubscribeManager1.2.172: publishData success host DataCenter#StandardDataService matcher app_foreground
+03-13 00:17:36.454  4276  4529 I ApiInvoke: SubscribeBusServerImpl1.2.172: onPublishData to {"pid": 0,"channels": [CommonChannel]} success 
+03-13 00:17:36.460  3696  3696 W SmartPanel_OperateState: show
+03-13 00:17:36.461  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.465   776  4967 W AudioALSACaptureDataProviderNormal: readThread, latency_in_s,0.000001,0.019774,0.002628, totalTime 0.022402 > logTimeout 0.022000 TIMEOUT!!
+03-13 00:17:36.467  1347  1381 W InputManager-JNI: Input channel object 'cb0bf74 Splash Screen com.kelas.balancebook (client)' was disposed without first being removed with the input manager!
+03-13 00:17:36.467  1347  1381 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.469  1347  1381 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.470  1347  2191 W libc    : Access denied finding property "ro.vendor.tgpa_resolution_tuner"
+03-13 00:17:36.470  1347  2191 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.470  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{680798a com.smartwidgetlabs.nfctools}
+03-13 00:17:36.475  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.478  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.478   838  1000 I SurfaceFlinger: NotifyHwcComposition(), id 0, mode 1
+03-13 00:17:36.478   803   826 I mtkpower@impl: [setMode] type:6, enabled:0
+03-13 00:17:36.478   803   826 E mtkpower@impl: [setMode] unknown type
+03-13 00:17:36.479   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Buffer queue is created with size(3), m_id(3375), q2  
+03-13 00:17:36.479   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Reallocate Slot(0), pool(0 -> 0) size(0 -> 10627200) secure(0 -> 0)  
+03-13 00:17:36.483  1347  2338 I FloatWindow: hookInputMethodShown inputShown: false
+03-13 00:17:36.483  1347  2338 I TranSourceConnectManagerImpl: hookInputMethodShown inputShown: false
+03-13 00:17:36.484  1347  2338 I input_debug: package: com.aniverseid.animelovers isPassWordInput: false inputType: 0 mMethodMap: true isKeyguardShowing: false enable: 0 isSplitScreen: false
+03-13 00:17:36.484  2119  2146 I MultiWindowManager: manager notifyInputMethodShow: false
+03-13 00:17:36.484  2119  2146 I tmw_    : notifyInputMethodShow: false ignoreSame: true mFocusOnMultiDisplay: false
+03-13 00:17:36.484   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Alloc Slot(0), handle=0xb4000075e1a02610 c=0 w=1080 h=2460 p=1088 ys=1088 vs=2460 f=2 sec=0 sh=0, usage=0x800  
+03-13 00:17:36.487   803   826 I mtkpower@impl: [setMode] type:5, enabled:0
+03-13 00:17:36.488  1347  2191 I PowerHalWrapper: amsBoostStop AMS_BOOST_PACK_SWITCH:true, AMS_BOOST_ACT_SWITCH:false, AMS_BOOST_PROCESS_CREATE:true 
+03-13 00:17:36.489   803   825 I mtkpower@impl: [mtkPowerHint] hint:22, hold:500, ext:30, ext_hold:1500
+03-13 00:17:36.489   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Reallocate Slot(1), pool(0 -> 0) size(0 -> 10627200) secure(0 -> 0)  
+03-13 00:17:36.490  3167  3167 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2114 
+03-13 00:17:36.494   767 18455 I resolv  : GetAddrInfoHandler::run: {123 123 123 983163 10369 0}
+03-13 00:17:36.494   803   825 I mtkpower@impl: [mtkPowerHint] hint:21, hold:6000, ext:30, ext_hold:30000
+03-13 00:17:36.499  1347  2338 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.500   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Alloc Slot(1), handle=0xb4000075e19f95b0 c=0 w=1080 h=2460 p=1088 ys=1088 vs=2460 f=2 sec=0 sh=0, usage=0x800  
+03-13 00:17:36.502  1347  1381 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.505   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Reallocate Slot(2), pool(0 -> 0) size(0 -> 10627200) secure(0 -> 0)  
+03-13 00:17:36.506  3167  3167 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 0, locked = false
+03-13 00:17:36.506   767 18458 I resolv  : GetAddrInfoHandler::run: {123 123 123 983163 10369 0}
+03-13 00:17:36.507  3167  3167 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1385 onStartInput(EditorInfo{EditorInfo{packageName=com.aniverseid.animelovers, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=-1, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+03-13 00:17:36.507  3167  3167 W AndroidIME: LatinIMEBase.updateInputViewCoverNavigation():319 Null input view, cannot update padding!
+03-13 00:17:36.510   767 18456 I resolv  : res_nmkquery: (QUERY, IN, A)
+03-13 00:17:36.511   767 18456 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007255a68090
+03-13 00:17:36.511   767 18456 I resolv  : doQuery: rcode=0, ancount=3, return value=120
+03-13 00:17:36.505   776  4967 W AudioALSACaptureDataProviderNormal: readThread, latency_in_s,0.000002,0.022501,0.000022, totalTime 0.022525 > logTimeout 0.022000 TIMEOUT!!
+03-13 00:17:36.511   784   784 I hwcomposer: [DBQ] (q2:0xb4000076219ffbe0) Alloc Slot(2), handle=0xb4000075e1a01850 c=0 w=1080 h=2460 p=1088 ys=1088 vs=2460 f=2 sec=0 sh=0, usage=0x800  
+03-13 00:17:36.515   767 18459 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+03-13 00:17:36.515   767 18459 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007265a5bdd0
+03-13 00:17:36.515   767 18459 I resolv  : doQuery: rcode=0, ancount=3, return value=164
+03-13 00:17:36.518  3167  3167 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 1, locked = false
+03-13 00:17:36.528  1347  1381 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.540  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.542  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.570   803   841 I libPerfCtl: xgfGetFPS pid:1897 fps:102
+03-13 00:17:36.571   803   841 I libPerfCtl: xgfGetFPS pid:12456 fps:107
+03-13 00:17:36.572  3696  3696 I SmartPanel_OperateState: clear, goto SlideState
+03-13 00:17:36.579  3696  3696 I SmartPanel_TouchView: showSliderView mIsGestureNavigationBarOn true return 
+03-13 00:17:36.583  1347  4336 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.586  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.587  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.590  3696  3747 I sion.smartpanel: NativeAlloc concurrent copying GC freed 6556KB AllocSpace bytes, 23(4732KB) LOS objects, 78% free, 6870KB/30MB, paused 50us,48us total 104.269ms
+03-13 00:17:36.591  3696  3696 I SmartPanel_SmartPanelService: onTaskFocusChanged isSplitScreen: false
+03-13 00:17:36.606  1347  2338 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.610  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.611  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.612  3696  3696 I SmartPanel_SmartPanelService: checkAndHandleAPP curosr: count = 0
+03-13 00:17:36.615  3696  3696 I SmartPanel_SmartPanelService: checkVideoApp curosr: count = 0
+03-13 00:17:36.630  1347  2191 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.633  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.634  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.634  1347  1715 I BaseFilesVerify: Base File verify start
+03-13 00:17:36.635  1347  1715 W BaseXMLFilesVerify: isGrammarAndSemanticsLegal file = /data/system/users/0/settings_global.xml
+03-13 00:17:36.635  1347  1715 W BaseXMLFilesVerify: format is normal
+03-13 00:17:36.635  1347  1715 W BaseXMLFilesVerify: verifyRuleGrammarFormat verifyRuleresult :true
+03-13 00:17:36.637  1347  1715 W BaseXMLFilesVerify: isGrammarAndSemanticsLegal file = /data/system/users/0/settings_global.xmlsecnew.bak
+03-13 00:17:36.638   767 18462 I resolv  : GetAddrInfoHandler::run: {123 786555 123 983163 10115 0}
+03-13 00:17:36.639  1347  1715 W BaseXMLFilesVerify: format is normal
+03-13 00:17:36.639  1347  1715 W BaseXMLFilesVerify: verifyRuleGrammarFormat verifyRuleresult :true
+03-13 00:17:36.639   767 18464 I resolv  : res_nmkquery: (QUERY, IN, A)
+03-13 00:17:36.639   767 18464 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007255a6b630
+03-13 00:17:36.639   767 18464 I resolv  : doQuery: rcode=0, ancount=1, return value=105
+03-13 00:17:36.640   767 18463 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+03-13 00:17:36.641   767 18463 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007255a65f90
+03-13 00:17:36.641   767 18463 I resolv  : doQuery: rcode=0, ancount=1, return value=87
+03-13 00:17:36.643  1347  3355 I FloatWindow: hookGetMultiWindowDefaultRectByTask
+03-13 00:17:36.644  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation111: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.644  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{b3d05b6 com.vsrevogroup.revouninstaller}
+03-13 00:17:36.644  2119  2576 I tmw_    : calculateMultiWindowScaleAndLocation222: {100=0.5, 101=180.0, 102=270.0}
+03-13 00:17:36.647  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.650  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.652  2861 18465 W FA-SVC  : Gms url request failed, app: com.android.vending, CONFIG, m1.ms: Exception in CronetUrlRequest: net::ERR_CONNECTION_REFUSED, ErrorCode=7, InternalErrorCode=-102, Retryable=false
+03-13 00:17:36.694  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{31a0102 com.woertec.tozo}
+03-13 00:17:36.696  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.699  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.732   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=107.26 dur=1006.90 max=25.31 min=3.53
+03-13 00:17:36.755  1347  3355 W WindowManager: Failed looking up window session=Session{233cfec 1897:u0a10174} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:6224 com.android.server.wm.WindowManagerService.relayoutWindow:2408 com.android.server.wm.Session.relayout:267 
+03-13 00:17:36.764  1347  2191 W WindowManager: Failed looking up window session=Session{233cfec 1897:u0a10174} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:6224 com.android.server.wm.WindowManagerService.removeWindow:2199 com.android.server.wm.Session.remove:229 
+03-13 00:17:36.765  1347  2338 W WindowManager: Failed looking up window session=Session{233cfec 1897:u0a10174} callers=com.android.server.wm.WindowManagerService.windowForClientLocked:6224 com.android.server.wm.Session.setOnBackInvokedCallbackInfo:949 android.view.IWindowSession$Stub.onTransact:1209 
+03-13 00:17:36.765  1347  2338 E WindowManager: setOnBackInvokedCallback(): No window state for package:com.android.systemui
+03-13 00:17:36.765  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{894e13f gov.dukcapil.mobile_id}
+03-13 00:17:36.768   838   838 I BufferQueueDebug: [Splash Screen com.kelas.balancebook#11447](this:0xb400007d3f861308,id:-1,api:0,p:-1,c:838) onDestructor()
+03-13 00:17:36.768  1347  4336 W BroadcastQueue: Background execution not allowed: receiving Intent { act=android.intent.action.DROPBOX_ENTRY_ADDED flg=0x10 (has extras) } to com.google.android.gms/.stats.service.DropBoxEntryAddedReceiver
+03-13 00:17:36.772  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.779  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.790 31571 31600 I TABE.CrashHandler: FGTag[0,3]
+03-13 00:17:36.813 31571 31600 E TABE    : Check DelDexOat: Icon Package com.kelas.balancebook CRASH 6
+03-13 00:17:36.820 31571 31600 I TABE    : NOT trigger : User version NOT TOP App:com.kelas.balancebook
+03-13 00:17:36.822 31571 31600 I TABE.CrashHandler: Exception Info{Name='BalanceBook', Pkg='com.kelas.balancebook', EType='crash', ProcessType='data_app', EClassName='java.lang.IllegalArgumentException', EMessage='bad base-64', IsFG=1, TimeStamp='2026-03-13 00:17:36', Version='1.0', Installer='unk', LastUpdate=2026-03-13 00:17, Abi=''} ,isApp=true ,crashsplit=false
+03-13 00:17:36.867  1347  1380 W ActivityTaskManager: Activity top resumed state loss timeout for ActivityRecord{abd05e5 u0 com.kelas.balancebook/.MainActivity} t-1 f}}
+03-13 00:17:36.867  1347  1380 I PowerHalWrapper: amsBoostNotify pid:12456,activity:com.aniverseid.animelovers.MainActivity, package:com.aniverseid.animelovers, mProcessCreatePackcom.kelas.balancebook 
+03-13 00:17:36.867  1347  1380 I PowerHalWrapper: state: 1 
+03-13 00:17:36.867  1347  1380 I mtkpower_client: [Legacy][PowerHal_Wrap_notifyAppState] com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity pid=12456 state:1
+03-13 00:17:36.867  1347  1380 I game_scn: collectForegroundAppList packName=com.aniverseid.animelovers, actName=com.aniverseid.animelovers.MainActivity, pid=12456, uid=10369, state:RESUMED
+03-13 00:17:36.867  1347  1380 I game_scn: powerNotifyForegroundApp multi_resumed_app_info: pid: 12456, packname: com.aniverseid.animelovers, actname: com.aniverseid.animelovers.MainActivity
+03-13 00:17:36.867  1347  1380 I PowerHalWrapper: amsBoostNotify AMS_BOOST_PROCESS_CREATE_BOOST:true 
+03-13 00:17:36.868   803   861 I libPowerHal: [perfNotifyAppState] pack:com.aniverseid.animelovers, act:com.aniverseid.animelovers.MainActivity, state:1, pid:12456, uid:10369, fps:120
+03-13 00:17:36.868   803   861 I libPowerHal: [perfNotifyAppState] foreground:com.aniverseid.animelovers, pid:12456, uid:10369
+03-13 00:17:36.869   803   861 I UxUtility: notifyForegroundApp pack:com.aniverseid.animelovers, uid:10369
+03-13 00:17:36.869   803   861 I TouchUtility: notifyAppState error = NULL
+03-13 00:17:36.869   803   825 I mtkpower@impl: [notifyAppState] pc:0, com.kelas.balancebook => com.aniverseid.animelovers
+03-13 00:17:36.875   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:117.271118,dur:1006.22,max:17.24,min:3.35  
+03-13 00:17:36.877  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{b8c2ae9 id.co.foom}
+03-13 00:17:36.878  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.881  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.896  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{899bf64 id.flip}
+03-13 00:17:36.898  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.900  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.901   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23171
+03-13 00:17:36.901   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23172
+03-13 00:17:36.908  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{2093f39 id.go.kemensos.pelaporan}
+03-13 00:17:36.909  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.911  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.916  1347  1381 I WindowManager: DisplayContent w: Window{b5fcc89 u0 com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity} Apply preferredModeId = 1
+03-13 00:17:36.930  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{3538ede id.tix.android}
+03-13 00:17:36.931  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.933  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.951  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{a6cbfb5 lds.cinema21}
+03-13 00:17:36.953  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.955  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.965  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{85007c6 live.shorttv.dramarush.android}
+03-13 00:17:36.966  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.968  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.997  3696 18330 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{829a144 org.chromium.webapk.a7e38917e8079b034_v2}
+03-13 00:17:36.999  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:36.999   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23174
+03-13 00:17:36.999   803   861 I libPowerHal: [PD] MTKPOWER_HINT_PACK_SWITCH update cmd:c0c300 param:4
+03-13 00:17:37.000  3696 18330 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.027  3696 18330 I SmartPanel_SmartPanelPresenter1: getAllAppInfo finished
+03-13 00:17:37.036  3696 18468 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show set = 1 userid = 0
+03-13 00:17:37.036  3696 18468 I SmartPanel_PackageReceiver1: PackageReceiver received uri null false, action = android.intent.action.PACKAGE_REPLACED
+03-13 00:17:37.036  3696 18468 I SmartPanel_PackageReceiver1: PackageReceiver received pkgName = com.kelas.balancebook, action = android.intent.action.PACKAGE_REPLACED
+03-13 00:17:37.036  3696 18468 I SmartPanel_PackageReceiver1: package replaced pkgName = com.kelas.balancebook
+03-13 00:17:37.036  3696 18468 I SmartPanel_SmartPanelBeanHelper: oobe = ID, DefaultAppShortcutList = [screen_shot, screen_record, com.whatsapp, com.facebook.katana, com.google.android.youtube, com.instagram.android, com.zaz.translate, com.android.chrome, com.transsion.notebook, com.transsion.calculator, lock_screen, com.transsion.filemanagerx, com.gallery20, com.transsion.smartmessage, com.transsion.phoenix, scan, com.transsion.camera/selfie, com.shopee.id, com.lazada.android, com.zhiliaoapp.musically]
+03-13 00:17:37.037  3696  3696 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1978 android.content.ContextWrapper.startService:817 com.transsion.smartpanel.presenter.SmartPanelPresenter$r.a:5 com.transsion.smartpanel.commands.e.onChange:1 android.database.ContentObserver.onChange:154 
+03-13 00:17:37.037  3696 18468 I SmartPanel_SmartPanelPresenter1: doCheckAndAddAppOrShortcut canAddFlow = true, isTwinApp = false,isShortcut = false, xunhui game= true, freeeform = false
+03-13 00:17:37.040  3696  3696 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show = 1
+03-13 00:17:37.040  3696 18468 I SmartPanel_SmartPanelPresenter1: getAllAppInfo start
+03-13 00:17:37.041  3696  3696 I SmartPanel_SmartPanelService: changeSmartPanelStatus :0,selfSet =true, mTouchView null false
+03-13 00:17:37.041  3696  3696 I SmartPanel_SmartPanelService: do changeSmartPanelStatus dismiss
+03-13 00:17:37.123  3696 18468 I SmartPanel_AppModel: com.sh.smart.caller is duplicated uid = 0
+03-13 00:17:37.171  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30656): avc: denied { ioctl } for comm=4173796E635461736B20233730 path="/data/app/~~Gk1oVJen63dJtPcP4t5iWQ==/idm.internet.download.manager-a9fRJLu4Y9AfkAW0Y6tJSA==/base.apk" dev="incremental-fs" ino=996956 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:37.171  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30657): avc: denied { ioctl } for comm=4173796E635461736B20233730 path="/data/app/~~Gk1oVJen63dJtPcP4t5iWQ==/idm.internet.download.manager-a9fRJLu4Y9AfkAW0Y6tJSA==/split_config.xxhdpi.apk" dev="incremental-fs" ino=1045137 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:37.175  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30658): avc: denied { ioctl } for comm=4173796E635461736B20233730 path="/data/app/~~Gk1oVJen63dJtPcP4t5iWQ==/idm.internet.download.manager-a9fRJLu4Y9AfkAW0Y6tJSA==/base.apk" dev="incremental-fs" ino=996956 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:37.175  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30659): avc: denied { ioctl } for comm=4173796E635461736B20233730 path="/data/app/~~Gk1oVJen63dJtPcP4t5iWQ==/idm.internet.download.manager-a9fRJLu4Y9AfkAW0Y6tJSA==/split_config.xxhdpi.apk" dev="incremental-fs" ino=1045137 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:37.175  3696  3696 W com.transsion.smartpanel: type=1400 audit(0.0:30660): avc: denied { ioctl } for comm=4173796E635461736B20233730 path="/data/app/~~Gk1oVJen63dJtPcP4t5iWQ==/idm.internet.download.manager-a9fRJLu4Y9AfkAW0Y6tJSA==/base.apk" dev="incremental-fs" ino=996956 ioctlcmd=0x6722 scontext=u:r:system_app:s0 tcontext=u:object_r:apk_data_file:s0 tclass=file permissive=0
+03-13 00:17:37.184  3696 18468 I SmartPanel_AppModel: idm.internet.download.manager is duplicated uid = 0
+03-13 00:17:37.190  1347  1774 W ActivityManager: Receiver with filter android.content.IntentFilter@843dfb3 already registered for pid 1347, callerPackage is android
+03-13 00:17:37.191  1347  1774 W ActivityManager: Receiver with filter android.content.IntentFilter@a80f970 already registered for pid 1347, callerPackage is android
+03-13 00:17:37.242  1347  1715 I BaseFilesVerify: Base File verify start
+03-13 00:17:37.242  1347  1715 W BaseFilesVerify: settings_secure.xmlis not in fileProtect list,can not protect this file
+03-13 00:17:37.352  4276  4817 W Kolun_AI: TwsScanController:isPeriodScanModel mIsPhonePlayingMusic:true
+03-13 00:17:37.352  4276  4817 W Kolun_AI: TwsScanController:isPeriodScanModel mIsPhonePlayingMusic:true
+03-13 00:17:37.352  4276  4817 I Kolun_AI: KolunBleScanProcessor: startScan,scanMode:0
+03-13 00:17:37.353  4276  4817 I Kolun_AI: KolunBleScanProcessor: startScan,scanPermission:0,connectPermission:0
+03-13 00:17:37.355 17177 17248 I bluetooth: GATT_Register: Allocated name:GattClient uuid:3f9ccdd6-ed21-05d5-ea4d-1a80b73a0f50 gatt_if:8 eatt_support:0
+03-13 00:17:37.358 17177 20100 I AppScanStats: BLE_SCAN_STATE_CHANGED[8]reportBleScanStarted=false
+03-13 00:17:37.358 17177 20100 I bt_btif : get_profile_interface: get_profile_interface: id = activity_attribution
+03-13 00:17:37.358 17177 20100 E bt_stack: [ERROR:com_android_bluetooth_btservice_ActivityAttribution.cpp(172)] Failed to get ActivityAttribution Interface
+03-13 00:17:37.359  4276  4817 I Kolun_AI: KolunBleScanProcessor: startScan success
+03-13 00:17:37.508  1347  1347 I MWN     : onSignalStrengthsChanged...
+03-13 00:17:37.509  1347  1347 I MWN     : network type = 1
+03-13 00:17:37.510  1347  1347 I MWN     : Write 0 to node. type=Wi-Fi mSimExist=true mFlightMode=false
+03-13 00:17:37.510  1347  1347 I MWN     : write the value:0 to node successfully.
+03-13 00:17:37.569   803   841 I libPerfCtl: xgfGetFPS pid:1897 fps:125
+03-13 00:17:37.569   803   841 I libPerfCtl: xgfGetFPS pid:12456 fps:120
+03-13 00:17:37.576  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{8520f20 com.funbase.xradio}
+03-13 00:17:37.578  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.580  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.607  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{106affe com.transsion.XOSLauncher}
+03-13 00:17:37.608  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.610  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.617  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{b763ddc com.transsion.healthlife}
+03-13 00:17:37.618  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.621  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.631  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{611196a com.transsion.smartpanel}
+03-13 00:17:37.633  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.635  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.658  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{5aa4a6c com.telkomsel.telkomselcm}
+03-13 00:17:37.659  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.662  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.706  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{15faa82 com.infinix.xshare}
+03-13 00:17:37.707  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.709  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.714  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{96cb700 com.transsion.aivoiceassistant}
+03-13 00:17:37.716  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.718  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.736  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{cef8548 com.transsnet.store}
+03-13 00:17:37.738  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.739   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=120.14 dur=1007.13 max=9.83 min=6.70
+03-13 00:17:37.740  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.744  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{20bc7b6 com.trassion.infinix.xclub}
+03-13 00:17:37.746  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.748  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.755  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{79de6f2 net.bat.store}
+03-13 00:17:37.757  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.758  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.773  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9ecf1fa app.bpjs.mobile}
+03-13 00:17:37.775  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.777  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.791  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{2266802 com.afkarstudios.icyfloes}
+03-13 00:17:37.793  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.796  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.800  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{4d0d080 com.aiany.astra}
+03-13 00:17:37.801  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.803  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.813  1846  1846 I WifiHAL : Get link layer stats
+03-13 00:17:37.813  1846  1846 I WifiHAL : GetLinkStatsCommand::create
+03-13 00:17:37.813  1846  1846 I android.hardware.wifi@1.0-service-lazy: WifiCommand::requestResponse err=-14
+03-13 00:17:37.813  1846  1846 I WifiHAL : wifi_get_link_stats: result=-1
+03-13 00:17:37.813  1347  1752 E WifiVendorHal: getWifiLinkLayerStats_1_5_Internal(l.1176) failed {.code = ERROR_UNKNOWN, .description = unknown}
+03-13 00:17:37.816  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{e6228ba com.ammonite.goose}
+03-13 00:17:37.818  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.820  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.830  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{f3b2d36 com.aniverseid.animelovers}
+03-13 00:17:37.832  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.833  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.882   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:120.243721,dur:1006.29,max:9.64,min:7.10  
+03-13 00:17:37.896  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{e3951cc com.freereels.app}
+03-13 00:17:37.898  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.899  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.976  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{d40d848 com.k24klik.android}
+03-13 00:17:37.978  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:37.980  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.010   803   861 I mtkpower@impl: [powerd_req] TIMER_MSG_PERF_LOCK_TIMEOUT hdl:23175
+03-13 00:17:38.052  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{b2d92b6 com.kcatta.fwcoupleonline}
+03-13 00:17:38.054  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.057  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.088 30786  3152 I welinkBLE: deviceInfo is null, continue scan......
+03-13 00:17:38.143  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{8ce302 com.kitalulus}
+03-13 00:17:38.147  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.149  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.181  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9322f0 com.lemon.lvoverseas}
+03-13 00:17:38.182  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.184  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.193  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{3962695 com.linkdokter.halodoc.android}
+03-13 00:17:38.195  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.198  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.284  3271  6504 W native  : W0000 00:00:1773335858.284579    6504 lag_detector.cc:58] Pipeline lagging by 1.130807534s. Continue processing samples.
+03-13 00:17:38.307  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{24adda5 com.sangkode.hitunghpp}
+03-13 00:17:38.308  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.310  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.368  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{251b930 com.smartwidgetlabs.nfctools}
+03-13 00:17:38.370  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.373  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.426  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{8a9e43 com.vsrevogroup.revouninstaller}
+03-13 00:17:38.428  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.430  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.454  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{f37cd95 com.woertec.tozo}
+03-13 00:17:38.456  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.458  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.507  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{98b3786 gov.dukcapil.mobile_id}
+03-13 00:17:38.509  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.510  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.569   803   841 I libPerfCtl: xgfGetFPS pid:1897 fps:-1
+03-13 00:17:38.569   803   841 I libPerfCtl: xgfGetFPS pid:12456 fps:120
+03-13 00:17:38.577  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{61ded58 id.co.foom}
+03-13 00:17:38.579  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.581  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.596  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{f59dcff id.flip}
+03-13 00:17:38.598  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.599  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.607  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{297bee8 id.go.kemensos.pelaporan}
+03-13 00:17:38.608  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.611  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.634  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{e593be1 id.tix.android}
+03-13 00:17:38.636  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.638  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.659  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{6594254 lds.cinema21}
+03-13 00:17:38.662  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.664  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.673  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{e9a1e69 live.shorttv.dramarush.android}
+03-13 00:17:38.675  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.676  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.709  3696 18468 I TranNonAdaptiveIconExtImpl: custom icon for ApplicationInfo{9c1ce5f org.chromium.webapk.a7e38917e8079b034_v2}
+03-13 00:17:38.711  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.714  3696 18468 I TranIconHelper: Destory assetMAnager
+03-13 00:17:38.742  3696 18468 I SmartPanel_SmartPanelPresenter1: getAllAppInfo finished
+03-13 00:17:38.747   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=120.15 dur=1007.09 max=8.59 min=8.14
+03-13 00:17:38.754  3696  3696 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show set = 0 userid = 0
+03-13 00:17:38.756  3696  3696 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.startService:1978 android.content.ContextWrapper.startService:817 com.transsion.smartpanel.presenter.SmartPanelPresenter$r.a:5 com.transsion.smartpanel.commands.e.onChange:1 android.database.ContentObserver.onChange:154 
+03-13 00:17:38.758  3696  3696 I SmartPanel_SmartPanelPresenter1: smart_panel_can_show = 0
+03-13 00:17:38.759  3696  3696 I SmartPanel_SmartPanelService: changeSmartPanelStatus :1,selfSet =true, mTouchView null false
+03-13 00:17:38.766  3696  3696 I SmartPanel_SmartPanelService: do changeSmartPanelStatus show
+03-13 00:17:38.785 30786  3152 I welinkBLE: deviceInfo is null, continue scan......
+03-13 00:17:38.815 30786  3152 I welinkBLE: deviceInfo is null, continue scan......
+03-13 00:17:38.816 30786  3152 I welinkBLE: deviceInfo is null, continue scan......
+03-13 00:17:38.889   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:120.144936,dur:1007.12,max:8.70,min:7.98  
+03-13 00:17:38.959  1347  1715 I BaseFilesVerify: Base File verify start
+03-13 00:17:38.959  1347  1715 W BaseFilesVerify: settings_secure.xmlis not in fileProtect list,can not protect this file
+03-13 00:17:38.955  2432  2432 W ThreadPoolForeg: type=1400 audit(0.0:30667): avc: denied { write } for name="traced_producer" dev="tmpfs" ino=647 scontext=u:r:gmscore_app:s0:c512,c768 tcontext=u:object_r:traced_producer_socket:s0 tclass=sock_file permissive=0 app=com.google.android.gms
+03-13 00:17:39.054  4276  5795 I DataStorageManager: batchSaveRunnable  isBatchSaveRunning false
+03-13 00:17:39.054  4276 18215 I DataStorageManager: batchSave 8
+03-13 00:17:39.340  1347  3390 I BaseFilesVerify: Base File verify start
+03-13 00:17:39.340  1347  3390 W BaseFilesVerify: 182_task.xmlis not in fileProtect list,can not protect this file
+03-13 00:17:39.353  4276  4817 W Kolun_AI: BleScanAssistor: stopBleScan immediate:true
+03-13 00:17:39.354 17177 20100 I AppScanStats: BLE_SCAN_RESULT_RECEIVED[8]reportBleScanResults=4
+03-13 00:17:39.354 17177 20100 I AppScanStats: BLE_SCAN_STATE_CHANGED[8]reportBleScanStopped=false
+03-13 00:17:39.355 17177 20100 I bt_btif : get_profile_interface: get_profile_interface: id = activity_attribution
+03-13 00:17:39.355 17177 20100 E bt_stack: [ERROR:com_android_bluetooth_btservice_ActivityAttribution.cpp(172)] Failed to get ActivityAttribution Interface
+03-13 00:17:39.356 17177 17248 I bt_stack: [INFO:gatt_api.cc(1045)] GATT_Deregister gatt_if=8
+03-13 00:17:39.356  4276  4817 W Kolun_AI: KolunBleScanProcessor: stopScan
+03-13 00:17:39.356  4276  4817 W Kolun_AI: TwsScanController:isPeriodScanModel mIsPhonePlayingMusic:true
+03-13 00:17:39.356  4276  4817 I Kolun_AI: TwsScanController:updateScanState mPeriodStartScanRunnable start,delay:4000
+03-13 00:17:39.356  4276  4817 I Kolun_AI: BleScanAssistor:realStopBleScan success
+03-13 00:17:39.356  4276  4817 W Kolun_AI: TwsScanController:isPeriodScanModel mIsPhonePlayingMusic:true
+03-13 00:17:39.356  4276  4817 W Kolun_AI: BleScanAssistor:realStopBleScan isPeriodScanModel and is screen on,do not remove BleScannerDeathRecipient
+03-13 00:17:39.356  4276  4817 W Kolun_AI: TwsScanController:PeriodStopScanRunnable running end, mIsBleScanning:false
+03-13 00:17:39.569 17830 17963 W Video:SocketState: (DefaultDispatcher-worker-12:155) [onWebSocketEventLost] no args
+03-13 00:17:39.569 17830 17870 I Video:Socket: (DefaultDispatcher-worker-1:80) [onSocketStateChanged] state: Disconnected.InactiveWS
+03-13 00:17:39.569   803   841 I libPerfCtl: xgfGetFPS pid:1897 fps:-1
+03-13 00:17:39.569   803   841 I libPerfCtl: xgfGetFPS pid:12456 fps:120
+03-13 00:17:39.570 17830 17870 I Video:Socket: (DefaultDispatcher-worker-1:80) [onSocketStateChanged] state: Connecting(connectionConf=UserConnectionConf(endpoint=wss://video.stream-io-api.com/video/connect, apiKey=8d8j4ujbd3pj, user=User(id=9990016343335724, role=user, type=Authenticated, name=Kalel, image=https://static-content.alfagift.id/static/alfagift-app/profile_placeholder.png, teams=[], custom={}, createdAt=null, updatedAt=null, deletedAt=null)), connectionType=AUTOMATIC_RECONNECTION)
+03-13 00:17:39.570 17830 17960 E Video:Socket: (DefaultDispatcher-worker-7:150) [handleError] error: Error(streamError=NetworkError(message=Server closed connection, serverErrorCode=1002, statusCode=-1, cause=null), reconnectStrategy=null)
+03-13 00:17:39.570 17830 17960 E Video:SocketState: (DefaultDispatcher-worker-7:150) [onNetworkError] error: NetworkError(message=Server closed connection, serverErrorCode=1002, statusCode=-1, cause=null)
+03-13 00:17:39.572 17830 17870 I Video:SocketFactory: (DefaultDispatcher-worker-1:80) [createSocket] new web socket: https://video.stream-io-api.com/video/connect
+03-13 00:17:39.573 17830 17870 I Video:Socket: (DefaultDispatcher-worker-1:80) [onSocketStateChanged] state: DisconnectedTemporarily(error=NetworkError(message=Server closed connection, serverErrorCode=1002, statusCode=-1, cause=null))
+03-13 00:17:39.573 17830 17870 I Video:SocketMonitor: (DefaultDispatcher-worker-1:80) Next connection attempt in 12445 ms
+03-13 00:17:39.574   767 18471 I resolv  : GetAddrInfoHandler::run: {123 262267 123 983163 10338 0}
+03-13 00:17:39.574   767 18472 I resolv  : res_nmkquery: (QUERY, IN, AAAA)
+03-13 00:17:39.574   767 18473 I resolv  : res_nmkquery: (QUERY, IN, A)
+03-13 00:17:39.574   767 18472 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007265a657d0
+03-13 00:17:39.574   767 18472 I resolv  : doQuery: rcode=0, ancount=1, return value=204
+03-13 00:17:39.574   767 18473 I resolv  : resolv_cache_lookup: FOUND IN CACHE entry=0xb400007265a66090
+03-13 00:17:39.574   767 18473 I resolv  : doQuery: rcode=0, ancount=4, return value=167
+03-13 00:17:39.746 17830 17870 E Video:Socket: (DefaultDispatcher-worker-1:80) [handleError] error: Error(streamError=NetworkError(message=Too many requests, check response headers for more information., serverErrorCode=9, statusCode=429, cause=null), reconnectStrategy=null)
+03-13 00:17:39.746 17830 17870 E Video:SocketState: (DefaultDispatcher-worker-1:80) [onNetworkError] error: NetworkError(message=Too many requests, check response headers for more information., serverErrorCode=9, statusCode=429, cause=null)
+03-13 00:17:39.746 17830 17870 I Video:Socket: (DefaultDispatcher-worker-1:80) [onSocketStateChanged] state: DisconnectedTemporarily(error=NetworkError(message=Too many requests, check response headers for more information., serverErrorCode=9, statusCode=429, cause=null))
+03-13 00:17:39.746 17830 17870 I Video:SocketMonitor: (DefaultDispatcher-worker-1:80) Next connection attempt in 12922 ms
+03-13 00:17:39.754   838   838 I BufferQueueProducer: [SurfaceView[com.aniverseid.animelovers/com.aniverseid.animelovers.MainActivity](BLAST)#11425](this:0xb400007d3f88ec08,id:-1,api:0,p:-1,c:838) queueBuffer: fps=120.14 dur=1007.18 max=8.47 min=8.21
+03-13 00:17:39.844  1347  3390 I BaseFilesVerify: Base File verify start
+03-13 00:17:39.844  1347  3390 W BaseFilesVerify: 130_task.xmlis not in fileProtect list,can not protect this file
+03-13 00:17:39.896   784   784 I hwcomposer: [HWCDisplay] [Display_0 (type:1)] fps:120.132751,dur:1007.22,max:8.59,min:8.08  
+03-13 00:17:40.012   838   838 I BufferQueueProducer: [StatusBar#94](this:0xb400007d3f7de328,id:-1,api:0,p:-1,c:838) queueBuffer: fps=0.20 dur=5002.51 max=5002.51 min=5002.51
