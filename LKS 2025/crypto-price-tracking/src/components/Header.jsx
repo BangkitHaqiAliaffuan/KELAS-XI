@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { FaBitcoin } from 'react-icons/fa';
 import { useCrypto } from '../context/CryptoContext';
-import { debounce } from '../utils/api';
+import { debounce, fetchGlobalData, formatNumber } from '../utils/api';
 import './Header.css';
 
 const Header = () => {
@@ -13,6 +14,8 @@ const Header = () => {
   } = useCrypto();
 
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [globalSummary, setGlobalSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   // Debounced search function
   const debouncedSearch = debounce((term) => {
@@ -37,6 +40,59 @@ const Header = () => {
     setSearchTerm('');
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadGlobalSummary = async () => {
+      try {
+        setSummaryLoading(true);
+        const data = await fetchGlobalData();
+        if (isMounted) {
+          setGlobalSummary(data);
+        }
+      } catch (error) {
+        console.error('Error fetching global market summary:', error);
+      } finally {
+        if (isMounted) {
+          setSummaryLoading(false);
+        }
+      }
+    };
+
+    loadGlobalSummary();
+
+    const intervalId = setInterval(() => {
+      loadGlobalSummary();
+    }, 60000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const currentMarketCap = globalSummary?.total_market_cap?.[currency];
+  const currentVolume = globalSummary?.total_volume?.[currency];
+  const btcDominance = globalSummary?.market_cap_percentage?.btc;
+
+  const marketCapText = summaryLoading
+    ? 'Loading...'
+    : currentMarketCap !== null && currentMarketCap !== undefined
+      ? formatNumber(currentMarketCap)
+      : 'N/A';
+
+  const volumeText = summaryLoading
+    ? 'Loading...'
+    : currentVolume !== null && currentVolume !== undefined
+      ? formatNumber(currentVolume)
+      : 'N/A';
+
+  const dominanceText = summaryLoading
+    ? 'Loading...'
+    : btcDominance !== null && btcDominance !== undefined
+      ? `${btcDominance.toFixed(2)}%`
+      : 'N/A';
+
   return (
     <header className="header">
       <div className="container">
@@ -44,18 +100,7 @@ const Header = () => {
           {/* Logo Section */}
           <div className="logo-section">
             <div className="logo">
-              <img 
-                src="/src/assets/logo.png" 
-                alt="CryptoTrack" 
-                className="logo-image"
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                  e.target.nextSibling.style.display = 'block';
-                }}
-              />
-              <div className="logo-text" style={{ display: 'none' }}>
-                ₿ CryptoTrack
-              </div>
+              <FaBitcoin className="logo-image" aria-hidden="true" />
             </div>
             <h1 className="app-title">CryptoTrack</h1>
           </div>
@@ -134,15 +179,15 @@ const Header = () => {
         <div className="market-summary">
           <div className="market-info">
             <span className="market-label">Global Market Cap:</span>
-            <span className="market-value">Loading...</span>
+            <span className="market-value">{marketCapText}</span>
           </div>
           <div className="market-info">
             <span className="market-label">24h Vol:</span>
-            <span className="market-value">Loading...</span>
+            <span className="market-value">{volumeText}</span>
           </div>
           <div className="market-info">
             <span className="market-label">BTC Dominance:</span>
-            <span className="market-value">Loading...</span>
+            <span className="market-value">{dominanceText}</span>
           </div>
         </div>
       </div>

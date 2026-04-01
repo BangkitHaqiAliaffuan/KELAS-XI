@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 // Base URL untuk CoinGecko API
-const BASE_URL = 'https://api.coingecko.com/api/v3';
+const BASE_URL = import.meta.env.DEV
+  ? '/api'
+  : (import.meta.env.VITE_API_BASE_URL || 'https://api.coingecko.com/api/v3');
 const API_KEY = import.meta.env.VITE_COINGECKO_API_KEY;
 
 // Create axios instance dengan konfigurasi default

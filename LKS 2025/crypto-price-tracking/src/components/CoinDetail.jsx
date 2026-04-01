@@ -1,7 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useCrypto } from '../context/CryptoContext';
-import { fetchCoinDetail, formatPrice, formatPercentage, formatNumber } from '../utils/api';
+import {
+  fetchCoinDetail,
+  fetchCoinHistory,
+  formatPrice,
+  formatPercentage,
+  formatNumber,
+} from '../utils/api';
 import './CoinDetail.css';
 
 const CoinDetail = () => {
@@ -19,6 +34,10 @@ const CoinDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [historyDays, setHistoryDays] = useState(7);
+  const [priceHistory, setPriceHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState(null);
 
   // Fetch coin detail
   useEffect(() => {
@@ -41,6 +60,31 @@ const CoinDetail = () => {
       fetchDetail();
     }
   }, [coinId, currency]);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!coinId) return;
+
+      try {
+        setHistoryLoading(true);
+        setHistoryError(null);
+        const history = await fetchCoinHistory(coinId, currency, historyDays);
+        const mappedHistory = history.map(([timestamp, price]) => ({
+          timestamp,
+          price,
+        }));
+        setPriceHistory(mappedHistory);
+      } catch (historyFetchError) {
+        console.error('Error fetching coin history:', historyFetchError);
+        setHistoryError(historyFetchError.message);
+        setPriceHistory([]);
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+
+    loadHistory();
+  }, [coinId, currency, historyDays]);
 
   // Handle back navigation
   const handleBack = () => {
@@ -121,6 +165,56 @@ const CoinDetail = () => {
   const maxSupply = coin.market_data?.max_supply;
 
   const priceChangeFormatted = formatPercentage(priceChange24h);
+
+  const chartMin = priceHistory.length
+    ? Math.min(...priceHistory.map((item) => item.price))
+    : 0;
+  const chartMax = priceHistory.length
+    ? Math.max(...priceHistory.map((item) => item.price))
+    : 0;
+  const latestHistoryPrice = priceHistory.length ? priceHistory[priceHistory.length - 1].price : null;
+  const trendIsUp = priceHistory.length > 1
+    ? priceHistory[priceHistory.length - 1].price >= priceHistory[0].price
+    : true;
+  const trendColor = trendIsUp ? 'var(--success-color)' : 'var(--danger-color)';
+  const chartGradientId = `priceAreaGradient-${coinId}-${historyDays}`;
+
+  const formatChartLabel = (timestamp) => {
+    if (historyDays === 1) {
+      return new Date(timestamp).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    return new Date(timestamp).toLocaleDateString([], {
+      day: '2-digit',
+      month: 'short',
+    });
+  };
+
+  const formatTooltipLabel = (timestamp) => {
+    if (historyDays === 1) {
+      return new Date(timestamp).toLocaleString([], {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+
+    return new Date(timestamp).toLocaleDateString([], {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  };
+
+  const chartData = priceHistory.map((item) => ({
+    price: item.price,
+    label: formatChartLabel(item.timestamp),
+    fullLabel: formatTooltipLabel(item.timestamp),
+  }));
 
   return (
     <div className="coin-detail-container">
@@ -204,6 +298,102 @@ const CoinDetail = () => {
         </div>
 
         {/* Statistics Grid */}
+        <div className="chart-section">
+          <div className="chart-header">
+            <div>
+              <h2>Price Chart</h2>
+              <p>{coin.name} historical price movement</p>
+            </div>
+            <div className="chart-controls">
+              {[1, 7, 30, 90].map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  className={`chart-range-btn ${historyDays === days ? 'active' : ''}`}
+                  onClick={() => setHistoryDays(days)}
+                >
+                  {days === 1 ? '1D' : `${days}D`}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {historyLoading ? (
+            <div className="chart-loading">Loading chart data...</div>
+          ) : historyError ? (
+            <div className="chart-error">{historyError}</div>
+          ) : priceHistory.length > 1 ? (
+            <>
+              <div className="chart-metrics">
+                <div>
+                  <span className="metric-label">Current</span>
+                  <span className="metric-value">{formatPrice(latestHistoryPrice, currency, currencySymbol)}</span>
+                </div>
+                <div>
+                  <span className="metric-label">High</span>
+                  <span className="metric-value">{formatPrice(chartMax, currency, currencySymbol)}</span>
+                </div>
+                <div>
+                  <span className="metric-label">Low</span>
+                  <span className="metric-value">{formatPrice(chartMin, currency, currencySymbol)}</span>
+                </div>
+              </div>
+
+              <div className="chart-container">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
+                    <defs>
+                      <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={trendColor} stopOpacity={0.35} />
+                        <stop offset="100%" stopColor={trendColor} stopOpacity={0.04} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(148, 163, 184, 0.15)" />
+                    <XAxis
+                      dataKey="label"
+                      tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={{ stroke: 'rgba(148, 163, 184, 0.25)' }}
+                      minTickGap={24}
+                    />
+                    <YAxis
+                      dataKey="price"
+                      tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                      tickLine={false}
+                      axisLine={false}
+                      width={70}
+                      tickFormatter={(value) => formatNumber(value)}
+                      domain={['dataMin', 'dataMax']}
+                    />
+                    <Tooltip
+                      formatter={(value) => [formatPrice(value, currency, currencySymbol), 'Price']}
+                      labelFormatter={(_, payload) => payload?.[0]?.payload?.fullLabel || ''}
+                      contentStyle={{
+                        backgroundColor: 'rgba(17, 24, 39, 0.92)',
+                        border: '1px solid rgba(148, 163, 184, 0.3)',
+                        borderRadius: '10px',
+                        color: '#fff',
+                      }}
+                      cursor={{ stroke: 'rgba(148, 163, 184, 0.35)', strokeDasharray: '4 4' }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="price"
+                      stroke={trendColor}
+                      fill={`url(#${chartGradientId})`}
+                      strokeWidth={3}
+                      dot={false}
+                      activeDot={{ r: 5 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          ) : (
+            <div className="chart-empty">No chart data available.</div>
+          )}
+        </div>
+
         <div className="stats-grid">
           <div className="stat-card">
             <h3>Market Cap</h3>
