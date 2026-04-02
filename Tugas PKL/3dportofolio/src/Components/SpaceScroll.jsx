@@ -278,7 +278,7 @@ const SpaceScroll = () => {
            * Contoh: nama, profesi, tagline, dll.
            * Jika tidak ingin ada teks, hapus elemen <p> di bawah ini.
            */}
-          <p ref={profileTextRef} className="profile-text" style={{ opacity: 0, fontSize: "30px", }}>
+          <p ref={profileTextRef} className="profile-text" style={{ opacity: 0, fontSize: "30px", 'fontWeight':'bold'}}>
             Bangkit Haqi Aliaffuan
           </p>
         </div>

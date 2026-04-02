@@ -1,6 +1,11 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import emailjs from '@emailjs/browser'
 import SpaceScroll from './SpaceScroll'
 import './Home.css'
+import PhotoProfile from '../assets/photo-profile.png'
+import CryptoTrackingImage from '../assets/projects/img/CryptoTracking.png'
+import TrashcareImage from '../assets/projects/img/Trashcare.png'
+import MonitoringKelasImage from '../assets/projects/img/MonitoringKelas.png'
 import {
   FaCode,
   FaPaintBrush,
@@ -13,6 +18,13 @@ import {
 } from 'react-icons/fa'
 
 const Home = () => {
+  const [isSending, setIsSending] = useState(false)
+  const [sendStatus, setSendStatus] = useState({ type: '', message: '' })
+
+  const emailjsServiceId = String(import.meta.env.VITE_EMAILJS_SERVICE_ID || '').trim()
+  const emailjsTemplateId = String(import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '').trim()
+  const emailjsPublicKey = String(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '').trim()
+
   const handleNavScroll = (event) => {
     const targetId = event.currentTarget.getAttribute('href')
 
@@ -65,6 +77,81 @@ const Home = () => {
     return () => observer.disconnect()
   }, [])
 
+  const handleContactSubmit = async (event) => {
+    event.preventDefault()
+
+    const form = event.currentTarget
+    const formData = new FormData(form)
+    const senderName = String(formData.get('name') || '').trim()
+    const senderEmail = String(formData.get('email') || '').trim()
+    const senderMessage = String(formData.get('message') || '').trim()
+
+    if (!senderName || !senderEmail || !senderMessage) {
+      setSendStatus({
+        type: 'error',
+        message: 'Please complete all fields before sending.',
+      })
+      return
+    }
+
+    if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey) {
+      setSendStatus({
+        type: 'error',
+        message: 'Email service is not configured yet. Please set the EmailJS environment variables.',
+      })
+      return
+    }
+
+    setIsSending(true)
+    setSendStatus({ type: '', message: '' })
+
+    try {
+      await emailjs.send(
+        emailjsServiceId,
+        emailjsTemplateId,
+        {
+          from_name: senderName,
+          reply_to: senderEmail,
+          from_email: senderEmail,
+          message: senderMessage,
+        },
+        {
+          publicKey: emailjsPublicKey,
+        }
+      )
+
+      setSendStatus({
+        type: 'success',
+        message: 'Message sent successfully. Thank you!',
+      })
+      form.reset()
+    } catch (error) {
+      const statusCode = error?.status || error?.statusCode
+      const errorText = String(error?.text || error?.message || '').trim()
+      let friendlyMessage = 'Failed to send message. Please try again in a moment.'
+
+      if (statusCode === 400) {
+        friendlyMessage = 'EmailJS rejected request (400). Check template variables and allowed origin in EmailJS settings.'
+      }
+
+      if (errorText) {
+        friendlyMessage = `${friendlyMessage} (${errorText})`
+      }
+
+      console.error('EmailJS send failed:', {
+        statusCode,
+        errorText,
+      })
+
+      setSendStatus({
+        type: 'error',
+        message: friendlyMessage,
+      })
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   return (
     <div className='portfolio-page'>
       <SpaceScroll />
@@ -86,7 +173,7 @@ const Home = () => {
         <div className='about-grid'>
           <div className='reveal reveal-left'>
             <p className='section-index reveal reveal-up' style={{ '--reveal-delay': '60ms' }}>01 / ARCHITECTURE VOID</p>
-            <h2 className='reveal reveal-up' style={{ '--reveal-delay': '120ms' }}>
+            <h2 className='reveal reveal-up' style={{ '--reveal-delay': '120ms', 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>
               Bangkit Haqi Aliaffuan
               <br />
               <span>Software Engineer</span>
@@ -119,13 +206,19 @@ const Home = () => {
 
           <div className='about-panel reveal reveal-right' style={{ '--reveal-delay': '200ms' }}>
             <div className='about-panel__badge'>EDUCATION: SMK NEGERI 2 BUDURAN</div>
-            <div className='about-panel__core' />
+            <div className='about-panel__core'>
+              <img src={PhotoProfile} alt='Bangkit Haqi Aliaffuan' className='about-panel__photo' />
+              <span className='about-panel__scan-wipe' aria-hidden='true' />
+              <span className='about-panel__scan-line' aria-hidden='true' />
+              <span className='about-panel__tag about-panel__tag--left'>SYS ONLINE</span>
+              <span className='about-panel__tag about-panel__tag--right'>ARCHIVE VOID</span>
+            </div>
           </div>
         </div>
 
         <div className='skill-constellation reveal reveal-up'>
           <p className='section-index skill-index reveal reveal-up' style={{ '--reveal-delay': '40ms' }}>02 / CORE CAPABILITIES</p>
-          <h3 className='reveal reveal-up' style={{ '--reveal-delay': '120ms' }}>Skill Constellations</h3>
+          <h3 className='reveal reveal-up' style={{ '--reveal-delay': '120ms','fontFamily':'Dune Rise', 'fontWeight':'bold', 'marginTop':'10px'  }}>Skill Constellations</h3>
 
           <div className='solar-skill-system reveal reveal-zoom' style={{ '--reveal-delay': '180ms' }}>
             <div className='orbit-ring orbit-ring--inner' aria-hidden='true' />
@@ -237,27 +330,47 @@ const Home = () => {
 
       <section className='content-section reveal reveal-up' id='projects'>
         <div className='section-header reveal reveal-up' style={{ '--reveal-delay': '70ms' }}>
-          <p className='section-index'>03 / PROJECTS</p>
-          <h2>Selected Works</h2>
+          <p  className='section-index'>03 / PROJECTS</p>
+          <h2 style={{ 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>Selected Works</h2>
         </div>
         <div className='project-grid'>
-          <article className='project-card reveal reveal-up' style={{ '--reveal-delay': '160ms' }}>
-            <div className='project-thumb project-thumb--one' />
-            <h3>Crypto Price Tracking Website</h3>
-            <p>Website pelacakan harga cryptocurrency real-time dengan pencarian coin, watchlist, dan detail aset yang dipersonalisasi.</p>
-            <small>WEB APP • REAL-TIME DATA</small>
-          </article>
+          <a
+            className='project-card project-card--featured project-card--link reveal reveal-up'
+            style={{ '--reveal-delay': '160ms' }}
+            href='https://cryptotracking-mu.vercel.app/'
+            target='_blank'
+            rel='noreferrer noopener'
+            aria-label='Open Crypto Price Tracking Website'
+          >
+            <div className='project-media'>
+              <img src={CryptoTrackingImage} alt='Crypto Price Tracking Website' />
+              <span className='project-hover-cta' aria-hidden='true'>Kunjungi Website ↗</span>
+              <div className='project-overlay'>
+                <h3>Crypto Price Tracking Website</h3>
+                <p>Website pelacakan harga cryptocurrency real-time dengan pencarian coin, watchlist, dan detail aset yang dipersonalisasi.</p>
+                <small>WEB APP • REAL-TIME DATA</small>
+              </div>
+            </div>
+          </a>
           <article className='project-card reveal reveal-up' style={{ '--reveal-delay': '240ms' }}>
-            <div className='project-thumb project-thumb--two' />
-            <h3>TrashCare: Smart Waste Pickup & Reuse Marketplace</h3>
-            <p>Aplikasi mobile untuk pickup sampah gratis dan marketplace barang bekas guna mendorong circular use di komunitas.</p>
-            <small>MOBILE APP • SUSTAINABILITY</small>
+            <div className='project-media'>
+              <img src={TrashcareImage} alt='TrashCare: Smart Waste Pickup & Reuse Marketplace' />
+              <div className='project-overlay'>
+                <h3>TrashCare: Smart Waste Pickup & Reuse Marketplace</h3>
+                <p>Aplikasi mobile untuk pickup sampah gratis dan marketplace barang bekas guna mendorong circular use di komunitas.</p>
+                <small>MOBILE APP • SUSTAINABILITY</small>
+              </div>
+            </div>
           </article>
           <article className='project-card reveal reveal-up' style={{ '--reveal-delay': '320ms' }}>
-            <div className='project-thumb project-thumb--three' />
-            <h3>Class Monitoring Application for School Operations</h3>
-            <p>Aplikasi monitoring kelas untuk attendance, jadwal, tugas, dan progress siswa agar operasional sekolah lebih rapi dan efisien.</p>
-            <small>EDTECH • OPERATIONS</small>
+            <div className='project-media'>
+              <img src={MonitoringKelasImage} alt='Class Monitoring Application for School Operations' />
+              <div className='project-overlay'>
+                <h3>Class Monitoring Application for School Operations</h3>
+                <p>Aplikasi monitoring kelas untuk attendance, jadwal, tugas, dan progress siswa agar operasional sekolah lebih rapi dan efisien.</p>
+                <small>EDTECH • OPERATIONS</small>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -266,7 +379,7 @@ const Home = () => {
         <div className='contact-grid'>
           <div className='reveal reveal-left' style={{ '--reveal-delay': '120ms' }}>
             <p className='section-index'>04 / CONTACT</p>
-            <h2>Let&apos;s Connect.</h2>
+            <h2 style={{ 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>Let&apos;s Connect.</h2>
             <p>
               Open for collaboration, project opportunities, and software development partnerships.
             </p>
@@ -277,17 +390,22 @@ const Home = () => {
             </ul>
           </div>
 
-          <form className='contact-form reveal reveal-right' style={{ '--reveal-delay': '180ms' }} onSubmit={(event) => event.preventDefault()}>
+          <form className='contact-form reveal reveal-right' style={{ '--reveal-delay': '180ms' }} onSubmit={handleContactSubmit}>
             <label htmlFor='identity'>Name</label>
-            <input id='identity' placeholder='Your name' />
+            <input id='identity' name='name' placeholder='Your name' required />
 
             <label htmlFor='signal'>Email</label>
-            <input id='signal' placeholder='your@email.com' />
+            <input id='signal' name='email' type='email' placeholder='your@email.com' required />
 
             <label htmlFor='message'>Message</label>
-            <textarea id='message' rows='4' placeholder='Write your message...' />
+            <textarea id='message' name='message' rows='4' placeholder='Write your message...' required />
 
-            <button type='submit'>SEND MESSAGE</button>
+            <button type='submit' disabled={isSending}>{isSending ? 'SENDING...' : 'SEND MESSAGE'}</button>
+            {sendStatus.message ? (
+              <p className={`contact-form__status contact-form__status--${sendStatus.type}`} role='status'>
+                {sendStatus.message}
+              </p>
+            ) : null}
           </form>
         </div>
       </section>
