@@ -130,6 +130,12 @@ const SpaceScroll = () => {
 
         /* ── Layer Z2: Spaceship — pakai mask-image agar porthole transparan ── */
         .spaceship-img {
+          --porthole-x: 50%;
+          --porthole-y: 48%;
+          --porthole-r1: 21vmin;
+          --porthole-r2: 22.5vmin;
+          --porthole-r3: 25vmin;
+
           position: absolute;
           inset: 0;
           width: 100%;
@@ -147,19 +153,58 @@ const SpaceScroll = () => {
            * Nilai 22vmin ≈ radius porthole di layar.
            */
           -webkit-mask-image: radial-gradient(
-            circle at 50% 48%,
+            circle at var(--porthole-x) var(--porthole-y),
             transparent 0vmin,
-            transparent 21vmin,
-            rgba(0,0,0,0.35) 22.5vmin,
-            black 25vmin
+            transparent var(--porthole-r1),
+            rgba(0,0,0,0.35) var(--porthole-r2),
+            black var(--porthole-r3)
           );
           mask-image: radial-gradient(
-            circle at 50% 48%,
+            circle at var(--porthole-x) var(--porthole-y),
             transparent 0vmin,
-            transparent 21vmin,
-            rgba(0,0,0,0.35) 22.5vmin,
-            black 25vmin
+            transparent var(--porthole-r1),
+            rgba(0,0,0,0.35) var(--porthole-r2),
+            black var(--porthole-r3)
           );
+        }
+
+        @media (max-width: 640px) {
+          .spaceship-img {
+            --porthole-y: 49.2%;
+            --porthole-r1: 26.6vmin;
+            --porthole-r2: 50vmin;
+            --porthole-r3: 25.8vmin;
+          }
+
+          .earth-img {
+            object-position: center 45%;
+          }
+        }
+
+        @media (max-width: 420px) {
+          .spaceship-img {
+            --porthole-y: 44.4%;
+            --porthole-r1: 18.9vmin;
+            --porthole-r2: 19.2vmin;
+            --porthole-r3: 22vmin;
+          }
+
+          .earth-img {
+            object-position: center 43.5%;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .spaceship-img {
+            --porthole-y: 44%;
+            --porthole-r1: 17.4vmin;
+            --porthole-r2: 18.8vmin;
+            --porthole-r3: 21.6vmin;
+          }
+
+          .earth-img {
+            object-position: center 43%;
+          }
         }
 
         /* ── Vignette di atas segalanya ── */

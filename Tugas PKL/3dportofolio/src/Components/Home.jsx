@@ -20,6 +20,7 @@ import {
 const Home = () => {
   const [isSending, setIsSending] = useState(false)
   const [sendStatus, setSendStatus] = useState({ type: '', message: '' })
+  const [isMobileViewport] = useState(() => window.matchMedia('(max-width: 900px)').matches)
 
   const emailjsServiceId = String(import.meta.env.VITE_EMAILJS_SERVICE_ID || '').trim()
   const emailjsTemplateId = String(import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '').trim()
@@ -154,7 +155,7 @@ const Home = () => {
 
   return (
     <div className='portfolio-page'>
-      <SpaceScroll />
+      {!isMobileViewport ? <SpaceScroll /> : null}
 
       <div className='sticky-nav reveal reveal-up' style={{ '--reveal-delay': '50ms' }}>
         <nav className='top-nav'>
