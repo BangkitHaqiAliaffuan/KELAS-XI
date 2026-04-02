@@ -15,6 +15,9 @@ import {
   FaUsers,
   FaPuzzlePiece,
   FaSyncAlt,
+  FaTiktok,
+  FaInstagram,
+  FaGithub,
 } from 'react-icons/fa'
 
 const Home = () => {
@@ -466,6 +469,20 @@ const Home = () => {
               <li>Email: bangkithaqialiafuan@gmail.com</li>
               <li>Address: Taman Apsari, MCA Blok P1-39, Sidoarjo 61272</li>
             </ul>
+            <div className='contact-socials' aria-label='Social links'>
+              <a href='https://www.tiktok.com/@uraniumn0' target='_blank' rel='noreferrer noopener' aria-label='TikTok'>
+                <FaTiktok />
+                <span>TikTok</span>
+              </a>
+              <a href='https://www.instagram.com/nomadendf/' target='_blank' rel='noreferrer noopener' aria-label='Instagram'>
+                <FaInstagram />
+                <span>Instagram</span>
+              </a>
+              <a href='https://github.com/BangkitHaqiAliaffuan' target='_blank' rel='noreferrer noopener' aria-label='GitHub'>
+                <FaGithub />
+                <span>GitHub</span>
+              </a>
+            </div>
           </div>
 
           <form className='contact-form reveal reveal-right' style={{ '--reveal-delay': '180ms' }} onSubmit={handleContactSubmit}>

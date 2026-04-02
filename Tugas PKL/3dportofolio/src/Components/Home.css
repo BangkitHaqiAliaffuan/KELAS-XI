@@ -828,6 +828,39 @@ html {
   color: rgba(225, 236, 255, 0.9);
 }
 
+.contact-socials {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.contact-socials a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  border: 1px solid rgba(110, 185, 255, 0.26);
+  border-radius: 999px;
+  padding: 0.42rem 0.68rem;
+  color: rgba(219, 236, 255, 0.92);
+  background: rgba(5, 22, 40, 0.55);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  transition: border-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.contact-socials a:hover {
+  border-color: rgba(139, 232, 255, 0.62);
+  color: #8be8ff;
+  transform: translateY(-1px);
+}
+
+.contact-socials a svg {
+  width: 0.86rem;
+  height: 0.86rem;
+}
+
 .contact-form {
   border: 1px solid rgba(110, 185, 255, 0.2);
   border-radius: 14px;
@@ -1328,6 +1361,11 @@ html {
   .contact-form {
     padding: 1rem;
     border-radius: 10px;
+  }
+
+  .contact-socials a {
+    font-size: 0.66rem;
+    padding: 0.36rem 0.58rem;
   }
 
   .contact-form label {
