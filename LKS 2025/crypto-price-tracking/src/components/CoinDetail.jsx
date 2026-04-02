@@ -228,9 +228,11 @@ const CoinDetail = () => {
         </button>
 
         <button
+          type="button"
           onClick={handleWatchlistToggle}
-          className={`watchlist-btn ${isInWatchlist ? 'active' : ''}`}
+          className={`detail-watchlist-btn ${isInWatchlist ? 'active' : ''}`}
           aria-label={isInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+          title={isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
         >
           <svg
             fill={isInWatchlist ? 'currentColor' : 'none'}

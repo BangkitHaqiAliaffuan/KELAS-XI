@@ -333,41 +333,7 @@ fun LoginScreen(modifier: Modifier = Modifier, viewModel: AuthViewModel = viewMo
                     
                     Spacer(modifier = Modifier.height(Spacing.xl))
                     
-                    // Test Accounts Info
-                    SchoolCard(
-                        variant = CardVariant.Primary,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "Akun untuk Testing",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = SMKPrimary
-                        )
-                        Spacer(modifier = Modifier.height(Spacing.sm))
-                        
-                        val testAccounts = listOf(
-                            "Admin: admin@sekolah.com",
-                            "Guru: siti.guru@sekolah.com", 
-                            "Siswa: andi.siswa@sekolah.com"
-                        )
-                        
-                        testAccounts.forEach { account ->
-                            Text(
-                                text = account,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = SMKPrimary.copy(alpha = 0.8f)
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(Spacing.xs))
-                        Text(
-                            text = "Password: password123",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontWeight = FontWeight.Bold,
-                            color = SMKPrimary
-                        )
-                    }
+                    // Test Accounts
                 }
             }
             

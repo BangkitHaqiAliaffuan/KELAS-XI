@@ -330,10 +330,6 @@ fun TrashCareNavGraph() {
                     navDeepLink {
                         uriPattern = "trashcare://payment/success?cartCheckoutId={cartCheckoutId}"
                     }
-                ),
-                arguments = listOf(
-                    navArgument("orderId") { type = NavType.LongType; defaultValue = 0L },
-                    navArgument("cartCheckoutId") { type = NavType.StringType; defaultValue = "" }
                 )
             ) { backEntry ->
                 val orderId = backEntry.arguments?.getLong("orderId") ?: 0L
@@ -360,11 +356,7 @@ fun TrashCareNavGraph() {
 
             // CartCheckout payment screen: polls status after Mayar link opened
             composable(
-                route = Screen.CartCheckout.route,
-                arguments = listOf(
-                    navArgument("cartCheckoutId") { type = NavType.StringType },
-                    navArgument("paymentLink")    { type = NavType.StringType }
-                )
+                route = Screen.CartCheckout.route
             ) { backEntry ->
                 val cartCheckoutId  = backEntry.arguments?.getString("cartCheckoutId") ?: ""
                 val encodedLink     = backEntry.arguments?.getString("paymentLink") ?: ""
@@ -476,12 +468,7 @@ fun TrashCareNavGraph() {
                 )
             }
             composable(
-                route = Screen.Payment.ROUTE_WITH_QUERY,
-                arguments = listOf(
-                    navArgument("orderId")     { type = NavType.LongType },
-                    navArgument("paymentId")   { type = NavType.StringType },
-                    navArgument("paymentLink") { type = NavType.StringType; defaultValue = "" }
-                )
+                route = Screen.Payment.ROUTE_WITH_QUERY
             ) { backEntry ->
                 val orderId     = backEntry.arguments?.getLong("orderId") ?: 0L
                 val paymentId   = backEntry.arguments?.getString("paymentId") ?: ""
@@ -538,12 +525,7 @@ fun TrashCareNavGraph() {
                 MapPickerScreen(navController = navController)
             }
             composable(
-                route = Screen.CourierRoute.route,
-                arguments = listOf(
-                    navArgument("lat") { type = NavType.StringType },
-                    navArgument("lng") { type = NavType.StringType },
-                    navArgument("address") { type = NavType.StringType }
-                )
+                route = Screen.CourierRoute.route
             ) { backEntry ->
                 val lat = backEntry.arguments?.getString("lat")?.toDoubleOrNull() ?: 0.0
                 val lng = backEntry.arguments?.getString("lng")?.toDoubleOrNull() ?: 0.0

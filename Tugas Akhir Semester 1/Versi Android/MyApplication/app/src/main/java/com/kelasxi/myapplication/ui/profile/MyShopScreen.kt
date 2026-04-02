@@ -249,13 +249,13 @@ fun MyShopScreen(
                                 modifier   = Modifier.padding(top = 4.dp, bottom = 4.dp)
                             )
                         }
-                        items(salesTransactions, key = { it.id }) { trx ->
+                        items(salesTransactions, key = { "trx_${it.id}" }) { trx ->
                             ShopTransactionCard(trx = trx)
                         }
                     }
 
                     // Listing cards
-                    items(myListings, key = { it.id }) { product ->
+                    items(myListings, key = { "listing_${it.id}" }) { product ->
                         MyShopListingCard(
                             product   = product,
                             onManage  = { onManage(product.id) },
