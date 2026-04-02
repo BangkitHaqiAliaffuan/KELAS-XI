@@ -18,9 +18,27 @@ import {
 } from 'react-icons/fa'
 
 const Home = () => {
+  const aboutTextContent = {
+    index: '01 / ARCHITECTURE VOID',
+    name: 'Bangkit Haqi Aliaffuan',
+    role: 'Software Engineer',
+    paragraphOne:
+      'I am a technology enthusiast who always stays up-to-date with the latest developments and is ready to quickly adapt to emerging innovations. I have a passion for using logic to solve complex problems, while staying open to long-term opportunities that create real impact.',
+    paragraphTwo:
+      'I completed Full Course Learning Coding at IT Brain Software House, served as Project Manager in DIGIFORWARD 2025, and currently work as a Freelance Software Developer with AI-assisted workflow and practical delivery for web and mobile solutions.',
+  }
+
   const [isSending, setIsSending] = useState(false)
   const [sendStatus, setSendStatus] = useState({ type: '', message: '' })
   const [isMobileViewport] = useState(() => window.matchMedia('(max-width: 900px)').matches)
+  const [typedAboutText, setTypedAboutText] = useState({
+    index: '',
+    name: '',
+    role: '',
+    paragraphOne: '',
+    paragraphTwo: '',
+  })
+  const [activeTypingKey, setActiveTypingKey] = useState('')
 
   const emailjsServiceId = String(import.meta.env.VITE_EMAILJS_SERVICE_ID || '').trim()
   const emailjsTemplateId = String(import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '').trim()
@@ -76,6 +94,60 @@ const Home = () => {
     animatedElements.forEach((element) => observer.observe(element))
 
     return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    if (reducedMotion) {
+      setTypedAboutText(aboutTextContent)
+      return undefined
+    }
+
+    let isCancelled = false
+
+    const wait = (duration) => new Promise((resolve) => setTimeout(resolve, duration))
+
+    const typeByKey = async (key, text, speed) => {
+      setActiveTypingKey(key)
+
+      for (let index = 1; index <= text.length; index += 1) {
+        if (isCancelled) {
+          return
+        }
+
+        setTypedAboutText((previousValue) => ({
+          ...previousValue,
+          [key]: text.slice(0, index),
+        }))
+
+        await wait(speed)
+      }
+    }
+
+    const runTypingSequence = async () => {
+      await wait(260)
+      await typeByKey('index', aboutTextContent.index, 22)
+      await wait(120)
+      await typeByKey('name', aboutTextContent.name, 28)
+      await wait(80)
+      await typeByKey('role', aboutTextContent.role, 24)
+      await wait(130)
+      await typeByKey('paragraphOne', aboutTextContent.paragraphOne, 10)
+      await wait(110)
+      await typeByKey('paragraphTwo', aboutTextContent.paragraphTwo, 9)
+
+      if (!isCancelled) {
+        setActiveTypingKey('')
+      }
+    }
+
+    runTypingSequence()
+
+    return () => {
+      isCancelled = true
+      setActiveTypingKey('')
+    }
   }, [])
 
   const handleContactSubmit = async (event) => {
@@ -173,21 +245,26 @@ const Home = () => {
       <section className='content-section reveal reveal-up' id='about'>
         <div className='about-grid'>
           <div className='reveal reveal-left'>
-            <p className='section-index reveal reveal-up' style={{ '--reveal-delay': '60ms' }}>01 / ARCHITECTURE VOID</p>
+            <p className='section-index reveal reveal-up' style={{ '--reveal-delay': '60ms' }}>
+              {typedAboutText.index}
+              {activeTypingKey === 'index' ? <span className='typing-caret' aria-hidden='true' /> : null}
+            </p>
             <h2 className='reveal reveal-up' style={{ '--reveal-delay': '120ms', 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>
-              Bangkit Haqi Aliaffuan
+              {typedAboutText.name}
+              {activeTypingKey === 'name' ? <span className='typing-caret' aria-hidden='true' /> : null}
               <br />
-              <span>Software Engineer</span>
+              <span>
+                {typedAboutText.role}
+                {activeTypingKey === 'role' ? <span className='typing-caret' aria-hidden='true' /> : null}
+              </span>
             </h2>
             <p className='reveal reveal-up' style={{ '--reveal-delay': '180ms' }}>
-              I am a technology enthusiast who always stays up-to-date with the latest developments and is
-              ready to quickly adapt to emerging innovations. I have a passion for using logic to solve
-              complex problems, while staying open to long-term opportunities that create real impact.
+              {typedAboutText.paragraphOne}
+              {activeTypingKey === 'paragraphOne' ? <span className='typing-caret' aria-hidden='true' /> : null}
             </p>
             <p className='reveal reveal-up' style={{ '--reveal-delay': '220ms' }}>
-              I completed Full Course Learning Coding at IT Brain Software House, served as Project Manager in
-              DIGIFORWARD 2025, and currently work as a Freelance Software Developer with AI-assisted workflow
-              and practical delivery for web and mobile solutions.
+              {typedAboutText.paragraphTwo}
+              {activeTypingKey === 'paragraphTwo' ? <span className='typing-caret' aria-hidden='true' /> : null}
             </p>
             <div className='stat-row'>
               <div className='reveal reveal-up' style={{ '--reveal-delay': '260ms' }}>

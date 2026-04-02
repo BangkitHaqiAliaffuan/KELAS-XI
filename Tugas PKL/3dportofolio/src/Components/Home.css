@@ -49,6 +49,29 @@ html {
   filter: blur(10px) brightness(0.7);
 }
 
+.typing-caret {
+  display: inline-block;
+  width: 0.08em;
+  height: 0.95em;
+  margin-left: 0.12em;
+  vertical-align: -0.08em;
+  background: #8be8ff;
+  box-shadow: 0 0 10px rgba(139, 232, 255, 0.5);
+  animation: typingCaretBlink 0.9s steps(1, end) infinite;
+}
+
+@keyframes typingCaretBlink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 .skill-card.reveal.in-view,
 .project-card.reveal.in-view,
 .about-panel.reveal.in-view,
@@ -971,6 +994,9 @@ html {
   }
 
   .solar-skill-system {
+    display: grid;
+    gap: 0.62rem;
+    justify-items: center;
     height: auto;
     min-height: 0;
     padding: 0.6rem 0;
@@ -997,7 +1023,7 @@ html {
     height: auto;
     transform: none !important;
     animation: none;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0;
     display: flex;
     justify-content: center;
   }
@@ -1009,7 +1035,7 @@ html {
     min-height: 90px;
     transform: none !important;
     animation: none !important;
-    margin: 0 auto;
+    margin: 0;
   }
 
   .orbit-skill-card strong {
@@ -1244,6 +1270,10 @@ html {
     margin-bottom: 0.95rem;
   }
 
+  .solar-skill-system {
+    gap: 0.52rem;
+  }
+
   .orbit-skill-card,
   .orbit-skill-card--soft {
     min-height: 72px;
@@ -1383,6 +1413,10 @@ html {
   .orbit-node,
   .orbit-skill-card {
     animation: none !important;
+  }
+
+  .orbit-skill-card {
+    transform: translateX(var(--radius)) translate(-50%, -50%) !important;
   }
 
   .about-panel__scan-line,
