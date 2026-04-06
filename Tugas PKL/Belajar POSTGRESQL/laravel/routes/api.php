@@ -13,3 +13,4 @@ Route::post('/barang', [BarangController::class, 'createBarang']);
 Route::post('/order', [BarangController::class, 'createOrder']);
 Route::post('/user', [AuthController::class, 'register']);
 Route::post('/user/login', [AuthController::class, 'login']);
+Route::post('/update-user', [AuthController::class, 'updateUser']);

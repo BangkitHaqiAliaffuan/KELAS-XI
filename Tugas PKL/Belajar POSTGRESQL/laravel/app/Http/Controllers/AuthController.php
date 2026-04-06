@@ -9,6 +9,32 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    public function updateUser(Request $request)
+    {
+
+        $token = $request->bearerToken();
+
+        $user = User::where('remember_token', $token)->first();
+
+        if(!$user){
+            return response()->json([
+                'message' => 'unauthorized'
+            ]);
+        }
+
+        $user->update([
+            'name' => $request->name,
+            // 'password' => $request->password,
+            'email' => $request->email,
+        ]);
+
+        $user->save();
+
+        return response()->json([
+            'message' => 'Done',
+            'data' => $user
+        ]);
+    }
     public function register(Request $request)
     {
         $validate = Validator::make($request->all(), [
@@ -67,7 +93,7 @@ class AuthController extends Controller
             $user->update([
                 'remember_token' => $token
             ]);
-            
+
             return response()->json([
                 'status' => 'success',
                 'error' => 'Login Success',
