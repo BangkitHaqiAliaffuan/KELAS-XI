@@ -46,6 +46,18 @@ const Home = () => {
   const emailjsServiceId = String(import.meta.env.VITE_EMAILJS_SERVICE_ID || '').trim()
   const emailjsTemplateId = String(import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '').trim()
   const emailjsPublicKey = String(import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '').trim()
+  const certificates = [
+    {
+      title: 'LKS Dikmen Sidoarjo 2026 — Juara 3 Web Technologies',
+      issuer: 'LKS Dikmen Kabupaten Sidoarjo',
+      image: '/certificates/lks-web-technologies-2026.jpg',
+    },
+    {
+      title: 'DIGIForward 2025 — Juara 2',
+      issuer: 'CTI Group × GenEd',
+      image: '/certificates/digiforward-2025-juara-2.jpg',
+    },
+  ]
 
   const handleNavScroll = (event) => {
     const targetId = event.currentTarget.getAttribute('href')
@@ -456,10 +468,32 @@ const Home = () => {
         </div>
       </section>
 
+      <section className='content-section reveal reveal-up' id='certificates'>
+        <div className='section-header reveal reveal-up' style={{ '--reveal-delay': '70ms' }}>
+          <p className='section-index'>04 / CERTIFICATES</p>
+          <h2 style={{ 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>Achievements & Certificates</h2>
+        </div>
+        <div className='certificate-grid'>
+          {certificates.map((certificate, index) => (
+            <article
+              key={certificate.title}
+              className='certificate-card reveal reveal-up'
+              style={{ '--reveal-delay': `${140 + index * 80}ms` }}
+            >
+              <img src={certificate.image} alt={certificate.title} className='certificate-card__image' loading='lazy' />
+              <div className='certificate-card__meta'>
+                <h3>{certificate.title}</h3>
+                <p>{certificate.issuer}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <section className='content-section contact reveal reveal-up' id='contact'>
         <div className='contact-grid'>
           <div className='reveal reveal-left' style={{ '--reveal-delay': '120ms' }}>
-            <p className='section-index'>04 / CONTACT</p>
+            <p className='section-index'>05 / CONTACT</p>
             <h2 style={{ 'fontFamily':'Dune Rise', 'fontWeight':'bold'  }}>Let&apos;s Connect.</h2>
             <p>
               Open for collaboration, project opportunities, and software development partnerships.
