@@ -1,4 +1,6 @@
 import { Layers, MapPin, BarChart3, Globe, Users, Monitor, BarChart2 } from "lucide-react";
+import { FaFacebookF, FaInstagram, FaYoutube } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 const navItems = [
   { icon: Layers, label: "PEMERINTAHAN" },
@@ -10,25 +12,32 @@ const navItems = [
   { icon: BarChart2, label: "TRANSPARANSI" },
 ];
 
+const socialItems = [
+  { icon: FaFacebookF, label: "FB" },
+  { icon: FaInstagram, label: "IG" },
+  { icon: FaXTwitter, label: "X" },
+  { icon: FaYoutube, label: "YT" },
+];
+
 const Sidebar = () => {
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-24 flex-col items-center justify-between border-r border-border bg-background py-6">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-40 flex-col items-center justify-between border-r border-emerald-100 bg-gradient-to-b from-emerald-50 via-white to-green-50/70 py-6 shadow-[6px_0_24px_-18px_rgba(22,163,74,0.45)]">
       <div className="flex flex-col items-center gap-2">
         <img
           src="/images/sidoarjo-logo.png"
           alt="Logo Sidoarjo"
           width={56}
           height={56}
-          className="mb-4"
+          className="mb-4 rounded-xl bg-emerald-100/60 p-1 ring-1 ring-emerald-200/80"
         />
-        <nav className="flex flex-col items-center gap-1">
+        <nav className="flex w-full flex-col items-center gap-1 px-2">
           {navItems.map((item) => (
             <button
               key={item.label}
-              className="group flex w-20 flex-col items-center gap-1 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="group flex h-24 w-full flex-col items-center justify-center gap-1 rounded-xl border border-emerald-200/80 bg-white/60 px-2 py-1 text-emerald-700/80 transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 hover:text-emerald-800 hover:shadow-sm"
             >
-              <item.icon className="h-5 w-5" />
-              <span className="text-center text-[9px] font-semibold leading-tight whitespace-pre-line">
+              <item.icon className="h-8 w-8 shrink-0 drop-shadow-[0_1px_2px_rgba(22,163,74,0.2)]" />
+              <span className="flex min-h-[2.25rem] w-full items-center justify-center text-center text-[12px] font-semibold leading-tight whitespace-pre-line">
                 {item.label}
               </span>
             </button>
@@ -36,11 +45,17 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-        <a href="#" className="text-xs hover:text-primary transition-colors">FB</a>
-        <a href="#" className="text-xs hover:text-primary transition-colors">IG</a>
-        <a href="#" className="text-xs hover:text-primary transition-colors">X</a>
-        <a href="#" className="text-xs hover:text-primary transition-colors">YT</a>
+      <div className="flex w-full flex-wrap items-center justify-center gap-2 px-2 text-emerald-700/80">
+        {socialItems.map((item) => (
+          <a
+            key={item.label}
+            href="#"
+            className="flex min-w-[3rem] items-center justify-center gap-1.5 rounded-lg border border-transparent px-2 py-1 text-xs font-medium transition-all hover:border-emerald-200 hover:bg-emerald-100/70 hover:text-emerald-900"
+          >
+            <item.icon className="h-3.5 w-3.5" />
+            <span>{item.label}</span>
+          </a>
+        ))}
       </div>
     </aside>
   );

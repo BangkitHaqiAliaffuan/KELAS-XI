@@ -1,16 +1,21 @@
 #root {
-  max-width: 1280px;
+  /* max-width: 1280px; */
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  background: #f1f1f1;
 }
-
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
 }
+
+body::-webkit-scrollbar{
+  display: none;
+}
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
@@ -31,6 +36,12 @@
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
+}
+
+.leader .leader-box{
+  height: 120px;
+  padding-left: 30px;
+  padding-right: 30px;
 }
 
 .card {
