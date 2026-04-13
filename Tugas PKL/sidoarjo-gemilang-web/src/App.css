@@ -11,6 +11,13 @@
   will-change: filter;
   transition: filter 300ms;
 }
+ g#GarisPantai,
+g#Kabupaten1,
+g#Laut,
+g#Provinsi,
+g#Other {
+  display: none !important;
+}
 
 body::-webkit-scrollbar{
   display: none;
