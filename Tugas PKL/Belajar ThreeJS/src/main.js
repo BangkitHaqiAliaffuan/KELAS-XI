@@ -62,6 +62,8 @@ let exclamationMarker = null;
 let isApartmentView = false;
 let firstPersonControls = null;
 let cityRotateDirection = 0;
+let cityHorizontalDistance = 0;
+let cityZoomLevel = 1;
 
 const backButton = document.createElement('button');
 backButton.textContent = 'Back to City';
@@ -137,6 +139,12 @@ const APARTMENT_CONFIG = {
 const CITY_VIEW_CONFIG = {
   fov: 35,
   distance: 260,
+  minDistance: 120,
+  maxDistance: 700,
+  minZoom: 0.7,
+  maxZoom: 2.4,
+  zoomStep: 0.15,
+  defaultZoom: 1,
   cameraY: 400,
   targetY: 0,
   autoRotateSpeed: THREE.MathUtils.degToRad(22),
@@ -190,10 +198,17 @@ function findFirstMesh(root) {
 
 function applyCityIsometricSettings() {
   camera.fov = CITY_VIEW_CONFIG.fov;
+  cityZoomLevel = THREE.MathUtils.clamp(
+    cityZoomLevel || CITY_VIEW_CONFIG.defaultZoom,
+    CITY_VIEW_CONFIG.minZoom,
+    CITY_VIEW_CONFIG.maxZoom
+  );
+  camera.zoom = cityZoomLevel;
   camera.updateProjectionMatrix();
 
   controls.enableRotate = false;
   controls.enablePan = true;
+  controls.enableZoom = false;
   controls.panSpeed = CITY_VIEW_CONFIG.panSpeed;
   controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
   controls.mouseButtons.RIGHT = THREE.MOUSE.PAN;
@@ -222,9 +237,14 @@ function frameOrbitToObject(object, offset = new THREE.Vector3(14, 10, 14)) {
   controls.target.copy(center);
   if (offset === null) {
     controls.target.y = CITY_VIEW_CONFIG.targetY;
+    cityHorizontalDistance = THREE.MathUtils.clamp(
+      CITY_VIEW_CONFIG.distance,
+      CITY_VIEW_CONFIG.minDistance,
+      CITY_VIEW_CONFIG.maxDistance
+    );
     const isometricOffset = new THREE.Vector3().setFromSpherical(
       new THREE.Spherical(
-        CITY_VIEW_CONFIG.distance,
+        cityHorizontalDistance,
         CITY_VIEW_CONFIG.polarAngle,
         CITY_VIEW_CONFIG.azimuthAngle
       )
@@ -235,6 +255,22 @@ function frameOrbitToObject(object, offset = new THREE.Vector3(14, 10, 14)) {
     camera.position.copy(center).add(offset);
   }
   controls.update();
+}
+
+function applyCityZoom(stepDirection) {
+  if (isApartmentView) {
+    return;
+  }
+
+  const nextZoom = THREE.MathUtils.clamp(
+    cityZoomLevel + -stepDirection * CITY_VIEW_CONFIG.zoomStep,
+    CITY_VIEW_CONFIG.minZoom,
+    CITY_VIEW_CONFIG.maxZoom
+  );
+
+  cityZoomLevel = nextZoom;
+  camera.zoom = cityZoomLevel;
+  camera.updateProjectionMatrix();
 }
 
 function setupApartmentFirstPerson() {
@@ -302,6 +338,7 @@ function switchToApartmentView() {
   }
 
   camera.fov = 75;
+  camera.zoom = 1;
   camera.updateProjectionMatrix();
   cityRotateDirection = 0;
   updateRotateButtonsState();
@@ -426,6 +463,23 @@ rotateRightButton.addEventListener('click', () => {
   cityRotateDirection = cityRotateDirection === 1 ? 0 : 1;
   updateRotateButtonsState();
 });
+
+renderer.domElement.addEventListener(
+  'wheel',
+  (event) => {
+    if (isApartmentView) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.deltaY < 0) {
+      applyCityZoom(-1);
+    } else if (event.deltaY > 0) {
+      applyCityZoom(1);
+    }
+  },
+  { passive: false }
+);
 
 const clock = new THREE.Clock();
 
