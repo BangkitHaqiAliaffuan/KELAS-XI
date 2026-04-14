@@ -58,8 +58,23 @@
   }
 
   body {
-    
     @apply bg-background text-foreground font-sans;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+}
+
+/* Typewriter Animation */
+@layer utilities {
+  .typing::after {
+    content: '|';
+    display: inline-block;
+    width: 0.5em;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+    opacity: 0.7;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
   }
 }

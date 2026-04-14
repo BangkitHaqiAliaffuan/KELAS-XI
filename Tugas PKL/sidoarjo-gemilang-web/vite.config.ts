@@ -11,6 +11,14 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/opendata-proxy": {
+        target: "https://opendata.sidoarjokab.go.id",
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/opendata-proxy/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

@@ -1,6 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { FaLightbulb, FaMapMarkerAlt, FaNewspaper, FaRulerCombined, FaUsers } from "react-icons/fa";
+import { loadScrapedNews, mapNewsByDistrict, getNewsForDistrict, type NewsByDistrict } from "@/utils/newsLoader";
+import { getDistrictStats, formatPopulation, formatArea } from "@/utils/districtStatistics";
+import { useLanguage } from "@/i18n";
+import { TypewriterText } from "@/components/ui/typewriter-text";
 
 type RegionPopupData = {
   district: string;
@@ -443,7 +447,29 @@ const regionPopupData: Record<number, RegionPopupData> = {
 const HeroSection = () => {
   const [activeRegion, setActiveRegion] = useState<RegionPopupData | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [newsByDistrict, setNewsByDistrict] = useState<NewsByDistrict>({});
+  const [newsLoading, setNewsLoading] = useState(true);
   const mapObjectRef = useRef<HTMLObjectElement | null>(null);
+  const { language, setLanguage, t } = useLanguage();
+
+  // Load scraped news data on component mount
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        setNewsLoading(true);
+        const news = await loadScrapedNews();
+        const mapped = mapNewsByDistrict(news);
+        setNewsByDistrict(mapped);
+        console.log(`✅ Loaded ${news.length} news articles for ${Object.keys(mapped).length} districts`);
+      } catch (error) {
+        console.error('❌ Failed to load news:', error);
+      } finally {
+        setNewsLoading(false);
+      }
+    };
+
+    loadNews();
+  }, []);
 
   const bindRegionPopupEvents = useCallback(() => {
     const mapDocument = mapObjectRef.current?.contentDocument;
@@ -476,7 +502,25 @@ const HeroSection = () => {
       const openPopup = (event: Event) => {
         event.preventDefault();
         event.stopPropagation();
-        setActiveRegion(regionInfo);
+        
+        // Get news for this district from scraped data
+        const districtName = regionInfo.district.replace('KECAMATAN ', '');
+        const scrapedNews = getNewsForDistrict(districtName, newsByDistrict, 2);
+        
+        // Get statistics from static data (instant, no loading)
+        const stats = getDistrictStats(districtName);
+        const population = stats ? formatPopulation(stats.population) : 'Data belum tersedia';
+        const area = stats ? formatArea(stats.area) : 'Data belum tersedia';
+        
+        // Update region with real data
+        const updatedRegion = {
+          ...regionInfo,
+          news: scrapedNews,
+          population,
+          area,
+        };
+        
+        setActiveRegion(updatedRegion);
         setActiveSlide(0);
       };
 
@@ -488,7 +532,7 @@ const HeroSection = () => {
         }
       });
     });
-  }, []);
+  }, [newsByDistrict]);
 
   const closePopup = () => {
     setActiveRegion(null);
@@ -518,11 +562,17 @@ const HeroSection = () => {
       {/* Header */}
       <div className="flex items-center justify-between px-20 py-6">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Portal Resmi</p>
-          <h1 className="text-2xl font-bold text-foreground">Pemerintah Kabupaten Sidoarjo</h1>
+          <TypewriterText className="text-sm font-medium text-muted-foreground" speed={20}>
+            {t('header.officialPortal')}
+          </TypewriterText>
+          <TypewriterText className="text-2xl font-bold text-foreground" speed={25}>
+            {t('header.government')}
+          </TypewriterText>
         </div>
         <button className="flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-foreground shadow-sm transition-all hover:shadow-md">
-          Akses Cepat
+          <TypewriterText speed={20}>
+            {t('header.quickAccess')}
+          </TypewriterText>
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
@@ -537,16 +587,16 @@ const HeroSection = () => {
               data="/images/sidoarjo-map.svg"
               type="image/svg+xml"
               aria-label="Peta Kabupaten Sidoarjo interaktif"
-              className="absolute left-1/2 top-1/2 h-[155%] w-auto max-w-none -translate-x-1/2 -translate-y-[50%] bg-[#F1F1F1]"
+              className="absolute left-1/2 top-1/2 h-[175%] w-auto max-w-none -translate-x-1/2 -translate-y-[50%] bg-[#F1F1F1]"
             >
               <img
                 src="/images/sidoarjo-map.svg"
                 alt="Peta Kabupaten Sidoarjo"
-                className="absolute left-1/2 top-1/2 h-[155%] w-auto max-w-none -translate-x-1/2 -translate-y-[50%] bg-[#F1F1F1]"
+                className="absolute left-1/2 top-1/2 h-[175%] w-auto max-w-none -translate-x-1/2 -translate-y-[50%] bg-[#F1F1F1]"
               />
             </object>
 
-            <div className="pointer-events-none absolute left-[70%] top-[56%] z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute left-[73%] top-[56%] z-20 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/places/alun-alun.png"
                 alt="Spot Alun-Alun"
@@ -554,7 +604,7 @@ const HeroSection = () => {
               />
             </div>
 
-            <div className="pointer-events-none absolute left-[66%] top-[70%] z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute left-[72%] top-[70%] z-20 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/places/candi-pari.png"
                 alt="Spot Candi Pari"
@@ -562,7 +612,7 @@ const HeroSection = () => {
               />
             </div>
 
-            <div className="pointer-events-none absolute left-[60%] top-[25%] z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute left-[60%] top-[20%] z-20 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/places/monumen-juanda.png"
                 alt="Spot Monumen Juanda"
@@ -578,9 +628,37 @@ const HeroSection = () => {
               />
             </div>
 
-            <div className="pointer-events-none absolute left-[80%] top-[78%] z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="pointer-events-none absolute left-[92%] top-[78%] z-20 -translate-x-1/2 -translate-y-1/2">
               <img
                 src="/images/places/pulau-sarinah.png"
+                alt="Spot Pulau Sarinah"
+                className="h-20 w-20 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
+              />
+            </div>
+            <div className="pointer-events-none absolute left-[42%] top-[17%] z-20 -translate-x-1/2 -translate-y-1/2">
+              <img
+                src="/images/places/sentra-batik.png"
+                alt="Spot Pulau Sarinah"
+                className="h-20 w-20 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
+              />
+            </div>
+            <div className="pointer-events-none absolute left-[40%] top-[65%] z-20 -translate-x-1/2 -translate-y-1/2">
+              <img
+                src="/images/places/pasar-krembung.png"
+                alt="Spot Pulau Sarinah"
+                className="h-20 w-20 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
+              />
+            </div>
+            <div className="pointer-events-none absolute left-[15%] top-[30%] z-20 -translate-x-1/2 -translate-y-1/2">
+              <img
+                src="/images/places/koridor-industri.png"
+                alt="Spot Pulau Sarinah"
+                className="h-20 w-20 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
+              />
+            </div>
+            <div className="pointer-events-none absolute left-[32%] top-[47%] z-20 -translate-x-1/2 -translate-y-1/2">
+              <img
+                src="/images/places/sentra-pertanian-prambon.png"
                 alt="Spot Pulau Sarinah"
                 className="h-20 w-20 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)]"
               />
@@ -602,11 +680,11 @@ const HeroSection = () => {
               loading="lazy"
             />
             <div className="pb-6 flex flex-col items-start">
-              <p className="text-l font-semibold uppercase tracking-wider text-muted-foreground">
-                Bupati Sidoarjo
-              </p>
+              <TypewriterText className="text-l font-semibold uppercase tracking-wider text-muted-foreground" speed={25}>
+                {t('leader.regent')}
+              </TypewriterText>
               <p className="text-3xl font-bold text-foreground">
-                H. SUBANDI
+                H. SUBANDI, S.H.
               </p>
             </div>
           </div>
@@ -623,9 +701,9 @@ const HeroSection = () => {
               loading="lazy"
             />
             <div className="pb-6 text-right flex flex-col items-end">
-              <p className="text-l font-semibold uppercase tracking-wider text-muted-foreground">
-                Wakil Bupati Sidoarjo
-              </p>
+              <TypewriterText className="text-l font-semibold uppercase tracking-wider text-muted-foreground" speed={25}>
+                {t('leader.viceRegent')}
+              </TypewriterText>
               <p className="text-3xl font-bold text-foreground">
                 HJ. MIMIK IDAYANA
               </p>
@@ -635,22 +713,51 @@ const HeroSection = () => {
       </div>
 
       {/* Language Switcher */}
-      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-full bg-background px-4 py-2 shadow-lg border border-border">
-        <button className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          🇮🇩 ID
+      <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-background px-3 py-2 shadow-lg border border-border">
+        <button
+          onClick={() => setLanguage('id')}
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold transition-all ${
+            language === 'id'
+              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+          aria-label="Bahasa Indonesia"
+          title="Bahasa Indonesia"
+        >
+          <img
+            src="https://flagcdn.com/w20/id.png"
+            alt="Indonesia"
+            className="h-4 w-6 rounded-sm object-cover"
+          />
+          <span className="text-xs">ID</span>
         </button>
-        <button className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          🇬🇧 EN
+        <button
+          onClick={() => setLanguage('en')}
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold transition-all ${
+            language === 'en'
+              ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+          aria-label="English"
+          title="English"
+        >
+          <img
+            src="https://flagcdn.com/w20/gb.png"
+            alt="English"
+            className="h-4 w-6 rounded-sm object-cover"
+          />
+          <span className="text-xs">EN</span>
         </button>
       </div>
 
       {activeRegion && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-[1px]" onClick={closePopup}>
           <div
-            className="w-full max-w-xl overflow-hidden rounded-3xl border border-emerald-100/90 bg-white shadow-2xl"
+            className="w-full max-w-lg overflow-hidden rounded-3xl border border-emerald-100/90 bg-white shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="relative h-64 w-full bg-emerald-50">
+            {/* Image Carousel - More Compact */}
+            <div className="relative h-48 w-full bg-emerald-50">
               <img
                 src={activeRegion.images[activeSlide].src}
                 alt={activeRegion.images[activeSlide].alt}
@@ -659,120 +766,183 @@ const HeroSection = () => {
 
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
 
-              <div className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-emerald-700">
+              {/* Slide Counter */}
+              <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
                 {activeSlide + 1} / {activeRegion.images.length}
               </div>
 
+              {/* Prev Button */}
               <button
-                className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-emerald-700 transition hover:bg-white hover:text-emerald-800"
+                className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 text-emerald-700 transition hover:bg-white hover:text-emerald-800"
                 onClick={goToPrevSlide}
                 aria-label="Gambar sebelumnya"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-3.5 w-3.5" />
               </button>
 
+              {/* Next Button */}
               <button
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 text-emerald-700 transition hover:bg-white hover:text-emerald-800"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-1.5 text-emerald-700 transition hover:bg-white hover:text-emerald-800"
                 onClick={goToNextSlide}
                 aria-label="Gambar berikutnya"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-3.5 w-3.5" />
               </button>
 
+              {/* Close Button */}
               <button
-                className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-muted-foreground transition hover:bg-white hover:text-foreground"
+                className="absolute right-2 top-2 rounded-full bg-white/90 p-1.5 text-muted-foreground transition hover:bg-white hover:text-foreground"
                 onClick={closePopup}
                 aria-label="Tutup popup informasi"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             </div>
 
-            <div className="space-y-4 p-5">
-              <div className="flex flex-wrap gap-2">
-                {activeRegion.images.map((image, index) => (
-                  <button
-                    key={`${image.src}-${index}`}
-                    type="button"
-                    className={`h-2.5 rounded-full transition-all ${index === activeSlide ? "w-7 bg-emerald-500" : "w-2.5 bg-emerald-200 hover:bg-emerald-300"}`}
-                    onClick={() => setActiveSlide(index)}
-                    aria-label={`Buka gambar ${index + 1}`}
-                  />
-                ))}
-              </div>
+            {/* Scrollable Content */}
+            <div className="max-h-[28rem] overflow-y-auto">
+              <div className="space-y-3 p-4">
+                {/* Title */}
+                <TypewriterText className="text-xl font-bold tracking-tight text-foreground" speed={25}>
+                  {activeRegion.district}
+                </TypewriterText>
 
-              <h3 className="text-2xl font-extrabold tracking-tight text-foreground">{activeRegion.district}</h3>
-
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2">
-                <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  <FaMapMarkerAlt className="h-3.5 w-3.5" />
-                  Tempat unik
-                </p>
-                <p className="text-sm font-semibold text-foreground">{activeRegion.uniquePlace}</p>
-              </div>
-
-              <div>
-                <p className="mb-2 flex items-center gap-2 text-base font-semibold">
-                  <FaLightbulb className="h-4 w-4 text-emerald-600" />
-                  Unique Facts
-                </p>
-                <div className="grid gap-2">
-                  {activeRegion.facts.map((fact, index) => (
-                    <div
-                      key={fact}
-                      className="flex items-start gap-2 rounded-lg border border-emerald-100 bg-emerald-50/60 px-3 py-2"
-                    >
-                      <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1 text-[10px] font-bold text-white">
-                        {index + 1}
-                      </span>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{fact}</p>
-                    </div>
+                {/* Slide Indicators */}
+                <div className="flex gap-1.5">
+                  {activeRegion.images.map((image, index) => (
+                    <button
+                      key={`${image.src}-${index}`}
+                      type="button"
+                      className={`h-1.5 rounded-full transition-all ${index === activeSlide ? "w-6 bg-emerald-500" : "w-1.5 bg-emerald-200 hover:bg-emerald-300"}`}
+                      onClick={() => setActiveSlide(index)}
+                      aria-label={`Buka gambar ${index + 1}`}
+                    />
                   ))}
                 </div>
-              </div>
 
-              <div>
-                <p className="mb-2 text-base font-semibold">Statistics</p>
-                <div className="grid grid-cols-2 gap-3 rounded-xl border border-emerald-100 bg-white p-3">
-                  <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-2">
-                    <p className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <FaUsers className="h-3 w-3" />
-                      Population
-                    </p>
-                    <p className="text-base font-bold">{activeRegion.population}</p>
-                  </div>
-                  <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-2">
-                    <p className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <FaRulerCombined className="h-3 w-3" />
-                      Area
-                    </p>
-                    <p className="text-base font-bold">{activeRegion.area}</p>
-                  </div>
+                {/* Unique Place */}
+                <div className="rounded-lg border border-emerald-100 bg-emerald-50/70 px-2.5 py-2">
+                  <p className="mb-0.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    <FaMapMarkerAlt className="h-3 w-3" />
+                    <TypewriterText speed={15}>
+                      {t('popup.uniquePlace')}
+                    </TypewriterText>
+                  </p>
+                  <TypewriterText className="text-xs font-semibold text-foreground" speed={20}>
+                    {activeRegion.uniquePlace}
+                  </TypewriterText>
                 </div>
-              </div>
 
-              <div>
-                <p className="mb-2 flex items-center gap-2 text-base font-semibold">
-                  <FaNewspaper className="h-4 w-4 text-emerald-600" />
-                  Latest News
-                </p>
-                <div className="grid gap-2.5">
-                  {activeRegion.news.map((newsItem) => (
-                    <article
-                      key={newsItem.title}
-                      className="flex items-start gap-3 rounded-xl border border-emerald-100/90 bg-emerald-50/50 p-2.5"
-                    >
-                      <img
-                        src={newsItem.image}
-                        alt={newsItem.imageAlt}
-                        className="h-14 w-20 shrink-0 rounded-lg object-cover"
-                      />
-                      <div className="min-w-0">
-                        <h4 className="text-sm font-semibold leading-tight text-foreground">{newsItem.title}</h4>
-                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{newsItem.description}</p>
+                {/* Unique Facts */}
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+                    <FaLightbulb className="h-3.5 w-3.5 text-emerald-600" />
+                    <TypewriterText speed={15}>
+                      {t('popup.uniqueFacts')}
+                    </TypewriterText>
+                  </p>
+                  <div className="grid gap-1.5">
+                    {activeRegion.facts.map((fact, index) => (
+                      <div
+                        key={fact}
+                        className="flex items-start gap-1.5 rounded-lg border border-emerald-100 bg-emerald-50/60 px-2 py-1.5"
+                      >
+                        <span className="mt-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-emerald-500 px-1 text-[9px] font-bold text-white">
+                          {index + 1}
+                        </span>
+                        <p className="text-xs leading-relaxed text-muted-foreground">{fact}</p>
                       </div>
-                    </article>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+
+                {/* Statistics */}
+                <div>
+                  <TypewriterText className="mb-1.5 text-sm font-semibold block" speed={20}>
+                    {t('popup.statistics')}
+                  </TypewriterText>
+                  <div className="grid grid-cols-2 gap-2 rounded-lg border border-emerald-100 bg-white p-2">
+                    <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-1.5">
+                      <p className="mb-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <FaUsers className="h-2.5 w-2.5" />
+                        <TypewriterText speed={15}>
+                          {t('popup.population')}
+                        </TypewriterText>
+                      </p>
+                      <p className="text-sm font-bold">{activeRegion.population}</p>
+                    </div>
+                    <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-1.5">
+                      <p className="mb-0.5 flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <FaRulerCombined className="h-2.5 w-2.5" />
+                        <TypewriterText speed={15}>
+                          {t('popup.area')}
+                        </TypewriterText>
+                      </p>
+                      <p className="text-sm font-bold">{activeRegion.area}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Latest News */}
+                <div>
+                  <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+                    <FaNewspaper className="h-3.5 w-3.5 text-emerald-600" />
+                    <TypewriterText speed={15}>
+                      {t('popup.latestNews')}
+                    </TypewriterText>
+                    {newsLoading && (
+                      <span className="ml-1 animate-pulse text-[10px] text-muted-foreground">{t('common.loading')}</span>
+                    )}
+                  </p>
+                  <div className="grid gap-1.5">
+                    {activeRegion.news.map((newsItem, index) => (
+                      <article
+                        key={`${newsItem.title}-${index}`}
+                        className="group flex flex-col gap-1.5 rounded-lg border border-emerald-100/90 bg-emerald-50/50 p-2 transition-all hover:border-emerald-300 hover:bg-emerald-50/80 hover:shadow-sm"
+                      >
+                        <div className="flex items-start gap-2">
+                          {newsItem.image && newsItem.image !== '/images/news/placeholder.jpg' ? (
+                            <img
+                              src={newsItem.image}
+                              alt={newsItem.imageAlt}
+                              className="h-10 w-14 shrink-0 rounded object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-10 w-14 shrink-0 items-center justify-center rounded bg-emerald-100">
+                              <FaNewspaper className="h-4 w-4 text-emerald-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-[11px] font-semibold leading-tight text-foreground group-hover:text-emerald-700 transition-colors line-clamp-2">
+                              {newsItem.title}
+                            </h4>
+                            <p className="mt-0.5 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
+                              {newsItem.description}
+                            </p>
+                          </div>
+                        </div>
+                        {newsItem.url && newsItem.url !== '#' && (
+                          <a
+                            href={newsItem.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-0.5 text-[9px] font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <TypewriterText speed={20}>
+                              {t('common.readMore')}
+                            </TypewriterText>
+                            <svg className="h-2.5 w-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        )}
+                      </article>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

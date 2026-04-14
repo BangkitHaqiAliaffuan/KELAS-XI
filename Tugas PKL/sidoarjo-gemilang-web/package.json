@@ -10,7 +10,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "scrape": "node scraper/news-scraper.js",
+    "scrape:install": "cd scraper && npm install",
+    "scrape:run": "cd scraper && npm install && node news-scraper.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
