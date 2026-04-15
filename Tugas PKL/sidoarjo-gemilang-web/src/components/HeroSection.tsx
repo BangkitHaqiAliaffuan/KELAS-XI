@@ -1,6 +1,15 @@
 import { useCallback, useEffect, useRef, useState, type Touch, type TouchEvent } from "react";
 import { ArrowRight, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { FaLightbulb, FaMapMarkerAlt, FaNewspaper, FaRulerCombined, FaUsers } from "react-icons/fa";
+import { useLanguage } from "../i18n/LanguageContext";
+import type { Language } from "../i18n/LanguageContext";
+import { TypewriterText } from "../components/ui/typewriter-text";
+import { fetchDistrictData } from "../services/sidoarjoApi";
+import {
+  formatArea,
+  formatPopulation,
+  getDistrictStats as getFallbackDistrictStats,
+} from "../utils/districtStatistics";
 
 type RegionPopupData = {
   district: string;
@@ -39,8 +48,135 @@ const fallbackRegionImages: RegionPopupData["images"] = [
   },
 ];
 
+const popupCarouselImages: Record<string, RegionPopupData["images"]> = {
+  BALONGBENDO: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Balongbendo.jpg",
+      alt: "Kecamatan Balongbendo",
+    },
+  ],
+  BUDURAN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Buduran.png",
+      alt: "Kecamatan Buduran",
+    },
+  ],
+  CANDI: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Candi.png",
+      alt: "Kecamatan Candi",
+    },
+  ],
+  GEDANGAN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Gedangan.jpg",
+      alt: "Kecamatan Gedangan",
+    },
+  ],
+  JABON: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Jabon.png",
+      alt: "Kecamatan Jabon",
+    },
+    {
+      src: "/images/popup-images/Peta%20Asset/Jabon%202.png",
+      alt: "Kecamatan Jabon",
+    },
+  ],
+  KREMBUNG: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Krembung.png",
+      alt: "Kecamatan Krembung",
+    },
+  ],
+  KRIAN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Krian.png",
+      alt: "Kecamatan Krian",
+    },
+  ],
+  PORONG: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Porong.png",
+      alt: "Kecamatan Porong",
+    },
+  ],
+  PRAMBON: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Prambon.png",
+      alt: "Kecamatan Prambon",
+    },
+  ],
+  SEDATI: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Sedati.jpg",
+      alt: "Kecamatan Sedati",
+    },
+  ],
+  SIDOARJO: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Kec%20Sidoarjo.jpg",
+      alt: "Kecamatan Sidoarjo",
+    },
+  ],
+  SUKODONO: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Sukodono.jpg",
+      alt: "Kecamatan Sukodono",
+    },
+  ],
+  TAMAN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Taman.png",
+      alt: "Kecamatan Taman",
+    },
+  ],
+  TANGGULANGIN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Tanggulangin.png",
+      alt: "Kecamatan Tanggulangin",
+    },
+  ],
+  TARIK: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Tarik.png",
+      alt: "Kecamatan Tarik",
+    },
+  ],
+  TULANGAN: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Tulangan.png",
+      alt: "Kecamatan Tulangan",
+    },
+  ],
+  WARU: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Waru%201.png",
+      alt: "Kecamatan Waru",
+    },
+    {
+      src: "/images/popup-images/Peta%20Asset/Waru%202.png",
+      alt: "Kecamatan Waru",
+    },
+  ],
+  WONOAYU: [
+    {
+      src: "/images/popup-images/Peta%20Asset/Wonoayu.png",
+      alt: "Kecamatan Wonoayu",
+    },
+  ],
+};
+
+const normalizeDistrictKey = (name: string) =>
+  name
+    .toUpperCase()
+    .replace(/^KECAMATAN\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
 const buildRegionPopupData = (seed: RegionPopupSeed): RegionPopupData => {
-  const images = seed.images ?? fallbackRegionImages;
+  const districtImages = popupCarouselImages[normalizeDistrictKey(seed.district)];
+  const images = seed.images ?? districtImages ?? fallbackRegionImages;
 
   return {
     district: seed.district,
@@ -440,11 +576,22 @@ const regionPopupData: Record<number, RegionPopupData> = {
   }),
 };
 
+// ─── TAP DETECTION THRESHOLD ────────────────────────────────────────────────
+// Jika jari bergerak lebih dari nilai ini (px), dianggap drag, bukan tap
+const TAP_MOVE_THRESHOLD = 12;
+// Jika sentuh lebih lama dari ini (ms), bukan tap
+const TAP_MAX_DURATION_MS = 450;
+const GESTURE_DEBUG = import.meta.env.DEV;
+
 const HeroSection = () => {
+  const { language, setLanguage, t } = useLanguage();
   const [activeRegion, setActiveRegion] = useState<RegionPopupData | null>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [districtData, setDistrictData] = useState<Record<string, { population: string; area: string }>>({});
+  const districtDataRef = useRef<Record<string, { population: string; area: string }>>({});
   const mapObjectRef = useRef<HTMLObjectElement | null>(null);
   const mapViewportRef = useRef<HTMLDivElement | null>(null);
+
   const touchStateRef = useRef<{
     mode: "none" | "drag" | "pinch";
     startX: number;
@@ -466,11 +613,80 @@ const HeroSection = () => {
     pinchCenterX: 0,
     pinchCenterY: 0,
   });
+
+  // ─── FIX: Ref untuk melacak apakah gesture adalah drag nyata atau tap ───
+  const mapTouchMovedRef = useRef(false);
+  const mapTouchStartTimeRef = useRef(0);
+  const tapBlockUntilRef = useRef(0);
+
+  const logGesture = useCallback((label: string, payload?: Record<string, unknown>) => {
+    if (!GESTURE_DEBUG) return;
+    console.log("[map-gesture]", label, payload ?? {});
+  }, []);
+
   const [isMobileViewport, setIsMobileViewport] = useState(
     typeof window !== "undefined" ? window.innerWidth < 1024 : false,
   );
   const [mapScale, setMapScale] = useState(1);
   const [mapOffset, setMapOffset] = useState({ x: 0, y: 0 });
+  const mapScaleRef = useRef(1);
+  const mapOffsetRef = useRef({ x: 0, y: 0 });
+  const mapEmbedTransform = isMobileViewport
+    ? "translateY(-10px) scale(1.0)"
+    : "translateY(-45px) scale(1.6)";
+  const mapFallbackTransform = isMobileViewport
+    ? "translateY(-8px) scale(1.2)"
+    : "translateY(-40px) scale(1.6)";
+
+  // Fetch data dari API saat component mount
+  useEffect(() => {
+    const loadDistrictData = async () => {
+      const data = await fetchDistrictData();
+      setDistrictData(data);
+    };
+    loadDistrictData();
+  }, []);
+
+  useEffect(() => {
+    districtDataRef.current = districtData;
+  }, [districtData]);
+
+  useEffect(() => {
+    mapScaleRef.current = mapScale;
+  }, [mapScale]);
+
+  useEffect(() => {
+    mapOffsetRef.current = mapOffset;
+  }, [mapOffset]);
+
+  const getDistrictStats = useCallback((districtKey: string) => {
+    const normalizedKey = normalizeDistrictKey(districtKey);
+
+    for (const [key, value] of Object.entries(districtDataRef.current)) {
+      const normalizedDataKey = normalizeDistrictKey(key);
+      if (normalizedDataKey === normalizedKey) {
+        const hasPopulation = value.population && value.population !== "0";
+        const hasArea = value.area && value.area !== "-";
+
+        if (hasPopulation || hasArea) {
+          return {
+            population: hasPopulation ? value.population : "Data BPS",
+            area: hasArea ? value.area : "Data BPS",
+          };
+        }
+      }
+    }
+
+    const fallbackStats = getFallbackDistrictStats(districtKey);
+    if (fallbackStats) {
+      return {
+        population: formatPopulation(fallbackStats.population),
+        area: formatArea(fallbackStats.area),
+      };
+    }
+
+    return { population: "Data BPS", area: "Data BPS" };
+  }, []);
 
   const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
@@ -515,26 +731,48 @@ const HeroSection = () => {
     };
   }, []);
 
+  // ─── FIX: handleMapTouchStart — reset moved flag & catat waktu mulai ────
   const handleMapTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    if (!isMobileViewport) {
-      return;
-    }
+    if (!isMobileViewport) return;
+
+    // Reset tap tracking setiap kali ada sentuhan baru
+    mapTouchMovedRef.current = false;
+    mapTouchStartTimeRef.current = Date.now();
 
     if (event.touches.length === 1) {
-      const touch = event.touches[0];
+      // Drag satu jari hanya aktif saat map sedang zoom-in.
+      if (mapScaleRef.current <= 1) {
+        logGesture("touchstart: single finger treated as tap-candidate", {
+          scale: mapScaleRef.current,
+          reason: "scale<=1 so drag is disabled",
+        });
+        touchStateRef.current = {
+          ...touchStateRef.current,
+          mode: "none",
+        };
+        return;
+      }
 
+      const touch = event.touches[0];
       touchStateRef.current = {
         ...touchStateRef.current,
         mode: "drag",
         startX: touch.clientX,
         startY: touch.clientY,
-        startOffsetX: mapOffset.x,
-        startOffsetY: mapOffset.y,
+        startOffsetX: mapOffsetRef.current.x,
+        startOffsetY: mapOffsetRef.current.y,
       };
+      logGesture("touchstart: drag mode", {
+        scale: mapScaleRef.current,
+        x: touch.clientX,
+        y: touch.clientY,
+      });
       return;
     }
 
     if (event.touches.length === 2) {
+      // Dua jari = pasti bukan tap
+      mapTouchMovedRef.current = true;
       const [touchA, touchB] = Array.from(event.touches);
       const centerX = (touchA.clientX + touchB.clientX) / 2;
       const centerY = (touchA.clientY + touchB.clientY) / 2;
@@ -543,32 +781,54 @@ const HeroSection = () => {
         ...touchStateRef.current,
         mode: "pinch",
         startDistance: getDistance(touchA, touchB),
-        startScale: mapScale,
-        startOffsetX: mapOffset.x,
-        startOffsetY: mapOffset.y,
+        startScale: mapScaleRef.current,
+        startOffsetX: mapOffsetRef.current.x,
+        startOffsetY: mapOffsetRef.current.y,
         pinchCenterX: centerX,
         pinchCenterY: centerY,
       };
+      logGesture("touchstart: pinch mode", {
+        scale: mapScaleRef.current,
+        startDistance: touchStateRef.current.startDistance,
+      });
     }
   };
 
+  // ─── FIX: handleMapTouchMove — preventDefault hanya jika benar-benar drag ─
   const handleMapTouchMove = (event: TouchEvent<HTMLDivElement>) => {
-    if (!isMobileViewport) {
-      return;
-    }
+    if (!isMobileViewport) return;
 
     if (touchStateRef.current.mode === "drag" && event.touches.length === 1) {
-      event.preventDefault();
       const touch = event.touches[0];
-      const nextOffset = {
-        x: touchStateRef.current.startOffsetX + (touch.clientX - touchStateRef.current.startX),
-        y: touchStateRef.current.startOffsetY + (touch.clientY - touchStateRef.current.startY),
-      };
-      setMapOffset(clampOffset(nextOffset, mapScale));
+      const deltaX = Math.abs(touch.clientX - touchStateRef.current.startX);
+      const deltaY = Math.abs(touch.clientY - touchStateRef.current.startY);
+
+      // Tandai sebagai drag hanya jika melewati threshold
+      if (deltaX > TAP_MOVE_THRESHOLD || deltaY > TAP_MOVE_THRESHOLD) {
+        if (!mapTouchMovedRef.current) {
+          logGesture("touchmove: swipe/drag detected", {
+            deltaX,
+            deltaY,
+            threshold: TAP_MOVE_THRESHOLD,
+          });
+        }
+        mapTouchMovedRef.current = true;
+      }
+
+      // Hanya blokir default scroll & update offset jika sudah pasti drag
+      if (mapTouchMovedRef.current) {
+        event.preventDefault();
+        const nextOffset = {
+          x: touchStateRef.current.startOffsetX + (touch.clientX - touchStateRef.current.startX),
+          y: touchStateRef.current.startOffsetY + (touch.clientY - touchStateRef.current.startY),
+        };
+        setMapOffset(clampOffset(nextOffset, mapScaleRef.current));
+      }
       return;
     }
 
     if (touchStateRef.current.mode === "pinch" && event.touches.length === 2) {
+      mapTouchMovedRef.current = true;
       event.preventDefault();
       const [touchA, touchB] = Array.from(event.touches);
       const distance = getDistance(touchA, touchB);
@@ -591,19 +851,51 @@ const HeroSection = () => {
           nextScale,
         ),
       );
+
+      logGesture("touchmove: pinch zoom", {
+        distance,
+        ratio,
+        nextScale,
+      });
     }
   };
 
-  const handleMapTouchEnd = () => {
+  // ─── FIX: handleMapTouchEnd — jangan blokir event jika ini adalah tap ────
+  const handleMapTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const wasDrag = mapTouchMovedRef.current;
+    const duration = Date.now() - mapTouchStartTimeRef.current;
+    const isTap = !wasDrag && duration < TAP_MAX_DURATION_MS;
+
+    // Reset mode gesture
     if (touchStateRef.current.mode !== "none") {
       touchStateRef.current.mode = "none";
     }
+
+    // Jika ini tap, jangan preventDefault agar event diteruskan ke SVG di dalam <object>
+    if (isTap) {
+      logGesture("touchend: classified as tap", {
+        duration,
+        maxDuration: TAP_MAX_DURATION_MS,
+      });
+      return;
+    }
+
+    // Beri jeda sangat singkat setelah drag/pinch untuk menghindari ghost tap.
+    tapBlockUntilRef.current = Date.now() + 140;
+    logGesture("touchend: classified as swipe/gesture", {
+      duration,
+      moved: wasDrag,
+      tapBlockedMs: 140,
+    });
+
+    // Jika drag, cegah event lanjut supaya tidak trigger klik yang tidak diinginkan
+    event.preventDefault();
   };
 
   const zoomMap = (delta: number) => {
-    const nextScale = clamp(mapScale + delta, 1, 2.6);
+    const nextScale = clamp(mapScaleRef.current + delta, 1, 2.6);
     setMapScale(nextScale);
-    setMapOffset(clampOffset(mapOffset, nextScale));
+    setMapOffset(clampOffset(mapOffsetRef.current, nextScale));
   };
 
   const resetMapView = () => {
@@ -638,15 +930,133 @@ const HeroSection = () => {
       regionPath.setAttribute("data-popup-bound", "true");
       regionPath.setAttribute("data-region-name", regionInfo.district);
       regionPath.setAttribute("aria-label", `${regionInfo.district} - klik untuk lihat informasi`);
+      regionPath.setAttribute("tabindex", "0");
 
-      const openPopup = (event: Event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setActiveRegion(regionInfo);
+      const openPopup = (event?: Event) => {
+        if (event) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+
+        logGesture("popup: open", {
+          district: regionInfo.district,
+          trigger: event?.type ?? "programmatic",
+        });
+
+        const stats = getDistrictStats(regionInfo.district);
+        const regionInfoWithApiData = {
+          ...regionInfo,
+          population: stats.population,
+          area: stats.area,
+        };
+
+        setActiveRegion(regionInfoWithApiData);
         setActiveSlide(0);
       };
 
+      // ─── FIX: Touch handler di dalam SVG — toleransi tap yang lebih baik ─
+      let svgTouchStartX = 0;
+      let svgTouchStartY = 0;
+      let svgStartOffsetX = 0;
+      let svgStartOffsetY = 0;
+      let svgTouchMoved = false;
+      let svgTouchStartTime = 0;
+
+      const handleSvgTouchStart = (event: Event) => {
+        const touchEvent = event as globalThis.TouchEvent;
+
+        if (touchEvent.touches.length !== 1) {
+          svgTouchMoved = true;
+          logGesture("svg touchstart: non-tap (multi-touch)", {
+            district: regionInfo.district,
+            touches: touchEvent.touches.length,
+          });
+          return;
+        }
+
+        svgTouchStartX = touchEvent.touches[0].clientX;
+        svgTouchStartY = touchEvent.touches[0].clientY;
+        svgStartOffsetX = mapOffsetRef.current.x;
+        svgStartOffsetY = mapOffsetRef.current.y;
+        svgTouchMoved = false;
+        svgTouchStartTime = Date.now();
+        logGesture("svg touchstart: tap candidate", {
+          district: regionInfo.district,
+          scale: mapScaleRef.current,
+        });
+      };
+
+      const handleSvgTouchMove = (event: Event) => {
+        const touchEvent = event as globalThis.TouchEvent;
+
+        if (touchEvent.touches.length !== 1) {
+          svgTouchMoved = true;
+          return;
+        }
+
+        const touch = touchEvent.touches[0];
+        const deltaX = Math.abs(touch.clientX - svgTouchStartX);
+        const deltaY = Math.abs(touch.clientY - svgTouchStartY);
+
+        if (deltaX > TAP_MOVE_THRESHOLD || deltaY > TAP_MOVE_THRESHOLD) {
+          svgTouchMoved = true;
+          mapTouchMovedRef.current = true;
+          logGesture("svg touchmove: swipe detected", {
+            district: regionInfo.district,
+            deltaX,
+            deltaY,
+            threshold: TAP_MOVE_THRESHOLD,
+          });
+        }
+
+        if (svgTouchMoved && mapScaleRef.current > 1) {
+          touchEvent.preventDefault();
+          const nextOffset = {
+            x: svgStartOffsetX + (touch.clientX - svgTouchStartX),
+            y: svgStartOffsetY + (touch.clientY - svgTouchStartY),
+          };
+          setMapOffset(clampOffset(nextOffset, mapScaleRef.current));
+          logGesture("svg touchmove: drag applied", {
+            district: regionInfo.district,
+            nextOffsetX: nextOffset.x,
+            nextOffsetY: nextOffset.y,
+            scale: mapScaleRef.current,
+          });
+        }
+      };
+
+      const handleSvgTouchEnd = (event: Event) => {
+        const duration = Date.now() - svgTouchStartTime;
+        const blockedByGesture = mapTouchMovedRef.current || Date.now() < tapBlockUntilRef.current;
+
+        if (blockedByGesture) {
+          logGesture("svg touchend: popup blocked by prior gesture", {
+            district: regionInfo.district,
+            duration,
+            mapTouchMoved: mapTouchMovedRef.current,
+            blockUntil: tapBlockUntilRef.current,
+          });
+          return;
+        }
+
+        // Hanya buka popup jika tidak ada gerakan & durasi pendek (tap)
+        if (!svgTouchMoved && duration < TAP_MAX_DURATION_MS) {
+          openPopup(event);
+          return;
+        }
+
+        logGesture("svg touchend: not a tap", {
+          district: regionInfo.district,
+          svgTouchMoved,
+          duration,
+          maxDuration: TAP_MAX_DURATION_MS,
+        });
+      };
+
       regionPath.addEventListener("click", openPopup);
+      regionPath.addEventListener("touchstart", handleSvgTouchStart, { passive: true });
+      regionPath.addEventListener("touchmove", handleSvgTouchMove, { passive: false });
+      regionPath.addEventListener("touchend", handleSvgTouchEnd, { passive: false });
       regionPath.addEventListener("keydown", (event) => {
         const keyboardEvent = event as KeyboardEvent;
         if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
@@ -654,7 +1064,7 @@ const HeroSection = () => {
         }
       });
     });
-  }, []);
+  }, [clampOffset, getDistrictStats, logGesture]);
 
   const closePopup = () => {
     setActiveRegion(null);
@@ -662,44 +1072,53 @@ const HeroSection = () => {
   };
 
   const goToPrevSlide = () => {
-    if (!activeRegion) {
-      return;
-    }
-
+    if (!activeRegion) return;
     const totalSlides = activeRegion.images.length;
     setActiveSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
   };
 
   const goToNextSlide = () => {
-    if (!activeRegion) {
-      return;
-    }
-
+    if (!activeRegion) return;
     const totalSlides = activeRegion.images.length;
     setActiveSlide((prev) => (prev + 1) % totalSlides);
   };
 
   return (
-    <section className="relative flex min-h-screen flex-col">
+    <section className="relative flex min-h-[100dvh] flex-col sm:min-h-screen">
       {/* Header */}
       <div className="flex flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:items-center sm:px-6 lg:px-12 xl:px-20">
         <div className="w-full text-center sm:w-auto sm:text-left">
-          <p className="text-xs font-medium text-muted-foreground sm:text-sm">Portal Resmi</p>
-          <h1 className="text-xl font-bold text-foreground sm:text-2xl">Pemerintah Kabupaten Sidoarjo</h1>
+          <TypewriterText speed={25} className="text-xs font-medium text-muted-foreground sm:text-sm">
+            {t('header.officialPortal')}
+          </TypewriterText>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+            <TypewriterText speed={20}>{t('header.government')}</TypewriterText>
+          </h1>
         </div>
-        <button className="self-center flex items-center gap-2 rounded-full border border-border bg-background px-5 py-2.5 text-xs font-semibold text-foreground shadow-sm transition-all hover:shadow-md sm:self-auto sm:px-6 sm:py-3 sm:text-sm">
-          Akses Cepat
+        <a
+          href="https://sidoarjokab.go.id/layanan-terpadu/08"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="self-center flex items-center gap-2 rounded-full border border-border bg-background px-5 py-2.5 text-xs font-semibold text-foreground shadow-sm transition-all hover:shadow-md sm:self-auto sm:px-6 sm:py-3 sm:text-sm"
+        >
+          <TypewriterText speed={20}>{t('header.quickAccess')}</TypewriterText>
           <ArrowRight className="h-4 w-4" />
-        </button>
+        </a>
       </div>
 
       {/* Map Area */}
-      <div className="flex flex-1 items-center justify-center px-3 pb-8 sm:px-6 md:px-8 md:pb-44">
-        <div className="animate-fade-in w-full max-w-5xl">
+      <div className="flex flex-1 items-center justify-center px-3 pb-3 sm:px-6 md:px-8">
+        <div className="animate-fade-in w-full max-w-4xl">
           <div
             ref={mapViewportRef}
-            className="relative h-[clamp(300px,52vh,620px)] w-full overflow-hidden rounded-2xl bg-[#F1F1F1] sm:h-[clamp(340px,56vh,620px)]"
-            style={{ touchAction: "auto" }}
+            className="relative h-[clamp(280px,45dvh,420px)] w-full overflow-hidden rounded-2xl bg-[#F1F1F1] sm:h-[clamp(400px,71vh,740px)]"
+            onTouchStart={handleMapTouchStart}
+            onTouchMove={handleMapTouchMove}
+            onTouchEnd={handleMapTouchEnd}
+            onTouchCancel={handleMapTouchEnd}
+            // ─── FIX: Ubah dari "auto" → izinkan pan & pinch-zoom native
+            // tapi tetap bisa intercept saat diperlukan
+            style={{ touchAction: "pan-x pan-y pinch-zoom" }}
           >
             <div
               className="absolute inset-0"
@@ -716,94 +1135,16 @@ const HeroSection = () => {
                 type="image/svg+xml"
                 aria-label="Peta Kabupaten Sidoarjo interaktif"
                 className="absolute inset-0 h-full w-full bg-[#F1F1F1]"
+                style={{ transform: mapEmbedTransform, transformOrigin: "center center" }}
               >
                 <img
                   src="/images/sidoarjo-map.svg"
                   alt="Peta Kabupaten Sidoarjo"
                   className="absolute inset-0 h-full w-full object-contain bg-[#F1F1F1]"
+                  style={{ transform: mapFallbackTransform, transformOrigin: "center center" }}
                 />
               </object>
-
-              <div className="pointer-events-none absolute left-[74%] top-[56%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/alun-alun.png"
-                alt="Spot Alun-Alun"
-                className="h-16 w-16 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-24 sm:w-24 lg:h-32 lg:w-32"
-              />
             </div>
-
-            <div className="pointer-events-none absolute left-[54%] top-[62%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/candi-pari.png"
-                alt="Spot Candi Pari"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-
-            <div className="pointer-events-none absolute left-[63%] top-[18%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/monumen-juanda.png"
-                alt="Spot Monumen Juanda"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-
-            <div className="pointer-events-none absolute left-[60%] top-[38%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/museum-tantular.png"
-                alt="Spot Museum Tantular"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-
-            <div className="pointer-events-none absolute left-[90%] top-[78%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/pulau-sarinah.png"
-                alt="Spot Pulau Sarinah"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-            <div className="pointer-events-none absolute left-[40%] top-[66%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/pasar-krembung.png"
-                alt="Spot Pulau Sarinah"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-            <div className="pointer-events-none absolute left-[20%] top-[30%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/koridor-industri.png"
-                alt="Spot Pulau Sarinah"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-            <div className="pointer-events-none absolute left-[42%] top-[20%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/sentra-batik.png"
-                alt="Spot Pulau Sarinah"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-              <div className="pointer-events-none absolute left-[32%] top-[45%] z-20 -translate-x-1/2 -translate-y-1/2">
-              <img
-                src="/images/places/sentra-pertanian-prambon.png"
-                alt="Spot Pulau Sarinah"
-                className="h-10 w-10 object-contain brightness-125 contrast-110 saturate-125 drop-shadow-[0_6px_14px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14 lg:h-20 lg:w-20"
-              />
-            </div>
-            </div>
-
-            {isMobileViewport && (
-              <div
-                className="absolute inset-0 z-10"
-                onTouchStart={handleMapTouchStart}
-                onTouchMove={handleMapTouchMove}
-                onTouchEnd={handleMapTouchEnd}
-                onTouchCancel={handleMapTouchEnd}
-                style={{ touchAction: "none" }}
-                aria-hidden="true"
-              />
-            )}
 
             {isMobileViewport && (
               <div className="absolute bottom-3 left-3 z-30 flex items-center gap-2 rounded-full border border-emerald-100 bg-white/95 px-2 py-1 shadow-md">
@@ -838,43 +1179,43 @@ const HeroSection = () => {
       </div>
 
       {/* Leader Section */}
-      <div className="leader pointer-events-none z-30 mx-auto mt-2 flex w-full max-w-6xl items-end justify-center px-3 pb-2 md:absolute md:inset-x-0 md:bottom-5 md:left-10 md:mt-0 md:px-4">
-        <div className="leader-box relative flex w-full items-end overflow-visible rounded-2xl border border-emerald-100/80 bg-leader-bg shadow-lg md:rounded-t-2xl md:rounded-b-none">
+      <div className="pointer-events-none z-30 mx-auto flex w-full max-w-3xl items-end justify-center pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:pb-3 md:fixed md:bottom-0 md:left-0 md:right-0 md:mx-auto md:pb-0">
+        <div className="leader-box relative flex w-full px-5 items-end overflow-visible rounded-2xl border border-emerald-100/80 bg-leader-bg shadow-lg md:rounded-t-2xl md:rounded-b-none">
           <div className="pointer-events-none absolute inset-0 rounded-t-2xl bg-gradient-to-r from-emerald-100/75 via-white/45 to-emerald-100/75" />
           {/* Bupati */}
-          <div className="relative z-10 flex flex-1 items-end gap-3 sm:gap-6 lg:gap-10">
+          <div className="relative z-10 flex flex-1 items-end gap-2 sm:gap-4 lg:gap-6">
             <img
               src="/images/bupati.png"
-              alt="Bupati Sidoarjo"
-              className="relative z-30 h-28 w-auto -ml-2 -mb-0 object-contain sm:h-36 lg:h-48"
+              alt={t('leader.regent')}
+              className="relative z-30 h-20 w-auto -ml-2 -mb-0 object-contain sm:h-28 lg:h-32"
               loading="lazy"
             />
-            <div className="flex flex-col items-start pb-3 sm:pb-5 lg:pb-6">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
-                Bupati Sidoarjo
+            <div className="flex flex-col items-start pb-2 sm:pb-3 lg:pb-4">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs lg:text-sm">
+                <TypewriterText speed={25}>{t('leader.regent')}</TypewriterText>
               </p>
-              <p className="text-lg font-bold text-foreground sm:text-2xl lg:text-3xl">
+              <p className="text-sm font-bold text-foreground sm:text-lg lg:text-xl">
                 H. SUBANDI
               </p>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="relative z-10 hidden h-16 w-px self-center bg-emerald-200/90 sm:block lg:h-20" />
+          <div className="relative z-10 hidden h-12 w-px self-center bg-emerald-200/90 sm:block lg:h-14" />
 
           {/* Wakil Bupati */}
-          <div className="relative z-10 flex flex-1 flex-row-reverse items-end gap-3 sm:gap-6 lg:gap-10">
+          <div className="relative z-10 flex flex-1 flex-row-reverse items-end gap-2 sm:gap-4 lg:gap-6">
             <img
               src="/images/wakil-bupati.png"
-              alt="Wakil Bupati Sidoarjo"
-              className="relative z-30 h-28 w-auto -mr-2 -mb-0 object-contain sm:h-36 lg:h-48"
+              alt={t('leader.viceRegent')}
+              className="relative z-30 h-20 w-auto -mr-2 -mb-0 object-contain sm:h-28 lg:h-32"
               loading="lazy"
             />
-            <div className="flex flex-col items-end pb-3 text-right sm:pb-5 lg:pb-6">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-sm">
-                Wakil Bupati Sidoarjo
+            <div className="flex flex-col items-end pb-2 text-right sm:pb-3 lg:pb-4">
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs lg:text-sm">
+                <TypewriterText speed={25}>{t('leader.viceRegent')}</TypewriterText>
               </p>
-              <p className="text-lg font-bold text-foreground sm:text-2xl lg:text-3xl">
+              <p className="text-sm font-bold text-foreground sm:text-lg lg:text-xl">
                 HJ. MIMIK IDAYANA
               </p>
             </div>
@@ -883,19 +1224,51 @@ const HeroSection = () => {
       </div>
 
       {/* Language Switcher */}
-      <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 shadow-lg sm:bottom-6 sm:right-6 sm:gap-3 sm:px-4 sm:py-2">
-        <button className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
-          🇮🇩 ID
+      <div className="fixed bottom-24 right-4 z-[80] flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 shadow-lg sm:bottom-6 sm:right-6 sm:gap-3 sm:px-4 sm:py-2">
+        <button
+          onClick={() => setLanguage('id')}
+          className={`flex items-center justify-center rounded-full p-1 transition-all ${
+            language === 'id'
+              ? 'ring-2 ring-primary/50 bg-primary/10'
+              : 'hover:bg-muted/50'
+          }`}
+          aria-label="Switch to Indonesian"
+          title="Bahasa Indonesia"
+        >
+          <img
+            src="/images/flags/id.svg"
+            alt="Bendera Indonesia"
+            className="h-6 w-6 rounded-full object-cover"
+            loading="lazy"
+          />
         </button>
-        <button className="hidden items-center gap-1.5 text-sm text-muted-foreground sm:flex">
-          🇬🇧 EN
+        <button
+          onClick={() => setLanguage('en')}
+          className={`flex items-center justify-center rounded-full p-1 transition-all ${
+            language === 'en'
+              ? 'ring-2 ring-primary/50 bg-primary/10'
+              : 'hover:bg-muted/50'
+          }`}
+          aria-label="Switch to English"
+          title="English"
+        >
+          <img
+            src="/images/flags/gb.svg"
+            alt="Flag of the United Kingdom"
+            className="h-6 w-6 rounded-full object-cover"
+            loading="lazy"
+          />
         </button>
       </div>
 
+      {/* Region Popup */}
       {activeRegion && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 px-4 py-6 backdrop-blur-[1px]" onClick={closePopup}>
+        <div
+          className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto bg-black/45 px-4 py-6 backdrop-blur-[1px] sm:items-center"
+          onClick={closePopup}
+        >
           <div
-            className="w-full max-w-xl overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-2xl sm:rounded-3xl"
+            className="flex max-h-[calc(100vh-3rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-emerald-100/90 bg-white shadow-2xl sm:max-h-[calc(100vh-4rem)] sm:rounded-3xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="relative h-52 w-full bg-emerald-50 sm:h-64">
@@ -936,7 +1309,7 @@ const HeroSection = () => {
               </button>
             </div>
 
-            <div className="space-y-4 p-5">
+            <div className="space-y-4 overflow-y-auto overscroll-contain p-5">
               <div className="flex flex-wrap gap-2">
                 {activeRegion.images.map((image, index) => (
                   <button
@@ -954,7 +1327,7 @@ const HeroSection = () => {
               <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2">
                 <p className="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">
                   <FaMapMarkerAlt className="h-3.5 w-3.5" />
-                  Tempat unik
+                  <TypewriterText speed={15}>{t('popup.uniquePlace')}</TypewriterText>
                 </p>
                 <p className="text-sm font-semibold text-foreground">{activeRegion.uniquePlace}</p>
               </div>
@@ -962,7 +1335,7 @@ const HeroSection = () => {
               <div>
                 <p className="mb-2 flex items-center gap-2 text-base font-semibold">
                   <FaLightbulb className="h-4 w-4 text-emerald-600" />
-                  Unique Facts
+                  <TypewriterText speed={20}>{t('popup.uniqueFacts')}</TypewriterText>
                 </p>
                 <div className="grid gap-2">
                   {activeRegion.facts.map((fact, index) => (
@@ -980,19 +1353,21 @@ const HeroSection = () => {
               </div>
 
               <div>
-                <p className="mb-2 text-base font-semibold">Statistics</p>
+                <p className="mb-2 text-base font-semibold">
+                  <TypewriterText speed={20}>{t('popup.statistics')}</TypewriterText>
+                </p>
                 <div className="grid grid-cols-2 gap-3 rounded-xl border border-emerald-100 bg-white p-3">
                   <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-2">
                     <p className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                       <FaUsers className="h-3 w-3" />
-                      Population
+                      <TypewriterText speed={15}>{t('popup.population')}</TypewriterText>
                     </p>
                     <p className="text-base font-bold">{activeRegion.population}</p>
                   </div>
                   <div className="rounded-lg border border-emerald-100/80 bg-emerald-50/60 p-2">
                     <p className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                       <FaRulerCombined className="h-3 w-3" />
-                      Area
+                      <TypewriterText speed={15}>{t('popup.area')}</TypewriterText>
                     </p>
                     <p className="text-base font-bold">{activeRegion.area}</p>
                   </div>
@@ -1002,7 +1377,7 @@ const HeroSection = () => {
               <div>
                 <p className="mb-2 flex items-center gap-2 text-base font-semibold">
                   <FaNewspaper className="h-4 w-4 text-emerald-600" />
-                  Latest News
+                  <TypewriterText speed={20}>{t('popup.latestNews')}</TypewriterText>
                 </p>
                 <div className="grid gap-2.5">
                   {activeRegion.news.map((newsItem) => (

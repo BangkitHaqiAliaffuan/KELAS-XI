@@ -36,8 +36,8 @@ const Sidebar = ({ isOpen, onToggle, onGovernmentClick, onWebGisClick, onPublicS
     <aside 
       className={`fixed left-0 top-0 z-40 flex h-screen flex-col items-center justify-between border-r border-emerald-100 bg-gradient-to-b from-emerald-50 via-white to-green-50/70 py-6 shadow-[6px_0_24px_-18px_rgba(22,163,74,0.45)] transition-all duration-300 ${
         isOpen
-          ? "w-56 translate-x-0 pointer-events-auto"
-          : "w-56 -translate-x-full pointer-events-none lg:w-16 lg:translate-x-0 lg:pointer-events-auto"
+          ? "w-[13rem] translate-x-0 pointer-events-auto"
+          : "w-[13rem] -translate-x-full pointer-events-none lg:w-[3.5rem] lg:translate-x-0 lg:pointer-events-auto"
       }`}
     >
       {/* Toggle Button */}
@@ -57,8 +57,8 @@ const Sidebar = ({ isOpen, onToggle, onGovernmentClick, onWebGisClick, onPublicS
         <img
           src="/images/sidoarjo-logo.png"
           alt="Logo Sidoarjo"
-          width={56}
-          height={56}
+          width={50}
+          height={50}
           className="mb-2 rounded-xl bg-emerald-100/60 p-1 ring-1 ring-emerald-200/80"
         />
         
@@ -68,10 +68,10 @@ const Sidebar = ({ isOpen, onToggle, onGovernmentClick, onWebGisClick, onPublicS
               <button
                 key={item.label}
                 onClick={index === 0 ? onGovernmentClick : index === 1 ? onWebGisClick : index === 2 ? onPublicServicesClick : index === 3 ? onCctvClick : index === 4 ? onTransparencyClick : undefined}
-                className="group flex h-24 w-full flex-col items-center justify-center gap-1 rounded-xl border border-emerald-200/80 bg-white/60 px-2 py-1 text-emerald-700/80 transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 hover:text-emerald-800 hover:shadow-sm"
+                className="group flex h-20 w-full flex-col items-center justify-center gap-1 rounded-xl border border-emerald-200/80 bg-white/60 px-2 py-1 text-emerald-700/80 transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 hover:text-emerald-800 hover:shadow-sm"
               >
-                <item.icon className="h-8 w-8 shrink-0 drop-shadow-[0_1px_2px_rgba(22,163,74,0.2)]" />
-                <span className="flex min-h-[2.25rem] w-full items-center justify-center text-center text-[12px] font-semibold leading-tight whitespace-pre-line">
+                <item.icon className="h-7 w-7 shrink-0 drop-shadow-[0_1px_2px_rgba(22,163,74,0.2)]" />
+                <span className="flex min-h-[2rem] w-full items-center justify-center text-center text-[11px] font-semibold leading-tight whitespace-pre-line">
                   {item.label}
                 </span>
               </button>
@@ -84,10 +84,10 @@ const Sidebar = ({ isOpen, onToggle, onGovernmentClick, onWebGisClick, onPublicS
             {navItems.map((item) => (
               <button
                 key={item.label}
-                className="group flex h-12 w-full items-center justify-center rounded-xl border border-emerald-200/80 bg-white/60 p-2 text-emerald-700/80 transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 hover:text-emerald-800 hover:shadow-sm"
+                className="group flex h-11 w-full items-center justify-center rounded-xl border border-emerald-200/80 bg-white/60 p-2 text-emerald-700/80 transition-all duration-200 hover:border-emerald-300 hover:bg-emerald-100/80 hover:text-emerald-800 hover:shadow-sm"
                 title={item.label.replace('\n', ' ')}
               >
-                <item.icon className="h-6 w-6 shrink-0 drop-shadow-[0_1px_2px_rgba(22,163,74,0.2)]" />
+                <item.icon className="h-5 w-5 shrink-0 drop-shadow-[0_1px_2px_rgba(22,163,74,0.2)]" />
               </button>
             ))}
           </nav>

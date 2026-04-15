@@ -194,10 +194,10 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
           </button>
         )}
 
-        <div className="h-full p-3 pt-10">
+        <div className="h-full p-2.5 pt-9">
           <div className="h-full overflow-y-auto space-y-3">
             {/* Header - Current Weather */}
-            <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 p-3">
+            <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 p-2.5">
               <div className="flex items-center justify-between mb-2">
                 <TypewriterText className="text-xs font-semibold text-emerald-700" speed={20}>
                   {t('weather.title')}
@@ -210,14 +210,14 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                 </span>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-5xl font-bold text-emerald-700">{weather.temperature}°</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-4xl font-bold text-emerald-700">{weather.temperature}°</span>
                 <div className="flex-1">
                   <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
                     <div className="scale-75 origin-left">{sidebarWeather.icon}</div>
-                    <span className="text-xs font-semibold">{sidebarWeather.label}</span>
+                    <span className="text-[11px] font-semibold">{sidebarWeather.label}</span>
                   </div>
-                  <p className="text-xs text-emerald-600">{t('weather.feelsLike')} {weather.feelsLike}°C</p>
+                  <p className="text-[11px] text-emerald-600">{t('weather.feelsLike')} {weather.feelsLike}°C</p>
                 </div>
               </div>
             </div>
@@ -233,7 +233,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                       {t('weather.humidity')}
                     </TypewriterText>
                   </div>
-                  <p className="text-sm font-bold text-cyan-700">{weather.humidity}%</p>
+                  <p className="text-[15px] font-bold text-cyan-700">{weather.humidity}%</p>
                 </div>
               </div>
 
@@ -246,7 +246,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                       {t('weather.wind')}
                     </TypewriterText>
                   </div>
-                  <p className="text-sm font-bold text-teal-700">{weather.windSpeed} km/h</p>
+                  <p className="text-[15px] font-bold text-teal-700">{weather.windSpeed} km/h</p>
                 </div>
               </div>
 
@@ -257,7 +257,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                     <Thermometer className="h-3.5 w-3.5" />
                     <span className="text-[11px] font-semibold">{t('weather.feelsLike')}</span>
                   </div>
-                  <p className="text-sm font-bold text-orange-700">{weather.feelsLike}°C</p>
+                  <p className="text-[15px] font-bold text-orange-700">{weather.feelsLike}°C</p>
                 </div>
               </div>
 
@@ -277,7 +277,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
 
             {/* Forecast */}
             <div className="rounded-lg border border-emerald-100/60 bg-emerald-50/50 p-2.5">
-              <h4 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
+              <h4 className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold text-emerald-700">
                 <Sun className="h-3 w-3" />
                 <TypewriterText speed={15}>
                   {t('weather.forecast')}
@@ -294,7 +294,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        <span className={`text-[11px] font-semibold ${index === 0 ? "text-emerald-700" : "text-muted-foreground"}`}>
+                        <span className={`text-[10px] font-semibold ${index === 0 ? "text-emerald-700" : "text-muted-foreground"}`}>
                           {index === 0 ? t('weather.today') : day.day}
                         </span>
                         <div className="scale-75 origin-left text-emerald-600">
@@ -302,7 +302,7 @@ const WeatherCard = ({ variant = "full", isOpen = true, onToggle }: WeatherCardP
                         </div>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold">{day.maxTemp}°</span>
+                        <span className="text-[11px] font-bold">{day.maxTemp}°</span>
                         <span className="text-[10px] text-muted-foreground">{day.minTemp}°</span>
                       </div>
                     </div>

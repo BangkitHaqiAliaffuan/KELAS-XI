@@ -2,9 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
 @layer base {
+  html {
+    font-size: 15px;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 210 20% 15%;
@@ -49,6 +51,18 @@
     --hero-gradient-end: 200 40% 96%;
 
     --leader-bg: 0 0% 97%;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 16px;
   }
 }
 

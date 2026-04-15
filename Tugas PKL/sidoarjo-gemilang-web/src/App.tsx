@@ -48,13 +48,9 @@ const App = () => {
             <div className={`sidoarjo-loader ${loaderClosing ? "is-closing" : ""}`} role="status" aria-live="polite">
               <div className="sidoarjo-loader__backdrop" />
               <div className="sidoarjo-loader__content">
-                <div className="sidoarjo-loader__rings" aria-hidden="true">
-                  <span className="sidoarjo-loader__ring sidoarjo-loader__ring--outer" />
-                  <span className="sidoarjo-loader__ring sidoarjo-loader__ring--middle" />
-                </div>
                 <img src="/images/sidoarjo-logo.png" alt="Logo Kabupaten Sidoarjo" className="sidoarjo-loader__logo" />
                 <p className="sidoarjo-loader__title">Portal Kabupaten Sidoarjo</p>
-                <p className="sidoarjo-loader__subtitle">Memuat layanan digital...</p>
+                <p className="sidoarjo-loader__subtitle">Memuat...</p>
                 <div className="sidoarjo-loader__progress" aria-hidden="true">
                   <span className="sidoarjo-loader__progress-bar" />
                 </div>

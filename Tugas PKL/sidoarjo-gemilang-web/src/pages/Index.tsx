@@ -9,7 +9,7 @@ const Index = () => {
     typeof window !== "undefined" ? window.matchMedia("(min-width: 1024px)").matches : true,
   );
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(isDesktop);
-  const [rightSidebarOpen, setRightSidebarOpen] = useState(isDesktop);
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
   const [governmentPopupOpen, setGovernmentPopupOpen] = useState(false);
 
   useEffect(() => {
@@ -18,7 +18,8 @@ const Index = () => {
     const applyViewportMode = (matches: boolean) => {
       setIsDesktop(matches);
       setLeftSidebarOpen(matches);
-      setRightSidebarOpen(matches);
+      // Don't auto-open weather card - keep it closed by default
+      // setRightSidebarOpen(matches);
     };
 
     applyViewportMode(mediaQuery.matches);
@@ -47,19 +48,19 @@ const Index = () => {
       />
       <main
         className={`flex-1 transition-all duration-300 ${
-          leftSidebarOpen ? "ml-0 lg:ml-56" : "ml-0 lg:ml-16"
+          leftSidebarOpen ? "ml-0 lg:ml-[13rem]" : "ml-0 lg:ml-14"
         } ${
-          rightSidebarOpen ? "mr-0 lg:mr-56" : "mr-0"
+          rightSidebarOpen ? "mr-0 lg:mr-52" : "mr-0"
         }`}
       >
         <HeroSection />
       </main>
 
-      {!isDesktop && (
+      {!isDesktop && !governmentPopupOpen && (
         <button
           onClick={() => setLeftSidebarOpen((prev) => !prev)}
-          className={`fixed top-1/2 z-[72] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300 bg-white shadow-xl transition-all hover:bg-emerald-50 hover:shadow-2xl ${
-            leftSidebarOpen ? "left-[14.5rem]" : "left-3"
+          className={`fixed top-1/2 z-30 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300 bg-white shadow-xl transition-all hover:bg-emerald-50 hover:shadow-2xl ${
+            leftSidebarOpen ? "left-[12.5rem]" : "left-3"
           }`}
           aria-label={leftSidebarOpen ? "Tutup menu kiri" : "Buka menu kiri"}
           title={leftSidebarOpen ? "Tutup menu" : "Buka menu"}
@@ -86,7 +87,7 @@ const Index = () => {
               aria-label="Tutup panel cuaca"
             />
           )}
-          <aside className="fixed right-2 top-16 bottom-4 z-50 w-[min(92vw,22rem)] overflow-hidden rounded-2xl border border-emerald-100/70 bg-white/90 shadow-2xl backdrop-blur-xl transition-all duration-300 lg:right-0 lg:top-0 lg:bottom-0 lg:w-56 lg:rounded-none lg:border-l lg:border-r-0 lg:border-t-0 lg:border-b-0 lg:shadow-none">
+          <aside className="fixed right-2 top-16 bottom-4 z-50 w-[min(92vw,22rem)] overflow-hidden rounded-2xl border border-emerald-100/70 bg-white/90 shadow-2xl backdrop-blur-xl transition-all duration-300 lg:right-0 lg:top-0 lg:bottom-0 lg:w-52 lg:rounded-none lg:border-l lg:border-r-0 lg:border-t-0 lg:border-b-0 lg:shadow-none">
             <div className="relative h-full">
               <WeatherCard
                 variant="sidebar"
@@ -99,13 +100,13 @@ const Index = () => {
       )}
 
       {/* Toggle Button - Muncul saat sidebar cuaca tertutup */}
-      {!rightSidebarOpen && (
+      {!rightSidebarOpen && !governmentPopupOpen && (
         <button
           onClick={() => {
             setLeftSidebarOpen(false);
             setRightSidebarOpen(true);
           }}
-          className="group fixed right-3 top-1/2 z-[70] flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300 bg-white shadow-xl transition-all hover:scale-110 hover:bg-emerald-50 hover:shadow-2xl sm:right-4 sm:h-12 sm:w-12"
+          className="group fixed right-3 top-1/2 z-30 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border-2 border-emerald-300 bg-white shadow-xl transition-all hover:scale-110 hover:bg-emerald-50 hover:shadow-2xl sm:right-4 sm:h-12 sm:w-12"
           aria-label="Buka cuaca"
           title="Buka cuaca"
         >
