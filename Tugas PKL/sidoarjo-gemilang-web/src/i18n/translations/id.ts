@@ -47,12 +47,12 @@ export const idTranslations = {
   "weather.dataFrom": "Data dari",
 
   // Region Popup
-  "popup.uniquePlace": "Tempat unik",
-  "popup.uniqueFacts": "Unique Facts",
-  "popup.statistics": "Statistics",
-  "popup.population": "Population",
-  "popup.area": "Area",
-  "popup.latestNews": "Latest News",
+  "popup.uniquePlace": "Tempat Unik",
+  "popup.uniqueFacts": "Fakta Unik",
+  "popup.statistics": "Statistik",
+  "popup.population": "Jumlah Penduduk",
+  "popup.area": "Luas Wilayah",
+  "popup.latestNews": "Berita Terbaru",
   "popup.imageSlide": "Gambar {{current}} dari {{total}}",
   "popup.previousImage": "Gambar sebelumnya",
   "popup.nextImage": "Gambar berikutnya",
@@ -66,6 +66,17 @@ export const idTranslations = {
   "footer.rights": "© 2025 Pemerintah Kabupaten Sidoarjo. Hak Cipta Dilindungi.",
   "footer.privacy": "Kebijakan Privasi",
   "footer.terms": "Syarat & Ketentuan",
+
+  // Government Popup
+  "governmentPopup.title": "Pemerintahan",
+  "governmentPopup.subtitle": "Direktori instansi pemerintah Kabupaten Sidoarjo",
+  "governmentPopup.searchPlaceholder": "Cari instansi...",
+  "governmentPopup.noResults": "Tidak ada hasil ditemukan",
+  "governmentPopup.noResultsHint": "Coba gunakan kata kunci lain",
+  "governmentPopup.total": "Total",
+  "governmentPopup.dinas": "Dinas",
+  "governmentPopup.kecamatan": "Kecamatan",
+  "governmentPopup.rsud": "RSUD",
 };
 
 export type TranslationKeys = keyof typeof idTranslations;

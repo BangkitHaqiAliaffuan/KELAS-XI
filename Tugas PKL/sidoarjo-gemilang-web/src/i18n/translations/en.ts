@@ -66,6 +66,17 @@ export const enTranslations = {
   "footer.rights": "© 2025 Sidoarjo Regency Government. All Rights Reserved.",
   "footer.privacy": "Privacy Policy",
   "footer.terms": "Terms & Conditions",
+
+  // Government Popup
+  "governmentPopup.title": "Government",
+  "governmentPopup.subtitle": "Directory of Sidoarjo Regency Government Agencies",
+  "governmentPopup.searchPlaceholder": "Search agency...",
+  "governmentPopup.noResults": "No results found",
+  "governmentPopup.noResultsHint": "Try using different keywords",
+  "governmentPopup.total": "Total",
+  "governmentPopup.dinas": "Agencies",
+  "governmentPopup.kecamatan": "Districts",
+  "governmentPopup.rsud": "Hospitals",
 };
 
 export type TranslationKeys = keyof typeof enTranslations;
