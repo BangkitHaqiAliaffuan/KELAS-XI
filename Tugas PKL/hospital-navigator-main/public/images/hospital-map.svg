@@ -15,7 +15,26 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"><defs
-     id="defs1"><inkscape:path-effect
+     id="defs1"><style
+       id="room-interaction-style"><![CDATA[
+      .room-interactive {
+        cursor: pointer;
+        transition: fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+      }
+      .room-interactive:hover {
+        fill: #dbeafe !important;
+        stroke: #1d4ed8 !important;
+        stroke-width: 1.6 !important;
+        opacity: 1 !important;
+        filter: brightness(1.04);
+      }
+      .region-active {
+        fill: #bfdbfe !important;
+        stroke: #2563eb !important;
+        stroke-width: 2.1 !important;
+        opacity: 1 !important;
+      }
+    ]]></style><inkscape:path-effect
        effect="bspline"
        id="path-effect45"
        is_visible="true"

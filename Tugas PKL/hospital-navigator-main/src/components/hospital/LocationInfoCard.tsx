@@ -1,16 +1,21 @@
 import { Share2, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { HospitalLocation } from "@/data/hospitalLocations";
+import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 interface LocationInfoCardProps {
-  location: HospitalLocation | null;
+  location: HospitalRoomInfo | null;
 }
 
 const categoryIcons: Record<string, string> = {
-  Clinic: "🏥",
-  Ward: "🛏️",
+  Emergency: "🚑",
+  Outpatient: "🏥",
+  "Critical Care": "❤️‍🩹",
+  Diagnostic: "🔬",
   Facility: "🔧",
-  Restroom: "🚻",
+  Service: "ℹ️",
+  Administration: "📋",
+  Surgery: "🔪",
+  Room: "🚪",
 };
 
 const LocationInfoCard = ({ location }: LocationInfoCardProps) => {
@@ -28,12 +33,12 @@ const LocationInfoCard = ({ location }: LocationInfoCardProps) => {
             <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded bg-hospital-gold text-accent-foreground">
               {location.category}
             </span>
-            <span className="text-xs text-muted-foreground">• 3 min walk</span>
           </div>
           <h3 className="font-bold text-foreground text-lg leading-tight truncate">{location.name}</h3>
           <p className="text-sm text-muted-foreground">
-            📍 {location.building} • {location.location}
+            📍 {location.locationHint}
           </p>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{location.description}</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">

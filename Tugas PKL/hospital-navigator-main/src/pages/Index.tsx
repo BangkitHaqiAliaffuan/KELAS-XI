@@ -1,20 +1,23 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import TopNav from "@/components/hospital/TopNav";
 import Sidebar from "@/components/hospital/Sidebar";
 import SearchBar from "@/components/hospital/SearchBar";
 import MapViewer from "@/components/hospital/MapViewer";
-import LocationInfoCard from "@/components/hospital/LocationInfoCard";
 import NavigationDialog from "@/components/hospital/NavigationDialog";
-import type { HospitalLocation } from "@/data/hospitalLocations";
+import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
-  const [selectedLocation, setSelectedLocation] = useState<HospitalLocation | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
 
   const handleStartNavigation = () => {
     setIsNavDialogOpen(true);
   };
+
+  const handleClearSelection = useCallback(() => {
+    setSelectedLocation(null);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
@@ -40,10 +43,11 @@ const Index = () => {
           {/* Map area */}
           <div className="flex-1 relative px-4 pb-4">
             <div className="h-full flex gap-3">
-              <MapViewer selectedLocation={selectedLocation} />
+              <MapViewer 
+                selectedLocation={selectedLocation} 
+                onClearSelection={handleClearSelection}
+              />
             </div>
-
-            <LocationInfoCard location={selectedLocation} />
           </div>
         </main>
       </div>
