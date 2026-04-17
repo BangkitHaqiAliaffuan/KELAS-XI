@@ -1,13 +1,24 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { Plus, Minus, Locate, X, Navigation } from "lucide-react";
-import { roomInfoBySvgId, type HospitalRoomInfo } from "@/data/hospitalRoomInfo";
+import {
+  roomInfoBySvgId,
+  roomLabelConfigBySvgId,
+  type HospitalRoomInfo,
+} from "@/data/hospitalRoomInfo";
+import {
+  buildRouteForRooms,
+  getRoutingRoomIds,
+  resolveRoomIdFromQrCode,
+  type RoomRouteResult,
+} from "@/data/hospitalRouteGraph";
 
 interface MapViewerProps {
   selectedLocation?: HospitalRoomInfo | null;
   onClearSelection?: () => void;
+  highlightCategory?: "departments" | "facilities" | "emergency" | null;
 }
 
-const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
+const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: MapViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
@@ -36,6 +47,19 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
     y: number;
   } | null>(null);
 
+  const routingRoomIds = getRoutingRoomIds();
+  const routingRoomOptions = routingRoomIds
+    .map((roomId) => roomInfoBySvgId[roomId])
+    .filter((room): room is HospitalRoomInfo => Boolean(room))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const [locationInputMode, setLocationInputMode] = useState<"dropdown" | "qr">("dropdown");
+  const [startRoomId, setStartRoomId] = useState<string>(routingRoomOptions[0]?.id || "");
+  const [endRoomId, setEndRoomId] = useState<string>(routingRoomOptions[1]?.id || routingRoomOptions[0]?.id || "");
+  const [qrCodeInput, setQrCodeInput] = useState("");
+  const [routeDebugMessage, setRouteDebugMessage] = useState("");
+  const [activeRoute, setActiveRoute] = useState<RoomRouteResult | null>(null);
+
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
   const ZOOM_STEP = 0.2;
@@ -44,6 +68,12 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
   useEffect(() => { positionRef.current = position; }, [position]);
+
+  useEffect(() => {
+    if (!routingRoomOptions.length) return;
+    if (!startRoomId) setStartRoomId(routingRoomOptions[0].id);
+    if (!endRoomId) setEndRoomId(routingRoomOptions[Math.min(1, routingRoomOptions.length - 1)].id);
+  }, [routingRoomOptions, startRoomId, endRoomId]);
 
   const toShortDescription = useCallback((value: string) => {
     if (value.length <= 92) return value;
@@ -244,10 +274,12 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
       if (!pathId && !pathLabel) return null;
 
       const source = `${pathId} ${pathLabel}`.toLowerCase();
+      const normalizedSource = source.replace(/_/g, " ");
       if (
-        source.includes("jalan") ||
-        source.includes("background") ||
-        source.includes("unamed")
+        normalizedSource.includes("jalan") ||
+        normalizedSource.includes("background") ||
+        normalizedSource.includes("unamed") ||
+        normalizedSource.includes("area kamar operasi")
       ) {
         return null;
       }
@@ -299,6 +331,162 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
     []
   );
 
+  const roomMatchesHighlightCategory = useCallback(
+    (room: HospitalRoomInfo, category: "departments" | "facilities" | "emergency") => {
+      const roomCategory = room.category.trim();
+
+      if (category === "emergency") {
+        const match = roomCategory === "Emergency";
+        console.log(`[Category] room="${room.id}" cat="${roomCategory}" → emergency match: ${match}`);
+        return match;
+      }
+
+      if (category === "facilities") {
+        const match = ["Facility", "Service", "Administration"].includes(roomCategory);
+        console.log(`[Category] room="${room.id}" cat="${roomCategory}" → facilities match: ${match}`);
+        return match;
+      }
+
+      // departments — includes wards, treatment, outpatient, diagnostic, surgery, critical
+      const match = ["Outpatient", "Critical Care", "Diagnostic", "Surgery", "Ward", "Treatment"].includes(roomCategory);
+      console.log(`[Category] room="${room.id}" cat="${roomCategory}" → departments match: ${match}`);
+      return match;
+    },
+    []
+  );
+
+  const ensureDynamicHighlightStyle = useCallback((svgDoc: Document) => {
+    if (svgDoc.getElementById("mapviewer-dynamic-highlight-style")) {
+      console.log("[Category] ensureDynamicHighlightStyle: style already injected");
+      return;
+    }
+
+    // IMPORTANT: <style> must be a direct child of <svg> root, NOT inside <defs>.
+    // CSS inside <defs> is not applied by browsers to SVG elements.
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) {
+      console.warn("[Category] ensureDynamicHighlightStyle: no <svg> root found");
+      return;
+    }
+
+    const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.id = "mapviewer-dynamic-highlight-style";
+    style.textContent = `
+      .region-category-active:not(.region-active) {
+        fill: #fde047 !important;
+        fill-opacity: 0.96 !important;
+        stroke: #92400e !important;
+        stroke-width: 2.8 !important;
+        stroke-linejoin: round !important;
+        filter: drop-shadow(0 0 2px rgba(146, 64, 14, 0.6));
+      }
+    `;
+
+    svgRoot.insertBefore(style, svgRoot.firstChild);
+    console.log("[Category] ensureDynamicHighlightStyle: style injected into SVG root");
+  }, []);
+
+  const ensureRouteStyle = useCallback((svgDoc: Document) => {
+    if (svgDoc.getElementById("mapviewer-route-style")) return;
+
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) return;
+
+    const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.id = "mapviewer-route-style";
+    style.textContent = `
+      .route-base-line {
+        fill: none;
+        stroke: #1d4ed8;
+        stroke-width: 10;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0.35;
+      }
+      .route-arrow-line {
+        fill: none;
+        stroke: #38bdf8;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 16 10;
+        animation: routeDashMotion 1.2s linear infinite;
+      }
+      .route-start-arrow {
+        fill: #38bdf8;
+        stroke: #0f172a;
+        stroke-width: 1.6;
+        stroke-linejoin: round;
+      }
+      @keyframes routeDashMotion {
+        to {
+          stroke-dashoffset: -52;
+        }
+      }
+    `;
+
+    svgRoot.insertBefore(style, svgRoot.firstChild);
+  }, []);
+
+  const renderRouteOverlay = useCallback((svgDoc: Document, route: RoomRouteResult | null) => {
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) return;
+
+    const namespace = "http://www.w3.org/2000/svg";
+    const oldLayer = svgDoc.getElementById("dynamic-route-layer");
+    oldLayer?.remove();
+
+    if (!route || route.points.length < 2) return;
+
+    ensureRouteStyle(svgDoc);
+
+    const pointsAttr = route.points.map((point) => `${point.x},${point.y}`).join(" ");
+
+    const layer = svgDoc.createElementNS(namespace, "g");
+    layer.setAttribute("id", "dynamic-route-layer");
+    layer.setAttribute("pointer-events", "none");
+
+    const baseLine = svgDoc.createElementNS(namespace, "polyline");
+    baseLine.setAttribute("points", pointsAttr);
+    baseLine.setAttribute("class", "route-base-line");
+    layer.appendChild(baseLine);
+
+    const arrowLine = svgDoc.createElementNS(namespace, "polyline");
+    arrowLine.setAttribute("points", pointsAttr);
+    arrowLine.setAttribute("class", "route-arrow-line");
+    layer.appendChild(arrowLine);
+
+    const startPoint = route.points[0];
+    const endPoint = route.points[route.points.length - 1];
+
+    const nextPoint = route.points.find((point, index) => {
+      if (index === 0) return false;
+      return Math.hypot(point.x - startPoint.x, point.y - startPoint.y) > 0.5;
+    }) || route.points[1];
+
+    if (nextPoint) {
+      const angle = Math.atan2(nextPoint.y - startPoint.y, nextPoint.x - startPoint.x) * (180 / Math.PI);
+      const startArrow = svgDoc.createElementNS(namespace, "path");
+      startArrow.setAttribute("class", "route-start-arrow");
+      startArrow.setAttribute("d", "M -12 -8 L 12 0 L -12 8 L -4 0 Z");
+      startArrow.setAttribute("transform", `translate(${startPoint.x} ${startPoint.y}) rotate(${angle})`);
+      layer.appendChild(startArrow);
+    }
+
+    const pinWidth = 30;
+    const pinHeight = 36;
+    const endPin = svgDoc.createElementNS(namespace, "image");
+    endPin.setAttribute("x", String(endPoint.x - pinWidth / 2));
+    endPin.setAttribute("y", String(endPoint.y - pinHeight));
+    endPin.setAttribute("width", String(pinWidth));
+    endPin.setAttribute("height", String(pinHeight));
+    endPin.setAttribute("href", "/images/location-pin.png");
+    endPin.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "/images/location-pin.png");
+    layer.appendChild(endPin);
+
+    svgRoot.appendChild(layer);
+  }, [ensureRouteStyle]);
+
   const renderDynamicRoomLabels = useCallback(
     (svgDoc: Document) => {
       const svgRoot = svgDoc.querySelector("svg");
@@ -326,16 +514,45 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
         const bbox = targetElement.getBBox();
         if (!bbox.width || !bbox.height) return;
 
-        const centerX = bbox.x + bbox.width / 2;
-        const centerY = bbox.y + bbox.height / 2;
-        const minDimension = Math.min(bbox.width, bbox.height);
-        const area = bbox.width * bbox.height;
+        const labelConfig =
+          roomLabelConfigBySvgId[room.id] ||
+          roomLabelConfigBySvgId[path.id] ||
+          {};
+        const configuredWidth =
+          typeof labelConfig.width === "number" && labelConfig.width > 0
+            ? labelConfig.width
+            : bbox.width;
+        const offsetX =
+          typeof labelConfig.x === "number" ? labelConfig.x : 0;
+        const offsetY =
+          typeof labelConfig.y === "number" ? labelConfig.y : 0;
 
-        const fontSize = Math.max(
+        const centerX = bbox.x + bbox.width / 2 + offsetX;
+        const centerY = bbox.y + bbox.height / 2 + offsetY;
+        const minDimension = Math.min(configuredWidth, bbox.height);
+        const area = configuredWidth * bbox.height;
+
+        const autoFontSize = Math.max(
           8,
           Math.min(28, Math.min(minDimension * 0.22, Math.sqrt(area) * 0.09))
         );
-        const maxCharsPerLine = Math.max(4, Math.floor(bbox.width / (fontSize * 0.58)));
+        const fontSize =
+          typeof labelConfig.fontSize === "number" && labelConfig.fontSize > 0
+            ? labelConfig.fontSize
+            : autoFontSize;
+        const fontWeight =
+          typeof labelConfig.fontWeight === "number" || typeof labelConfig.fontWeight === "string"
+            ? String(labelConfig.fontWeight)
+            : "600";
+        const fillColor = labelConfig.fill || "#ffffff";
+        const strokeColor = labelConfig.stroke;
+        const strokeWidth =
+          typeof labelConfig.strokeWidth === "number" && labelConfig.strokeWidth >= 0
+            ? labelConfig.strokeWidth
+            : Math.max(0.6, fontSize * 0.1);
+        const fontFamily = labelConfig.fontFamily || "Helvetica, Arial, sans-serif";
+
+        const maxCharsPerLine = Math.max(4, Math.floor(configuredWidth / (fontSize * 0.58)));
 
         const labelText = room.name || room.id;
         const lines = buildLabelLines(labelText, maxCharsPerLine);
@@ -346,11 +563,17 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
         textNode.setAttribute("y", String(centerY));
         textNode.setAttribute("text-anchor", "middle");
         textNode.setAttribute("font-size", `${fontSize.toFixed(2)}px`);
-        textNode.setAttribute("font-weight", "700");
-        textNode.setAttribute("fill", "#ffffff");
-        textNode.setAttribute("paint-order", "stroke");
-        textNode.setAttribute("stroke", "#0f172a");
-        textNode.setAttribute("stroke-width", `${Math.max(0.6, fontSize * 0.1).toFixed(2)}`);
+        textNode.setAttribute("font-family", fontFamily);
+        textNode.setAttribute("font-weight", fontWeight);
+        textNode.setAttribute("fill", fillColor);
+        if (strokeColor && strokeColor !== "none") {
+          textNode.setAttribute("paint-order", "stroke");
+          textNode.setAttribute("stroke", strokeColor);
+          textNode.setAttribute("stroke-width", `${strokeWidth.toFixed(2)}`);
+        } else {
+          textNode.setAttribute("stroke", "none");
+          textNode.setAttribute("stroke-width", "0");
+        }
         textNode.setAttribute("stroke-linejoin", "round");
         textNode.setAttribute("style", "pointer-events:none;user-select:none;");
 
@@ -380,6 +603,7 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
 
+    ensureDynamicHighlightStyle(svgDoc);
     renderDynamicRoomLabels(svgDoc);
 
     const cleanupHandlers: Array<() => void> = [];
@@ -453,7 +677,7 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
     );
 
     return () => cleanupHandlers.forEach((fn) => fn());
-  }, [roomFromPath, startDrag, handleWheel, renderDynamicRoomLabels]);
+  }, [roomFromPath, startDrag, handleWheel, renderDynamicRoomLabels, ensureDynamicHighlightStyle]);
 
   useEffect(() => {
     const objectElement = objectRef.current;
@@ -530,23 +754,43 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
       console.log(`[MapViewer] 🔍 target bbox=`, { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height });
       console.log(`[MapViewer] 🔍 svgCenter=(${svgCenterX}, ${svgCenterY})`);
 
-      // Convert SVG coords to container-space (how the <object> is currently rendered)
-      const scaleSvgToObj = objectRect.width / viewBox.width;
-      const objCenterX = (svgCenterX - viewBox.x) * scaleSvgToObj;
-      const objCenterY = (svgCenterY - viewBox.y) * scaleSvgToObj;
-      
-      console.log(`[MapViewer] 🔍 scaleSvgToObj=${scaleSvgToObj}, objCenter=(${objCenterX}, ${objCenterY})`);
+      // We need everything in "unscaled map-space" — the coordinate system of mapRef
+      // before the CSS transform (translate + scale) is applied.
+      const currentScale = scaleRef.current;
+      const currentPos   = positionRef.current;
+
+      // objectRect.width is the RENDERED (scaled) width of the <object>.
+      // Divide by currentScale to get the natural (unscaled) width.
+      const objNaturalWidth = objectRect.width / currentScale;
+      const scaleSvgToObjNatural = objNaturalWidth / viewBox.width;
+
+      // Offset of target centre within the <object> — in unscaled pixels
+      const objCenterX = (svgCenterX - viewBox.x) * scaleSvgToObjNatural;
+      const objCenterY = (svgCenterY - viewBox.y) * scaleSvgToObjNatural;
+
+      console.log(`[MapViewer] 🔍 scaleSvgToObjNatural=${scaleSvgToObjNatural.toFixed(4)}, objCenter=(${objCenterX.toFixed(1)}, ${objCenterY.toFixed(1)})`);
+
+      // Position of the <object>'s top-left corner in unscaled map-space.
+      // screenLeft = containerLeft + currentPos.x + mapLeft * currentScale  →  mapLeft = (screenLeft - containerLeft - currentPos.x) / currentScale
+      const objOffsetInMapX = (objectRect.left - containerRect.left - currentPos.x) / currentScale;
+      const objOffsetInMapY = (objectRect.top  - containerRect.top  - currentPos.y) / currentScale;
+
+      // Both terms are now in unscaled map-space — safe to add
+      const elementInMapX = objOffsetInMapX + objCenterX;
+      const elementInMapY = objOffsetInMapY + objCenterY;
+
+      console.log(`[MapViewer] 🔍 objOffsetInMap=(${objOffsetInMapX.toFixed(1)}, ${objOffsetInMapY.toFixed(1)}), elementInMap=(${elementInMapX.toFixed(1)}, ${elementInMapY.toFixed(1)})`);
 
       // Desired zoom level
       const targetScale = 2.0;
 
-      // The SVG element center (in container-space) needs to land at container center
+      // Place the element centre exactly at the container centre
       const containerCenterX = containerRect.width / 2;
       const containerCenterY = containerRect.height / 2;
 
       const newPos = {
-        x: containerCenterX - objCenterX * targetScale,
-        y: containerCenterY - objCenterY * targetScale,
+        x: containerCenterX - elementInMapX * targetScale,
+        y: containerCenterY - elementInMapY * targetScale,
       };
       
       console.log(`[MapViewer] ✅ ZOOMING to scale=${targetScale}, pos=`, newPos, `current scale=${scaleRef.current}`);
@@ -595,6 +839,50 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
   }, [selectedLocation, zoomToSvgElement]);
 
   // ---------------------------------------------------------------------------
+  // Highlight all rooms by selected sidebar category
+  useEffect(() => {
+    console.log(`[Category] highlightCategory effect fired: category="${highlightCategory}"`);
+
+    if (!objectRef.current) {
+      console.warn("[Category] ABORT: objectRef.current is null");
+      return;
+    }
+    const svgDoc = objectRef.current.contentDocument;
+    if (!svgDoc) {
+      console.warn("[Category] ABORT: contentDocument is null — SVG may not be loaded yet");
+      return;
+    }
+
+    // Make sure the highlight CSS is in the SVG document
+    ensureDynamicHighlightStyle(svgDoc);
+
+    // Clear previous category highlights
+    const prevHighlighted = svgDoc.querySelectorAll(".region-category-active");
+    console.log(`[Category] clearing ${prevHighlighted.length} previously highlighted elements`);
+    prevHighlighted.forEach((el) => el.classList.remove("region-category-active"));
+
+    if (!highlightCategory) {
+      console.log("[Category] highlightCategory is null/empty — cleared only");
+      return;
+    }
+
+    const roomPaths = Array.from(svgDoc.querySelectorAll("path")) as SVGPathElement[];
+    console.log(`[Category] scanning ${roomPaths.length} paths in SVG...`);
+
+    let matchCount = 0;
+    roomPaths.forEach((path) => {
+      const room = roomFromPath(path);
+      if (!room) return;
+      if (roomMatchesHighlightCategory(room, highlightCategory)) {
+        path.classList.add("region-category-active");
+        matchCount++;
+        console.log(`[Category] ✅ highlighted path id="${path.id}" room="${room.name}" (${room.category})`);
+      }
+    });
+
+    console.log(`[Category] done — ${matchCount} rooms highlighted for category="${highlightCategory}"`);
+  }, [highlightCategory, roomFromPath, roomMatchesHighlightCategory, ensureDynamicHighlightStyle]);
+
   // Highlight active room / selected location in SVG
   // ---------------------------------------------------------------------------
 
@@ -622,6 +910,70 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
       setActiveMarkerPosition(null);
     }
   }, [selectedLocation, activeRoomId, scale, position, calculateMarkerPosition, asSvgGraphicsElement]);
+
+  const handleResolveQrLocation = useCallback(() => {
+    const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
+    if (!resolvedRoomId) {
+      setRouteDebugMessage("QR tidak dikenali. Contoh: QR-IGD, QR-LAB, QR-POLI.");
+      return;
+    }
+
+    setStartRoomId(resolvedRoomId);
+    setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+  }, [qrCodeInput]);
+
+  const handleFindRoute = useCallback(() => {
+    if (!startRoomId || !endRoomId) {
+      setRouteDebugMessage("Pilih titik awal dan tujuan terlebih dahulu.");
+      return;
+    }
+
+    if (startRoomId === endRoomId) {
+      setRouteDebugMessage("Titik awal dan tujuan sama. Pilih tujuan yang berbeda.");
+      setActiveRoute(null);
+      return;
+    }
+
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setRouteDebugMessage("SVG belum siap. Coba beberapa detik lagi.");
+      return;
+    }
+
+    const result = buildRouteForRooms(startRoomId, endRoomId, svgDoc);
+    if (!result) {
+      setRouteDebugMessage("Rute tidak ditemukan pada jalur 'jalan' di denah.");
+      setActiveRoute(null);
+      return;
+    }
+
+    setActiveRoute(result);
+    setRouteDebugMessage(
+      `Rute ditemukan: ${roomInfoBySvgId[startRoomId]?.name || startRoomId} → ${roomInfoBySvgId[endRoomId]?.name || endRoomId}`
+    );
+
+    zoomToSvgElement(endRoomId);
+  }, [startRoomId, endRoomId, zoomToSvgElement]);
+
+  const handleClearRoute = useCallback(() => {
+    setActiveRoute(null);
+    setRouteDebugMessage("Rute dibersihkan.");
+  }, []);
+
+  useEffect(() => {
+    const objectElement = objectRef.current;
+    if (!objectElement) return;
+
+    const applyRoute = () => {
+      const svgDoc = objectElement.contentDocument;
+      if (!svgDoc) return;
+      renderRouteOverlay(svgDoc, activeRoute);
+    };
+
+    applyRoute();
+    objectElement.addEventListener("load", applyRoute);
+    return () => objectElement.removeEventListener("load", applyRoute);
+  }, [activeRoute, renderRouteOverlay]);
 
   // ---------------------------------------------------------------------------
   // Center / reset
@@ -692,6 +1044,110 @@ const MapViewer = ({ selectedLocation, onClearSelection }: MapViewerProps) => {
         <div className="px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shadow-sm">
           Desktop View • Mouse Wheel to Zoom
         </div>
+      </div>
+
+      <div className="absolute top-4 right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background/90 backdrop-blur-md shadow-lg p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pathfinding Debug</p>
+          <span className="text-[10px] text-muted-foreground">Lantai 1</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setLocationInputMode("dropdown")}
+            className={`rounded-md px-2 py-1 text-xs font-medium border transition-colors ${
+              locationInputMode === "dropdown"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            Lokasi via Dropdown
+          </button>
+          <button
+            onClick={() => setLocationInputMode("qr")}
+            className={`rounded-md px-2 py-1 text-xs font-medium border transition-colors ${
+              locationInputMode === "qr"
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background text-foreground border-border hover:bg-muted"
+            }`}
+          >
+            Lokasi via QR
+          </button>
+        </div>
+
+        {locationInputMode === "dropdown" ? (
+          <div className="space-y-1">
+            <label className="text-[11px] text-muted-foreground">Saya di sini (Start)</label>
+            <select
+              value={startRoomId}
+              onChange={(event) => setStartRoomId(event.target.value)}
+              className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+            >
+              {routingRoomOptions.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <label className="text-[11px] text-muted-foreground">Scan QR (simulasi)</label>
+            <div className="flex gap-2">
+              <input
+                value={qrCodeInput}
+                onChange={(event) => setQrCodeInput(event.target.value)}
+                placeholder="Contoh: QR-IGD"
+                className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+              />
+              <button
+                onClick={handleResolveQrLocation}
+                className="rounded-md border border-border bg-muted px-2 py-1.5 text-xs font-medium hover:bg-muted/80"
+              >
+                Set
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-1">
+          <label className="text-[11px] text-muted-foreground">Tujuan (End)</label>
+          <select
+            value={endRoomId}
+            onChange={(event) => setEndRoomId(event.target.value)}
+            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
+          >
+            {routingRoomOptions.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleFindRoute}
+            className="flex-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            Find Route
+          </button>
+          <button
+            onClick={handleClearRoute}
+            className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            Clear
+          </button>
+        </div>
+
+        {activeRoute && (
+          <p className="text-[11px] text-muted-foreground">
+            Jarak koridor: {Math.round(activeRoute.totalDistance)} px • {activeRoute.checkpointIds.length} checkpoint
+          </p>
+        )}
+        {routeDebugMessage && (
+          <p className="text-[11px] text-muted-foreground">{routeDebugMessage}</p>
+        )}
       </div>
 
       {/* Zoom controls */}

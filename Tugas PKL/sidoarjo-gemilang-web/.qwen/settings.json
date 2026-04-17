@@ -1,4 +1,13 @@
 {
+  "providers": {
+    "openrouter": {
+      "api_key": "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",
+      "models": [
+        "qwen/qwen-2.5-coder-32b-instruct:free"
+      ]
+    }
+  },
+  "default_model": "openrouter/qwen/qwen-2.5-coder-32b-instruct:free",
   "permissions": {
     "allow": [
       "WebSearch"

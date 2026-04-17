@@ -6,10 +6,17 @@ import MapViewer from "@/components/hospital/MapViewer";
 import NavigationDialog from "@/components/hospital/NavigationDialog";
 import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
+type RoomHighlightCategory = "departments" | "facilities" | "emergency" | null;
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
+
+  const highlightCategory: RoomHighlightCategory =
+    activeTab === "departments" || activeTab === "facilities" || activeTab === "emergency"
+      ? activeTab
+      : null;
 
   const handleStartNavigation = () => {
     setIsNavDialogOpen(true);
@@ -46,6 +53,7 @@ const Index = () => {
               <MapViewer 
                 selectedLocation={selectedLocation} 
                 onClearSelection={handleClearSelection}
+                highlightCategory={highlightCategory}
               />
             </div>
           </div>

@@ -9,8 +9,8 @@ function createCircle(radius) {
   };
 }
 
-const anotherCircle = createCircle(2);
-anotherCircle.draw();
+// const anotherCircle = createCircle(2);
+// anotherCircle.draw();
 
 // constructor
 function circle(radius) {
@@ -20,9 +20,9 @@ function circle(radius) {
   };
 }
 
-const buildCircle = new circle(1);
+// const buildCircle = new circle(1);
 
-buildCircle.draw();
+// buildCircle.draw();
 
 // use case factory function
 
@@ -32,45 +32,69 @@ function createBook(title, author, price) {
     author,
     price,
     getInfo: () => {
-        console.log('data buku berhasil diambil', title, author, price)
+      console.log("data buku berhasil diambil", title, author, price);
     },
-    applyDiscount:(percent)=>{
-        const total = ((100 - percent)/ 100) * price 
-        console.log('berikut ini adalah data diskon', total)
+    applyDiscount: (percent) => {
+      const total = ((100 - percent) / 100) * price;
+      console.log("berikut ini adalah data diskon", total);
     },
   };
 }
 
+const LaskarPelangi = createBook("Laskar Pelangi", "bang Surya", 2000);
 
-const LaskarPelangi = createBook('Laskar Pelangi', 'bang Surya', 2000)
-
-
-const Femboy = createBook('Femboy Attractiveness', 'Bangkit Haqi Aliaffuan', 50000)
+const Femboy = createBook(
+  "Femboy Attractiveness",
+  "Bangkit Haqi Aliaffuan",
+  50000,
+);
 
 // Femboy.getInfo()
 // Femboy.applyDiscount(30)
 
-
-function User(username, email){
-    this.username = username,    
-    this.email = email,
-    this.isOnline = false,
-    this.login = function(){
-        this.isOnline = true
-        console.log(`User ${this.username}, telah login dengan sukses. Status Online ${this.isOnline}`)
-    }    
-    this.logout = function(){
-        this.isOnline = false
-        console.log(`User ${this.username}, telah logout dengan sukses. Status Online: ${this.isOnline}`)
-    }    
+function User(username, email) {
+  ((this.username = username),
+    (this.email = email),
+    (this.isOnline = false),
+    (this.login = function () {
+      this.isOnline = true;
+      console.log(
+        `User ${this.username}, telah login dengan sukses. Status Online ${this.isOnline}`,
+      );
+    }));
+  this.logout = function () {
+    this.isOnline = false;
+    console.log(
+      `User ${this.username}, telah logout dengan sukses. Status Online: ${this.isOnline}`,
+    );
+  };
 }
 
+// const Haqi = new User('Haqi', 'haqi@gmail.com');
+// const Ale = new User('Ale', 'ale@gmail.com');
 
-const Haqi = new User('Haqi', 'haqi@gmail.com');
-const Ale = new User('Ale', 'ale@gmail.com');
+// Haqi.logout()
 
-Haqi.logout()
+// primitive types
 
+let number = 10;
 
+function increase(number) {
+  number++;
+}
 
+increase();
 
+console.log(number);
+
+// refrence types
+
+let object = { number: 10 };
+
+function increases(obj){
+  obj.number++;
+}
+
+increases(object)
+
+console.log(object)

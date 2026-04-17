@@ -6,6 +6,18 @@ export interface HospitalRoomInfo {
   description: string;
 }
 
+export interface HospitalRoomLabelConfig {
+  width?: number;
+  x?: number;
+  y?: number;
+  fontFamily?: string;
+  fontSize?: number;
+  fontWeight?: string | number;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+}
+
 export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
   IGD: {
     id: "IGD",
@@ -63,6 +75,13 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Dekat area IGD",
     description: "Meja informasi untuk bantuan arah ruangan dan layanan rumah sakit.",
   },
+  Ruang_sebelah_IGD: {
+    id: "Ruang_sebelah_IGD",
+    name: "Area Pelayanan IGD",
+    category: "Service",
+    locationHint: "Menyatu dengan area IGD",
+    description: "Area pelayanan pendukung di sebelah IGD untuk kebutuhan pasien dan pengunjung.",
+  },
   Rekam_Medis: {
     id: "Rekam_Medis",
     name: "Rekam Medis",
@@ -76,6 +95,20 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Surgery",
     locationHint: "Sayap kiri tengah peta",
     description: "Area tindakan operasi dengan kontrol sterilitas tinggi.",
+  },
+  Area_Kamar_Operasi: {
+    id: "Area_Kamar_Operasi",
+    name: "Area Kamar Operasi",
+    category: "Surgery",
+    locationHint: "Sisi kiri tengah peta",
+    description: "Area pendukung kamar operasi.",
+  },
+  Area_Kamar_Operasi_2: {
+    id: "Area_Kamar_Operasi_2",
+    name: "Area Kamar Operasi 2",
+    category: "Surgery",
+    locationHint: "Sisi kiri tengah peta",
+    description: "Area tambahan pendukung kamar operasi.",
   },
   Musholla: {
     id: "Musholla",
@@ -91,4 +124,199 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Sayap kiri tengah peta",
     description: "Unit sterilisasi alat medis untuk kebutuhan tindakan klinis.",
   },
+  "K._Mayat": {
+    id: "K._Mayat",
+    name: "K. Mayat",
+    category: "Facility",
+    locationHint: "Sisi kiri atas peta",
+    description: "Area kamar jenazah untuk penanganan sesuai prosedur rumah sakit.",
+  },
+  "R._HD": {
+    id: "R._HD",
+    name: "R. HD",
+    category: "Treatment",
+    locationHint: "Sisi kiri atas peta",
+    description: "Ruang hemodialisa untuk layanan cuci darah pasien.",
+  },
+  "R._Laundry": {
+    id: "R._Laundry",
+    name: "R. Laundry",
+    category: "Facility",
+    locationHint: "Sisi kiri atas peta",
+    description: "Area laundry untuk pengelolaan linen dan kebutuhan kebersihan.",
+  },
+  "R._Internis": {
+    id: "R._Internis",
+    name: "R. Internis",
+    category: "Outpatient",
+    locationHint: "Sisi kanan atas peta",
+    description: "Ruang layanan dokter penyakit dalam.",
+  },
+  "R._Tindakan_Internis": {
+    id: "R._Tindakan_Internis",
+    name: "R. Tindakan Internis",
+    category: "Outpatient",
+    locationHint: "Sisi kanan atas peta",
+    description: "area khusus di rumah sakit untuk menangani masalah kesehatan organ dalam",
+  },
+  "R._Rawat_Inap": {
+    id: "R._Rawat_Inap",
+    name: "R. Rawat Inap",
+    category: "Ward",
+    locationHint: "Sisi kanan atas peta",
+    description: "Ruang rawat inap untuk perawatan pasien.",
+  },
+  "R._JKN": {
+    id: "R._JKN",
+    name: "R. JKN",
+    category: "Administration",
+    locationHint: "Sisi kanan atas peta",
+    description: "Layanan administrasi dan informasi kepesertaan JKN.",
+  },
+  "R._Gizi": {
+    id: "R._Gizi",
+    name: "R. Gizi",
+    category: "Service",
+    locationHint: "Sisi atas tengah peta",
+    description: "Unit gizi untuk konsultasi dan pengelolaan diet pasien.",
+  },
+  "R._Pinere": {
+    id: "R._Pinere",
+    name: "R. Pinere",
+    category: "Ward",
+    locationHint: "Sisi kiri atas-tengah peta",
+    description: "Ruang perawatan isolasi sesuai protokol infeksius.",
+  },
+  KU_1: {
+    id: "KU_1",
+    name: "KU 1",
+    category: "Ward",
+    locationHint: "Sisi kiri tengah peta",
+    description: "Kelas perawatan umum KU 1.",
+  },
+  "R._Gawat_Gabung": {
+    id: "R._Gawat_Gabung",
+    name: "R. Gawat Gabung",
+    category: "Ward",
+    locationHint: "Sisi kiri tengah peta",
+    description: "Ruang perawatan gabung untuk kebutuhan observasi pasien.",
+  },
+  "TRP._RJ": {
+    id: "TRP._RJ",
+    name: "TRP. RJ",
+    category: "Service",
+    locationHint: "Dekat area IGD",
+    description: "Area transit/triase layanan rawat jalan.",
+  },
+  "R._Ponek": {
+    id: "R._Ponek",
+    name: "R. Ponek",
+    category: "Emergency",
+    locationHint: "Dekat area IGD",
+    description: "Ruang layanan PONEK untuk kegawatdaruratan maternal-neonatal.",
+  },
+  "R._IPSRS": {
+    id: "R._IPSRS",
+    name: "R. IPSRS",
+    category: "Facility",
+    locationHint: "Sisi kiri atas-tengah peta",
+    description: "Instalasi pemeliharaan sarana rumah sakit.",
+  },
+  "R._Kebidanan": {
+    id: "R._Kebidanan",
+    name: "R. Kebidanan",
+    category: "Ward",
+    locationHint: "Sisi atas tengah-kanan peta",
+    description: "Ruang layanan kebidanan dan perawatan ibu.",
+  },
+  "R._Anak": {
+    id: "R._Anak",
+    name: "R. Anak",
+    category: "Ward",
+    locationHint: "Sisi atas kanan peta",
+    description: "Ruang layanan dan perawatan pasien anak.",
+  },
+  "R._Rawat_Jantung": {
+    id: "R._Rawat_Jantung",
+    name: "R. Rawat Jantung",
+    category: "Ward",
+    locationHint: "Sisi kanan tengah peta",
+    description: "Ruang rawat pasien dengan layanan kardiovaskular.",
+  },
+  "R._Bedah": {
+    id: "R._Bedah",
+    name: "R. Bedah",
+    category: "Ward",
+    locationHint: "Sisi kanan tengah peta",
+    description: "Ruang perawatan pasien bedah.",
+  },
+  Rehab_Medik: {
+    id: "Rehab_Medik",
+    name: "Rehab Medik",
+    category: "Service",
+    locationHint: "Sisi kanan bawah peta",
+    description: "Layanan rehabilitasi medik untuk pemulihan fungsi pasien.",
+  },
+  "R._Fisioterapi": {
+    id: "R._Fisioterapi",
+    name: "R. Fisioterapi",
+    category: "Service",
+    locationHint: "Sisi kanan bawah peta",
+    description: "Ruang fisioterapi untuk terapi gerak dan pemulihan.",
+  },
+  Kantor_Administrasi: {
+    id: "Kantor_Administrasi",
+    name: "Kantor/Administrasi",
+    category: "Administration",
+    locationHint: "Sisi kanan bawah peta",
+    description: "Area kantor dan layanan administrasi rumah sakit.",
+  },
+  "R._Tunggu": {
+    id: "R._Tunggu",
+    name: "R. Tunggu",
+    category: "Facility",
+    locationHint: "Sisi kanan bawah peta",
+    description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
+  },
+};
+
+export const roomLabelConfigBySvgId: Record<string, HospitalRoomLabelConfig> = {
+  IGD: { width: 700, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", },
+  Poliklinik: { width: 300, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", },
+  ICU: { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", },
+  Lab: { width: 80, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", },
+  Farmasi: { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize:10 },
+  Radiologi: { width: 95, x: 30, y: -30, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 18 },
+  Toilet: { width: 85, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  Informasi: { width: 80, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 7 },
+  Ruang_sebelah_IGD: { width: 140, x: 0, y: -7, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 8 },
+  Rekam_Medis: { width: 80, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif",fontSize: 9 },
+  Kamar_Operasi: { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 13 },
+  Area_Kamar_Operasi: { width: 120, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 11 },
+  Area_Kamar_Operasi_2: { width: 140, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 11 },
+  Musholla: { width: 85, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  CSSD: { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 13 },
+  "K._Mayat": { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+  "R._HD": { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+  "R._Laundry": { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  "R._Internis": { width: 100, x: 0, y: 50, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+  "R._Tindakan_Internis": { width: 90, x: 2, y: -20, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 8 },
+  "R._Rawat_Inap": { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+  "R._JKN": { width: 100, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  "R._Gizi": { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  "R._Pinere": { width: 95, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  KU_1: { width: 70, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 9 },
+  "R._Gawat_Gabung": { width: 100, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 8 },
+  "TRP._RJ": { width: 85, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 7.5},
+  "R._Ponek": { width: 85, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 7.5 },
+  "R._IPSRS": { width: 95, x: 0, y: 5, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+
+  "R._Kebidanan": { width: 100, x: 8, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 12 },
+  "R._Anak": { width: 90, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 11 },
+  "R._Rawat_Jantung": { width: 120, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 8 },
+  "R._Bedah": { width: 95, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  Rehab_Medik: { width: 100, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
+  "R._Fisioterapi": { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 9 },
+  Kantor_Administrasi: { width: 120, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 8 },
+  "R._Tunggu": { width: 95, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 9, fill: "#1a53c8" },
 };
