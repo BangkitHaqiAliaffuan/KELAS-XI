@@ -59,6 +59,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const [qrCodeInput, setQrCodeInput] = useState("");
   const [routeDebugMessage, setRouteDebugMessage] = useState("");
   const [activeRoute, setActiveRoute] = useState<RoomRouteResult | null>(null);
+  const hasAppliedAutoStartRef = useRef(false);
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
@@ -74,6 +75,55 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     if (!startRoomId) setStartRoomId(routingRoomOptions[0].id);
     if (!endRoomId) setEndRoomId(routingRoomOptions[Math.min(1, routingRoomOptions.length - 1)].id);
   }, [routingRoomOptions, startRoomId, endRoomId]);
+
+  useEffect(() => {
+    if (hasAppliedAutoStartRef.current) return;
+    if (!routingRoomOptions.length) return;
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const startParamRaw = params.get("start");
+    const qrParamRaw = params.get("qr") || params.get("code");
+
+    const validRoomIds = new Set(routingRoomOptions.map((room) => room.id));
+
+    const resolveStartRoomId = (raw: string | null): string | null => {
+      if (!raw) return null;
+      const normalized = raw.trim();
+      if (!normalized) return null;
+      if (validRoomIds.has(normalized)) return normalized;
+
+      const lower = normalized.toLowerCase();
+      const match = routingRoomOptions.find((room) => room.id.toLowerCase() === lower);
+      return match?.id || null;
+    };
+
+    const startFromQuery = resolveStartRoomId(startParamRaw);
+    const startFromQr = qrParamRaw ? resolveRoomIdFromQrCode(qrParamRaw) : null;
+    const resolvedStart = startFromQuery || startFromQr;
+
+    hasAppliedAutoStartRef.current = true;
+    if (!resolvedStart || !validRoomIds.has(resolvedStart)) return;
+
+    setStartRoomId(resolvedStart);
+
+    if (startFromQr) {
+      setLocationInputMode("qr");
+      setQrCodeInput(qrParamRaw || "");
+      setRouteDebugMessage(
+        `Start point otomatis dari QR URL: ${roomInfoBySvgId[resolvedStart]?.name || resolvedStart}`
+      );
+    } else {
+      setRouteDebugMessage(
+        `Start point otomatis dari URL: ${roomInfoBySvgId[resolvedStart]?.name || resolvedStart}`
+      );
+    }
+
+    if (endRoomId === resolvedStart) {
+      const alternative = routingRoomOptions.find((room) => room.id !== resolvedStart)?.id;
+      if (alternative) setEndRoomId(alternative);
+    }
+  }, [routingRoomOptions, endRoomId]);
 
   const toShortDescription = useCallback((value: string) => {
     if (value.length <= 92) return value;

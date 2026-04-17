@@ -44,7 +44,34 @@ const toNodeId = (x: number, y: number): string => {
   return `n_${gx}_${gy}`;
 };
 
+const findNearestNodeWithin = (
+  nodes: Record<string, GraphNode>,
+  point: { x: number; y: number },
+  threshold: number,
+  idPrefix?: string
+): GraphNode | null => {
+  const candidates = Object.values(nodes).filter((node) =>
+    idPrefix ? node.id.startsWith(idPrefix) : true
+  );
+
+  let nearest: GraphNode | null = null;
+  let nearestDistance = threshold;
+
+  candidates.forEach((node) => {
+    const d = distance(node, point);
+    if (d <= nearestDistance) {
+      nearest = node;
+      nearestDistance = d;
+    }
+  });
+
+  return nearest;
+};
+
 const ensureNode = (nodes: Record<string, GraphNode>, x: number, y: number): GraphNode => {
+  const explicitNearby = findNearestNodeWithin(nodes, { x, y }, NODE_SNAP_SIZE * 2.2, "node_j");
+  if (explicitNearby) return explicitNearby;
+
   const id = toNodeId(x, y);
   if (!nodes[id]) {
     nodes[id] = { id, x, y };
@@ -79,6 +106,16 @@ const addEdge = (graph: Graph, fromId: string, toId: string, weight: number) => 
 const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<string, GraphNode> } => {
   const graph: Graph = {};
   const nodes: Record<string, GraphNode> = {};
+
+  const explicitNodes = Array.from(svgDoc.querySelectorAll("circle[id^='node_']")) as SVGCircleElement[];
+  explicitNodes.forEach((circle) => {
+    const id = circle.id;
+    const x = Number(circle.getAttribute("cx") || "0");
+    const y = Number(circle.getAttribute("cy") || "0");
+    if (!id || !Number.isFinite(x) || !Number.isFinite(y)) return;
+    nodes[id] = { id, x, y };
+    if (!graph[id]) graph[id] = [];
+  });
 
   const roadPaths = Array.from(svgDoc.querySelectorAll("path")).filter(isRoadPath);
 
@@ -158,6 +195,15 @@ const dijkstra = (graph: Graph, startId: string, endId: string): { path: string[
 };
 
 const getRoomCenter = (svgDoc: Document, roomId: string): { x: number; y: number } | null => {
+  const roomAnchor = svgDoc.getElementById(`node_room_${roomId}`);
+  if (roomAnchor && roomAnchor.tagName.toLowerCase() === "circle") {
+    const x = Number(roomAnchor.getAttribute("cx") || "NaN");
+    const y = Number(roomAnchor.getAttribute("cy") || "NaN");
+    if (Number.isFinite(x) && Number.isFinite(y)) {
+      return { x, y };
+    }
+  }
+
   const target = svgDoc.getElementById(roomId);
   if (!target) return null;
   const maybeGraphics = target as unknown as { getBBox?: () => DOMRect };
@@ -170,8 +216,15 @@ const getRoomCenter = (svgDoc: Document, roomId: string): { x: number; y: number
   };
 };
 
-const getNearestNodeId = (nodes: Record<string, GraphNode>, point: { x: number; y: number }): string | null => {
-  const nodeValues = Object.values(nodes);
+const getNearestNodeId = (
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  point: { x: number; y: number }
+): string | null => {
+  const nodeValues = Object.values(nodes).filter((node) => {
+    if (node.id.startsWith("node_room_")) return false;
+    return (graph[node.id]?.length || 0) > 0;
+  });
   if (!nodeValues.length) return null;
 
   let nearestId: string | null = null;
@@ -205,8 +258,8 @@ export const buildRouteForRooms = (
   if (!startCenter || !endCenter) return null;
 
   const { graph, nodes } = buildRoadGraphFromSvg(svgDoc);
-  const startNodeId = getNearestNodeId(nodes, startCenter);
-  const endNodeId = getNearestNodeId(nodes, endCenter);
+  const startNodeId = getNearestNodeId(nodes, graph, startCenter);
+  const endNodeId = getNearestNodeId(nodes, graph, endCenter);
   if (!startNodeId || !endNodeId) return null;
 
   const shortest = dijkstra(graph, startNodeId, endNodeId);

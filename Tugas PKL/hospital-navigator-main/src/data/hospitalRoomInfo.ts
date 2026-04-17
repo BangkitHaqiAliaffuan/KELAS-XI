@@ -152,9 +152,9 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Sisi kanan atas peta",
     description: "Ruang layanan dokter penyakit dalam.",
   },
-  "R._Tindakan_Internis": {
-    id: "R._Tindakan_Internis",
-    name: "R. Tindakan Internis",
+  "R._Pemeriksaan_Internis": {
+    id: "R._Pemeriksaan_Internis",
+    name: "R. Pemeriksaan Internis",
     category: "Outpatient",
     locationHint: "Sisi kanan atas peta",
     description: "area khusus di rumah sakit untuk menangani masalah kesehatan organ dalam",
