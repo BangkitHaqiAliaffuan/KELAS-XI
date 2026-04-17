@@ -53,7 +53,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const [showCurrentUserMarker, setShowCurrentUserMarker] = useState(false);
   const [svgReadyVersion, setSvgReadyVersion] = useState(0);
 
-  const routingRoomIds = getRoutingRoomIds();
+  const [routingRoomIds, setRoutingRoomIds] = useState<string[]>(() => getRoutingRoomIds());
   const routingRoomOptions = routingRoomIds
     .map((roomId) => roomInfoBySvgId[roomId])
     .filter((room): room is HospitalRoomInfo => Boolean(room))
@@ -78,8 +78,14 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
 
   useEffect(() => {
     if (!routingRoomOptions.length) return;
-    if (!startRoomId) setStartRoomId(routingRoomOptions[0].id);
-    if (!endRoomId) setEndRoomId(routingRoomOptions[Math.min(1, routingRoomOptions.length - 1)].id);
+
+    const validRoomIds = new Set(routingRoomOptions.map((room) => room.id));
+    if (!startRoomId || !validRoomIds.has(startRoomId)) {
+      setStartRoomId(routingRoomOptions[0].id);
+    }
+    if (!endRoomId || !validRoomIds.has(endRoomId)) {
+      setEndRoomId(routingRoomOptions[Math.min(1, routingRoomOptions.length - 1)].id);
+    }
   }, [routingRoomOptions, startRoomId, endRoomId]);
 
   useEffect(() => {
@@ -342,7 +348,9 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         normalizedSource.includes("jalan") ||
         normalizedSource.includes("background") ||
         normalizedSource.includes("unamed") ||
-        normalizedSource.includes("area kamar operasi")
+        normalizedSource.includes("area kamar operasi") ||
+        normalizedSource.includes("lift lantai 1") ||
+        normalizedSource.includes("tangga lantai 1")
       ) {
         return null;
       }
@@ -751,6 +759,8 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     const onLoad = () => {
       cleanup?.();
       cleanup = setupSvgRoomInteraction();
+      const svgDoc = objectElement.contentDocument || undefined;
+      setRoutingRoomIds(getRoutingRoomIds(svgDoc));
       setSvgReadyVersion((prev) => prev + 1);
     };
 

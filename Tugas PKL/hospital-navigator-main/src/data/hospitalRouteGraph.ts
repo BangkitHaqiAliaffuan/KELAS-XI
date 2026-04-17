@@ -283,7 +283,27 @@ const getNearestNodeId = (
   return nearestId;
 };
 
-export const getRoutingRoomIds = (): string[] => Object.keys(roomInfoBySvgId);
+const shouldExcludeFromRouting = (roomId: string): boolean => {
+  const normalized = roomId.toLowerCase().replace(/_/g, " ");
+  return (
+    normalized.includes("jalan") ||
+    normalized.includes("background") ||
+    normalized.includes("unamed") ||
+    normalized.includes("area kamar operasi") ||
+    normalized.includes("lift lantai 1") ||
+    normalized.includes("tangga lantai 1")
+  );
+};
+
+export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
+  const ids = Object.keys(roomInfoBySvgId).filter((roomId) => !shouldExcludeFromRouting(roomId));
+  if (!svgDoc) return ids;
+
+  return ids.filter((roomId) => {
+    const element = svgDoc.getElementById(roomId);
+    return Boolean(element && element.tagName.toLowerCase() === "path");
+  });
+};
 
 export const resolveRoomIdFromQrCode = (rawCode: string): string | null => {
   const normalized = rawCode.trim().toUpperCase();
