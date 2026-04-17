@@ -46,6 +46,12 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     x: number;
     y: number;
   } | null>(null);
+  const [currentUserMarkerPosition, setCurrentUserMarkerPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const [showCurrentUserMarker, setShowCurrentUserMarker] = useState(false);
+  const [svgReadyVersion, setSvgReadyVersion] = useState(0);
 
   const routingRoomIds = getRoutingRoomIds();
   const routingRoomOptions = routingRoomIds
@@ -106,6 +112,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     if (!resolvedStart || !validRoomIds.has(resolvedStart)) return;
 
     setStartRoomId(resolvedStart);
+    setShowCurrentUserMarker(true);
 
     if (startFromQr) {
       setLocationInputMode("qr");
@@ -262,23 +269,18 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   // SVG interaction setup — room clicks + forward mousedown/wheel into host
   // ---------------------------------------------------------------------------
 
-  const calculateMarkerPosition = useCallback(
-    (target: SVGGraphicsElement | null) => {
+  const calculateOverlayPosition = useCallback(
+    (target: SVGGraphicsElement | null, anchor: "top" | "center") => {
       if (
         !target ||
         !containerRef.current ||
         !objectRef.current?.contentDocument
       ) {
-        setActiveMarkerPosition(null);
-        return;
+        return null;
       }
 
-      const svgRoot =
-        objectRef.current.contentDocument.querySelector("svg");
-      if (!svgRoot) {
-        setActiveMarkerPosition(null);
-        return;
-      }
+      const svgRoot = objectRef.current.contentDocument.querySelector("svg");
+      if (!svgRoot) return null;
 
       const objectRect = objectRef.current.getBoundingClientRect();
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -291,25 +293,36 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         !objectRect.width ||
         !objectRect.height
       ) {
+        return null;
+      }
+
+      const anchorX = bbox.x + bbox.width / 2;
+      const anchorY = anchor === "center" ? bbox.y + bbox.height / 2 : bbox.y;
+
+      const overlayX =
+        objectRect.left -
+        containerRect.left +
+        ((anchorX - viewBox.x) / viewBox.width) * objectRect.width;
+      const overlayY =
+        objectRect.top -
+        containerRect.top +
+        ((anchorY - viewBox.y) / viewBox.height) * objectRect.height;
+
+      return { x: overlayX, y: overlayY };
+    },
+    []
+  );
+
+  const calculateMarkerPosition = useCallback(
+    (target: SVGGraphicsElement | null) => {
+      const markerPos = calculateOverlayPosition(target, "top");
+      if (!markerPos) {
         setActiveMarkerPosition(null);
         return;
       }
-
-      const centerX = bbox.x + bbox.width / 2;
-      const topY = bbox.y;
-
-      const markerX =
-        objectRect.left -
-        containerRect.left +
-        ((centerX - viewBox.x) / viewBox.width) * objectRect.width;
-      const markerY =
-        objectRect.top -
-        containerRect.top +
-        ((topY - viewBox.y) / viewBox.height) * objectRect.height;
-
-      setActiveMarkerPosition({ x: markerX, y: markerY });
+      setActiveMarkerPosition(markerPos);
     },
-    []
+    [calculateOverlayPosition]
   );
 
   const roomFromPath = useCallback(
@@ -738,6 +751,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     const onLoad = () => {
       cleanup?.();
       cleanup = setupSvgRoomInteraction();
+      setSvgReadyVersion((prev) => prev + 1);
     };
 
     if (objectElement.contentDocument) onLoad();
@@ -748,6 +762,28 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       cleanup?.();
     };
   }, [setupSvgRoomInteraction]);
+
+  useEffect(() => {
+    if (!showCurrentUserMarker || !startRoomId) {
+      setCurrentUserMarkerPosition(null);
+      return;
+    }
+
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setCurrentUserMarkerPosition(null);
+      return;
+    }
+
+    const target = asSvgGraphicsElement(svgDoc.getElementById(startRoomId));
+    const markerPos = calculateOverlayPosition(target, "center");
+    if (!markerPos) {
+      setCurrentUserMarkerPosition(null);
+      return;
+    }
+
+    setCurrentUserMarkerPosition(markerPos);
+  }, [showCurrentUserMarker, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition]);
 
   // ---------------------------------------------------------------------------
   // Zoom to SVG element — centers the map on a given SVG element
@@ -968,7 +1004,9 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return;
     }
 
+    setLocationInputMode("qr");
     setStartRoomId(resolvedRoomId);
+    setShowCurrentUserMarker(true);
     setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
   }, [qrCodeInput]);
 
@@ -1130,7 +1168,10 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
             <label className="text-[11px] text-muted-foreground">Saya di sini (Start)</label>
             <select
               value={startRoomId}
-              onChange={(event) => setStartRoomId(event.target.value)}
+              onChange={(event) => {
+                setStartRoomId(event.target.value);
+                setShowCurrentUserMarker(false);
+              }}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
             >
               {routingRoomOptions.map((room) => (
@@ -1260,6 +1301,21 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
             className="h-8 w-8 drop-shadow-lg"
             draggable={false}
           />
+        </div>
+      )}
+
+      {/* Current user marker (QR start point) */}
+      {showCurrentUserMarker && currentUserMarkerPosition && (
+        <div
+          className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+          style={{
+            left: currentUserMarkerPosition.x,
+            top: currentUserMarkerPosition.y,
+          }}
+        >
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary/30 animate-ping" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-primary/20" />
+          <div className="relative h-4.5 w-4.5 rounded-full bg-primary border-2 border-white shadow-[0_0_0_4px_rgba(37,99,235,0.30)]" />
         </div>
       )}
 

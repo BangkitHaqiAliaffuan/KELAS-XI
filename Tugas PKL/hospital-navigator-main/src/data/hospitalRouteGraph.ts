@@ -38,6 +38,18 @@ const isRoadPath = (path: SVGPathElement): boolean => {
   return pathId.includes("jalan") || pathLabel.includes("jalan");
 };
 
+const isElementNodeLike = (element: Element): element is SVGCircleElement | SVGEllipseElement => {
+  const tag = element.tagName.toLowerCase();
+  return tag === "circle" || tag === "ellipse";
+};
+
+const getNodeCenterFromSvgElement = (element: SVGCircleElement | SVGEllipseElement): { x: number; y: number } | null => {
+  const cx = Number(element.getAttribute("cx") || "NaN");
+  const cy = Number(element.getAttribute("cy") || "NaN");
+  if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
+  return { x: cx, y: cy };
+};
+
 const toNodeId = (x: number, y: number): string => {
   const gx = Math.round(x / NODE_SNAP_SIZE);
   const gy = Math.round(y / NODE_SNAP_SIZE);
@@ -48,10 +60,10 @@ const findNearestNodeWithin = (
   nodes: Record<string, GraphNode>,
   point: { x: number; y: number },
   threshold: number,
-  idPrefix?: string
+  predicate?: (node: GraphNode) => boolean
 ): GraphNode | null => {
   const candidates = Object.values(nodes).filter((node) =>
-    idPrefix ? node.id.startsWith(idPrefix) : true
+    predicate ? predicate(node) : true
   );
 
   let nearest: GraphNode | null = null;
@@ -68,8 +80,18 @@ const findNearestNodeWithin = (
   return nearest;
 };
 
-const ensureNode = (nodes: Record<string, GraphNode>, x: number, y: number): GraphNode => {
-  const explicitNearby = findNearestNodeWithin(nodes, { x, y }, NODE_SNAP_SIZE * 2.2, "node_j");
+const ensureNode = (
+  nodes: Record<string, GraphNode>,
+  explicitNodeIds: Set<string>,
+  x: number,
+  y: number
+): GraphNode => {
+  const explicitNearby = findNearestNodeWithin(
+    nodes,
+    { x, y },
+    NODE_SNAP_SIZE * 3,
+    (node) => explicitNodeIds.has(node.id) && !node.id.startsWith("node_room_")
+  );
   if (explicitNearby) return explicitNearby;
 
   const id = toNodeId(x, y);
@@ -107,17 +129,37 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
   const graph: Graph = {};
   const nodes: Record<string, GraphNode> = {};
 
-  const explicitNodes = Array.from(svgDoc.querySelectorAll("circle[id^='node_']")) as SVGCircleElement[];
-  explicitNodes.forEach((circle) => {
-    const id = circle.id;
-    const x = Number(circle.getAttribute("cx") || "0");
-    const y = Number(circle.getAttribute("cy") || "0");
-    if (!id || !Number.isFinite(x) || !Number.isFinite(y)) return;
-    nodes[id] = { id, x, y };
+  const explicitNodeIds = new Set<string>();
+
+  const nodeLayer = Array.from(svgDoc.querySelectorAll("g"))
+    .find((group) => {
+      const layerLabel = (group.getAttribute("inkscape:label") || "").toLowerCase();
+      return layerLabel.includes("node jalan") || layerLabel.includes("pathfinding node");
+    });
+
+  const explicitNodeElements = nodeLayer
+    ? Array.from(nodeLayer.querySelectorAll("circle, ellipse"))
+    : Array.from(svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"));
+
+  explicitNodeElements.forEach((element) => {
+    if (!isElementNodeLike(element)) return;
+    const id = element.id;
+    if (!id) return;
+    const center = getNodeCenterFromSvgElement(element);
+    if (!center) return;
+    nodes[id] = { id, x: center.x, y: center.y };
+    explicitNodeIds.add(id);
     if (!graph[id]) graph[id] = [];
   });
 
-  const roadPaths = Array.from(svgDoc.querySelectorAll("path")).filter(isRoadPath);
+  const centerlineLayer = Array.from(svgDoc.querySelectorAll("g")).find((group) => {
+    const layerLabel = (group.getAttribute("inkscape:label") || "").toLowerCase();
+    return layerLabel.includes("centerline jalan");
+  });
+
+  const roadPaths = centerlineLayer
+    ? Array.from(centerlineLayer.querySelectorAll("path"))
+    : Array.from(svgDoc.querySelectorAll("path")).filter(isRoadPath);
 
   roadPaths.forEach((path) => {
     const totalLength = path.getTotalLength();
@@ -129,7 +171,7 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
     for (let i = 0; i <= samples; i += 1) {
       const t = i / samples;
       const point = path.getPointAtLength(totalLength * t);
-      const currentNode = ensureNode(nodes, point.x, point.y);
+      const currentNode = ensureNode(nodes, explicitNodeIds, point.x, point.y);
 
       if (previousNode && previousNode.id !== currentNode.id) {
         addEdge(graph, previousNode.id, currentNode.id, distance(previousNode, currentNode));
@@ -222,7 +264,7 @@ const getNearestNodeId = (
   point: { x: number; y: number }
 ): string | null => {
   const nodeValues = Object.values(nodes).filter((node) => {
-    if (node.id.startsWith("node_room_")) return false;
+    if (node.id.toLowerCase().startsWith("node_room_")) return false;
     return (graph[node.id]?.length || 0) > 0;
   });
   if (!nodeValues.length) return null;
