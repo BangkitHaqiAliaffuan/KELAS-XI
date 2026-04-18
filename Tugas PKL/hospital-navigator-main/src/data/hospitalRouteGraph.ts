@@ -8,6 +8,82 @@ export interface RoomRouteResult {
   totalDistance: number;
 }
 
+export interface QrAnchor {
+  qrId: string;
+  roomId: string;
+  svgX: number;
+  svgY: number;
+  label: string;
+  floor: number;
+}
+
+export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
+  "QR-CORR-A1-J1": {
+    qrId: "QR-CORR-A1-J1",
+    roomId: "IGD",
+    svgX: 632.95538,
+    svgY: 753.07831,
+    label: "Persimpangan Area Pelayanan IGD",
+    floor: 1,
+  },
+  "QR-CORR-A2-J1": {
+    qrId: "QR-CORR-A2-J1",
+    roomId: "Informasi",
+    svgX: 633.01105,
+    svgY: 729.92206,
+    label: "Persimpangan TRP RJ dan Informasi",
+    floor: 1,
+  },
+  "QR-CORR-B1-J2": {
+    qrId: "QR-CORR-B1-J2",
+    roomId: "Lab",
+    svgX: 865.2005,
+    svgY: 516.54614,
+    label: "Persimpangan ke Lab",
+    floor: 1,
+  },
+  "QR-CORR-B2-J2": {
+    qrId: "QR-CORR-B2-J2",
+    roomId: "Farmasi",
+    svgX: 989.14642,
+    svgY: 515.6015,
+    label: "Persimpangan jalan ke Farmasi",
+    floor: 1,
+  },
+  "QR-CORR-C1-J1": {
+    qrId: "QR-CORR-C1-J1",
+    roomId: "Poliklinik",
+    svgX: 1297.0038,
+    svgY: 681.64331,
+    label: "Persimpangan dari Poliklinik",
+    floor: 1,
+  },
+  "QR-CORR-C2-J3": {
+    qrId: "QR-CORR-C2-J3",
+    roomId: "Rekam_Medis",
+    svgX: 988.59271,
+    svgY: 681.49438,
+    label: "Persimpangan ke Rekam Medis",
+    floor: 1,
+  },
+  "QR-CORR-D1-J1": {
+    qrId: "QR-CORR-D1-J1",
+    roomId: "ICU",
+    svgX: 538.37146,
+    svgY: 255.84256,
+    label: "Persimpangan ke ICU",
+    floor: 1,
+  },
+  "QR-CORR-D2-J1": {
+    qrId: "QR-CORR-D2-J1",
+    roomId: "Rehab_Medik",
+    svgX: 781.63397,
+    svgY: 680.77075,
+    label: "Persimpangan ke Rehab Medik",
+    floor: 1,
+  },
+};
+
 const qrCodeToRoomId: Record<string, string> = {
   "QR-IGD": "IGD",
   "QR-INFORMASI": "Informasi",
@@ -32,9 +108,22 @@ const distance = (from: { x: number; y: number }, to: { x: number; y: number }):
   return Math.hypot(dx, dy);
 };
 
+const normalizeElementId = (raw: string): string => raw.toLowerCase().trim();
+
+const normalizeElementLabel = (raw: string): string =>
+  raw.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
+
+const isBlockedIgdEntranceElement = (idRaw: string, labelRaw: string): boolean => {
+  const normalizedId = normalizeElementId(idRaw);
+  const normalizedLabel = normalizeElementLabel(labelRaw);
+
+  return normalizedId === "masuk_ke_igd" || normalizedLabel === "masuk ke igd";
+};
+
 const isRoadPath = (path: SVGPathElement): boolean => {
   const pathId = path.id?.toLowerCase() || "";
   const pathLabel = (path.getAttribute("inkscape:label") || path.getAttribute("label") || "").toLowerCase();
+  if (isBlockedIgdEntranceElement(pathId, pathLabel)) return false;
   return pathId.includes("jalan") || pathLabel.includes("jalan");
 };
 
@@ -145,6 +234,8 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
     if (!isElementNodeLike(element)) return;
     const id = element.id;
     if (!id) return;
+    const label = (element.getAttribute("inkscape:label") || element.getAttribute("label") || "");
+    if (isBlockedIgdEntranceElement(id, label)) return;
     const center = getNodeCenterFromSvgElement(element);
     if (!center) return;
     nodes[id] = { id, x: center.x, y: center.y };
@@ -158,7 +249,7 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
   });
 
   const roadPaths = centerlineLayer
-    ? Array.from(centerlineLayer.querySelectorAll("path"))
+    ? Array.from(centerlineLayer.querySelectorAll("path")).filter(isRoadPath)
     : Array.from(svgDoc.querySelectorAll("path")).filter(isRoadPath);
 
   roadPaths.forEach((path) => {
@@ -305,6 +396,29 @@ export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
   });
 };
 
+export const resolveQrAnchor = (rawQr: string): QrAnchor | null => {
+  const normalized = rawQr.trim().toUpperCase().replace(/\s+/g, "");
+  if (!normalized) return null;
+
+  const registryEntries = Object.values(QR_ANCHOR_REGISTRY);
+
+  const directMatch = registryEntries.find(
+    (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized
+  );
+  if (directMatch) return directMatch;
+
+  const fuzzyPrefixMatch = registryEntries.find((anchor) => {
+    const key = anchor.qrId.toUpperCase().replace(/\s+/g, "");
+    return normalized.startsWith(key) || key.startsWith(normalized);
+  });
+  if (fuzzyPrefixMatch) return fuzzyPrefixMatch;
+
+  const roomIdFromLegacyQr = resolveRoomIdFromQrCode(rawQr);
+  if (!roomIdFromLegacyQr) return null;
+
+  return registryEntries.find((anchor) => anchor.roomId === roomIdFromLegacyQr) || null;
+};
+
 export const resolveRoomIdFromQrCode = (rawCode: string): string | null => {
   const normalized = rawCode.trim().toUpperCase();
   return qrCodeToRoomId[normalized] || null;
@@ -313,15 +427,22 @@ export const resolveRoomIdFromQrCode = (rawCode: string): string | null => {
 export const buildRouteForRooms = (
   startRoomId: string,
   endRoomId: string,
-  svgDoc: Document
+  svgDoc: Document,
+  options?: {
+    startPoint?: { x: number; y: number };
+    endPoint?: { x: number; y: number };
+  }
 ): RoomRouteResult | null => {
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
   if (!startCenter || !endCenter) return null;
 
+  const startSourcePoint = options?.startPoint ?? startCenter;
+  const endSourcePoint = options?.endPoint ?? endCenter;
+
   const { graph, nodes } = buildRoadGraphFromSvg(svgDoc);
-  const startNodeId = getNearestNodeId(nodes, graph, startCenter);
-  const endNodeId = getNearestNodeId(nodes, graph, endCenter);
+  const startNodeId = getNearestNodeId(nodes, graph, startSourcePoint);
+  const endNodeId = getNearestNodeId(nodes, graph, endSourcePoint);
   if (!startNodeId || !endNodeId) return null;
 
   const shortest = dijkstra(graph, startNodeId, endNodeId);
@@ -332,19 +453,15 @@ export const buildRouteForRooms = (
     .filter(Boolean)
     .map((node) => ({ x: node.x, y: node.y }));
 
-  const points = [startCenter, ...roadPoints, endCenter];
+  const points = roadPoints;
 
   if (points.length < 2) return null;
-
-  const startConnector = startNodeId ? distance(startCenter, nodes[startNodeId]) : 0;
-  const endConnector = endNodeId ? distance(endCenter, nodes[endNodeId]) : 0;
-  const totalDistance = shortest.distance + startConnector + endConnector;
 
   return {
     startRoomId,
     endRoomId,
     checkpointIds: shortest.path,
     points,
-    totalDistance,
+    totalDistance: shortest.distance,
   };
 };

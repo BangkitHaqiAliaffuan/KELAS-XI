@@ -1,5 +1,12 @@
 import { useRef, useState, useCallback, useEffect } from "react";
-import { Plus, Minus, Locate, X, Navigation } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  Locate,
+  X,
+  Navigation,
+  QrCode,
+} from "lucide-react";
 import {
   roomInfoBySvgId,
   roomLabelConfigBySvgId,
@@ -7,10 +14,19 @@ import {
 } from "@/data/hospitalRoomInfo";
 import {
   buildRouteForRooms,
+  QR_ANCHOR_REGISTRY,
   getRoutingRoomIds,
+  resolveQrAnchor,
   resolveRoomIdFromQrCode,
+  type QrAnchor,
   type RoomRouteResult,
 } from "@/data/hospitalRouteGraph";
+import {
+  buildNavigationSteps,
+  getActiveStepIndex,
+  type NavigationStep,
+  type TurnType,
+} from "@/lib/navigationInstructions";
 
 interface MapViewerProps {
   selectedLocation?: HospitalRoomInfo | null;
@@ -68,10 +84,16 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const [isLiveMode, setIsLiveMode] = useState(false);
   const [liveModeStatus, setLiveModeStatus] = useState("");
   const [liveSvgPoint, setLiveSvgPoint] = useState<{ x: number; y: number } | null>(null);
+  const [showQrAnchorHints, setShowQrAnchorHints] = useState(true);
+  const [lastQrAnchor, setLastQrAnchor] = useState<QrAnchor | null>(null);
+  const [qrCalibrationHistory, setQrCalibrationHistory] = useState<QrAnchor[]>([]);
+  const [navSteps, setNavSteps] = useState<NavigationStep[]>([]);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
   const hasAppliedAutoStartRef = useRef(false);
   const geoWatchIdRef = useRef<number | null>(null);
   const liveOriginRef = useRef<{ lat: number; lng: number; svgX: number; svgY: number } | null>(null);
   const liveSvgPointRef = useRef<{ x: number; y: number } | null>(null);
+  const gpsBufferRef = useRef<Array<{ x: number; y: number }>>([]);
   const startRoomIdRef = useRef(startRoomId);
   const endRoomIdRef = useRef(endRoomId);
   const lastRerouteAtRef = useRef(0);
@@ -81,9 +103,10 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const ZOOM_STEP = 0.2;
   const DRAG_THRESHOLD = 4; // px before we consider it a real drag
   const LIVE_METERS_TO_SVG_PX = 2.2;
-  const LIVE_SMOOTHING_ALPHA = 0.35;
   const LIVE_REROUTE_INTERVAL_MS = 1200;
   const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
+  const GPS_BUFFER_SIZE = 5;
+  const qrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
 
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
@@ -592,6 +615,254 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     svgRoot.insertBefore(style, svgRoot.firstChild);
   }, []);
 
+  const ensureTurnArrowStyle = useCallback((svgDoc: Document) => {
+    if (svgDoc.getElementById("mapviewer-turn-arrow-style")) return;
+
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) return;
+
+    const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.id = "mapviewer-turn-arrow-style";
+    style.textContent = `
+      .turn-arrow-group {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.25s ease, opacity 0.25s ease;
+      }
+      .turn-arrow-active {
+        opacity: 1;
+        transform: scale(1.3);
+        filter: drop-shadow(0 0 6px rgba(15, 23, 42, 0.45));
+      }
+      .turn-arrow-passed {
+        opacity: 0.3;
+      }
+      .turn-arrow-upcoming {
+        opacity: 0.85;
+      }
+      .turn-arrive-pulse {
+        animation: turnArrivePulse 1.2s ease-in-out infinite;
+      }
+      @keyframes turnArrivePulse {
+        0% { r: 10; opacity: 0.85; }
+        50% { r: 15; opacity: 0.45; }
+        100% { r: 10; opacity: 0.85; }
+      }
+    `;
+
+    svgRoot.insertBefore(style, svgRoot.firstChild);
+  }, []);
+
+  const ensureQrAnchorStyle = useCallback((svgDoc: Document) => {
+    if (svgDoc.getElementById("mapviewer-qr-anchor-style")) return;
+
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) return;
+
+    const style = svgDoc.createElementNS("http://www.w3.org/2000/svg", "style");
+    style.id = "mapviewer-qr-anchor-style";
+    style.textContent = `
+      .qr-anchor-point {
+        fill: #f59e0b;
+        stroke: #ffffff;
+        stroke-width: 2;
+      }
+      .qr-anchor-point-active {
+        fill: #16a34a;
+      }
+      .qr-anchor-label-bg {
+        fill: rgba(17, 24, 39, 0.85);
+        stroke: rgba(255, 255, 255, 0.45);
+        stroke-width: 0.8;
+      }
+      .qr-anchor-label-text {
+        fill: #ffffff;
+        font-size: 8px;
+        font-weight: 700;
+        font-family: Helvetica, Arial, sans-serif;
+      }
+    `;
+
+    svgRoot.insertBefore(style, svgRoot.firstChild);
+  }, []);
+
+  const renderQrAnchorHints = useCallback((svgDoc: Document, anchors: QrAnchor[], activeQrId: string | null) => {
+    const namespace = "http://www.w3.org/2000/svg";
+    svgDoc.getElementById("dynamic-qr-anchor-layer")?.remove();
+    if (!showQrAnchorHints || !anchors.length) return;
+
+    ensureQrAnchorStyle(svgDoc);
+
+    const layer = svgDoc.createElementNS(namespace, "g");
+    layer.setAttribute("id", "dynamic-qr-anchor-layer");
+    layer.setAttribute("pointer-events", "none");
+
+    anchors.forEach((anchor) => {
+      const group = svgDoc.createElementNS(namespace, "g");
+      group.setAttribute("transform", `translate(${anchor.svgX} ${anchor.svgY})`);
+
+      const point = svgDoc.createElementNS(namespace, "circle");
+      point.setAttribute("cx", "0");
+      point.setAttribute("cy", "0");
+      point.setAttribute("r", "10");
+      point.setAttribute("class", `qr-anchor-point ${activeQrId === anchor.qrId ? "qr-anchor-point-active" : ""}`.trim());
+      group.appendChild(point);
+
+      const qrText = svgDoc.createElementNS(namespace, "text");
+      qrText.setAttribute("x", "0");
+      qrText.setAttribute("y", "3");
+      qrText.setAttribute("text-anchor", "middle");
+      qrText.setAttribute("fill", "#111827");
+      qrText.setAttribute("font-size", "7");
+      qrText.setAttribute("font-weight", "800");
+      qrText.textContent = "QR";
+      group.appendChild(qrText);
+
+      const labelWidth = Math.max(52, anchor.qrId.length * 4.5 + 12);
+      const labelBg = svgDoc.createElementNS(namespace, "rect");
+      labelBg.setAttribute("x", String(14));
+      labelBg.setAttribute("y", String(-20));
+      labelBg.setAttribute("width", String(labelWidth));
+      labelBg.setAttribute("height", "14");
+      labelBg.setAttribute("rx", "4");
+      labelBg.setAttribute("class", "qr-anchor-label-bg");
+      group.appendChild(labelBg);
+
+      const labelText = svgDoc.createElementNS(namespace, "text");
+      labelText.setAttribute("x", String(19));
+      labelText.setAttribute("y", String(-10));
+      labelText.setAttribute("class", "qr-anchor-label-text");
+      labelText.textContent = anchor.qrId;
+      group.appendChild(labelText);
+
+      layer.appendChild(group);
+    });
+
+    svgDoc.querySelector("svg")?.appendChild(layer);
+  }, [ensureQrAnchorStyle, showQrAnchorHints]);
+
+  const renderTurnArrows = useCallback((
+    svgDoc: Document,
+    steps: NavigationStep[],
+    activeIdx: number
+  ) => {
+    const namespace = "http://www.w3.org/2000/svg";
+    svgDoc.getElementById("dynamic-turn-arrow-layer")?.remove();
+    if (!steps.length) return;
+
+    ensureTurnArrowStyle(svgDoc);
+
+    const layer = svgDoc.createElementNS(namespace, "g");
+    layer.setAttribute("id", "dynamic-turn-arrow-layer");
+    layer.setAttribute("pointer-events", "none");
+
+    steps.forEach((step, idx) => {
+      if (step.type === "straight" || step.type === "arrive") return;
+
+      const g = svgDoc.createElementNS(namespace, "g");
+      const stateClass = idx < activeIdx ? "turn-arrow-passed" : idx === activeIdx ? "turn-arrow-active" : "turn-arrow-upcoming";
+      g.setAttribute("class", `turn-arrow-group ${stateClass}`);
+      g.setAttribute("transform", `translate(${step.pivotPoint.x} ${step.pivotPoint.y})`);
+
+      const bg = svgDoc.createElementNS(namespace, "circle");
+      bg.setAttribute("r", "20");
+      bg.setAttribute("cx", "0");
+      bg.setAttribute("cy", "0");
+      const bgColor = step.type === "turn_left" ? "#3b82f6" : step.type === "turn_right" ? "#f59e0b" : "#ef4444";
+      bg.setAttribute("fill", bgColor);
+      bg.setAttribute("stroke", "#ffffff");
+      bg.setAttribute("stroke-width", "2");
+      g.appendChild(bg);
+
+      const arrow = svgDoc.createElementNS(namespace, "path");
+      arrow.setAttribute("d", "M 8,-6 L -6,0 L 8,6 L 4,0 Z");
+      arrow.setAttribute("fill", "#ffffff");
+
+      let rotation = 0;
+      if (step.type === "turn_left") rotation = 0;
+      else if (step.type === "turn_right") rotation = 180;
+      else rotation = 180;
+
+      arrow.setAttribute("transform", `rotate(${rotation})`);
+      g.appendChild(arrow);
+
+      const distanceLabel = svgDoc.createElementNS(namespace, "text");
+      distanceLabel.setAttribute("x", "0");
+      distanceLabel.setAttribute("y", "35");
+      distanceLabel.setAttribute("text-anchor", "middle");
+      distanceLabel.setAttribute("fill", "#0f172a");
+      distanceLabel.setAttribute("font-size", "10");
+      distanceLabel.setAttribute("font-weight", "700");
+      distanceLabel.textContent = `${Math.max(1, Math.round(step.distanceToNext / 3.5))}m`;
+      g.appendChild(distanceLabel);
+
+      if (idx === activeIdx && step.nextQrHint) {
+        const hintGroup = svgDoc.createElementNS(namespace, "g");
+        hintGroup.setAttribute("transform", "translate(0 52)");
+
+        const hintBg = svgDoc.createElementNS(namespace, "rect");
+        hintBg.setAttribute("x", "-56");
+        hintBg.setAttribute("y", "-10");
+        hintBg.setAttribute("width", "112");
+        hintBg.setAttribute("height", "20");
+        hintBg.setAttribute("rx", "8");
+        hintBg.setAttribute("fill", "#fef3c7");
+        hintBg.setAttribute("stroke", "#f59e0b");
+        hintGroup.appendChild(hintBg);
+
+        const hintText = svgDoc.createElementNS(namespace, "text");
+        hintText.setAttribute("x", "0");
+        hintText.setAttribute("y", "4");
+        hintText.setAttribute("text-anchor", "middle");
+        hintText.setAttribute("fill", "#92400e");
+        hintText.setAttribute("font-size", "8");
+        hintText.setAttribute("font-weight", "700");
+        hintText.textContent = "Scan QR di simpang";
+        hintGroup.appendChild(hintText);
+        g.appendChild(hintGroup);
+      }
+
+      layer.appendChild(g);
+    });
+
+    const lastPoint = steps[steps.length - 1]?.pivotPoint;
+    if (lastPoint) {
+      const arriveGroup = svgDoc.createElementNS(namespace, "g");
+      arriveGroup.setAttribute("transform", `translate(${lastPoint.x} ${lastPoint.y})`);
+
+      const arrivePulse = svgDoc.createElementNS(namespace, "circle");
+      arrivePulse.setAttribute("class", "turn-arrive-pulse");
+      arrivePulse.setAttribute("cx", "0");
+      arrivePulse.setAttribute("cy", "0");
+      arrivePulse.setAttribute("r", "14");
+      arrivePulse.setAttribute("fill", "#22c55e");
+      arriveGroup.appendChild(arrivePulse);
+
+      const arriveDot = svgDoc.createElementNS(namespace, "circle");
+      arriveDot.setAttribute("cx", "0");
+      arriveDot.setAttribute("cy", "0");
+      arriveDot.setAttribute("r", "8");
+      arriveDot.setAttribute("fill", "#16a34a");
+      arriveDot.setAttribute("stroke", "#ffffff");
+      arriveDot.setAttribute("stroke-width", "2");
+      arriveGroup.appendChild(arriveDot);
+
+      const arriveText = svgDoc.createElementNS(namespace, "text");
+      arriveText.setAttribute("x", "0");
+      arriveText.setAttribute("y", "-18");
+      arriveText.setAttribute("text-anchor", "middle");
+      arriveText.setAttribute("fill", "#166534");
+      arriveText.setAttribute("font-size", "9");
+      arriveText.setAttribute("font-weight", "800");
+      arriveText.textContent = "TUJUAN";
+      arriveGroup.appendChild(arriveText);
+
+      layer.appendChild(arriveGroup);
+    }
+
+    svgDoc.querySelector("svg")?.appendChild(layer);
+  }, [ensureTurnArrowStyle]);
+
   const renderRouteOverlay = useCallback((svgDoc: Document, route: RoomRouteResult | null) => {
     const svgRoot = svgDoc.querySelector("svg");
     if (!svgRoot) return;
@@ -872,7 +1143,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return;
     }
 
-    if (isLiveMode && liveSvgPoint) {
+    if (liveSvgPoint) {
       const livePos = projectSvgPointToOverlay(liveSvgPoint);
       setCurrentUserMarkerPosition(livePos);
       return;
@@ -897,7 +1168,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     }
 
     setCurrentUserMarkerPosition(markerPos);
-  }, [showCurrentUserMarker, isLiveMode, liveSvgPoint, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition, projectSvgPointToOverlay]);
+  }, [showCurrentUserMarker, liveSvgPoint, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition, projectSvgPointToOverlay]);
 
   // ---------------------------------------------------------------------------
   // Zoom to SVG element — centers the map on a given SVG element
@@ -1112,16 +1383,50 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   }, [selectedLocation, activeRoomId, scale, position, calculateMarkerPosition, asSvgGraphicsElement]);
 
   const handleResolveQrLocation = useCallback(() => {
-    const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
-    if (!resolvedRoomId) {
-      setRouteDebugMessage("QR tidak dikenali. Contoh: QR-IGD, QR-LAB, QR-POLI.");
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setRouteDebugMessage("SVG belum siap. Coba lagi beberapa detik.");
       return;
     }
 
-    setLocationInputMode("qr");
-    setStartRoomId(resolvedRoomId);
+    const anchor = resolveQrAnchor(qrCodeInput);
+    if (!anchor) {
+      const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
+      if (!resolvedRoomId) {
+        setRouteDebugMessage("QR tidak dikenali. Contoh: QR-CORR-A1-J1 atau QR-IGD.");
+        return;
+      }
+
+      setLocationInputMode("qr");
+      setStartRoomId(resolvedRoomId);
+      setShowCurrentUserMarker(true);
+      setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+      return;
+    }
+
+    gpsBufferRef.current = [];
+    liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
+    setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
     setShowCurrentUserMarker(true);
-    setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+    setStartRoomId(anchor.roomId);
+    startRoomIdRef.current = anchor.roomId;
+    setLastQrAnchor(anchor);
+    setQrCalibrationHistory((prev) => [...prev, anchor]);
+    setLocationInputMode("qr");
+
+    const routeAfterCalibration =
+      endRoomIdRef.current && endRoomIdRef.current !== anchor.roomId
+        ? buildRouteForRooms(anchor.roomId, endRoomIdRef.current, svgDoc, {
+            startPoint: { x: anchor.svgX, y: anchor.svgY },
+          })
+        : null;
+
+    if (routeAfterCalibration) {
+      setActiveRoute(routeAfterCalibration);
+    }
+
+    setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
+    setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
   }, [qrCodeInput]);
 
   const stopLiveMode = useCallback((statusMessage?: string) => {
@@ -1131,6 +1436,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     geoWatchIdRef.current = null;
     liveOriginRef.current = null;
     liveSvgPointRef.current = null;
+    gpsBufferRef.current = [];
     setLiveSvgPoint(null);
     setIsLiveMode(false);
     setLiveModeStatus(statusMessage || "Live navigation dihentikan.");
@@ -1160,11 +1466,12 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     }
 
     liveOriginRef.current = null;
+    gpsBufferRef.current = [];
     liveSvgPointRef.current = startCenter;
     setLiveSvgPoint(startCenter);
     setShowCurrentUserMarker(true);
     setIsLiveMode(true);
-    setLiveModeStatus("Live mode aktif. Menunggu update lokasi perangkat...");
+    setLiveModeStatus("Mode live aktif. Menunggu update lokasi perangkat...");
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
@@ -1196,13 +1503,13 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
           y: origin.svgY - northMeters * LIVE_METERS_TO_SVG_PX,
         };
 
-        const previous = liveSvgPointRef.current;
-        const smoothedPoint = previous
-          ? {
-              x: previous.x + (rawSvgPoint.x - previous.x) * LIVE_SMOOTHING_ALPHA,
-              y: previous.y + (rawSvgPoint.y - previous.y) * LIVE_SMOOTHING_ALPHA,
-            }
-          : rawSvgPoint;
+        const buffer = gpsBufferRef.current;
+        buffer.push(rawSvgPoint);
+        if (buffer.length > GPS_BUFFER_SIZE) buffer.shift();
+        const smoothedPoint = {
+          x: buffer.reduce((sum, point) => sum + point.x, 0) / buffer.length,
+          y: buffer.reduce((sum, point) => sum + point.y, 0) / buffer.length,
+        };
 
         liveSvgPointRef.current = smoothedPoint;
         setLiveSvgPoint(smoothedPoint);
@@ -1230,13 +1537,17 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         if (now - lastRerouteAtRef.current < LIVE_REROUTE_INTERVAL_MS) return;
         lastRerouteAtRef.current = now;
 
-        const dynamicRoute = buildRouteForRooms(nearest.roomId, currentEnd, svgDocLocal);
+        const dynamicRoute = buildRouteForRooms(nearest.roomId, currentEnd, svgDocLocal, {
+          startPoint: smoothedPoint,
+        });
         if (dynamicRoute) {
           setActiveRoute(dynamicRoute);
           setRouteDebugMessage(
-            `Live route: ${roomInfoBySvgId[nearest.roomId]?.name || nearest.roomId} → ${roomInfoBySvgId[currentEnd]?.name || currentEnd}`
+            `Rute live: ${roomInfoBySvgId[nearest.roomId]?.name || nearest.roomId} → ${roomInfoBySvgId[currentEnd]?.name || currentEnd}`
           );
-          setLiveModeStatus("Live navigation aktif dan rute diperbarui otomatis.");
+          setLiveModeStatus("Navigasi live aktif dan rute diperbarui otomatis.");
+        } else {
+          setRouteDebugMessage("Rute live belum ditemukan dari posisi terbaru.");
         }
       },
       (error) => {
@@ -1278,7 +1589,9 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return;
     }
 
-    const result = buildRouteForRooms(startRoomId, endRoomId, svgDoc);
+    const result = buildRouteForRooms(startRoomId, endRoomId, svgDoc, {
+      startPoint: liveSvgPoint ?? undefined,
+    });
     if (!result) {
       setRouteDebugMessage("Rute tidak ditemukan pada jalur 'jalan' di denah.");
       setActiveRoute(null);
@@ -1296,7 +1609,27 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const handleClearRoute = useCallback(() => {
     setActiveRoute(null);
     setRouteDebugMessage("Rute dibersihkan.");
+    setNavSteps([]);
+    setActiveStepIndex(0);
   }, []);
+
+  useEffect(() => {
+    if (!activeRoute || activeRoute.points.length < 2) {
+      setNavSteps([]);
+      setActiveStepIndex(0);
+      return;
+    }
+
+    const steps = buildNavigationSteps(activeRoute.points);
+    setNavSteps(steps);
+    setActiveStepIndex(0);
+  }, [activeRoute]);
+
+  useEffect(() => {
+    if (!liveSvgPoint || !navSteps.length) return;
+    const idx = getActiveStepIndex(liveSvgPoint, navSteps);
+    setActiveStepIndex(idx);
+  }, [liveSvgPoint, navSteps]);
 
   useEffect(() => {
     return () => {
@@ -1321,6 +1654,18 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     objectElement.addEventListener("load", applyRoute);
     return () => objectElement.removeEventListener("load", applyRoute);
   }, [activeRoute, renderRouteOverlay]);
+
+  useEffect(() => {
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) return;
+    renderTurnArrows(svgDoc, navSteps, activeStepIndex);
+  }, [navSteps, activeStepIndex, renderTurnArrows, svgReadyVersion]);
+
+  useEffect(() => {
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) return;
+    renderQrAnchorHints(svgDoc, qrAnchors, lastQrAnchor?.qrId || null);
+  }, [renderQrAnchorHints, qrAnchors, lastQrAnchor, svgReadyVersion]);
 
   // ---------------------------------------------------------------------------
   // Center / reset
@@ -1389,13 +1734,13 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       {/* Navigation hint */}
       <div className="absolute top-4 left-4 flex flex-col gap-1 pointer-events-none">
         <div className="px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shadow-sm">
-          Desktop View • Mouse Wheel to Zoom
+          Tampilan Desktop • Gunakan Scroll untuk Zoom
         </div>
       </div>
 
       <div className="absolute top-4 right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background/90 backdrop-blur-md shadow-lg p-3 space-y-2">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Pathfinding Debug</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Navigation HUD</p>
           <span className="text-[10px] text-muted-foreground">Lantai 1</span>
         </div>
 
@@ -1448,7 +1793,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
               <input
                 value={qrCodeInput}
                 onChange={(event) => setQrCodeInput(event.target.value)}
-                placeholder="Contoh: QR-IGD"
+                placeholder="Contoh: QR-CORR-A1-J1"
                 className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs"
               />
               <button
@@ -1457,6 +1802,37 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
               >
                 Set
               </button>
+            </div>
+
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[10px] text-muted-foreground">Tampilkan titik QR di peta</p>
+              <button
+                onClick={() => setShowQrAnchorHints((prev) => !prev)}
+                className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
+                  showQrAnchorHints
+                    ? "bg-emerald-500 text-white border-emerald-500"
+                    : "bg-background text-foreground border-border"
+                }`}
+              >
+                {showQrAnchorHints ? "ON" : "OFF"}
+              </button>
+            </div>
+
+            <div className="max-h-28 overflow-y-auto rounded-md border border-border bg-muted/30 p-1.5 space-y-1">
+              {qrAnchors.map((anchor) => (
+                <button
+                  key={anchor.qrId}
+                  onClick={() => setQrCodeInput(anchor.qrId)}
+                  className={`w-full text-left rounded px-1.5 py-1 text-[10px] transition-colors ${
+                    lastQrAnchor?.qrId === anchor.qrId
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "hover:bg-muted"
+                  }`}
+                >
+                  <span className="font-semibold">{anchor.qrId}</span>
+                  <span className="text-muted-foreground"> — {anchor.label}</span>
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -1481,13 +1857,13 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
             onClick={handleFindRoute}
             className="flex-1 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
           >
-            Find Route
+            Cari Rute
           </button>
           <button
             onClick={handleClearRoute}
             className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
           >
-            Clear
+            Bersihkan
           </button>
         </div>
 
@@ -1503,7 +1879,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
                 : "bg-emerald-500 text-white hover:bg-emerald-600"
             }`}
           >
-            {isLiveMode ? "Stop Live Navigation" : "Start Live Navigation"}
+            {isLiveMode ? "Hentikan Navigasi Live" : "Mulai Navigasi Live"}
           </button>
         </div>
 
@@ -1553,11 +1929,18 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         <Locate className="h-5 w-5" />
       </button>
 
+      {qrCalibrationHistory.length > 0 && (
+        <div className="absolute bottom-20 left-6 z-20 max-w-[280px] rounded-lg border border-primary/20 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-md backdrop-blur-sm">
+          <p className="font-semibold text-foreground">🎯 {qrCalibrationHistory.length}x dikalibrasi via QR</p>
+          {lastQrAnchor && <p className="mt-0.5">Terakhir: {lastQrAnchor.label}</p>}
+        </div>
+      )}
+
       {/* Legend */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 text-[10px] text-muted-foreground bg-background/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50">
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-primary" />
-          <span>Your Location</span>
+          <span>Posisi Anda</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-orange-400" />
@@ -1590,6 +1973,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
           style={{
             left: currentUserMarkerPosition.x,
             top: currentUserMarkerPosition.y,
+            transition: "left 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94), top 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
           }}
         >
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-primary/30 animate-ping" />
