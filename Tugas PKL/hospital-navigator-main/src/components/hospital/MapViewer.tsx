@@ -65,16 +65,32 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const [qrCodeInput, setQrCodeInput] = useState("");
   const [routeDebugMessage, setRouteDebugMessage] = useState("");
   const [activeRoute, setActiveRoute] = useState<RoomRouteResult | null>(null);
+  const [isLiveMode, setIsLiveMode] = useState(false);
+  const [liveModeStatus, setLiveModeStatus] = useState("");
+  const [liveSvgPoint, setLiveSvgPoint] = useState<{ x: number; y: number } | null>(null);
   const hasAppliedAutoStartRef = useRef(false);
+  const geoWatchIdRef = useRef<number | null>(null);
+  const liveOriginRef = useRef<{ lat: number; lng: number; svgX: number; svgY: number } | null>(null);
+  const liveSvgPointRef = useRef<{ x: number; y: number } | null>(null);
+  const startRoomIdRef = useRef(startRoomId);
+  const endRoomIdRef = useRef(endRoomId);
+  const lastRerouteAtRef = useRef(0);
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
   const ZOOM_STEP = 0.2;
   const DRAG_THRESHOLD = 4; // px before we consider it a real drag
+  const LIVE_METERS_TO_SVG_PX = 2.2;
+  const LIVE_SMOOTHING_ALPHA = 0.35;
+  const LIVE_REROUTE_INTERVAL_MS = 1200;
+  const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
 
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
   useEffect(() => { positionRef.current = position; }, [position]);
+  useEffect(() => { liveSvgPointRef.current = liveSvgPoint; }, [liveSvgPoint]);
+  useEffect(() => { startRoomIdRef.current = startRoomId; }, [startRoomId]);
+  useEffect(() => { endRoomIdRef.current = endRoomId; }, [endRoomId]);
 
   useEffect(() => {
     if (!routingRoomOptions.length) return;
@@ -317,6 +333,83 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return { x: overlayX, y: overlayY };
     },
     []
+  );
+
+  const projectSvgPointToOverlay = useCallback(
+    (svgPoint: { x: number; y: number } | null) => {
+      if (
+        !svgPoint ||
+        !containerRef.current ||
+        !objectRef.current?.contentDocument
+      ) {
+        return null;
+      }
+
+      const svgRoot = objectRef.current.contentDocument.querySelector("svg");
+      if (!svgRoot) return null;
+
+      const objectRect = objectRef.current.getBoundingClientRect();
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const viewBox = svgRoot.viewBox.baseVal;
+
+      if (
+        !viewBox.width ||
+        !viewBox.height ||
+        !objectRect.width ||
+        !objectRect.height
+      ) {
+        return null;
+      }
+
+      const overlayX =
+        objectRect.left -
+        containerRect.left +
+        ((svgPoint.x - viewBox.x) / viewBox.width) * objectRect.width;
+      const overlayY =
+        objectRect.top -
+        containerRect.top +
+        ((svgPoint.y - viewBox.y) / viewBox.height) * objectRect.height;
+
+      return { x: overlayX, y: overlayY };
+    },
+    []
+  );
+
+  const getRoomCenterById = useCallback(
+    (svgDoc: Document, roomId: string): { x: number; y: number } | null => {
+      const anchor = svgDoc.getElementById(`node_room_${roomId}`);
+      if (anchor && anchor.tagName.toLowerCase() === "circle") {
+        const x = Number(anchor.getAttribute("cx") || "NaN");
+        const y = Number(anchor.getAttribute("cy") || "NaN");
+        if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
+      }
+
+      const target = asSvgGraphicsElement(svgDoc.getElementById(roomId));
+      if (!target) return null;
+      const bbox = target.getBBox();
+      return { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+    },
+    [asSvgGraphicsElement]
+  );
+
+  const getNearestRoutingRoom = useCallback(
+    (svgDoc: Document, point: { x: number; y: number }) => {
+      let nearestRoomId: string | null = null;
+      let nearestDistance = Number.POSITIVE_INFINITY;
+
+      routingRoomOptions.forEach((room) => {
+        const center = getRoomCenterById(svgDoc, room.id);
+        if (!center) return;
+        const d = Math.hypot(center.x - point.x, center.y - point.y);
+        if (d < nearestDistance) {
+          nearestDistance = d;
+          nearestRoomId = room.id;
+        }
+      });
+
+      return { roomId: nearestRoomId, distance: nearestDistance };
+    },
+    [routingRoomOptions, getRoomCenterById]
   );
 
   const calculateMarkerPosition = useCallback(
@@ -774,7 +867,18 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   }, [setupSvgRoomInteraction]);
 
   useEffect(() => {
-    if (!showCurrentUserMarker || !startRoomId) {
+    if (!showCurrentUserMarker) {
+      setCurrentUserMarkerPosition(null);
+      return;
+    }
+
+    if (isLiveMode && liveSvgPoint) {
+      const livePos = projectSvgPointToOverlay(liveSvgPoint);
+      setCurrentUserMarkerPosition(livePos);
+      return;
+    }
+
+    if (!startRoomId) {
       setCurrentUserMarkerPosition(null);
       return;
     }
@@ -793,7 +897,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     }
 
     setCurrentUserMarkerPosition(markerPos);
-  }, [showCurrentUserMarker, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition]);
+  }, [showCurrentUserMarker, isLiveMode, liveSvgPoint, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition, projectSvgPointToOverlay]);
 
   // ---------------------------------------------------------------------------
   // Zoom to SVG element — centers the map on a given SVG element
@@ -1020,6 +1124,142 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
   }, [qrCodeInput]);
 
+  const stopLiveMode = useCallback((statusMessage?: string) => {
+    if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.clearWatch(geoWatchIdRef.current);
+    }
+    geoWatchIdRef.current = null;
+    liveOriginRef.current = null;
+    liveSvgPointRef.current = null;
+    setLiveSvgPoint(null);
+    setIsLiveMode(false);
+    setLiveModeStatus(statusMessage || "Live navigation dihentikan.");
+  }, []);
+
+  const startLiveMode = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setLiveModeStatus("Geolocation tidak didukung browser ini.");
+      return;
+    }
+
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setLiveModeStatus("SVG belum siap. Coba lagi beberapa detik.");
+      return;
+    }
+
+    const startCenter = getRoomCenterById(svgDoc, startRoomIdRef.current);
+    if (!startCenter) {
+      setLiveModeStatus("Titik start belum valid di SVG.");
+      return;
+    }
+
+    if (geoWatchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(geoWatchIdRef.current);
+      geoWatchIdRef.current = null;
+    }
+
+    liveOriginRef.current = null;
+    liveSvgPointRef.current = startCenter;
+    setLiveSvgPoint(startCenter);
+    setShowCurrentUserMarker(true);
+    setIsLiveMode(true);
+    setLiveModeStatus("Live mode aktif. Menunggu update lokasi perangkat...");
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const svgDocLocal = objectRef.current?.contentDocument;
+        if (!svgDocLocal) return;
+
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        const origin = liveOriginRef.current;
+        if (!origin) {
+          liveOriginRef.current = {
+            lat: latitude,
+            lng: longitude,
+            svgX: startCenter.x,
+            svgY: startCenter.y,
+          };
+          setLiveModeStatus("Lokasi terkunci. Mengikuti pergerakan user...");
+          return;
+        }
+
+        const metersPerDegLat = 111320;
+        const metersPerDegLng = 111320 * Math.cos((origin.lat * Math.PI) / 180);
+        const eastMeters = (longitude - origin.lng) * metersPerDegLng;
+        const northMeters = (latitude - origin.lat) * metersPerDegLat;
+
+        const rawSvgPoint = {
+          x: origin.svgX + eastMeters * LIVE_METERS_TO_SVG_PX,
+          y: origin.svgY - northMeters * LIVE_METERS_TO_SVG_PX,
+        };
+
+        const previous = liveSvgPointRef.current;
+        const smoothedPoint = previous
+          ? {
+              x: previous.x + (rawSvgPoint.x - previous.x) * LIVE_SMOOTHING_ALPHA,
+              y: previous.y + (rawSvgPoint.y - previous.y) * LIVE_SMOOTHING_ALPHA,
+            }
+          : rawSvgPoint;
+
+        liveSvgPointRef.current = smoothedPoint;
+        setLiveSvgPoint(smoothedPoint);
+
+        const nearest = getNearestRoutingRoom(svgDocLocal, smoothedPoint);
+        if (!nearest.roomId || !Number.isFinite(nearest.distance)) return;
+
+        if (nearest.distance > LIVE_NEAREST_ROOM_MAX_DISTANCE) {
+          setLiveModeStatus("Posisi user terlalu jauh dari area ruangan terdeteksi.");
+          return;
+        }
+
+        const currentEnd = endRoomIdRef.current;
+        if (nearest.roomId !== startRoomIdRef.current) {
+          setStartRoomId(nearest.roomId);
+          startRoomIdRef.current = nearest.roomId;
+        }
+
+        if (!currentEnd || nearest.roomId === currentEnd) {
+          setActiveRoute(null);
+          return;
+        }
+
+        const now = Date.now();
+        if (now - lastRerouteAtRef.current < LIVE_REROUTE_INTERVAL_MS) return;
+        lastRerouteAtRef.current = now;
+
+        const dynamicRoute = buildRouteForRooms(nearest.roomId, currentEnd, svgDocLocal);
+        if (dynamicRoute) {
+          setActiveRoute(dynamicRoute);
+          setRouteDebugMessage(
+            `Live route: ${roomInfoBySvgId[nearest.roomId]?.name || nearest.roomId} → ${roomInfoBySvgId[currentEnd]?.name || currentEnd}`
+          );
+          setLiveModeStatus("Live navigation aktif dan rute diperbarui otomatis.");
+        }
+      },
+      (error) => {
+        const message =
+          error.code === error.PERMISSION_DENIED
+            ? "Izin lokasi ditolak. Aktifkan location permission browser."
+            : error.code === error.POSITION_UNAVAILABLE
+              ? "Lokasi tidak tersedia. Coba pindah area atau cek sensor."
+              : error.code === error.TIMEOUT
+                ? "Timeout membaca lokasi. Coba lagi."
+                : "Gagal membaca lokasi perangkat.";
+        stopLiveMode(message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 1000,
+      }
+    );
+
+    geoWatchIdRef.current = watchId;
+  }, [getRoomCenterById, getNearestRoutingRoom, stopLiveMode]);
+
   const handleFindRoute = useCallback(() => {
     if (!startRoomId || !endRoomId) {
       setRouteDebugMessage("Pilih titik awal dan tujuan terlebih dahulu.");
@@ -1056,6 +1296,15 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const handleClearRoute = useCallback(() => {
     setActiveRoute(null);
     setRouteDebugMessage("Rute dibersihkan.");
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.clearWatch(geoWatchIdRef.current);
+      }
+      geoWatchIdRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -1179,6 +1428,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
             <select
               value={startRoomId}
               onChange={(event) => {
+                if (isLiveMode) stopLiveMode("Live mode dimatikan karena start dipilih manual.");
                 setStartRoomId(event.target.value);
                 setShowCurrentUserMarker(false);
               }}
@@ -1241,6 +1491,22 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
           </button>
         </div>
 
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (isLiveMode) stopLiveMode();
+              else startLiveMode();
+            }}
+            className={`flex-1 rounded-md px-3 py-1.5 text-xs font-semibold transition-colors ${
+              isLiveMode
+                ? "bg-rose-500 text-white hover:bg-rose-600"
+                : "bg-emerald-500 text-white hover:bg-emerald-600"
+            }`}
+          >
+            {isLiveMode ? "Stop Live Navigation" : "Start Live Navigation"}
+          </button>
+        </div>
+
         {activeRoute && (
           <p className="text-[11px] text-muted-foreground">
             Jarak koridor: {Math.round(activeRoute.totalDistance)} px • {activeRoute.checkpointIds.length} checkpoint
@@ -1248,6 +1514,9 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         )}
         {routeDebugMessage && (
           <p className="text-[11px] text-muted-foreground">{routeDebugMessage}</p>
+        )}
+        {liveModeStatus && (
+          <p className="text-[11px] text-muted-foreground">{liveModeStatus}</p>
         )}
       </div>
 
