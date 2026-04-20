@@ -17,6 +17,7 @@ const Index = () => {
     requestId: number;
     roomId: string;
     source: "manual" | "qr";
+    qrPayload?: string;
   } | null>(null);
   const [navigationStartCounter, setNavigationStartCounter] = useState(0);
 
@@ -30,13 +31,18 @@ const Index = () => {
     setIsNavDialogOpen(true);
   };
 
-  const handleConfirmNavigationStart = useCallback((payload: { roomId: string; source: "manual" | "qr" }) => {
+  const handleConfirmNavigationStart = useCallback((payload: {
+    roomId: string;
+    source: "manual" | "qr";
+    qrPayload?: string;
+  }) => {
     const nextId = navigationStartCounter + 1;
     setNavigationStartCounter(nextId);
     setNavigationStartRequest({
       requestId: nextId,
       roomId: payload.roomId,
       source: payload.source,
+      qrPayload: payload.qrPayload,
     });
     setIsNavDialogOpen(false);
   }, [navigationStartCounter]);

@@ -17,12 +17,18 @@ import {
 } from "@/components/ui/select";
 import { Camera, RefreshCcw, MapPin, Loader2 } from "lucide-react";
 import { roomInfoBySvgId } from "@/data/hospitalRoomInfo";
+import jsQR from "jsqr";
+import { resolveQrAnchor, resolveRoomIdFromQrCode } from "@/data/hospitalRouteGraph";
 
 interface NavigationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultMode?: "manual" | "qr";
-  onConfirmStart?: (payload: { roomId: string; source: "manual" | "qr" }) => void;
+  onConfirmStart?: (payload: {
+    roomId: string;
+    source: "manual" | "qr";
+    qrPayload?: string;
+  }) => void;
 }
 
 const NavigationDialog = ({
@@ -34,14 +40,24 @@ const NavigationDialog = ({
   const [startLocation, setStartLocation] = useState<string>("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [qrScanStatus, setQrScanStatus] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const scanRafRef = useRef<number | null>(null);
+  const lastDetectedPayloadRef = useRef<string | null>(null);
+  const isHandlingDetectionRef = useRef(false);
 
   const roomOptions = Object.values(roomInfoBySvgId).sort((a, b) =>
     a.name.localeCompare(b.name),
   );
 
   const stopCamera = useCallback(() => {
+    if (scanRafRef.current !== null) {
+      cancelAnimationFrame(scanRafRef.current);
+      scanRafRef.current = null;
+    }
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
         track.stop();
@@ -51,6 +67,7 @@ const NavigationDialog = ({
     }
     setIsCameraActive(false);
     setIsLoading(false);
+    isHandlingDetectionRef.current = false;
   }, []);
 
   const startCamera = async () => {
@@ -69,6 +86,7 @@ const NavigationDialog = ({
       streamRef.current = stream;
       setIsCameraActive(true);
       setIsLoading(false);
+      setQrScanStatus("Arahkan kamera ke QR code...");
     } catch (err) {
       console.error("Error accessing camera:", err);
       setIsLoading(false);
@@ -90,10 +108,92 @@ const NavigationDialog = ({
     }
   }, [isCameraActive]);
 
+  const handleDetectedQrPayload = useCallback(
+    (rawPayload: string) => {
+      const normalizedPayload = rawPayload.trim();
+      if (!normalizedPayload) return;
+      if (isHandlingDetectionRef.current) return;
+      if (lastDetectedPayloadRef.current === normalizedPayload) return;
+
+      lastDetectedPayloadRef.current = normalizedPayload;
+
+      const resolvedRoomId =
+        resolveRoomIdFromQrCode(normalizedPayload) ||
+        resolveQrAnchor(normalizedPayload)?.roomId ||
+        null;
+
+      if (!resolvedRoomId) {
+        setQrScanStatus(`QR tidak dikenali: ${normalizedPayload}`);
+        return;
+      }
+
+      isHandlingDetectionRef.current = true;
+      setStartLocation(resolvedRoomId);
+      setQrScanStatus(`QR terdeteksi: ${normalizedPayload} → ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+
+      onConfirmStart?.({
+        roomId: resolvedRoomId,
+        source: "qr",
+        qrPayload: normalizedPayload,
+      });
+
+      onOpenChange(false);
+      stopCamera();
+    },
+    [onConfirmStart, onOpenChange, stopCamera],
+  );
+
+  useEffect(() => {
+    if (!isCameraActive) return;
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return;
+
+    const scan = () => {
+      if (!isCameraActive) return;
+
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        const width = video.videoWidth;
+        const height = video.videoHeight;
+
+        if (width > 0 && height > 0) {
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(video, 0, 0, width, height);
+
+          const imageData = ctx.getImageData(0, 0, width, height);
+          const result = jsQR(imageData.data, width, height, {
+            inversionAttempts: "attemptBoth",
+          });
+
+          if (result?.data) {
+            handleDetectedQrPayload(result.data);
+          }
+        }
+      }
+
+      scanRafRef.current = requestAnimationFrame(scan);
+    };
+
+    scanRafRef.current = requestAnimationFrame(scan);
+
+    return () => {
+      if (scanRafRef.current !== null) {
+        cancelAnimationFrame(scanRafRef.current);
+        scanRafRef.current = null;
+      }
+    };
+  }, [isCameraActive, handleDetectedQrPayload]);
+
   // Clean up when dialog closes
   useEffect(() => {
     if (!open) {
       stopCamera();
+      setQrScanStatus("");
+      lastDetectedPayloadRef.current = null;
     }
   }, [open, stopCamera]);
 
@@ -101,6 +201,7 @@ const NavigationDialog = ({
     if (!open) return;
     if (defaultMode !== "qr") return;
     if (isCameraActive || isLoading) return;
+    setQrScanStatus("Menyalakan kamera...");
     void startCamera();
   }, [open, defaultMode, isCameraActive, isLoading]);
 
@@ -158,6 +259,14 @@ const NavigationDialog = ({
                 Switch to Manual
               </Button>
             )}
+
+            {qrScanStatus && (
+              <p className="text-[11px] text-muted-foreground text-center">
+                {qrScanStatus}
+              </p>
+            )}
+
+            <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
           </div>
 
           <div className="relative">
@@ -196,7 +305,7 @@ const NavigationDialog = ({
               console.log("Starting navigation from:", startLocation);
               onConfirmStart?.({
                 roomId: startLocation,
-                source: isCameraActive ? "qr" : "manual",
+                source: "manual",
               });
               onOpenChange(false);
             }}

@@ -37,6 +37,7 @@ interface MapViewerProps {
     requestId: number;
     roomId: string;
     source: "manual" | "qr";
+    qrPayload?: string;
   } | null;
   onNavigationStartRequestHandled?: (requestId: number) => void;
 }
@@ -90,7 +91,7 @@ const MapViewer = ({
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const [locationInputMode, setLocationInputMode] = useState<"dropdown" | "qr">("dropdown");
-  const [isPathfindingDebugVisible, setIsPathfindingDebugVisible] = useState(true);
+  const [isPathfindingDebugVisible, setIsPathfindingDebugVisible] = useState(false);
   const [startRoomId, setStartRoomId] = useState<string>(routingRoomOptions[0]?.id || "");
   const [endRoomId, setEndRoomId] = useState<string>(routingRoomOptions[1]?.id || routingRoomOptions[0]?.id || "");
   const [qrCodeInput, setQrCodeInput] = useState("");
@@ -1617,7 +1618,7 @@ const MapViewer = ({
   useEffect(() => {
     if (!navigationStartRequest) return;
 
-    const { requestId, roomId, source } = navigationStartRequest;
+    const { requestId, roomId, source, qrPayload } = navigationStartRequest;
     const finish = () => onNavigationStartRequestHandled?.(requestId);
 
     if (isLiveMode) {
@@ -1639,6 +1640,44 @@ const MapViewer = ({
       setRouteDebugMessage(`Start point diset ke ${roomInfoBySvgId[roomId]?.name || roomId}.`);
       finish();
       return;
+    }
+
+    if (source === "qr" && qrPayload) {
+      setQrCodeInput(qrPayload);
+
+      const resolvedRoomByQr = resolveRoomIdFromQrCode(qrPayload);
+      if (resolvedRoomByQr) {
+        setStartRoomId(resolvedRoomByQr);
+        startRoomIdRef.current = resolvedRoomByQr;
+        preferRoomCenterStartRef.current = true;
+      } else {
+        const anchor = resolveQrAnchor(qrPayload);
+        if (anchor) {
+          setStartRoomId(anchor.roomId);
+          startRoomIdRef.current = anchor.roomId;
+          preferRoomCenterStartRef.current = false;
+          setLastQrAnchor(anchor);
+          liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
+          setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+          setQrCalibrationHistory((prev) => [...prev, anchor]);
+
+          const targetEndFromAnchor = endRoomIdRef.current;
+          if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
+            const anchorRoute = buildRouteForRooms(anchor.roomId, targetEndFromAnchor, svgDoc, {
+              startPoint: { x: anchor.svgX, y: anchor.svgY },
+            });
+            if (anchorRoute) {
+              setActiveRoute(anchorRoute);
+              setRouteDebugMessage(
+                `Rute otomatis (QR): ${roomInfoBySvgId[anchor.roomId]?.name || anchor.roomId} → ${roomInfoBySvgId[targetEndFromAnchor]?.name || targetEndFromAnchor}`
+              );
+              zoomToSvgElement(targetEndFromAnchor);
+              finish();
+              return;
+            }
+          }
+        }
+      }
     }
 
     const targetEnd = endRoomIdRef.current;
@@ -1743,6 +1782,14 @@ const MapViewer = ({
     const steps = buildNavigationSteps(activeRoute.points);
     setNavSteps(steps);
     setActiveStepIndex(0);
+  }, [activeRoute]);
+
+  // Auto-close room info popup when navigation route becomes active
+  useEffect(() => {
+    if (activeRoute) {
+      setActiveRoomInfo(null);
+      setActiveRoomId(null);
+    }
   }, [activeRoute]);
 
   useEffect(() => {
@@ -2066,31 +2113,106 @@ const MapViewer = ({
         </button>
       )}
 
-      {(activeRoute || isLiveMode) && currentNavStep && (
-        <div className="absolute top-4 left-4 z-30 w-[min(92vw,320px)] rounded-xl border border-border bg-background/90 px-3 py-2 shadow-lg backdrop-blur-md">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-            Instruksi Navigasi
-          </p>
-          <p className="mt-1 text-sm font-bold text-foreground">
-            {currentNavInstruction}
-          </p>
-          {currentNavStep.type !== "arrive" && (
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Sekitar {Math.max(1, Math.round(currentNavStep.distanceToNext))} px lagi
-            </p>
-          )}
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <p className="text-[10px] text-muted-foreground">
-              Langkah {Math.min(activeStepIndex + 1, navSteps.length)} / {navSteps.length}
-            </p>
+      {(activeRoute || isLiveMode) && navSteps.length > 0 && currentNavStep && (
+        <div className="absolute top-4 left-4 z-30 w-[min(92vw,340px)] rounded-2xl border border-border/60 bg-background/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+          {/* ── Header ── */}
+          <div className="flex items-center justify-between px-3 py-2.5 bg-primary/8 border-b border-border/40">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/15 shrink-0">
+                <Navigation className="h-3.5 w-3.5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Navigasi Aktif</p>
+                <p className="text-[12px] font-bold text-foreground truncate leading-tight">
+                  {roomInfoBySvgId[endRoomId]?.name || endRoomId || "Tujuan"}
+                </p>
+              </div>
+            </div>
             <button
-              onClick={() => onStartNavigation?.({ mode: "qr" })}
-              className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-semibold text-foreground hover:bg-muted"
-              title="Kalibrasi QR saat navigasi"
+              onClick={handleClearRoute}
+              className="h-6 w-6 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+              title="Hentikan navigasi"
+              aria-label="Hentikan navigasi"
             >
-              Kalibrasi QR
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
+
+          {/* ── Current step ── */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="flex items-start gap-3">
+              {/* Step type icon */}
+              <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-sm ${
+                currentNavStep.type === "arrive"
+                  ? "bg-emerald-500/15 text-emerald-600"
+                  : currentNavStep.type === "turn_left"
+                  ? "bg-blue-500/15 text-blue-600"
+                  : currentNavStep.type === "turn_right"
+                  ? "bg-amber-500/15 text-amber-600"
+                  : currentNavStep.type === "u_turn"
+                  ? "bg-red-500/15 text-red-600"
+                  : "bg-primary/10 text-primary"
+              }`}>
+                {currentNavStep.type === "arrive" ? "🏁"
+                  : currentNavStep.type === "turn_left" ? "↰"
+                  : currentNavStep.type === "turn_right" ? "↱"
+                  : currentNavStep.type === "u_turn" ? "↩"
+                  : "↑"}
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <p className="text-[15px] font-extrabold text-foreground leading-snug">{currentNavInstruction}</p>
+                {currentNavStep.type !== "arrive" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    ≈ {Math.max(1, Math.round(currentNavStep.distanceToNext / 3.5))} m lagi
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Step progress pills ── */}
+          <div className="px-3 pb-2.5">
+            <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {navSteps.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveStepIndex(idx)}
+                  title={`Langkah ${idx + 1}`}
+                  className={`h-1.5 shrink-0 rounded-full transition-all duration-300 ${
+                    idx < activeStepIndex
+                      ? "w-3 bg-muted-foreground/35"
+                      : idx === activeStepIndex
+                      ? "w-7 bg-primary shadow-sm shadow-primary/40"
+                      : "w-3 bg-border"
+                  }`}
+                />
+              ))}
+              <span className="ml-1.5 shrink-0 text-[10px] text-muted-foreground whitespace-nowrap">
+                {Math.min(activeStepIndex + 1, navSteps.length)}/{navSteps.length}
+              </span>
+            </div>
+          </div>
+
+          {/* ── QR Calibration button ── */}
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => onStartNavigation?.({ mode: "qr" })}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-amber-500/25 transition-all"
+              title="Kalibrasi posisi via QR Code"
+              style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
+            >
+              <QrCode className="h-4 w-4 shrink-0" />
+              Kalibrasi Posisi via QR Code
+            </button>
+          </div>
+
+          {/* Keyframe for QR button pulse */}
+          <style>{`
+            @keyframes navQrPulse {
+              0%, 100% { box-shadow: 0 4px 14px rgba(245,158,11,0.25); }
+              50% { box-shadow: 0 4px 24px rgba(245,158,11,0.55); }
+            }
+          `}</style>
         </div>
       )}
 

@@ -81,7 +81,7 @@ const signedTurnAngle = (
   const dot = v1.x * v2.x + v1.y * v2.y;
   const raw = (Math.atan2(cross, dot) * 180) / Math.PI;
 
-  return -raw;
+  return raw;
 };
 
 const classifyTurn = (angleChange: number): TurnType => {
