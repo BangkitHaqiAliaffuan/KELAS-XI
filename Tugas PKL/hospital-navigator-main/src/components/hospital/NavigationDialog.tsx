@@ -16,19 +16,30 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Camera, RefreshCcw, MapPin, Loader2 } from "lucide-react";
-import { hospitalLocations } from "@/data/hospitalLocations";
+import { roomInfoBySvgId } from "@/data/hospitalRoomInfo";
 
 interface NavigationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  defaultMode?: "manual" | "qr";
+  onConfirmStart?: (payload: { roomId: string; source: "manual" | "qr" }) => void;
 }
 
-const NavigationDialog = ({ open, onOpenChange }: NavigationDialogProps) => {
+const NavigationDialog = ({
+  open,
+  onOpenChange,
+  defaultMode = "manual",
+  onConfirmStart,
+}: NavigationDialogProps) => {
   const [startLocation, setStartLocation] = useState<string>("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  const roomOptions = Object.values(roomInfoBySvgId).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
@@ -85,6 +96,13 @@ const NavigationDialog = ({ open, onOpenChange }: NavigationDialogProps) => {
       stopCamera();
     }
   }, [open, stopCamera]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (defaultMode !== "qr") return;
+    if (isCameraActive || isLoading) return;
+    void startCamera();
+  }, [open, defaultMode, isCameraActive, isLoading]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,7 +179,7 @@ const NavigationDialog = ({ open, onOpenChange }: NavigationDialogProps) => {
                 <SelectValue placeholder="Where are you now?" />
               </SelectTrigger>
               <SelectContent>
-                {hospitalLocations.map((loc) => (
+                {roomOptions.map((loc) => (
                   <SelectItem key={loc.id} value={loc.id}>
                     {loc.name}
                   </SelectItem>
@@ -176,6 +194,10 @@ const NavigationDialog = ({ open, onOpenChange }: NavigationDialogProps) => {
             disabled={!startLocation} 
             onClick={() => {
               console.log("Starting navigation from:", startLocation);
+              onConfirmStart?.({
+                roomId: startLocation,
+                source: isCameraActive ? "qr" : "manual",
+              });
               onOpenChange(false);
             }}
             className="w-full"

@@ -12,15 +12,41 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
+  const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
+  const [navigationStartRequest, setNavigationStartRequest] = useState<{
+    requestId: number;
+    roomId: string;
+    source: "manual" | "qr";
+  } | null>(null);
+  const [navigationStartCounter, setNavigationStartCounter] = useState(0);
 
   const highlightCategory: RoomHighlightCategory =
     activeTab === "departments" || activeTab === "facilities" || activeTab === "emergency"
       ? activeTab
       : null;
 
-  const handleStartNavigation = () => {
+  const handleStartNavigation = (options?: { mode?: "manual" | "qr" }) => {
+    setNavDialogMode(options?.mode ?? "manual");
     setIsNavDialogOpen(true);
   };
+
+  const handleConfirmNavigationStart = useCallback((payload: { roomId: string; source: "manual" | "qr" }) => {
+    const nextId = navigationStartCounter + 1;
+    setNavigationStartCounter(nextId);
+    setNavigationStartRequest({
+      requestId: nextId,
+      roomId: payload.roomId,
+      source: payload.source,
+    });
+    setIsNavDialogOpen(false);
+  }, [navigationStartCounter]);
+
+  const handleNavigationStartRequestHandled = useCallback((requestId: number) => {
+    setNavigationStartRequest((current) => {
+      if (!current) return current;
+      return current.requestId === requestId ? null : current;
+    });
+  }, []);
 
   const handleClearSelection = useCallback(() => {
     setSelectedLocation(null);
@@ -54,6 +80,9 @@ const Index = () => {
                 selectedLocation={selectedLocation} 
                 onClearSelection={handleClearSelection}
                 highlightCategory={highlightCategory}
+                onStartNavigation={handleStartNavigation}
+                navigationStartRequest={navigationStartRequest}
+                onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
               />
             </div>
           </div>
@@ -63,6 +92,8 @@ const Index = () => {
       <NavigationDialog 
         open={isNavDialogOpen} 
         onOpenChange={setIsNavDialogOpen} 
+        defaultMode={navDialogMode}
+        onConfirmStart={handleConfirmNavigationStart}
       />
     </div>
   );

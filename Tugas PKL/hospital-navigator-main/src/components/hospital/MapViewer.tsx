@@ -32,9 +32,23 @@ interface MapViewerProps {
   selectedLocation?: HospitalRoomInfo | null;
   onClearSelection?: () => void;
   highlightCategory?: "departments" | "facilities" | "emergency" | null;
+  onStartNavigation?: (options?: { mode?: "manual" | "qr" }) => void;
+  navigationStartRequest?: {
+    requestId: number;
+    roomId: string;
+    source: "manual" | "qr";
+  } | null;
+  onNavigationStartRequestHandled?: (requestId: number) => void;
 }
 
-const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: MapViewerProps) => {
+const MapViewer = ({
+  selectedLocation,
+  onClearSelection,
+  highlightCategory,
+  onStartNavigation,
+  navigationStartRequest,
+  onNavigationStartRequestHandled,
+}: MapViewerProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
@@ -76,6 +90,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const [locationInputMode, setLocationInputMode] = useState<"dropdown" | "qr">("dropdown");
+  const [isPathfindingDebugVisible, setIsPathfindingDebugVisible] = useState(true);
   const [startRoomId, setStartRoomId] = useState<string>(routingRoomOptions[0]?.id || "");
   const [endRoomId, setEndRoomId] = useState<string>(routingRoomOptions[1]?.id || routingRoomOptions[0]?.id || "");
   const [qrCodeInput, setQrCodeInput] = useState("");
@@ -97,6 +112,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const startRoomIdRef = useRef(startRoomId);
   const endRoomIdRef = useRef(endRoomId);
   const lastRerouteAtRef = useRef(0);
+  const preferRoomCenterStartRef = useRef(false);
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
@@ -106,6 +122,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const LIVE_REROUTE_INTERVAL_MS = 1200;
   const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
   const GPS_BUFFER_SIZE = 5;
+  const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set(["Lift_Lantai_1", "Tangga_Lantai_1", "Tangga_Lantai_1-2"]);
   const qrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
 
   // Keep refs in sync with state
@@ -158,6 +175,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
 
     setStartRoomId(resolvedStart);
     setShowCurrentUserMarker(true);
+    preferRoomCenterStartRef.current = Boolean(startFromQr);
 
     if (startFromQr) {
       setLocationInputMode("qr");
@@ -464,9 +482,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         normalizedSource.includes("jalan") ||
         normalizedSource.includes("background") ||
         normalizedSource.includes("unamed") ||
-        normalizedSource.includes("area kamar operasi") ||
-        normalizedSource.includes("lift lantai 1") ||
-        normalizedSource.includes("tangga lantai 1")
+        normalizedSource.includes("area kamar operasi")
       ) {
         return null;
       }
@@ -665,7 +681,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       .qr-anchor-point {
         fill: #f59e0b;
         stroke: #ffffff;
-        stroke-width: 2;
+        stroke-width: 0.3;
       }
       .qr-anchor-point-active {
         fill: #16a34a;
@@ -673,7 +689,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       .qr-anchor-label-bg {
         fill: rgba(17, 24, 39, 0.85);
         stroke: rgba(255, 255, 255, 0.45);
-        stroke-width: 0.8;
+        stroke-width: 0.1;
       }
       .qr-anchor-label-text {
         fill: #ffffff;
@@ -704,16 +720,16 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       const point = svgDoc.createElementNS(namespace, "circle");
       point.setAttribute("cx", "0");
       point.setAttribute("cy", "0");
-      point.setAttribute("r", "10");
+      point.setAttribute("r", "7");
       point.setAttribute("class", `qr-anchor-point ${activeQrId === anchor.qrId ? "qr-anchor-point-active" : ""}`.trim());
       group.appendChild(point);
 
       const qrText = svgDoc.createElementNS(namespace, "text");
       qrText.setAttribute("x", "0");
-      qrText.setAttribute("y", "3");
+      qrText.setAttribute("y", "2.4");
       qrText.setAttribute("text-anchor", "middle");
       qrText.setAttribute("fill", "#111827");
-      qrText.setAttribute("font-size", "7");
+      qrText.setAttribute("font-size", "5.8");
       qrText.setAttribute("font-weight", "800");
       qrText.textContent = "QR";
       group.appendChild(qrText);
@@ -854,7 +870,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       arriveText.setAttribute("fill", "#166534");
       arriveText.setAttribute("font-size", "9");
       arriveText.setAttribute("font-weight", "800");
-      arriveText.textContent = "TUJUAN";
+      arriveText.textContent = "";
       arriveGroup.appendChild(arriveText);
 
       layer.appendChild(arriveGroup);
@@ -944,6 +960,10 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         );
 
       roomTargets.forEach(({ path, room }) => {
+        if (HIDDEN_DYNAMIC_LABEL_ROOM_IDS.has(room.id) || HIDDEN_DYNAMIC_LABEL_ROOM_IDS.has(path.id)) {
+          return;
+        }
+
         const targetElement = asSvgGraphicsElement(path);
         if (!targetElement) return;
         const bbox = targetElement.getBBox();
@@ -1389,18 +1409,39 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return;
     }
 
-    const anchor = resolveQrAnchor(qrCodeInput);
-    if (!anchor) {
-      const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
-      if (!resolvedRoomId) {
-        setRouteDebugMessage("QR tidak dikenali. Contoh: QR-CORR-A1-J1 atau QR-IGD.");
-        return;
+    const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
+    if (resolvedRoomId) {
+      gpsBufferRef.current = [];
+      liveSvgPointRef.current = null;
+      setLiveSvgPoint(null);
+      setShowCurrentUserMarker(true);
+      setStartRoomId(resolvedRoomId);
+      startRoomIdRef.current = resolvedRoomId;
+      preferRoomCenterStartRef.current = true;
+      setLastQrAnchor(null);
+      setLocationInputMode("qr");
+
+      const roomCenter = getRoomCenterById(svgDoc, resolvedRoomId);
+      const routeAfterRoomScan =
+        endRoomIdRef.current && endRoomIdRef.current !== resolvedRoomId
+          ? buildRouteForRooms(resolvedRoomId, endRoomIdRef.current, svgDoc, {
+              startPoint: roomCenter ?? undefined,
+            })
+          : null;
+
+      if (routeAfterRoomScan) {
+        setActiveRoute(routeAfterRoomScan);
+      } else {
+        setActiveRoute(null);
       }
 
-      setLocationInputMode("qr");
-      setStartRoomId(resolvedRoomId);
-      setShowCurrentUserMarker(true);
-      setRouteDebugMessage(`Lokasi saat ini diset dari QR: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+      setRouteDebugMessage(`✅ Start point dari QR ruangan: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+      return;
+    }
+
+    const anchor = resolveQrAnchor(qrCodeInput);
+    if (!anchor) {
+      setRouteDebugMessage("QR tidak dikenali. Contoh: QR-F-N01, QR-R-IGD, atau QR-IGD.");
       return;
     }
 
@@ -1410,6 +1451,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     setShowCurrentUserMarker(true);
     setStartRoomId(anchor.roomId);
     startRoomIdRef.current = anchor.roomId;
+    preferRoomCenterStartRef.current = false;
     setLastQrAnchor(anchor);
     setQrCalibrationHistory((prev) => [...prev, anchor]);
     setLocationInputMode("qr");
@@ -1427,7 +1469,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
 
     setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
     setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
-  }, [qrCodeInput]);
+  }, [qrCodeInput, getRoomCenterById]);
 
   const stopLiveMode = useCallback((statusMessage?: string) => {
     if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -1468,6 +1510,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     liveOriginRef.current = null;
     gpsBufferRef.current = [];
     liveSvgPointRef.current = startCenter;
+    preferRoomCenterStartRef.current = false;
     setLiveSvgPoint(startCenter);
     setShowCurrentUserMarker(true);
     setIsLiveMode(true);
@@ -1571,13 +1614,78 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
     geoWatchIdRef.current = watchId;
   }, [getRoomCenterById, getNearestRoutingRoom, stopLiveMode]);
 
+  useEffect(() => {
+    if (!navigationStartRequest) return;
+
+    const { requestId, roomId, source } = navigationStartRequest;
+    const finish = () => onNavigationStartRequestHandled?.(requestId);
+
+    if (isLiveMode) {
+      stopLiveMode("Live mode dimatikan karena start point diubah.");
+    }
+
+    gpsBufferRef.current = [];
+    liveSvgPointRef.current = null;
+    setLiveSvgPoint(null);
+    setLastQrAnchor(null);
+    preferRoomCenterStartRef.current = true;
+    setLocationInputMode(source === "qr" ? "qr" : "dropdown");
+    setStartRoomId(roomId);
+    startRoomIdRef.current = roomId;
+    setShowCurrentUserMarker(true);
+
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setRouteDebugMessage(`Start point diset ke ${roomInfoBySvgId[roomId]?.name || roomId}.`);
+      finish();
+      return;
+    }
+
+    const targetEnd = endRoomIdRef.current;
+    if (!targetEnd || targetEnd === roomId) {
+      setActiveRoute(null);
+      setRouteDebugMessage(`Start point diset ke ${roomInfoBySvgId[roomId]?.name || roomId}. Pilih tujuan berbeda.`);
+      finish();
+      return;
+    }
+
+    const startCenter = getRoomCenterById(svgDoc, roomId);
+    const immediateRoute = buildRouteForRooms(roomId, targetEnd, svgDoc, {
+      startPoint: startCenter ?? undefined,
+    });
+
+    if (!immediateRoute) {
+      setActiveRoute(null);
+      setRouteDebugMessage("Rute tidak ditemukan setelah set titik awal. Coba scan ulang QR atau pilih start lain.");
+      finish();
+      return;
+    }
+
+    setActiveRoute(immediateRoute);
+    setRouteDebugMessage(
+      `Rute otomatis: ${roomInfoBySvgId[roomId]?.name || roomId} → ${roomInfoBySvgId[targetEnd]?.name || targetEnd}`
+    );
+    zoomToSvgElement(targetEnd);
+    finish();
+  }, [
+    navigationStartRequest,
+    onNavigationStartRequestHandled,
+    isLiveMode,
+    stopLiveMode,
+    getRoomCenterById,
+    zoomToSvgElement,
+  ]);
+
   const handleFindRoute = useCallback(() => {
-    if (!startRoomId || !endRoomId) {
+    const effectiveStartRoomId = startRoomIdRef.current || startRoomId;
+    const effectiveEndRoomId = endRoomIdRef.current || endRoomId;
+
+    if (!effectiveStartRoomId || !effectiveEndRoomId) {
       setRouteDebugMessage("Pilih titik awal dan tujuan terlebih dahulu.");
       return;
     }
 
-    if (startRoomId === endRoomId) {
+    if (effectiveStartRoomId === effectiveEndRoomId) {
       setRouteDebugMessage("Titik awal dan tujuan sama. Pilih tujuan yang berbeda.");
       setActiveRoute(null);
       return;
@@ -1589,8 +1697,20 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
       return;
     }
 
-    const result = buildRouteForRooms(startRoomId, endRoomId, svgDoc, {
-      startPoint: liveSvgPoint ?? undefined,
+    const roomCenterStart = preferRoomCenterStartRef.current
+      ? getRoomCenterById(svgDoc, effectiveStartRoomId)
+      : null;
+
+    if (preferRoomCenterStartRef.current && !roomCenterStart) {
+      setRouteDebugMessage("Start ruangan tidak valid di SVG. Scan ulang atau pilih start dari dropdown.");
+      setActiveRoute(null);
+      return;
+    }
+
+    const result = buildRouteForRooms(effectiveStartRoomId, effectiveEndRoomId, svgDoc, {
+      startPoint: preferRoomCenterStartRef.current
+        ? roomCenterStart ?? undefined
+        : (liveSvgPointRef.current ?? undefined),
     });
     if (!result) {
       setRouteDebugMessage("Rute tidak ditemukan pada jalur 'jalan' di denah.");
@@ -1600,11 +1720,11 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
 
     setActiveRoute(result);
     setRouteDebugMessage(
-      `Rute ditemukan: ${roomInfoBySvgId[startRoomId]?.name || startRoomId} → ${roomInfoBySvgId[endRoomId]?.name || endRoomId}`
+      `Rute ditemukan: ${roomInfoBySvgId[effectiveStartRoomId]?.name || effectiveStartRoomId} → ${roomInfoBySvgId[effectiveEndRoomId]?.name || effectiveEndRoomId}`
     );
 
-    zoomToSvgElement(endRoomId);
-  }, [startRoomId, endRoomId, zoomToSvgElement]);
+    zoomToSvgElement(effectiveEndRoomId);
+  }, [startRoomId, endRoomId, zoomToSvgElement, getRoomCenterById]);
 
   const handleClearRoute = useCallback(() => {
     setActiveRoute(null);
@@ -1697,6 +1817,29 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
   const handleZoomOut = () =>
     setScale((s) => Math.max(s - ZOOM_STEP, MIN_SCALE));
 
+  const currentNavStep = navSteps.length
+    ? navSteps[Math.min(activeStepIndex, navSteps.length - 1)]
+    : null;
+
+  const currentNavInstruction = (() => {
+    if (!currentNavStep) return "";
+
+    switch (currentNavStep.type) {
+      case "turn_left":
+        return "Belok kiri";
+      case "turn_right":
+        return "Belok kanan";
+      case "straight":
+        return "Lurus";
+      case "u_turn":
+        return "Ke belakang (putar balik)";
+      case "arrive":
+        return "Anda telah tiba di tujuan";
+      default:
+        return currentNavStep.label;
+    }
+  })();
+
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
@@ -1731,22 +1874,34 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         </div>
       </div>
 
-      {/* Navigation hint */}
-      <div className="absolute top-4 left-4 flex flex-col gap-1 pointer-events-none">
-        <div className="px-3 py-1.5 bg-background/80 backdrop-blur-md border border-border rounded-full text-[10px] font-semibold uppercase tracking-wider text-muted-foreground shadow-sm">
-          Tampilan Desktop • Gunakan Scroll untuk Zoom
-        </div>
-      </div>
-
-      <div className="absolute top-4 right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background/90 backdrop-blur-md shadow-lg p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Navigation HUD</p>
-          <span className="text-[10px] text-muted-foreground">Lantai 1</span>
-        </div>
+      {isPathfindingDebugVisible ? (
+        <div className="absolute top-4 right-4 z-30 w-[320px] max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-background/90 backdrop-blur-md shadow-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Navigation HUD</p>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">Lantai 1</span>
+              <button
+                onClick={() => setIsPathfindingDebugVisible(false)}
+                className="inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted"
+                title="Tutup debug mode"
+                aria-label="Tutup debug mode"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
 
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() => setLocationInputMode("dropdown")}
+            onClick={() => {
+              setLocationInputMode("dropdown");
+              setLastQrAnchor(null);
+              if (!isLiveMode) {
+                liveSvgPointRef.current = null;
+                gpsBufferRef.current = [];
+                setLiveSvgPoint(null);
+              }
+            }}
             className={`rounded-md px-2 py-1 text-xs font-medium border transition-colors ${
               locationInputMode === "dropdown"
                 ? "bg-primary text-primary-foreground border-primary"
@@ -1774,7 +1929,13 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
               value={startRoomId}
               onChange={(event) => {
                 if (isLiveMode) stopLiveMode("Live mode dimatikan karena start dipilih manual.");
+                preferRoomCenterStartRef.current = false;
+                liveSvgPointRef.current = null;
+                gpsBufferRef.current = [];
+                setLiveSvgPoint(null);
+                setLastQrAnchor(null);
                 setStartRoomId(event.target.value);
+                startRoomIdRef.current = event.target.value;
                 setShowCurrentUserMarker(false);
               }}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
@@ -1793,7 +1954,7 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
               <input
                 value={qrCodeInput}
                 onChange={(event) => setQrCodeInput(event.target.value)}
-                placeholder="Contoh: QR-CORR-A1-J1"
+                placeholder="Contoh: QR-F-N01 / QR-R-IGD"
                 className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs"
               />
               <button
@@ -1894,7 +2055,44 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
         {liveModeStatus && (
           <p className="text-[11px] text-muted-foreground">{liveModeStatus}</p>
         )}
-      </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsPathfindingDebugVisible(true)}
+          className="absolute top-4 right-4 z-30 rounded-md border border-border bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground shadow"
+          title="Buka pathfinding debug mode"
+        >
+          Buka Debug Mode
+        </button>
+      )}
+
+      {(activeRoute || isLiveMode) && currentNavStep && (
+        <div className="absolute top-4 left-4 z-30 w-[min(92vw,320px)] rounded-xl border border-border bg-background/90 px-3 py-2 shadow-lg backdrop-blur-md">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Instruksi Navigasi
+          </p>
+          <p className="mt-1 text-sm font-bold text-foreground">
+            {currentNavInstruction}
+          </p>
+          {currentNavStep.type !== "arrive" && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Sekitar {Math.max(1, Math.round(currentNavStep.distanceToNext))} px lagi
+            </p>
+          )}
+          <div className="mt-2 flex items-center justify-between gap-2">
+            <p className="text-[10px] text-muted-foreground">
+              Langkah {Math.min(activeStepIndex + 1, navSteps.length)} / {navSteps.length}
+            </p>
+            <button
+              onClick={() => onStartNavigation?.({ mode: "qr" })}
+              className="rounded-md border border-border bg-background px-2.5 py-1 text-[10px] font-semibold text-foreground hover:bg-muted"
+              title="Kalibrasi QR saat navigasi"
+            >
+              Kalibrasi QR
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Zoom controls */}
       <div className="absolute bottom-6 right-16 flex items-center gap-2 bg-background/80 backdrop-blur-md p-1.5 border border-border rounded-xl shadow-lg">
@@ -2016,9 +2214,16 @@ const MapViewer = ({ selectedLocation, onClearSelection, highlightCategory }: Ma
               📍 {activeRoomInfo.locationHint}
             </span>
             <button
-              onClick={() =>
-                setScale((current) => Math.min(current + 0.2, MAX_SCALE))
-              }
+              onClick={() => {
+                const destinationRoomId = activeRoomInfo.id;
+                setEndRoomId(destinationRoomId);
+                endRoomIdRef.current = destinationRoomId;
+                setRouteDebugMessage(
+                  `Tujuan dipilih: ${activeRoomInfo.name}. Pilih titik awal via QR atau dropdown.`
+                );
+                setIsPathfindingDebugVisible(true);
+                onStartNavigation?.({ mode: "qr" });
+              }}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               <Navigation className="h-3.5 w-3.5" />

@@ -1,6 +1,7 @@
 import { Globe, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import logo from '../../../public/logo.png'
+import { log } from "console";
 const tabs = ["Map", "Scan QR Code", "Emergency"];
 
 interface TopNavProps {
@@ -14,7 +15,7 @@ const TopNav = ({ activeTab, onTabChange, onStartNavigation }: TopNavProps) => {
     <header className="flex items-center justify-between px-6 py-3 bg-card border-b border-border">
       <div className="flex items-center gap-3">
         <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-sm">H+</span>
+          <img src={logo} alt="" />
         </div>
         <span className="font-bold text-foreground text-lg hidden sm:block">Hospital Navigator</span>
       </div>

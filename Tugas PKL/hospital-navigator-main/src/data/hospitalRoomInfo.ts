@@ -68,6 +68,20 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Tengah kanan bawah peta",
     description: "Fasilitas toilet umum untuk pengunjung dan pasien.",
   },
+  Lift_Lantai_1: {
+    id: "Lift_Lantai_1",
+    name: "Lift Lantai 1",
+    category: "Facility",
+    locationHint: "Koridor tengah-kanan peta",
+    description: "Akses lift untuk perpindahan antar lantai rumah sakit.",
+  },
+  Tangga_Lantai_1: {
+    id: "Tangga_Lantai_1",
+    name: "Tangga Lantai 1",
+    category: "Facility",
+    locationHint: "Koridor tengah-kanan peta",
+    description: "Akses tangga untuk perpindahan antar lantai rumah sakit.",
+  },
   Informasi: {
     id: "Informasi",
     name: "Informasi",
@@ -277,6 +291,20 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kanan bawah peta",
     description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
+  },
+  "R._Tunggu_Keluarga_Pasien": {
+    id: "R._Tunggu_Keluarga_Pasien",
+    name: "R. Tunggu Keluarga Pasien",
+    category: "Facility",
+    locationHint: "Sisi kanan bawah peta",
+    description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
+  },
+  "Tangga_Lantai_1-2": {
+    id: "Tangga_Lantai_1-2",
+    name: "Tangga Evakuasi Lantai 1",
+    category: "Facility",
+    locationHint: "Sisi kiri atas peta",
+    description: "Tangga Darurat",
   },
 };
 

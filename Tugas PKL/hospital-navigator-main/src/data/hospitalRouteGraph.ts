@@ -18,68 +18,140 @@ export interface QrAnchor {
 }
 
 export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
-  "QR-CORR-A1-J1": {
-    qrId: "QR-CORR-A1-J1",
+  "QR-F1-N01": {
+    qrId: "QR-F1-N01",
     roomId: "IGD",
     svgX: 632.95538,
     svgY: 753.07831,
     label: "Persimpangan Area Pelayanan IGD",
     floor: 1,
   },
-  "QR-CORR-A2-J1": {
-    qrId: "QR-CORR-A2-J1",
-    roomId: "Informasi",
-    svgX: 633.01105,
-    svgY: 729.92206,
-    label: "Persimpangan TRP RJ dan Informasi",
-    floor: 1,
-  },
-  "QR-CORR-B1-J2": {
-    qrId: "QR-CORR-B1-J2",
+  "QR-F1-N03": {
+    qrId: "QR-F1-N03",
     roomId: "Lab",
     svgX: 865.2005,
     svgY: 516.54614,
     label: "Persimpangan ke Lab",
     floor: 1,
   },
-  "QR-CORR-B2-J2": {
-    qrId: "QR-CORR-B2-J2",
+  "QR-F1-N04": {
+    qrId: "QR-F1-N04",
     roomId: "Farmasi",
     svgX: 989.14642,
     svgY: 515.6015,
     label: "Persimpangan jalan ke Farmasi",
     floor: 1,
   },
-  "QR-CORR-C1-J1": {
-    qrId: "QR-CORR-C1-J1",
+  "QR-F1-N05": {
+    qrId: "QR-F1-N05",
     roomId: "Poliklinik",
     svgX: 1297.0038,
     svgY: 681.64331,
     label: "Persimpangan dari Poliklinik",
     floor: 1,
   },
-  "QR-CORR-C2-J3": {
-    qrId: "QR-CORR-C2-J3",
+  "QR-F1-N06": {
+    qrId: "QR-F1-N06",
     roomId: "Rekam_Medis",
     svgX: 988.59271,
     svgY: 681.49438,
     label: "Persimpangan ke Rekam Medis",
     floor: 1,
   },
-  "QR-CORR-D1-J1": {
-    qrId: "QR-CORR-D1-J1",
+  "QR-F1-N07": {
+    qrId: "QR-F1-N07",
     roomId: "ICU",
-    svgX: 538.37146,
-    svgY: 255.84256,
+    svgX: 465.359,
+    svgY: 255.37,
     label: "Persimpangan ke ICU",
     floor: 1,
   },
-  "QR-CORR-D2-J1": {
-    qrId: "QR-CORR-D2-J1",
+  "QR-F1-N08": {
+    qrId: "QR-F1-N08",
     roomId: "Rehab_Medik",
     svgX: 781.63397,
     svgY: 680.77075,
     label: "Persimpangan ke Rehab Medik",
+    floor: 1,
+  },
+  "QR-F1-N09": {
+    qrId: "QR-F1-N09",
+    roomId: "Lab",
+    svgX: 782.692,
+    svgY: 517.453,
+    label: "Persimpangan masuk ke lab dan Rehab Medik",
+    floor: 1,
+  },
+  "QR-F1-N10": {
+    qrId: "QR-F1-N10",
+    roomId: "ICU",
+    svgX: 463.823,
+    svgY: 514.038,
+    label: "Persimpangan arah jalan atas",
+    floor: 1,
+  },
+  "QR-F1-N11": {
+    qrId: "QR-F1-N11",
+    roomId: "ICU",
+    svgX: 651.808,
+    svgY: 254.74,
+    label: "Persimpangan depan ruang kebidanan atas",
+    floor: 1,
+  },
+  "QR-F1-N12": {
+    qrId: "QR-F1-N12",
+    roomId: "R._Kebidanan",
+    svgX: 652.549,
+    svgY: 513.945,
+    label: "Persimpangan depan ruang kebidanan atas",
+    floor: 1,
+  },
+  "QR-F1-N13": {
+    qrId: "QR-F1-N13",
+    roomId: "R._Tunggu_Keluarga_Pasien",
+    svgX: 780.409,
+    svgY: 255.386,
+    label: "Persimpangan ke Ruang Rawat Jantung",
+    floor: 1,
+  },
+  "QR-F1-N14": {
+    qrId: "QR-F1-N14",
+    roomId: "R._Tunggu_Keluarga_Pasien",
+    svgX: 864.351,
+    svgY: 256.027,
+    label: "Persimpangan masuk ke ruang anak",
+    floor: 1,
+  },
+  "QR-F1-N15": {
+    qrId: "QR-F1-N15",
+    roomId: "R._Tunggu_Keluarga_Pasien",
+    svgX: 1000.108,
+    svgY: 256.118,
+    label: "Persimpangan ke Ruang Rawat Jantung",
+    floor: 1,
+  },
+  "QR-F1-N16": {
+    qrId: "QR-F1-N16",
+    roomId: "R._Laundry",
+    svgX: 1203.5,
+    svgY: 255.426,
+    label: "Belok ke Ruang Artenis atau Gizi (Atas)",
+    floor: 1,
+  },
+  "QR-F1-N17": {
+    qrId: "QR-F1-N17",
+    roomId: "R._Internis",
+    svgX: 1203.5,
+    svgY: 513.333,
+    label: "Persimpangan masuk ke ruang anak",
+    floor: 1,
+  },
+  "QR-F1-N18": {
+    qrId: "QR-F1-N18",
+    roomId: "R._JKN",
+    svgX: 1294.753,
+    svgY: 513.333,
+    label: "Persimpangan masuk ke ruang anak",
     floor: 1,
   },
 };
@@ -96,13 +168,43 @@ const qrCodeToRoomId: Record<string, string> = {
   "QR-MUSHOLLA": "Musholla",
 };
 
+const ROOM_QR_PREFIXES = ["QR-R-", "QR-ROOM-"] as const;
+
+const normalizeRoomToken = (value: string): string =>
+  value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+const roomTokenToRoomId: Record<string, string> = Object.keys(roomInfoBySvgId).reduce(
+  (acc, roomId) => {
+    const token = normalizeRoomToken(roomId);
+    if (!acc[token]) {
+      acc[token] = roomId;
+    }
+    return acc;
+  },
+  {} as Record<string, string>,
+);
+
+export const buildRoomQrCode = (roomId: string): string => `QR-R-${roomId.toUpperCase()}`;
+
+export const getAllRoomQrCodes = (): Record<string, string> =>
+  Object.keys(roomInfoBySvgId).reduce(
+    (acc, roomId) => {
+      acc[roomId] = buildRoomQrCode(roomId);
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
+
 type GraphNode = { id: string; x: number; y: number };
 type Graph = Record<string, Array<{ id: string; weight: number }>>;
 
 const NODE_SNAP_SIZE = 12;
 const SAMPLE_STEP = 24;
 
-const distance = (from: { x: number; y: number }, to: { x: number; y: number }): number => {
+const distance = (
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+): number => {
   const dx = from.x - to.x;
   const dy = from.y - to.y;
   return Math.hypot(dx, dy);
@@ -113,26 +215,59 @@ const normalizeElementId = (raw: string): string => raw.toLowerCase().trim();
 const normalizeElementLabel = (raw: string): string =>
   raw.toLowerCase().replace(/[_-]/g, " ").replace(/\s+/g, " ").trim();
 
-const isBlockedIgdEntranceElement = (idRaw: string, labelRaw: string): boolean => {
+const isBlockedIgdEntranceElement = (
+  idRaw: string,
+  labelRaw: string,
+): boolean => {
   const normalizedId = normalizeElementId(idRaw);
   const normalizedLabel = normalizeElementLabel(labelRaw);
 
   return normalizedId === "masuk_ke_igd" || normalizedLabel === "masuk ke igd";
 };
 
-const isRoadPath = (path: SVGPathElement): boolean => {
+const EXPLICIT_ROUTE_PATH_IDS = new Set([
+  "masuk_ke_kamar_mayat",
+  "keluar_menuju_kamar_mayat",
+  "belok_menuju_kamar_mayat",
+  "path5",
+]);
+
+const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
+  "Check_Point_Kamar_Mayat",
+  "Belok_Masuk_ke_Kamar_Mayat",
+  "Belok_ke_Kamar_Mayat",
+] as const;
+
+const isRoadPath = (
+  path: SVGPathElement,
+  options?: { allowIgdEntrancePath?: boolean },
+): boolean => {
   const pathId = path.id?.toLowerCase() || "";
-  const pathLabel = (path.getAttribute("inkscape:label") || path.getAttribute("label") || "").toLowerCase();
-  if (isBlockedIgdEntranceElement(pathId, pathLabel)) return false;
+  const pathLabel = (
+    path.getAttribute("inkscape:label") ||
+    path.getAttribute("label") ||
+    ""
+  ).toLowerCase();
+  if (
+    isBlockedIgdEntranceElement(pathId, pathLabel) &&
+    !options?.allowIgdEntrancePath
+  ) {
+    return false;
+  }
+  if (EXPLICIT_ROUTE_PATH_IDS.has(pathId)) return true;
   return pathId.includes("jalan") || pathLabel.includes("jalan");
 };
 
-const isElementNodeLike = (element: Element): element is SVGCircleElement | SVGEllipseElement => {
+const isElementNodeLike = (
+  element: Element,
+): element is SVGCircleElement | SVGEllipseElement => {
   const tag = element.tagName.toLowerCase();
   return tag === "circle" || tag === "ellipse";
 };
 
-const getNodeCenterFromSvgElement = (element: SVGCircleElement | SVGEllipseElement): { x: number; y: number } | null => {
+const getNodeCenterFromSvgElement = (
+  element: SVGCircleElement | SVGEllipseElement,
+): { x: number; y: number } | null => {
   const cx = Number(element.getAttribute("cx") || "NaN");
   const cy = Number(element.getAttribute("cy") || "NaN");
   if (!Number.isFinite(cx) || !Number.isFinite(cy)) return null;
@@ -149,10 +284,10 @@ const findNearestNodeWithin = (
   nodes: Record<string, GraphNode>,
   point: { x: number; y: number },
   threshold: number,
-  predicate?: (node: GraphNode) => boolean
+  predicate?: (node: GraphNode) => boolean,
 ): GraphNode | null => {
   const candidates = Object.values(nodes).filter((node) =>
-    predicate ? predicate(node) : true
+    predicate ? predicate(node) : true,
   );
 
   let nearest: GraphNode | null = null;
@@ -173,13 +308,13 @@ const ensureNode = (
   nodes: Record<string, GraphNode>,
   explicitNodeIds: Set<string>,
   x: number,
-  y: number
+  y: number,
 ): GraphNode => {
   const explicitNearby = findNearestNodeWithin(
     nodes,
     { x, y },
     NODE_SNAP_SIZE * 3,
-    (node) => explicitNodeIds.has(node.id) && !node.id.startsWith("node_room_")
+    (node) => explicitNodeIds.has(node.id) && !node.id.startsWith("node_room_"),
   );
   if (explicitNearby) return explicitNearby;
 
@@ -197,7 +332,12 @@ const ensureNode = (
   return nodes[id];
 };
 
-const addEdge = (graph: Graph, fromId: string, toId: string, weight: number) => {
+const addEdge = (
+  graph: Graph,
+  fromId: string,
+  toId: string,
+  weight: number,
+) => {
   if (!graph[fromId]) graph[fromId] = [];
   if (!graph[toId]) graph[toId] = [];
 
@@ -214,27 +354,39 @@ const addEdge = (graph: Graph, fromId: string, toId: string, weight: number) => 
   }
 };
 
-const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<string, GraphNode> } => {
+const buildRoadGraphFromSvg = (
+  svgDoc: Document,
+  options?: { allowIgdEntrancePath?: boolean },
+): { graph: Graph; nodes: Record<string, GraphNode> } => {
   const graph: Graph = {};
   const nodes: Record<string, GraphNode> = {};
 
   const explicitNodeIds = new Set<string>();
 
-  const nodeLayer = Array.from(svgDoc.querySelectorAll("g"))
-    .find((group) => {
-      const layerLabel = (group.getAttribute("inkscape:label") || "").toLowerCase();
-      return layerLabel.includes("node jalan") || layerLabel.includes("pathfinding node");
-    });
+  const nodeLayer = Array.from(svgDoc.querySelectorAll("g")).find((group) => {
+    const layerLabel = (
+      group.getAttribute("inkscape:label") || ""
+    ).toLowerCase();
+    return (
+      layerLabel.includes("node jalan") ||
+      layerLabel.includes("pathfinding node")
+    );
+  });
 
   const explicitNodeElements = nodeLayer
     ? Array.from(nodeLayer.querySelectorAll("circle, ellipse"))
-    : Array.from(svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"));
+    : Array.from(
+        svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"),
+      );
 
   explicitNodeElements.forEach((element) => {
     if (!isElementNodeLike(element)) return;
     const id = element.id;
     if (!id) return;
-    const label = (element.getAttribute("inkscape:label") || element.getAttribute("label") || "");
+    const label =
+      element.getAttribute("inkscape:label") ||
+      element.getAttribute("label") ||
+      "";
     if (isBlockedIgdEntranceElement(id, label)) return;
     const center = getNodeCenterFromSvgElement(element);
     if (!center) return;
@@ -243,14 +395,22 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
     if (!graph[id]) graph[id] = [];
   });
 
-  const centerlineLayer = Array.from(svgDoc.querySelectorAll("g")).find((group) => {
-    const layerLabel = (group.getAttribute("inkscape:label") || "").toLowerCase();
-    return layerLabel.includes("centerline jalan");
-  });
+  const centerlineLayer = Array.from(svgDoc.querySelectorAll("g")).find(
+    (group) => {
+      const layerLabel = (
+        group.getAttribute("inkscape:label") || ""
+      ).toLowerCase();
+      return layerLabel.includes("centerline jalan");
+    },
+  );
 
   const roadPaths = centerlineLayer
-    ? Array.from(centerlineLayer.querySelectorAll("path")).filter(isRoadPath)
-    : Array.from(svgDoc.querySelectorAll("path")).filter(isRoadPath);
+    ? Array.from(centerlineLayer.querySelectorAll("path")).filter((path) =>
+        isRoadPath(path, options),
+      )
+    : Array.from(svgDoc.querySelectorAll("path")).filter((path) =>
+        isRoadPath(path, options),
+      );
 
   roadPaths.forEach((path) => {
     const totalLength = path.getTotalLength();
@@ -265,7 +425,12 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
       const currentNode = ensureNode(nodes, explicitNodeIds, point.x, point.y);
 
       if (previousNode && previousNode.id !== currentNode.id) {
-        addEdge(graph, previousNode.id, currentNode.id, distance(previousNode, currentNode));
+        addEdge(
+          graph,
+          previousNode.id,
+          currentNode.id,
+          distance(previousNode, currentNode),
+        );
       }
 
       previousNode = currentNode;
@@ -275,7 +440,11 @@ const buildRoadGraphFromSvg = (svgDoc: Document): { graph: Graph; nodes: Record<
   return { graph, nodes };
 };
 
-const dijkstra = (graph: Graph, startId: string, endId: string): { path: string[]; distance: number } | null => {
+const dijkstra = (
+  graph: Graph,
+  startId: string,
+  endId: string,
+): { path: string[]; distance: number } | null => {
   if (!graph[startId] || !graph[endId]) return null;
 
   const distances: Record<string, number> = {};
@@ -327,7 +496,51 @@ const dijkstra = (graph: Graph, startId: string, endId: string): { path: string[
   return { path, distance: distances[endId] };
 };
 
-const getRoomCenter = (svgDoc: Document, roomId: string): { x: number; y: number } | null => {
+const GENERATED_ROOM_NODE_LAYER_ID = "mapviewer-generated-room-nodes";
+
+const ensureGeneratedRoomAnchorNode = (
+  svgDoc: Document,
+  roomId: string,
+  center: { x: number; y: number },
+): void => {
+  try {
+    const nodeId = `node_room_${roomId}`;
+    const existing = svgDoc.getElementById(nodeId);
+    if (existing) return;
+
+    const rootSvg = svgDoc.querySelector("svg");
+    if (!rootSvg) return;
+
+    const namespace = "http://www.w3.org/2000/svg";
+
+    let layer = svgDoc.getElementById(
+      GENERATED_ROOM_NODE_LAYER_ID,
+    ) as unknown as SVGGElement | null;
+    if (!layer) {
+      layer = svgDoc.createElementNS(namespace, "g");
+      layer.setAttribute("id", GENERATED_ROOM_NODE_LAYER_ID);
+      layer.setAttribute("style", "display:none;opacity:0");
+      layer.setAttribute("data-generated", "true");
+      rootSvg.appendChild(layer);
+    }
+
+    const roomNode = svgDoc.createElementNS(namespace, "circle");
+    roomNode.setAttribute("id", nodeId);
+    roomNode.setAttribute("cx", String(center.x));
+    roomNode.setAttribute("cy", String(center.y));
+    roomNode.setAttribute("r", "1");
+    roomNode.setAttribute("data-generated", "true");
+    roomNode.setAttribute("style", "display:none");
+    layer.appendChild(roomNode);
+  } catch {
+    return;
+  }
+};
+
+const getRoomCenter = (
+  svgDoc: Document,
+  roomId: string,
+): { x: number; y: number } | null => {
   const roomAnchor = svgDoc.getElementById(`node_room_${roomId}`);
   if (roomAnchor && roomAnchor.tagName.toLowerCase() === "circle") {
     const x = Number(roomAnchor.getAttribute("cx") || "NaN");
@@ -343,16 +556,19 @@ const getRoomCenter = (svgDoc: Document, roomId: string): { x: number; y: number
   if (typeof maybeGraphics.getBBox !== "function") return null;
 
   const bbox = maybeGraphics.getBBox();
-  return {
+  const center = {
     x: bbox.x + bbox.width / 2,
     y: bbox.y + bbox.height / 2,
   };
+
+  ensureGeneratedRoomAnchorNode(svgDoc, roomId, center);
+  return center;
 };
 
 const getNearestNodeId = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
-  point: { x: number; y: number }
+  point: { x: number; y: number },
 ): string | null => {
   const nodeValues = Object.values(nodes).filter((node) => {
     if (node.id.toLowerCase().startsWith("node_room_")) return false;
@@ -374,20 +590,87 @@ const getNearestNodeId = (
   return nearestId;
 };
 
+const isIgdRelatedRoom = (roomId: string): boolean => {
+  const normalized = roomId.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return normalized.includes("igd");
+};
+
+const isKamarMayatRoom = (roomId: string): boolean => roomId === "K._Mayat";
+
+const resolvePreferredNodeId = (
+  preferredNodeIds: readonly string[],
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  fallbackPoint: { x: number; y: number },
+): string | null => {
+  for (const preferredNodeId of preferredNodeIds) {
+    const preferredNode = nodes[preferredNodeId];
+    if (!preferredNode) continue;
+    if ((graph[preferredNodeId]?.length || 0) <= 0) continue;
+    return preferredNodeId;
+  }
+
+  return getNearestNodeId(nodes, graph, fallbackPoint);
+};
+
+const resolvePreferredStartNodeId = (
+  startRoomId: string,
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  fallbackStartPoint: { x: number; y: number },
+): string | null => {
+  if (isKamarMayatRoom(startRoomId)) {
+    return resolvePreferredNodeId(
+      KAMAR_MAYAT_PREFERRED_NODE_IDS,
+      nodes,
+      graph,
+      fallbackStartPoint,
+    );
+  }
+
+  if (startRoomId === "IGD") {
+    const igdExitNodeId = "Persimpangan_Keluar_IGD";
+    const igdExitNode = nodes[igdExitNodeId];
+    if (igdExitNode && (graph[igdExitNodeId]?.length || 0) > 0) {
+      return igdExitNodeId;
+    }
+  }
+
+  return getNearestNodeId(nodes, graph, fallbackStartPoint);
+};
+
+const resolvePreferredEndNodeId = (
+  endRoomId: string,
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  fallbackEndPoint: { x: number; y: number },
+): string | null => {
+  if (isKamarMayatRoom(endRoomId)) {
+    return resolvePreferredNodeId(
+      KAMAR_MAYAT_PREFERRED_NODE_IDS,
+      nodes,
+      graph,
+      fallbackEndPoint,
+    );
+  }
+
+  return getNearestNodeId(nodes, graph, fallbackEndPoint);
+};
+
 const shouldExcludeFromRouting = (roomId: string): boolean => {
   const normalized = roomId.toLowerCase().replace(/_/g, " ");
   return (
     normalized.includes("jalan") ||
     normalized.includes("background") ||
     normalized.includes("unamed") ||
-    normalized.includes("area kamar operasi") ||
-    normalized.includes("lift lantai 1") ||
-    normalized.includes("tangga lantai 1")
+    normalized.includes("area kamar operasi")
   );
 };
 
 export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
-  const ids = Object.keys(roomInfoBySvgId).filter((roomId) => !shouldExcludeFromRouting(roomId));
+  const ids = Object.keys(roomInfoBySvgId).filter(
+    (roomId) => !shouldExcludeFromRouting(roomId),
+  );
   if (!svgDoc) return ids;
 
   return ids.filter((roomId) => {
@@ -403,7 +686,7 @@ export const resolveQrAnchor = (rawQr: string): QrAnchor | null => {
   const registryEntries = Object.values(QR_ANCHOR_REGISTRY);
 
   const directMatch = registryEntries.find(
-    (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized
+    (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized,
   );
   if (directMatch) return directMatch;
 
@@ -416,12 +699,29 @@ export const resolveQrAnchor = (rawQr: string): QrAnchor | null => {
   const roomIdFromLegacyQr = resolveRoomIdFromQrCode(rawQr);
   if (!roomIdFromLegacyQr) return null;
 
-  return registryEntries.find((anchor) => anchor.roomId === roomIdFromLegacyQr) || null;
+  return (
+    registryEntries.find((anchor) => anchor.roomId === roomIdFromLegacyQr) ||
+    null
+  );
 };
 
 export const resolveRoomIdFromQrCode = (rawCode: string): string | null => {
   const normalized = rawCode.trim().toUpperCase();
-  return qrCodeToRoomId[normalized] || null;
+  if (!normalized) return null;
+
+  const legacyMatch = qrCodeToRoomId[normalized];
+  if (legacyMatch) return legacyMatch;
+
+  const compact = normalized.replace(/\s+/g, "");
+  for (const prefix of ROOM_QR_PREFIXES) {
+    if (!compact.startsWith(prefix)) continue;
+    const payload = compact.slice(prefix.length);
+    if (!payload) return null;
+    const roomId = roomTokenToRoomId[normalizeRoomToken(payload)];
+    return roomId || null;
+  }
+
+  return null;
 };
 
 export const buildRouteForRooms = (
@@ -431,7 +731,7 @@ export const buildRouteForRooms = (
   options?: {
     startPoint?: { x: number; y: number };
     endPoint?: { x: number; y: number };
-  }
+  },
 ): RoomRouteResult | null => {
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
@@ -440,9 +740,24 @@ export const buildRouteForRooms = (
   const startSourcePoint = options?.startPoint ?? startCenter;
   const endSourcePoint = options?.endPoint ?? endCenter;
 
-  const { graph, nodes } = buildRoadGraphFromSvg(svgDoc);
-  const startNodeId = getNearestNodeId(nodes, graph, startSourcePoint);
-  const endNodeId = getNearestNodeId(nodes, graph, endSourcePoint);
+  const allowIgdEntrancePath =
+    isIgdRelatedRoom(startRoomId) || isIgdRelatedRoom(endRoomId);
+
+  const { graph, nodes } = buildRoadGraphFromSvg(svgDoc, {
+    allowIgdEntrancePath,
+  });
+  const startNodeId = resolvePreferredStartNodeId(
+    startRoomId,
+    nodes,
+    graph,
+    startSourcePoint,
+  );
+  const endNodeId = resolvePreferredEndNodeId(
+    endRoomId,
+    nodes,
+    graph,
+    endSourcePoint,
+  );
   if (!startNodeId || !endNodeId) return null;
 
   const shortest = dijkstra(graph, startNodeId, endNodeId);
