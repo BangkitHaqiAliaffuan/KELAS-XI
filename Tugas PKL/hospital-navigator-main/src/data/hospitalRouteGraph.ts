@@ -154,6 +154,126 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     label: "Persimpangan masuk ke ruang anak",
     floor: 1,
   },
+  "QR-F2-N01": {
+    qrId: "QR-F2-N01",
+    roomId: "Lobby_Lantai_2",
+    svgX: 1296.753,
+    svgY: 515.5,
+    label: "Testing",
+    floor: 2,
+  },
+  "QR-F2-N02": {
+    qrId: "QR-F2-N02",
+    roomId: "R._Prancis",
+    svgX: 999.847,
+    svgY: 515.5,
+    label: "Persimpangan Jalan R. Rawat Inap Kelas 1",
+    floor: 2,
+  },
+  "QR-F2-N03": {
+    qrId: "QR-F2-N03",
+    roomId: "Terapi_Okupasi_Lanjutan",
+    svgX: 863.9,
+    svgY: 515.5,
+    label: "Persimpangan Jalan Keluar R. IT & Server",
+    floor: 2,
+  },
+  "QR-F2-N04": {
+    qrId: "QR-F2-N04",
+    roomId: "Terapi_Okupasi_Lanjutan",
+    svgX: 780.732,
+    svgY: 515.5,
+    label: "Persimpangan Atas Terapi Okupasi Lanjutan",
+    floor: 2,
+  },
+  "QR-F2-N05": {
+    qrId: "QR-F2-N05",
+    roomId: "R._PACS",
+    svgX: 652.894,
+    svgY: 515.5,
+    label: "Persimpangan Jalan Bawah R. HRD & Kepegawaian",
+    floor: 2,
+  },
+  "QR-F2-N06": {
+    qrId: "QR-F2-N06",
+    roomId: "Radioterapi",
+    svgX: 463.875,
+    svgY: 514.5,
+    label: "Belok ke Jalan Atas",
+    floor: 2,
+  },
+  "QR-F2-N07": {
+    qrId: "QR-F2-N07",
+    roomId: "R._Direktur___Manajemen",
+    svgX: 463.875,
+    svgY: 256.942,
+    label: "Belok ke Jalan Atas",
+    floor: 2,
+  },
+  "QR-F2-N08": {
+    qrId: "QR-F2-N08",
+    roomId: "R._HRD___Kepegawaian",
+    svgX: 653.031,
+    svgY: 255.344,
+    label: "Persimpangan Jalan Atas R. HRD & Kepegawaian",
+    floor: 2,
+  },
+  "QR-F2-N09": {
+    qrId: "QR-F2-N09",
+    roomId: "R._Meeting",
+    svgX: 780.188,
+    svgY: 255.344,
+    label: "Persimpangan Jalan Depan R. Tumbuh Kembang Anak",
+    floor: 2,
+  },
+  "QR-F2-N10": {
+    qrId: "QR-F2-N10",
+    roomId: "R._Meeting",
+    svgX: 863.756,
+    svgY: 255.344,
+    label: "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+    floor: 2,
+  },
+  "QR-F2-N11": {
+    qrId: "QR-F2-N11",
+    roomId: "R._Meeting",
+    svgX: 999.697,
+    svgY: 255.344,
+    label: "Persimpangan Jalan R. Rawat Inap Kelas 1 & VIP",
+    floor: 2,
+  },
+  "QR-F2-N12": {
+    qrId: "QR-F2-N12",
+    roomId: "R._Laundry_2",
+    svgX: 1202.698,
+    svgY: 255.344,
+    label: "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+    floor: 2,
+  },
+  "QR-F2-N13": {
+    qrId: "QR-F2-N13",
+    roomId: "Lobby_Lantai_2",
+    svgX: 1297.43,
+    svgY: 681.151,
+    label: "Persimpangan Jalan R. Rawat Inap Kelas 3",
+    floor: 2,
+  },
+  "QR-F2-N14": {
+    qrId: "QR-F2-N14",
+    roomId: "Lobby_Lantai_2",
+    svgX: 988.5,
+    svgY: 681.151,
+    label: "Persimpangan Jalan R. Rawat Inap Kelas 3",
+    floor: 2,
+  },
+  "QR-F2-N15": {
+    qrId: "QR-F2-N15",
+    roomId: "Lobby_Lantai_2",
+    svgX: 781.5,
+    svgY: 681.151,
+    label: "Persimpangan Jalan R. Rawat Inap Kelas 3",
+    floor: 2,
+  },
 };
 
 const qrCodeToRoomId: Record<string, string> = {
@@ -230,6 +350,13 @@ const EXPLICIT_ROUTE_PATH_IDS = new Set([
   "keluar_menuju_kamar_mayat",
   "belok_menuju_kamar_mayat",
   "path5",
+  // Lantai 2 connector segments around lift/reception that don't include "jalan" in id/label.
+  "masuk_ke_tangga-2",
+  "masuk_ke_lift-7",
+  "masuk_lobby_lantai_2_-_belakang_lift_",
+  "path100",
+  "masuk_ke_terapi_okupasi_lanjutan_menuju_ke_edukasi_keluarga",
+  "menuju_ke_edukasi_keluarga_dan_pasien",
 ]);
 
 const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
@@ -237,6 +364,22 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
   "Belok_Masuk_ke_Kamar_Mayat",
   "Belok_ke_Kamar_Mayat",
 ] as const;
+
+const ROOM_PREFERRED_START_NODE_IDS: Record<string, readonly string[]> = {
+  // Prefer drop to the lower corridor near QR-F2-N02 instead of taking the long top loop.
+  "R._Inggris": [
+    "Persimpangan_Jalan_R._Rawat_Inap_Kelas_1",
+    "Check_Point_R._Inggris",
+  ],
+};
+
+const ROOM_PREFERRED_END_NODE_IDS: Record<string, readonly string[]> = {
+  "Meja_Resepsionis_Lantai_2": [
+    "Check_Point_Resepsionis_Lantai_2",
+    "Check_Point_Lift_Turun",
+    "Persimpangan_Jalan_R._Rawat_Inap_Kelas_1",
+  ],
+};
 
 const isRoadPath = (
   path: SVGPathElement,
@@ -404,13 +547,21 @@ const buildRoadGraphFromSvg = (
     },
   );
 
-  const roadPaths = centerlineLayer
+  const globalRoadPaths = Array.from(svgDoc.querySelectorAll("path")).filter(
+    (path) => isRoadPath(path, options),
+  );
+  const centerlineRoadPaths = centerlineLayer
     ? Array.from(centerlineLayer.querySelectorAll("path")).filter((path) =>
         isRoadPath(path, options),
       )
-    : Array.from(svgDoc.querySelectorAll("path")).filter((path) =>
-        isRoadPath(path, options),
-      );
+    : [];
+  const roadPaths = Array.from(
+    new Set(
+      centerlineRoadPaths.length
+        ? [...centerlineRoadPaths, ...globalRoadPaths]
+        : globalRoadPaths,
+    ),
+  );
 
   roadPaths.forEach((path) => {
     const totalLength = path.getTotalLength();
@@ -619,6 +770,16 @@ const resolvePreferredStartNodeId = (
   graph: Graph,
   fallbackStartPoint: { x: number; y: number },
 ): string | null => {
+  const roomPreferredNodeIds = ROOM_PREFERRED_START_NODE_IDS[startRoomId];
+  if (roomPreferredNodeIds?.length) {
+    return resolvePreferredNodeId(
+      roomPreferredNodeIds,
+      nodes,
+      graph,
+      fallbackStartPoint,
+    );
+  }
+
   if (isKamarMayatRoom(startRoomId)) {
     return resolvePreferredNodeId(
       KAMAR_MAYAT_PREFERRED_NODE_IDS,
@@ -645,6 +806,16 @@ const resolvePreferredEndNodeId = (
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
 ): string | null => {
+  const roomPreferredNodeIds = ROOM_PREFERRED_END_NODE_IDS[endRoomId];
+  if (roomPreferredNodeIds?.length) {
+    return resolvePreferredNodeId(
+      roomPreferredNodeIds,
+      nodes,
+      graph,
+      fallbackEndPoint,
+    );
+  }
+
   if (isKamarMayatRoom(endRoomId)) {
     return resolvePreferredNodeId(
       KAMAR_MAYAT_PREFERRED_NODE_IDS,

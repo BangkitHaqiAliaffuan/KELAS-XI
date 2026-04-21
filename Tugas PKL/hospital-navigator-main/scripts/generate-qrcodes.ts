@@ -12,10 +12,12 @@ import {
 } from "../src/data/hospitalRouteGraph";
 
 type IncludeMode = "rooms" | "anchors" | "all";
+type FloorFilter = 1 | 2 | "all";
 
 type CliOptions = {
   outDir: string;
   include: IncludeMode;
+  floor: FloorFilter;
   size: number;
   margin: number;
   clean: boolean;
@@ -33,6 +35,7 @@ type GeneratedQr = {
 const DEFAULT_OPTIONS: CliOptions = {
   outDir: "public/images/qr",
   include: "all",
+  floor: "all",
   size: 512,
   margin: 2,
   clean: false,
@@ -42,6 +45,13 @@ const normalizeInclude = (value: string | undefined): IncludeMode => {
   if (!value) return "all";
   if (value === "rooms" || value === "anchors" || value === "all") return value;
   throw new Error(`Invalid --include value: "${value}". Use rooms|anchors|all.`);
+};
+
+const normalizeFloor = (value: string | undefined): FloorFilter => {
+  if (!value || value === "all") return "all";
+  if (value === "1") return 1;
+  if (value === "2") return 2;
+  throw new Error(`Invalid --floor value: "${value}". Use 1|2|all.`);
 };
 
 const parsePositiveInt = (value: string | undefined, fallback: number, name: string): number => {
@@ -77,6 +87,12 @@ const parseCliArgs = (): CliOptions => {
       continue;
     }
 
+    if (arg === "--floor") {
+      options.floor = normalizeFloor(args[i + 1]);
+      i += 1;
+      continue;
+    }
+
     if (arg === "--size") {
       options.size = parsePositiveInt(args[i + 1], options.size, "size");
       i += 1;
@@ -102,6 +118,7 @@ const parseCliArgs = (): CliOptions => {
 
 const printHelp = (): void => {
   console.log(`\nQR Generator\n\nUsage:\n  npm run qr:generate -- [options]\n\nOptions:\n  --include <rooms|anchors|all>  Which QR sets to generate (default: all)\n  --outDir <path>                 Output directory (default: public/images/qr)\n  --size <number>                 PNG width in px (default: 512)\n  --margin <number>               QR margin (default: 2)\n  --clean                         Remove existing PNG files in output directory\n  --help                          Show this help\n`);
+  console.log(`  --floor <1|2|all>              Filter QR by floor (default: all)\n`);
 };
 
 const sanitizeFileName = (value: string): string => {
@@ -129,8 +146,21 @@ const cleanPngFiles = async (dirPath: string): Promise<number> => {
   return removed;
 };
 
-const roomQrItems = (): GeneratedQr[] => {
-  return Object.values(roomInfoBySvgId)
+const roomQrItems = (floor: FloorFilter): GeneratedQr[] => {
+  let roomIds = Object.keys(roomInfoBySvgId);
+
+  if (floor !== "all") {
+    const roomIdsFromAnchors = new Set(
+      Object.values(QR_ANCHOR_REGISTRY)
+        .filter((anchor) => anchor.floor === floor)
+        .map((anchor) => anchor.roomId)
+        .filter((roomId) => Boolean(roomInfoBySvgId[roomId]))
+    );
+    roomIds = roomIds.filter((roomId) => roomIdsFromAnchors.has(roomId));
+  }
+
+  return roomIds
+    .map((roomId) => roomInfoBySvgId[roomId])
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((room) => {
       const payload = buildRoomQrCode(room.id);
@@ -146,8 +176,9 @@ const roomQrItems = (): GeneratedQr[] => {
     });
 };
 
-const anchorQrItems = (): GeneratedQr[] => {
+const anchorQrItems = (floor: FloorFilter): GeneratedQr[] => {
   return Object.values(QR_ANCHOR_REGISTRY)
+    .filter((anchor) => floor === "all" || anchor.floor === floor)
     .sort((a, b) => a.qrId.localeCompare(b.qrId))
     .map((anchor: QrAnchor) => {
       const fileName = `anchor_${sanitizeFileName(anchor.qrId)}.png`;
@@ -206,11 +237,11 @@ const generate = async (): Promise<void> => {
   const generated: GeneratedQr[] = [];
 
   if (options.include === "rooms" || options.include === "all") {
-    generated.push(...roomQrItems());
+    generated.push(...roomQrItems(options.floor));
   }
 
   if (options.include === "anchors" || options.include === "all") {
-    generated.push(...anchorQrItems());
+    generated.push(...anchorQrItems(options.floor));
   }
 
   if (!generated.length) {
@@ -230,6 +261,7 @@ const generate = async (): Promise<void> => {
 
   console.log("✅ QR generation completed");
   console.log(`   Output dir : ${options.outDir}`);
+  console.log(`   Floor      : ${options.floor}`);
   console.log(`   Room QR    : ${roomCount}`);
   console.log(`   Anchor QR  : ${anchorCount}`);
   console.log(`   Total PNG  : ${generated.length}`);

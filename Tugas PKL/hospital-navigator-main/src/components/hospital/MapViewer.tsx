@@ -83,6 +83,7 @@ const MapViewer = ({
   } | null>(null);
   const [showCurrentUserMarker, setShowCurrentUserMarker] = useState(false);
   const [svgReadyVersion, setSvgReadyVersion] = useState(0);
+  const [activeFloor, setActiveFloor] = useState<1 | 2>(1);
 
   const [routingRoomIds, setRoutingRoomIds] = useState<string[]>(() => getRoutingRoomIds());
   const routingRoomOptions = routingRoomIds
@@ -124,7 +125,16 @@ const MapViewer = ({
   const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
   const GPS_BUFFER_SIZE = 5;
   const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set(["Lift_Lantai_1", "Tangga_Lantai_1", "Tangga_Lantai_1-2"]);
-  const qrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
+  const HIDDEN_DYNAMIC_LABEL_KEYWORDS_FLOOR_2 = [
+    "area gudang alat medis steril",
+    "lift",
+    "tangga",
+  ];
+  const allRegisteredQrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
+  const activeQrAnchors = allRegisteredQrAnchors.filter((anchor) => anchor.floor === activeFloor);
+  const activeMapSvgPath = activeFloor === 1
+    ? "/images/hospital-map.svg"
+    : "/images/hospital-map-lantai-2.svg";
 
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
@@ -144,6 +154,16 @@ const MapViewer = ({
       setEndRoomId(routingRoomOptions[Math.min(1, routingRoomOptions.length - 1)].id);
     }
   }, [routingRoomOptions, startRoomId, endRoomId]);
+
+  useEffect(() => {
+    setActiveRoute(null);
+    setRouteDebugMessage(`Menampilkan denah lantai ${activeFloor}.`);
+    setNavSteps([]);
+    setActiveStepIndex(0);
+    setActiveRoomInfo(null);
+    setActiveRoomId(null);
+    setShowCurrentUserMarker(false);
+  }, [activeFloor]);
 
   useEffect(() => {
     if (hasAppliedAutoStartRef.current) return;
@@ -478,12 +498,14 @@ const MapViewer = ({
       if (!pathId && !pathLabel) return null;
 
       const source = `${pathId} ${pathLabel}`.toLowerCase();
-      const normalizedSource = source.replace(/_/g, " ");
+      const normalizedSource = source.replace(/_/g, " ").replace(/\s+/g, " ").trim();
       if (
         normalizedSource.includes("jalan") ||
         normalizedSource.includes("background") ||
         normalizedSource.includes("unamed") ||
-        normalizedSource.includes("area kamar operasi")
+        normalizedSource.includes("area kamar operasi") ||
+        normalizedSource.includes("area gudang alat medis steril") ||
+        normalizedSource.includes("area gudang alat meedis steril")
       ) {
         return null;
       }
@@ -507,6 +529,30 @@ const MapViewer = ({
       };
     },
     []
+  );
+
+  const resolveActiveQrAnchor = useCallback(
+    (rawQr: string): QrAnchor | null => {
+      const normalized = rawQr.trim().toUpperCase().replace(/\s+/g, "");
+      if (!normalized) return null;
+
+      const directMatch = activeQrAnchors.find(
+        (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized
+      );
+      if (directMatch) return directMatch;
+
+      const fuzzyMatch = activeQrAnchors.find((anchor) => {
+        const key = anchor.qrId.toUpperCase().replace(/\s+/g, "");
+        return normalized.startsWith(key) || key.startsWith(normalized);
+      });
+      if (fuzzyMatch) return fuzzyMatch;
+
+      const fallback = resolveQrAnchor(rawQr);
+      if (fallback && fallback.floor === activeFloor) return fallback;
+
+      return null;
+    },
+    [activeQrAnchors, activeFloor]
   );
 
   const buildLabelLines = useCallback(
@@ -965,6 +1011,21 @@ const MapViewer = ({
           return;
         }
 
+        if (activeFloor === 2) {
+          const normalizedFloor2LabelSource = `${room.id} ${room.name} ${path.id}`
+            .toLowerCase()
+            .replace(/[_-]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+          if (
+            HIDDEN_DYNAMIC_LABEL_KEYWORDS_FLOOR_2.some((keyword) =>
+              normalizedFloor2LabelSource.includes(keyword)
+            )
+          ) {
+            return;
+          }
+        }
+
         const targetElement = asSvgGraphicsElement(path);
         if (!targetElement) return;
         const bbox = targetElement.getBBox();
@@ -1052,7 +1113,7 @@ const MapViewer = ({
 
       svgRoot.appendChild(labelLayer);
     },
-    [buildLabelLines, asSvgGraphicsElement, roomFromPath]
+    [activeFloor, buildLabelLines, asSvgGraphicsElement, roomFromPath]
   );
 
   const setupSvgRoomInteraction = useCallback(() => {
@@ -1410,8 +1471,15 @@ const MapViewer = ({
       return;
     }
 
+    const validRoutingRoomIds = new Set(routingRoomOptions.map((room) => room.id));
+
     const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
     if (resolvedRoomId) {
+      if (!validRoutingRoomIds.has(resolvedRoomId)) {
+        setRouteDebugMessage(`QR ruangan ini bukan bagian dari lantai ${activeFloor}.`);
+        return;
+      }
+
       gpsBufferRef.current = [];
       liveSvgPointRef.current = null;
       setLiveSvgPoint(null);
@@ -1440,9 +1508,9 @@ const MapViewer = ({
       return;
     }
 
-    const anchor = resolveQrAnchor(qrCodeInput);
+    const anchor = resolveActiveQrAnchor(qrCodeInput);
     if (!anchor) {
-      setRouteDebugMessage("QR tidak dikenali. Contoh: QR-F-N01, QR-R-IGD, atau QR-IGD.");
+      setRouteDebugMessage(`QR tidak dikenali untuk lantai ${activeFloor}.`);
       return;
     }
 
@@ -1466,11 +1534,13 @@ const MapViewer = ({
 
     if (routeAfterCalibration) {
       setActiveRoute(routeAfterCalibration);
+    } else {
+      setActiveRoute(null);
     }
 
     setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
     setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
-  }, [qrCodeInput, getRoomCenterById]);
+  }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor]);
 
   const stopLiveMode = useCallback((statusMessage?: string) => {
     if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -1644,14 +1714,15 @@ const MapViewer = ({
 
     if (source === "qr" && qrPayload) {
       setQrCodeInput(qrPayload);
+      const validRoutingRoomIds = new Set(routingRoomOptions.map((room) => room.id));
 
       const resolvedRoomByQr = resolveRoomIdFromQrCode(qrPayload);
-      if (resolvedRoomByQr) {
+      if (resolvedRoomByQr && validRoutingRoomIds.has(resolvedRoomByQr)) {
         setStartRoomId(resolvedRoomByQr);
         startRoomIdRef.current = resolvedRoomByQr;
         preferRoomCenterStartRef.current = true;
       } else {
-        const anchor = resolveQrAnchor(qrPayload);
+        const anchor = resolveActiveQrAnchor(qrPayload);
         if (anchor) {
           setStartRoomId(anchor.roomId);
           startRoomIdRef.current = anchor.roomId;
@@ -1713,6 +1784,8 @@ const MapViewer = ({
     stopLiveMode,
     getRoomCenterById,
     zoomToSvgElement,
+    routingRoomOptions,
+    resolveActiveQrAnchor,
   ]);
 
   const handleFindRoute = useCallback(() => {
@@ -1831,8 +1904,8 @@ const MapViewer = ({
   useEffect(() => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
-    renderQrAnchorHints(svgDoc, qrAnchors, lastQrAnchor?.qrId || null);
-  }, [renderQrAnchorHints, qrAnchors, lastQrAnchor, svgReadyVersion]);
+    renderQrAnchorHints(svgDoc, activeQrAnchors, lastQrAnchor?.qrId || null);
+  }, [renderQrAnchorHints, activeQrAnchors, lastQrAnchor, svgReadyVersion]);
 
   // ---------------------------------------------------------------------------
   // Center / reset
@@ -1912,7 +1985,7 @@ const MapViewer = ({
           <div className="w-full h-full flex items-center justify-center">
             <object
               ref={objectRef}
-              data="/images/hospital-map.svg"
+              data={activeMapSvgPath}
               type="image/svg+xml"
               className="max-w-[90%] max-h-[90%]"
               aria-label="Hospital interactive map"
@@ -2027,7 +2100,7 @@ const MapViewer = ({
             </div>
 
             <div className="max-h-28 overflow-y-auto rounded-md border border-border bg-muted/30 p-1.5 space-y-1">
-              {qrAnchors.map((anchor) => (
+              {activeQrAnchors.map((anchor) => (
                 <button
                   key={anchor.qrId}
                   onClick={() => setQrCodeInput(anchor.qrId)}
@@ -2113,8 +2186,31 @@ const MapViewer = ({
         </button>
       )}
 
+      <div className="absolute top-4 left-4 z-30 inline-flex items-center rounded-md border border-border bg-background/90 shadow">
+        <button
+          onClick={() => setActiveFloor(1)}
+          className={`px-3 py-1.5 text-[11px] font-semibold ${
+            activeFloor === 1
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-muted"
+          }`}
+        >
+          Lantai 1
+        </button>
+        <button
+          onClick={() => setActiveFloor(2)}
+          className={`px-3 py-1.5 text-[11px] font-semibold ${
+            activeFloor === 2
+              ? "bg-primary text-primary-foreground"
+              : "text-foreground hover:bg-muted"
+          }`}
+        >
+          Lantai 2
+        </button>
+      </div>
+
       {(activeRoute || isLiveMode) && navSteps.length > 0 && currentNavStep && (
-        <div className="absolute top-4 left-4 z-30 w-[min(92vw,340px)] rounded-2xl border border-border/60 bg-background/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+        <div className="absolute top-16 left-4 z-30 w-[min(92vw,340px)] rounded-2xl border border-border/60 bg-background/95 shadow-2xl backdrop-blur-xl overflow-hidden">
           {/* ── Header ── */}
           <div className="flex items-center justify-between px-3 py-2.5 bg-primary/8 border-b border-border/40">
             <div className="flex items-center gap-2 min-w-0">
