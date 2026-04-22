@@ -10,6 +10,7 @@ type RoomHighlightCategory = "departments" | "facilities" | "emergency" | null;
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
   const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
@@ -64,6 +65,8 @@ const Index = () => {
         activeTab={activeTab} 
         onTabChange={setActiveTab} 
         onStartNavigation={handleStartNavigation}
+        isSidebarOpen={isMobileSidebarOpen}
+        onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -71,6 +74,8 @@ const Index = () => {
           activeTab={activeTab} 
           onTabChange={setActiveTab} 
           onStartNavigation={handleStartNavigation}
+          mobileOpen={isMobileSidebarOpen}
+          onMobileOpenChange={setIsMobileSidebarOpen}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden relative">

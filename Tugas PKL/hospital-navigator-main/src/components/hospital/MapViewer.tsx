@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import {
   Plus,
   Minus,
@@ -115,6 +115,7 @@ const MapViewer = ({
   const endRoomIdRef = useRef(endRoomId);
   const lastRerouteAtRef = useRef(0);
   const preferRoomCenterStartRef = useRef(false);
+  const pendingSearchZoomRoomIdRef = useRef<string | null>(null);
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
@@ -124,7 +125,7 @@ const MapViewer = ({
   const LIVE_REROUTE_INTERVAL_MS = 1200;
   const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
   const GPS_BUFFER_SIZE = 5;
-  const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set(["Lift_Lantai_1", "Tangga_Lantai_1", "Tangga_Lantai_1-2"]);
+  const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set(["Lift_Lantai_1", "Tangga_Lantai_1", "Tangga_Evakuasi_Lantai_1"]);
   const HIDDEN_DYNAMIC_LABEL_KEYWORDS_FLOOR_2 = [
     "area gudang alat medis steril",
     "lift",
@@ -135,6 +136,39 @@ const MapViewer = ({
   const activeMapSvgPath = activeFloor === 1
     ? "/images/hospital-map.svg"
     : "/images/hospital-map-lantai-2.svg";
+  const roomFloorById = allRegisteredQrAnchors.reduce<Record<string, 1 | 2>>((acc, anchor) => {
+    if (anchor.floor === 1 || anchor.floor === 2) {
+      acc[anchor.roomId] = anchor.floor;
+    }
+    return acc;
+  }, {});
+  const [multiFloorSvgDocs, setMultiFloorSvgDocs] = useState<Partial<Record<1 | 2, Document>>>({});
+  const multiFloorConnectors = [
+    {
+      id: "lift",
+      label: "Lift",
+      rooms: {
+        1: "Lift_Lantai_1",
+        2: "Lift_Lantai_1-2",
+      } as const,
+    },
+    {
+      id: "main_stairs",
+      label: "Tangga utama",
+      rooms: {
+        1: "Tangga_Lantai_1",
+        2: "Tangga_Lantai_1-7",
+      } as const,
+    },
+    {
+      id: "evac_stairs",
+      label: "Tangga evakuasi",
+      rooms: {
+        1: "Tangga_Evakuasi_Lantai_1",
+        2: "Tangga_Evakuasi_Lantai_2",
+      } as const,
+    },
+  ] as const;
 
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
@@ -142,6 +176,49 @@ const MapViewer = ({
   useEffect(() => { liveSvgPointRef.current = liveSvgPoint; }, [liveSvgPoint]);
   useEffect(() => { startRoomIdRef.current = startRoomId; }, [startRoomId]);
   useEffect(() => { endRoomIdRef.current = endRoomId; }, [endRoomId]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const loadMultiFloorSvgDocs = async () => {
+      if (typeof window === "undefined" || typeof DOMParser === "undefined") return;
+
+      const parser = new DOMParser();
+      const nextDocs: Partial<Record<1 | 2, Document>> = {};
+
+      for (const floor of [1, 2] as const) {
+        const liveDoc = floor === activeFloor ? objectRef.current?.contentDocument ?? null : null;
+        if (liveDoc) {
+          nextDocs[floor] = liveDoc;
+          continue;
+        }
+
+        try {
+          const response = await fetch(
+            floor === 1 ? "/images/hospital-map.svg" : "/images/hospital-map-lantai-2.svg"
+          );
+          if (!response.ok) continue;
+          const svgText = await response.text();
+          nextDocs[floor] = parser.parseFromString(svgText, "image/svg+xml");
+        } catch (error) {
+          console.warn(`[MapViewer] gagal preload SVG lantai ${floor}`, error);
+        }
+      }
+
+      if (!isCancelled) {
+        setMultiFloorSvgDocs((prev) => ({
+          ...prev,
+          ...nextDocs,
+        }));
+      }
+    };
+
+    void loadMultiFloorSvgDocs();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeFloor, svgReadyVersion]);
 
   useEffect(() => {
     if (!routingRoomOptions.length) return;
@@ -156,14 +233,18 @@ const MapViewer = ({
   }, [routingRoomOptions, startRoomId, endRoomId]);
 
   useEffect(() => {
-    setActiveRoute(null);
-    setRouteDebugMessage(`Menampilkan denah lantai ${activeFloor}.`);
+    setRouteDebugMessage((prev) => {
+      if (activeRoute?.floorsInvolved?.length) {
+        return `Menampilkan denah lantai ${activeFloor}. Rute debug tetap aktif untuk ${activeRoute.floorsInvolved.join(" & ")} lantai.`;
+      }
+      return `Menampilkan denah lantai ${activeFloor}.`;
+    });
     setNavSteps([]);
     setActiveStepIndex(0);
     setActiveRoomInfo(null);
     setActiveRoomId(null);
     setShowCurrentUserMarker(false);
-  }, [activeFloor]);
+  }, [activeFloor, activeRoute]);
 
   useEffect(() => {
     if (hasAppliedAutoStartRef.current) return;
@@ -227,6 +308,141 @@ const MapViewer = ({
     if (typeof maybeGraphics.getBBox !== "function") return null;
     return element as SVGGraphicsElement;
   }, []);
+
+  const resolveFloorForRoom = useCallback((room: HospitalRoomInfo): 1 | 2 => {
+    const floorFromAnchor = roomFloorById[room.id];
+    if (floorFromAnchor) return floorFromAnchor;
+
+    const normalizedHint = room.locationHint.toLowerCase();
+    if (normalizedHint.includes("lantai 2")) return 2;
+    return 1;
+  }, [roomFloorById]);
+
+  const debugRoutingRooms = useMemo(
+    () =>
+      routingRoomOptions
+        .map((room) => ({
+          ...room,
+          floor: resolveFloorForRoom(room),
+        }))
+        .sort((a, b) => a.floor - b.floor || a.name.localeCompare(b.name)),
+    [routingRoomOptions, resolveFloorForRoom]
+  );
+
+  const debugRoutingRoomsByFloor = useMemo(
+    () => ({
+      1: debugRoutingRooms.filter((room) => room.floor === 1),
+      2: debugRoutingRooms.filter((room) => room.floor === 2),
+    }),
+    [debugRoutingRooms]
+  );
+
+  const getFloorSvgDoc = useCallback((floor: 1 | 2): Document | null => {
+    if (floor === activeFloor) {
+      return objectRef.current?.contentDocument || multiFloorSvgDocs[floor] || null;
+    }
+    return multiFloorSvgDocs[floor] || null;
+  }, [activeFloor, multiFloorSvgDocs]);
+
+  const getRouteSegmentForFloor = useCallback((route: RoomRouteResult | null, floor: 1 | 2) => {
+    if (!route) return null;
+    const segment = route.floorSegments?.find((item) => item.floor === floor);
+    if (segment) return segment;
+    return {
+      floor,
+      checkpointIds: route.checkpointIds,
+      points: route.points,
+      totalDistance: route.totalDistance,
+    };
+  }, []);
+
+  const buildDebugRouteForRooms = useCallback((
+    startRoomIdParam: string,
+    endRoomIdParam: string,
+    options?: {
+      startPoint?: { x: number; y: number };
+      endPoint?: { x: number; y: number };
+    },
+  ): RoomRouteResult | null => {
+    const startRoom = roomInfoBySvgId[startRoomIdParam];
+    const endRoom = roomInfoBySvgId[endRoomIdParam];
+    const startFloor = startRoom ? resolveFloorForRoom(startRoom) : 1;
+    const endFloor = endRoom ? resolveFloorForRoom(endRoom) : 1;
+
+    if (startFloor === endFloor) {
+      const svgDoc = getFloorSvgDoc(startFloor);
+      if (!svgDoc) return null;
+
+      const singleFloorRoute = buildRouteForRooms(startRoomIdParam, endRoomIdParam, svgDoc, options);
+      if (!singleFloorRoute) return null;
+
+      return {
+        ...singleFloorRoute,
+        floorSegments: [
+          {
+            floor: startFloor,
+            checkpointIds: singleFloorRoute.checkpointIds,
+            points: singleFloorRoute.points,
+            totalDistance: singleFloorRoute.totalDistance,
+          },
+        ],
+        floorsInvolved: [startFloor],
+      };
+    }
+
+    const startDoc = getFloorSvgDoc(startFloor);
+    const endDoc = getFloorSvgDoc(endFloor);
+    if (!startDoc || !endDoc) return null;
+
+    let bestRoute: RoomRouteResult | null = null;
+
+    multiFloorConnectors.forEach((connector) => {
+      const startConnectorRoomId = connector.rooms[startFloor];
+      const endConnectorRoomId = connector.rooms[endFloor];
+
+      const startSegment = buildRouteForRooms(startRoomIdParam, startConnectorRoomId, startDoc, {
+        startPoint: options?.startPoint,
+      });
+      const endSegment = buildRouteForRooms(endConnectorRoomId, endRoomIdParam, endDoc, {
+        endPoint: options?.endPoint,
+      });
+
+      if (!startSegment || !endSegment) return;
+
+      const candidateDistance = startSegment.totalDistance + endSegment.totalDistance;
+      if (bestRoute && bestRoute.totalDistance <= candidateDistance) return;
+
+      bestRoute = {
+        startRoomId: startRoomIdParam,
+        endRoomId: endRoomIdParam,
+        checkpointIds: [
+          ...startSegment.checkpointIds,
+          `transition_${connector.id}`,
+          ...endSegment.checkpointIds,
+        ],
+        points: activeFloor === startFloor ? startSegment.points : endSegment.points,
+        totalDistance: candidateDistance,
+        floorSegments: [
+          {
+            floor: startFloor,
+            checkpointIds: startSegment.checkpointIds,
+            points: startSegment.points,
+            totalDistance: startSegment.totalDistance,
+          },
+          {
+            floor: endFloor,
+            checkpointIds: endSegment.checkpointIds,
+            points: endSegment.points,
+            totalDistance: endSegment.totalDistance,
+          },
+        ],
+        floorsInvolved: [startFloor, endFloor],
+        transitionLabel: connector.label,
+      };
+    });
+
+    return bestRoute;
+  }, [activeFloor, getFloorSvgDoc, multiFloorConnectors, resolveFloorForRoom]);
 
   // ---------------------------------------------------------------------------
   // Drag — startDrag snapshots positionRef (always current), window listeners
@@ -309,6 +525,26 @@ const MapViewer = ({
     },
     [startDrag]
   );
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      startDrag(touch.clientX, touch.clientY, "host");
+    },
+    [startDrag]
+  );
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    e.preventDefault();
+    applyDragMoveRef.current(touch.clientX, touch.clientY, 1);
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    applyDragEndRef.current();
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Wheel / zoom — single handler on the container only
@@ -536,23 +772,20 @@ const MapViewer = ({
       const normalized = rawQr.trim().toUpperCase().replace(/\s+/g, "");
       if (!normalized) return null;
 
-      const directMatch = activeQrAnchors.find(
+      const directMatch = allRegisteredQrAnchors.find(
         (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized
       );
       if (directMatch) return directMatch;
 
-      const fuzzyMatch = activeQrAnchors.find((anchor) => {
+      const fuzzyMatch = allRegisteredQrAnchors.find((anchor) => {
         const key = anchor.qrId.toUpperCase().replace(/\s+/g, "");
         return normalized.startsWith(key) || key.startsWith(normalized);
       });
       if (fuzzyMatch) return fuzzyMatch;
 
-      const fallback = resolveQrAnchor(rawQr);
-      if (fallback && fallback.floor === activeFloor) return fallback;
-
-      return null;
+      return resolveQrAnchor(rawQr);
     },
-    [activeQrAnchors, activeFloor]
+    [allRegisteredQrAnchors]
   );
 
   const buildLabelLines = useCallback(
@@ -926,7 +1159,7 @@ const MapViewer = ({
     svgDoc.querySelector("svg")?.appendChild(layer);
   }, [ensureTurnArrowStyle]);
 
-  const renderRouteOverlay = useCallback((svgDoc: Document, route: RoomRouteResult | null) => {
+  const renderRouteOverlay = useCallback((svgDoc: Document, route: RoomRouteResult | null, floor: 1 | 2) => {
     const svgRoot = svgDoc.querySelector("svg");
     if (!svgRoot) return;
 
@@ -934,11 +1167,12 @@ const MapViewer = ({
     const oldLayer = svgDoc.getElementById("dynamic-route-layer");
     oldLayer?.remove();
 
-    if (!route || route.points.length < 2) return;
+    const routeSegment = getRouteSegmentForFloor(route, floor);
+    if (!routeSegment || routeSegment.points.length < 2) return;
 
     ensureRouteStyle(svgDoc);
 
-    const pointsAttr = route.points.map((point) => `${point.x},${point.y}`).join(" ");
+    const pointsAttr = routeSegment.points.map((point) => `${point.x},${point.y}`).join(" ");
 
     const layer = svgDoc.createElementNS(namespace, "g");
     layer.setAttribute("id", "dynamic-route-layer");
@@ -954,13 +1188,13 @@ const MapViewer = ({
     arrowLine.setAttribute("class", "route-arrow-line");
     layer.appendChild(arrowLine);
 
-    const startPoint = route.points[0];
-    const endPoint = route.points[route.points.length - 1];
+    const startPoint = routeSegment.points[0];
+    const endPoint = routeSegment.points[routeSegment.points.length - 1];
 
-    const nextPoint = route.points.find((point, index) => {
+    const nextPoint = routeSegment.points.find((point, index) => {
       if (index === 0) return false;
       return Math.hypot(point.x - startPoint.x, point.y - startPoint.y) > 0.5;
-    }) || route.points[1];
+    }) || routeSegment.points[1];
 
     if (nextPoint) {
       const angle = Math.atan2(nextPoint.y - startPoint.y, nextPoint.x - startPoint.x) * (180 / Math.PI);
@@ -983,7 +1217,7 @@ const MapViewer = ({
     layer.appendChild(endPin);
 
     svgRoot.appendChild(layer);
-  }, [ensureRouteStyle]);
+  }, [ensureRouteStyle, getRouteSegmentForFloor]);
 
   const renderDynamicRoomLabels = useCallback(
     (svgDoc: Document) => {
@@ -1172,14 +1406,39 @@ const MapViewer = ({
     const svgMouseUp = () => applyDragEndRef.current();
     const svgWheel   = (e: WheelEvent) => handleWheel(e);
 
+    const svgTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const { left, top } = getObjectOffset();
+      startDrag(touch.clientX + left, touch.clientY + top, "svg");
+    };
+
+    const svgTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const { left, top } = getObjectOffset();
+      e.preventDefault();
+      applyDragMoveRef.current(touch.clientX + left, touch.clientY + top, 1);
+    };
+
+    const svgTouchEnd = () => applyDragEndRef.current();
+
     svgDoc.documentElement.addEventListener("mousedown", svgMouseDown);
     svgDoc.documentElement.addEventListener("mousemove", svgMouseMove);
     svgDoc.documentElement.addEventListener("mouseup",   svgMouseUp);
     svgDoc.documentElement.addEventListener("wheel",     svgWheel, { passive: false });
+    svgDoc.documentElement.addEventListener("touchstart", svgTouchStart, { passive: true });
+    svgDoc.documentElement.addEventListener("touchmove",  svgTouchMove, { passive: false });
+    svgDoc.documentElement.addEventListener("touchend",   svgTouchEnd);
+    svgDoc.documentElement.addEventListener("touchcancel", svgTouchEnd);
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mousedown", svgMouseDown));
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mousemove", svgMouseMove));
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mouseup",   svgMouseUp));
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("wheel",     svgWheel));
+    cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("touchstart", svgTouchStart));
+    cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("touchmove",  svgTouchMove));
+    cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("touchend",   svgTouchEnd));
+    cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("touchcancel", svgTouchEnd));
 
     // Deselect room on background click (only if not a drag)
     const rootClickHandler = () => {
@@ -1205,8 +1464,7 @@ const MapViewer = ({
     const onLoad = () => {
       cleanup?.();
       cleanup = setupSvgRoomInteraction();
-      const svgDoc = objectElement.contentDocument || undefined;
-      setRoutingRoomIds(getRoutingRoomIds(svgDoc));
+      setRoutingRoomIds(getRoutingRoomIds());
       setSvgReadyVersion((prev) => prev + 1);
     };
 
@@ -1375,21 +1633,39 @@ const MapViewer = ({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
-    console.log(`[MapViewer] 📡 selectedLocation effect fired:`, selectedLocation ? `id="${selectedLocation.id}" name="${selectedLocation.name}"` : 'null');
-    if (selectedLocation) {
-      setActiveRoomId(selectedLocation.id);
-      setActiveRoomInfo(selectedLocation);
-      // Delay zoom slightly to ensure SVG highlight renders first
-      const timer = setTimeout(() => {
-        console.log(`[MapViewer] 📡 calling zoomToSvgElement for id="${selectedLocation.id}"`);
-        zoomToSvgElement(selectedLocation.id);
-      }, 100);
-      return () => {
-        console.log(`[MapViewer] 📡 selectedLocation effect cleanup, clearing timer`);
-        clearTimeout(timer);
-      };
+    console.log(`[MapViewer] 📡 selectedLocation effect fired:`, selectedLocation ? `id="${selectedLocation.id}" name="${selectedLocation.name}"` : "null");
+    if (!selectedLocation) {
+      pendingSearchZoomRoomIdRef.current = null;
+      return;
     }
-  }, [selectedLocation, zoomToSvgElement]);
+
+    setActiveRoomId(selectedLocation.id);
+    setActiveRoomInfo(selectedLocation);
+    pendingSearchZoomRoomIdRef.current = selectedLocation.id;
+
+    const targetFloor = resolveFloorForRoom(selectedLocation);
+    if (targetFloor !== activeFloor) {
+      setActiveFloor(targetFloor);
+      return;
+    }
+
+    const svgDoc = objectRef.current?.contentDocument;
+    const targetElement = svgDoc?.getElementById(selectedLocation.id);
+    if (!targetElement) return;
+
+    // Delay zoom slightly to ensure SVG highlight renders first.
+    const timer = setTimeout(() => {
+      if (pendingSearchZoomRoomIdRef.current !== selectedLocation.id) return;
+      console.log(`[MapViewer] 📡 calling zoomToSvgElement for id="${selectedLocation.id}"`);
+      zoomToSvgElement(selectedLocation.id);
+      pendingSearchZoomRoomIdRef.current = null;
+    }, 100);
+
+    return () => {
+      console.log(`[MapViewer] 📡 selectedLocation effect cleanup, clearing timer`);
+      clearTimeout(timer);
+    };
+  }, [selectedLocation, activeFloor, svgReadyVersion, zoomToSvgElement, resolveFloorForRoom]);
 
   // ---------------------------------------------------------------------------
   // Highlight all rooms by selected sidebar category
@@ -1473,12 +1749,50 @@ const MapViewer = ({
 
     const validRoutingRoomIds = new Set(routingRoomOptions.map((room) => room.id));
 
+    const anchor = resolveActiveQrAnchor(qrCodeInput);
+    if (anchor) {
+      gpsBufferRef.current = [];
+      liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
+      setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+      setShowCurrentUserMarker(true);
+      setStartRoomId(anchor.roomId);
+      startRoomIdRef.current = anchor.roomId;
+      preferRoomCenterStartRef.current = false;
+      setLastQrAnchor(anchor);
+      setQrCalibrationHistory((prev) => [...prev, anchor]);
+      setLocationInputMode("qr");
+
+      if ((anchor.floor === 1 || anchor.floor === 2) && anchor.floor !== activeFloor) {
+        setActiveFloor(anchor.floor);
+      }
+
+      const routeAfterCalibration =
+        endRoomIdRef.current && endRoomIdRef.current !== anchor.roomId
+          ? buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
+              startPoint: { x: anchor.svgX, y: anchor.svgY },
+            })
+          : null;
+
+      if (routeAfterCalibration) {
+        setActiveRoute(routeAfterCalibration);
+      } else {
+        setActiveRoute(null);
+      }
+
+      setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
+      setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
+      return;
+    }
+
     const resolvedRoomId = resolveRoomIdFromQrCode(qrCodeInput);
     if (resolvedRoomId) {
       if (!validRoutingRoomIds.has(resolvedRoomId)) {
-        setRouteDebugMessage(`QR ruangan ini bukan bagian dari lantai ${activeFloor}.`);
+        setRouteDebugMessage("QR ruangan ini belum terdaftar sebagai titik routing.");
         return;
       }
+
+      const resolvedRoomInfo = roomInfoBySvgId[resolvedRoomId];
+      const targetFloor = resolvedRoomInfo ? resolveFloorForRoom(resolvedRoomInfo) : activeFloor;
 
       gpsBufferRef.current = [];
       liveSvgPointRef.current = null;
@@ -1490,10 +1804,14 @@ const MapViewer = ({
       setLastQrAnchor(null);
       setLocationInputMode("qr");
 
-      const roomCenter = getRoomCenterById(svgDoc, resolvedRoomId);
+      if (targetFloor !== activeFloor) {
+        setActiveFloor(targetFloor);
+      }
+
+      const roomCenter = getRoomCenterById(getFloorSvgDoc(targetFloor) || svgDoc, resolvedRoomId);
       const routeAfterRoomScan =
         endRoomIdRef.current && endRoomIdRef.current !== resolvedRoomId
-          ? buildRouteForRooms(resolvedRoomId, endRoomIdRef.current, svgDoc, {
+          ? buildDebugRouteForRooms(resolvedRoomId, endRoomIdRef.current, {
               startPoint: roomCenter ?? undefined,
             })
           : null;
@@ -1507,40 +1825,8 @@ const MapViewer = ({
       setRouteDebugMessage(`✅ Start point dari QR ruangan: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
       return;
     }
-
-    const anchor = resolveActiveQrAnchor(qrCodeInput);
-    if (!anchor) {
-      setRouteDebugMessage(`QR tidak dikenali untuk lantai ${activeFloor}.`);
-      return;
-    }
-
-    gpsBufferRef.current = [];
-    liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
-    setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
-    setShowCurrentUserMarker(true);
-    setStartRoomId(anchor.roomId);
-    startRoomIdRef.current = anchor.roomId;
-    preferRoomCenterStartRef.current = false;
-    setLastQrAnchor(anchor);
-    setQrCalibrationHistory((prev) => [...prev, anchor]);
-    setLocationInputMode("qr");
-
-    const routeAfterCalibration =
-      endRoomIdRef.current && endRoomIdRef.current !== anchor.roomId
-        ? buildRouteForRooms(anchor.roomId, endRoomIdRef.current, svgDoc, {
-            startPoint: { x: anchor.svgX, y: anchor.svgY },
-          })
-        : null;
-
-    if (routeAfterCalibration) {
-      setActiveRoute(routeAfterCalibration);
-    } else {
-      setActiveRoute(null);
-    }
-
-    setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
-    setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
-  }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor]);
+    setRouteDebugMessage("QR tidak dikenali pada registry multi-floor.");
+  }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor, resolveFloorForRoom, getFloorSvgDoc, buildDebugRouteForRooms]);
 
   const stopLiveMode = useCallback((statusMessage?: string) => {
     if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -1567,8 +1853,10 @@ const MapViewer = ({
       return;
     }
 
-    const startCenter = getRoomCenterById(svgDoc, startRoomIdRef.current);
-    if (!startCenter) {
+    const roomCenter = getRoomCenterById(svgDoc, startRoomIdRef.current);
+    const calibratedStartPoint = liveSvgPointRef.current;
+    const startPoint = calibratedStartPoint ?? roomCenter;
+    if (!startPoint) {
       setLiveModeStatus("Titik start belum valid di SVG.");
       return;
     }
@@ -1580,9 +1868,9 @@ const MapViewer = ({
 
     liveOriginRef.current = null;
     gpsBufferRef.current = [];
-    liveSvgPointRef.current = startCenter;
+    liveSvgPointRef.current = startPoint;
     preferRoomCenterStartRef.current = false;
-    setLiveSvgPoint(startCenter);
+    setLiveSvgPoint(startPoint);
     setShowCurrentUserMarker(true);
     setIsLiveMode(true);
     setLiveModeStatus("Mode live aktif. Menunggu update lokasi perangkat...");
@@ -1600,8 +1888,8 @@ const MapViewer = ({
           liveOriginRef.current = {
             lat: latitude,
             lng: longitude,
-            svgX: startCenter.x,
-            svgY: startCenter.y,
+            svgX: startPoint.x,
+            svgY: startPoint.y,
           };
           setLiveModeStatus("Lokasi terkunci. Mengikuti pergerakan user...");
           return;
@@ -1651,7 +1939,7 @@ const MapViewer = ({
         if (now - lastRerouteAtRef.current < LIVE_REROUTE_INTERVAL_MS) return;
         lastRerouteAtRef.current = now;
 
-        const dynamicRoute = buildRouteForRooms(nearest.roomId, currentEnd, svgDocLocal, {
+        const dynamicRoute = buildDebugRouteForRooms(nearest.roomId, currentEnd, {
           startPoint: smoothedPoint,
         });
         if (dynamicRoute) {
@@ -1683,7 +1971,7 @@ const MapViewer = ({
     );
 
     geoWatchIdRef.current = watchId;
-  }, [getRoomCenterById, getNearestRoutingRoom, stopLiveMode]);
+  }, [getRoomCenterById, getNearestRoutingRoom, stopLiveMode, buildDebugRouteForRooms]);
 
   useEffect(() => {
     if (!navigationStartRequest) return;
@@ -1705,7 +1993,13 @@ const MapViewer = ({
     startRoomIdRef.current = roomId;
     setShowCurrentUserMarker(true);
 
-    const svgDoc = objectRef.current?.contentDocument;
+    const requestedRoomInfo = roomInfoBySvgId[roomId];
+    const requestedFloor = requestedRoomInfo ? resolveFloorForRoom(requestedRoomInfo) : activeFloor;
+    if (requestedFloor !== activeFloor) {
+      setActiveFloor(requestedFloor);
+    }
+
+    const svgDoc = getFloorSvgDoc(requestedFloor);
     if (!svgDoc) {
       setRouteDebugMessage(`Start point diset ke ${roomInfoBySvgId[roomId]?.name || roomId}.`);
       finish();
@@ -1714,39 +2008,41 @@ const MapViewer = ({
 
     if (source === "qr" && qrPayload) {
       setQrCodeInput(qrPayload);
-      const validRoutingRoomIds = new Set(routingRoomOptions.map((room) => room.id));
+      const anchor = resolveActiveQrAnchor(qrPayload);
+      if (anchor) {
+        if ((anchor.floor === 1 || anchor.floor === 2) && anchor.floor !== activeFloor) {
+          setActiveFloor(anchor.floor);
+        }
+        setStartRoomId(anchor.roomId);
+        startRoomIdRef.current = anchor.roomId;
+        preferRoomCenterStartRef.current = false;
+        setLastQrAnchor(anchor);
+        liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
+        setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+        setQrCalibrationHistory((prev) => [...prev, anchor]);
 
-      const resolvedRoomByQr = resolveRoomIdFromQrCode(qrPayload);
-      if (resolvedRoomByQr && validRoutingRoomIds.has(resolvedRoomByQr)) {
-        setStartRoomId(resolvedRoomByQr);
-        startRoomIdRef.current = resolvedRoomByQr;
-        preferRoomCenterStartRef.current = true;
-      } else {
-        const anchor = resolveActiveQrAnchor(qrPayload);
-        if (anchor) {
-          setStartRoomId(anchor.roomId);
-          startRoomIdRef.current = anchor.roomId;
-          preferRoomCenterStartRef.current = false;
-          setLastQrAnchor(anchor);
-          liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
-          setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
-          setQrCalibrationHistory((prev) => [...prev, anchor]);
-
-          const targetEndFromAnchor = endRoomIdRef.current;
-          if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
-            const anchorRoute = buildRouteForRooms(anchor.roomId, targetEndFromAnchor, svgDoc, {
-              startPoint: { x: anchor.svgX, y: anchor.svgY },
-            });
-            if (anchorRoute) {
-              setActiveRoute(anchorRoute);
-              setRouteDebugMessage(
-                `Rute otomatis (QR): ${roomInfoBySvgId[anchor.roomId]?.name || anchor.roomId} → ${roomInfoBySvgId[targetEndFromAnchor]?.name || targetEndFromAnchor}`
-              );
-              zoomToSvgElement(targetEndFromAnchor);
-              finish();
-              return;
-            }
+        const targetEndFromAnchor = endRoomIdRef.current;
+        if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
+          const anchorRoute = buildDebugRouteForRooms(anchor.roomId, targetEndFromAnchor, {
+            startPoint: { x: anchor.svgX, y: anchor.svgY },
+          });
+          if (anchorRoute) {
+            setActiveRoute(anchorRoute);
+            setRouteDebugMessage(
+              `Rute otomatis (QR): ${roomInfoBySvgId[anchor.roomId]?.name || anchor.roomId} → ${roomInfoBySvgId[targetEndFromAnchor]?.name || targetEndFromAnchor}`
+            );
+            zoomToSvgElement(targetEndFromAnchor);
+            finish();
+            return;
           }
+        }
+      } else {
+        const validRoutingRoomIds = new Set(routingRoomOptions.map((room) => room.id));
+        const resolvedRoomByQr = resolveRoomIdFromQrCode(qrPayload);
+        if (resolvedRoomByQr && validRoutingRoomIds.has(resolvedRoomByQr)) {
+          setStartRoomId(resolvedRoomByQr);
+          startRoomIdRef.current = resolvedRoomByQr;
+          preferRoomCenterStartRef.current = true;
         }
       }
     }
@@ -1759,8 +2055,8 @@ const MapViewer = ({
       return;
     }
 
-    const startCenter = getRoomCenterById(svgDoc, roomId);
-    const immediateRoute = buildRouteForRooms(roomId, targetEnd, svgDoc, {
+    const startCenter = getRoomCenterById(getFloorSvgDoc(requestedFloor) || svgDoc, roomId);
+    const immediateRoute = buildDebugRouteForRooms(roomId, targetEnd, {
       startPoint: startCenter ?? undefined,
     });
 
@@ -1786,6 +2082,10 @@ const MapViewer = ({
     zoomToSvgElement,
     routingRoomOptions,
     resolveActiveQrAnchor,
+    resolveFloorForRoom,
+    activeFloor,
+    buildDebugRouteForRooms,
+    getFloorSvgDoc,
   ]);
 
   const handleFindRoute = useCallback(() => {
@@ -1803,14 +2103,16 @@ const MapViewer = ({
       return;
     }
 
-    const svgDoc = objectRef.current?.contentDocument;
-    if (!svgDoc) {
-      setRouteDebugMessage("SVG belum siap. Coba beberapa detik lagi.");
+    const startRoomInfo = roomInfoBySvgId[effectiveStartRoomId];
+    const startFloor = startRoomInfo ? resolveFloorForRoom(startRoomInfo) : activeFloor;
+    const targetStartDoc = getFloorSvgDoc(startFloor);
+    if (!targetStartDoc) {
+      setRouteDebugMessage("Data SVG multi-floor belum siap. Coba beberapa detik lagi.");
       return;
     }
 
     const roomCenterStart = preferRoomCenterStartRef.current
-      ? getRoomCenterById(svgDoc, effectiveStartRoomId)
+      ? getRoomCenterById(targetStartDoc, effectiveStartRoomId)
       : null;
 
     if (preferRoomCenterStartRef.current && !roomCenterStart) {
@@ -1819,7 +2121,7 @@ const MapViewer = ({
       return;
     }
 
-    const result = buildRouteForRooms(effectiveStartRoomId, effectiveEndRoomId, svgDoc, {
+    const result = buildDebugRouteForRooms(effectiveStartRoomId, effectiveEndRoomId, {
       startPoint: preferRoomCenterStartRef.current
         ? roomCenterStart ?? undefined
         : (liveSvgPointRef.current ?? undefined),
@@ -1830,13 +2132,21 @@ const MapViewer = ({
       return;
     }
 
+    const endRoomInfo = roomInfoBySvgId[effectiveEndRoomId];
+    const endFloor = endRoomInfo ? resolveFloorForRoom(endRoomInfo) : activeFloor;
+
     setActiveRoute(result);
+    if (startFloor !== activeFloor) {
+      setActiveFloor(startFloor);
+    }
     setRouteDebugMessage(
       `Rute ditemukan: ${roomInfoBySvgId[effectiveStartRoomId]?.name || effectiveStartRoomId} → ${roomInfoBySvgId[effectiveEndRoomId]?.name || effectiveEndRoomId}`
     );
 
-    zoomToSvgElement(effectiveEndRoomId);
-  }, [startRoomId, endRoomId, zoomToSvgElement, getRoomCenterById]);
+    if (endFloor === startFloor) {
+      zoomToSvgElement(effectiveEndRoomId);
+    }
+  }, [startRoomId, endRoomId, zoomToSvgElement, getRoomCenterById, resolveFloorForRoom, activeFloor, getFloorSvgDoc, buildDebugRouteForRooms]);
 
   const handleClearRoute = useCallback(() => {
     setActiveRoute(null);
@@ -1846,16 +2156,17 @@ const MapViewer = ({
   }, []);
 
   useEffect(() => {
-    if (!activeRoute || activeRoute.points.length < 2) {
+    const activeFloorSegment = getRouteSegmentForFloor(activeRoute, activeFloor);
+    if (!activeFloorSegment || activeFloorSegment.points.length < 2) {
       setNavSteps([]);
       setActiveStepIndex(0);
       return;
     }
 
-    const steps = buildNavigationSteps(activeRoute.points);
+    const steps = buildNavigationSteps(activeFloorSegment.points);
     setNavSteps(steps);
     setActiveStepIndex(0);
-  }, [activeRoute]);
+  }, [activeRoute, activeFloor, getRouteSegmentForFloor]);
 
   // Auto-close room info popup when navigation route becomes active
   useEffect(() => {
@@ -1887,19 +2198,19 @@ const MapViewer = ({
     const applyRoute = () => {
       const svgDoc = objectElement.contentDocument;
       if (!svgDoc) return;
-      renderRouteOverlay(svgDoc, activeRoute);
+      renderRouteOverlay(svgDoc, activeRoute, activeFloor);
     };
 
     applyRoute();
     objectElement.addEventListener("load", applyRoute);
     return () => objectElement.removeEventListener("load", applyRoute);
-  }, [activeRoute, renderRouteOverlay]);
+  }, [activeRoute, renderRouteOverlay, activeFloor]);
 
   useEffect(() => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
-    renderTurnArrows(svgDoc, navSteps, activeStepIndex);
-  }, [navSteps, activeStepIndex, renderTurnArrows, svgReadyVersion]);
+    svgDoc.getElementById("dynamic-turn-arrow-layer")?.remove();
+  }, [navSteps, activeStepIndex, svgReadyVersion]);
 
   useEffect(() => {
     const svgDoc = objectRef.current?.contentDocument;
@@ -1970,6 +2281,10 @@ const MapViewer = ({
         ref={containerRef}
         className={`w-full h-full ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         <div
           ref={mapRef}
@@ -1999,7 +2314,7 @@ const MapViewer = ({
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Navigation HUD</p>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground">Lantai 1</span>
+              <span className="text-[10px] text-muted-foreground">Map aktif: Lantai {activeFloor}</span>
               <button
                 onClick={() => setIsPathfindingDebugVisible(false)}
                 className="inline-flex h-5 w-5 items-center justify-center rounded border border-border text-muted-foreground hover:bg-muted"
@@ -2060,9 +2375,9 @@ const MapViewer = ({
               }}
               className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
             >
-              {routingRoomOptions.map((room) => (
+              {debugRoutingRooms.map((room) => (
                 <option key={room.id} value={room.id}>
-                  {room.name}
+                  [L{room.floor}] {room.name}
                 </option>
               ))}
             </select>
@@ -2086,7 +2401,7 @@ const MapViewer = ({
             </div>
 
             <div className="flex items-center justify-between mt-1">
-              <p className="text-[10px] text-muted-foreground">Tampilkan titik QR di peta</p>
+              <p className="text-[10px] text-muted-foreground">Tampilkan titik QR di peta • daftar semua lantai</p>
               <button
                 onClick={() => setShowQrAnchorHints((prev) => !prev)}
                 className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
@@ -2100,7 +2415,7 @@ const MapViewer = ({
             </div>
 
             <div className="max-h-28 overflow-y-auto rounded-md border border-border bg-muted/30 p-1.5 space-y-1">
-              {activeQrAnchors.map((anchor) => (
+              {allRegisteredQrAnchors.map((anchor) => (
                 <button
                   key={anchor.qrId}
                   onClick={() => setQrCodeInput(anchor.qrId)}
@@ -2125,9 +2440,9 @@ const MapViewer = ({
             onChange={(event) => setEndRoomId(event.target.value)}
             className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-xs"
           >
-            {routingRoomOptions.map((room) => (
+            {debugRoutingRooms.map((room) => (
               <option key={room.id} value={room.id}>
-                {room.name}
+                [L{room.floor}] {room.name}
               </option>
             ))}
           </select>
@@ -2167,6 +2482,9 @@ const MapViewer = ({
         {activeRoute && (
           <p className="text-[11px] text-muted-foreground">
             Jarak koridor: {Math.round(activeRoute.totalDistance)} px • {activeRoute.checkpointIds.length} checkpoint
+            {activeRoute.floorsInvolved && activeRoute.floorsInvolved.length > 1
+              ? ` • multi-floor via ${activeRoute.transitionLabel || "connector"}`
+              : ""}
           </p>
         )}
         {routeDebugMessage && (
@@ -2175,6 +2493,25 @@ const MapViewer = ({
         {liveModeStatus && (
           <p className="text-[11px] text-muted-foreground">{liveModeStatus}</p>
         )}
+        <div className="space-y-1 rounded-md border border-border bg-muted/20 p-2">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-semibold text-foreground">Data Ruangan Debug</p>
+            <p className="text-[10px] text-muted-foreground">
+              Total {debugRoutingRooms.length} ruangan • L1 {debugRoutingRoomsByFloor[1].length} • L2 {debugRoutingRoomsByFloor[2].length}
+            </p>
+          </div>
+          <div className="max-h-32 overflow-y-auto space-y-1 text-[10px]">
+            {debugRoutingRooms.map((room) => (
+              <div
+                key={room.id}
+                className="flex items-center justify-between rounded bg-background/70 px-1.5 py-1"
+              >
+                <span className="font-medium text-foreground">[L{room.floor}] {room.name}</span>
+                <span className="text-muted-foreground">{room.id}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         </div>
       ) : (
         <button
@@ -2210,23 +2547,24 @@ const MapViewer = ({
       </div>
 
       {(activeRoute || isLiveMode) && navSteps.length > 0 && currentNavStep && (
-        <div className="absolute top-16 left-4 z-30 w-[min(92vw,340px)] rounded-2xl border border-border/60 bg-background/95 shadow-2xl backdrop-blur-xl overflow-hidden">
+        <div className="absolute bottom-24 left-4 z-30 w-[min(92vw,340px)] overflow-hidden rounded-2xl border border-white/55 bg-white/36 shadow-2xl shadow-slate-900/20 ring-1 ring-white/45 backdrop-blur-2xl">
+          <div className="pointer-events-none absolute inset-0 bg-white/45" aria-hidden="true" />
           {/* ── Header ── */}
-          <div className="flex items-center justify-between px-3 py-2.5 bg-primary/8 border-b border-border/40">
+          <div className="relative flex items-center justify-between border-b border-white/55 bg-white/40 px-3 py-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/15 shrink-0">
-                <Navigation className="h-3.5 w-3.5 text-primary" />
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/60 shadow-sm shadow-slate-900/10">
+                <Navigation className="h-3.5 w-3.5 text-slate-700" />
               </div>
               <div className="min-w-0">
-                <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Navigasi Aktif</p>
-                <p className="text-[12px] font-bold text-foreground truncate leading-tight">
+                <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-widest leading-none text-slate-500">Navigasi Aktif</p>
+                <p className="truncate text-[12px] font-bold leading-tight text-slate-900">
                   {roomInfoBySvgId[endRoomId]?.name || endRoomId || "Tujuan"}
                 </p>
               </div>
             </div>
             <button
               onClick={handleClearRoute}
-              className="h-6 w-6 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900"
               title="Hentikan navigasi"
               aria-label="Hentikan navigasi"
             >
@@ -2235,19 +2573,19 @@ const MapViewer = ({
           </div>
 
           {/* ── Current step ── */}
-          <div className="px-3 pt-3 pb-2">
+          <div className="relative px-3 pt-3 pb-2">
             <div className="flex items-start gap-3">
               {/* Step type icon */}
-              <div className={`h-12 w-12 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-sm ${
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl shadow-md shadow-slate-900/10 ${
                 currentNavStep.type === "arrive"
-                  ? "bg-emerald-500/15 text-emerald-600"
+                  ? "bg-white/80 text-emerald-600"
                   : currentNavStep.type === "turn_left"
-                  ? "bg-blue-500/15 text-blue-600"
+                  ? "bg-white/80 text-slate-700"
                   : currentNavStep.type === "turn_right"
-                  ? "bg-amber-500/15 text-amber-600"
+                  ? "bg-white/80 text-slate-700"
                   : currentNavStep.type === "u_turn"
-                  ? "bg-red-500/15 text-red-600"
-                  : "bg-primary/10 text-primary"
+                  ? "bg-white/80 text-slate-700"
+                  : "bg-white/80 text-slate-700"
               }`}>
                 {currentNavStep.type === "arrive" ? "🏁"
                   : currentNavStep.type === "turn_left" ? "↰"
@@ -2256,44 +2594,17 @@ const MapViewer = ({
                   : "↑"}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[15px] font-extrabold text-foreground leading-snug">{currentNavInstruction}</p>
-                {currentNavStep.type !== "arrive" && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    ≈ {Math.max(1, Math.round(currentNavStep.distanceToNext / 3.5))} m lagi
-                  </p>
-                )}
+                <p className="text-[15px] font-extrabold leading-snug text-slate-900">{currentNavInstruction}</p>
+                <p className="mt-1 text-xs text-slate-600">Selanjutnya saja</p>
               </div>
             </div>
           </div>
 
-          {/* ── Step progress pills ── */}
-          <div className="px-3 pb-2.5">
-            <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              {navSteps.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveStepIndex(idx)}
-                  title={`Langkah ${idx + 1}`}
-                  className={`h-1.5 shrink-0 rounded-full transition-all duration-300 ${
-                    idx < activeStepIndex
-                      ? "w-3 bg-muted-foreground/35"
-                      : idx === activeStepIndex
-                      ? "w-7 bg-primary shadow-sm shadow-primary/40"
-                      : "w-3 bg-border"
-                  }`}
-                />
-              ))}
-              <span className="ml-1.5 shrink-0 text-[10px] text-muted-foreground whitespace-nowrap">
-                {Math.min(activeStepIndex + 1, navSteps.length)}/{navSteps.length}
-              </span>
-            </div>
-          </div>
-
           {/* ── QR Calibration button ── */}
-          <div className="px-3 pb-3">
+          <div className="relative px-3 pb-3">
             <button
               onClick={() => onStartNavigation?.({ mode: "qr" })}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-amber-500/25 transition-all"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
               title="Kalibrasi posisi via QR Code"
               style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
             >
@@ -2305,8 +2616,8 @@ const MapViewer = ({
           {/* Keyframe for QR button pulse */}
           <style>{`
             @keyframes navQrPulse {
-              0%, 100% { box-shadow: 0 4px 14px rgba(245,158,11,0.25); }
-              50% { box-shadow: 0 4px 24px rgba(245,158,11,0.55); }
+              0%, 100% { box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+              50% { box-shadow: 0 4px 24px rgba(16,185,129,0.55); }
             }
           `}</style>
         </div>

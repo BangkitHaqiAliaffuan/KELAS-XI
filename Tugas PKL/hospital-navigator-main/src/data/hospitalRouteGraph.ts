@@ -6,6 +6,14 @@ export interface RoomRouteResult {
   checkpointIds: string[];
   points: Array<{ x: number; y: number }>;
   totalDistance: number;
+  floorSegments?: Array<{
+    floor: 1 | 2;
+    checkpointIds: string[];
+    points: Array<{ x: number; y: number }>;
+    totalDistance: number;
+  }>;
+  floorsInvolved?: Array<1 | 2>;
+  transitionLabel?: string;
 }
 
 export interface QrAnchor {
@@ -164,7 +172,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   },
   "QR-F2-N02": {
     qrId: "QR-F2-N02",
-    roomId: "R._Prancis",
+    roomId: "R._Prancis"      ,
     svgX: 999.847,
     svgY: 515.5,
     label: "Persimpangan Jalan R. Rawat Inap Kelas 1",
@@ -317,13 +325,14 @@ export const getAllRoomQrCodes = (): Record<string, string> =>
 
 type GraphNode = { id: string; x: number; y: number };
 type Graph = Record<string, Array<{ id: string; weight: number }>>;
+type RouteEndpointResolution = {
+  anchorNodeId: string;
+  graphNodeId: string;
+};
 
 const NODE_SNAP_SIZE = 12;
-const SAMPLE_STEP = 24;
-const ROUTE_POINT_MERGE_EPSILON = 4;
-const ROUTE_STRAIGHT_ANGLE_THRESHOLD = 18;
-const ROUTE_LINE_DEVIATION_EPSILON = 3;
-const ROUTE_AXIS_ALIGN_EPSILON = 6;
+const SAMPLE_STEP = 8;
+const EXPLICIT_NODE_CONNECT_THRESHOLD = 56;
 
 const distance = (
   from: { x: number; y: number },
@@ -332,158 +341,6 @@ const distance = (
   const dx = from.x - to.x;
   const dy = from.y - to.y;
   return Math.hypot(dx, dy);
-};
-
-const signedTurnAngleDegrees = (
-  prev: { x: number; y: number },
-  curr: { x: number; y: number },
-  next: { x: number; y: number },
-): number => {
-  const v1 = { x: curr.x - prev.x, y: curr.y - prev.y };
-  const v2 = { x: next.x - curr.x, y: next.y - curr.y };
-  const cross = v1.x * v2.y - v1.y * v2.x;
-  const dot = v1.x * v2.x + v1.y * v2.y;
-  return (Math.atan2(cross, dot) * 180) / Math.PI;
-};
-
-const perpendicularDistanceToLine = (
-  point: { x: number; y: number },
-  lineStart: { x: number; y: number },
-  lineEnd: { x: number; y: number },
-): number => {
-  const lineLength = distance(lineStart, lineEnd);
-  if (lineLength === 0) return distance(point, lineStart);
-
-  const area = Math.abs(
-    (lineEnd.x - lineStart.x) * (lineStart.y - point.y) -
-      (lineStart.x - point.x) * (lineEnd.y - lineStart.y),
-  );
-  return area / lineLength;
-};
-
-const mergeNearbyRoutePoints = (
-  points: Array<{ x: number; y: number }>,
-): Array<{ x: number; y: number }> => {
-  if (points.length <= 1) return points;
-
-  const merged = [points[0]];
-  for (let i = 1; i < points.length; i += 1) {
-    const current = points[i];
-    const prev = merged[merged.length - 1];
-    if (distance(prev, current) <= ROUTE_POINT_MERGE_EPSILON) continue;
-    merged.push(current);
-  }
-
-  return merged;
-};
-
-const removeMinorRouteTurns = (
-  points: Array<{ x: number; y: number }>,
-): Array<{ x: number; y: number }> => {
-  if (points.length <= 2) return points;
-
-  const simplified = [points[0]];
-
-  for (let i = 1; i < points.length - 1; i += 1) {
-    const prev = simplified[simplified.length - 1];
-    const curr = points[i];
-    const next = points[i + 1];
-
-    const turnAngle = Math.abs(signedTurnAngleDegrees(prev, curr, next));
-    const lineDeviation = perpendicularDistanceToLine(curr, prev, next);
-
-    if (
-      turnAngle <= ROUTE_STRAIGHT_ANGLE_THRESHOLD &&
-      lineDeviation <= ROUTE_LINE_DEVIATION_EPSILON
-    ) {
-      continue;
-    }
-
-    simplified.push(curr);
-  }
-
-  simplified.push(points[points.length - 1]);
-  return simplified;
-};
-
-const alignAxisRuns = (
-  points: Array<{ x: number; y: number }>,
-): Array<{ x: number; y: number }> => {
-  if (points.length <= 2) return points;
-
-  const aligned = points.map((point) => ({ ...point }));
-
-  const classifySegment = (
-    a: { x: number; y: number },
-    b: { x: number; y: number },
-  ): "horizontal" | "vertical" | null => {
-    const dx = Math.abs(b.x - a.x);
-    const dy = Math.abs(b.y - a.y);
-
-    if (dy <= ROUTE_AXIS_ALIGN_EPSILON && dx > dy) return "horizontal";
-    if (dx <= ROUTE_AXIS_ALIGN_EPSILON && dy > dx) return "vertical";
-    return null;
-  };
-
-  let i = 0;
-  while (i < aligned.length - 1) {
-    const segmentType = classifySegment(aligned[i], aligned[i + 1]);
-    if (!segmentType) {
-      i += 1;
-      continue;
-    }
-
-    let j = i;
-    while (j < aligned.length - 1) {
-      const typeAtJ = classifySegment(aligned[j], aligned[j + 1]);
-      if (typeAtJ !== segmentType) break;
-      j += 1;
-    }
-
-    if (j > i) {
-      if (segmentType === "horizontal") {
-        const yAverage =
-          aligned.slice(i, j + 2).reduce((sum, point) => sum + point.y, 0) /
-          (j + 2 - i);
-        for (let k = i; k <= j + 1; k += 1) {
-          aligned[k].y = yAverage;
-        }
-      } else {
-        const xAverage =
-          aligned.slice(i, j + 2).reduce((sum, point) => sum + point.x, 0) /
-          (j + 2 - i);
-        for (let k = i; k <= j + 1; k += 1) {
-          aligned[k].x = xAverage;
-        }
-      }
-    }
-
-    i = j + 1;
-  }
-
-  return aligned;
-};
-
-const smoothRoutePoints = (
-  points: Array<{ x: number; y: number }>,
-): Array<{ x: number; y: number }> => {
-  if (points.length <= 2) return points;
-
-  const merged = mergeNearbyRoutePoints(points);
-  const coarseSimplified = removeMinorRouteTurns(merged);
-  const axisAligned = alignAxisRuns(coarseSimplified);
-  const finalSimplified = removeMinorRouteTurns(axisAligned);
-
-  return finalSimplified.length >= 2 ? finalSimplified : points;
-};
-
-const polylineDistance = (points: Array<{ x: number; y: number }>): number => {
-  if (points.length <= 1) return 0;
-  let total = 0;
-  for (let i = 1; i < points.length; i += 1) {
-    total += distance(points[i - 1], points[i]);
-  }
-  return total;
 };
 
 const normalizeElementId = (raw: string): string => raw.toLowerCase().trim();
@@ -523,6 +380,14 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
 
 const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
   "R._Direktur___Manajemen": ["Persimpangan_ke_R._Istirahat_Perawat"],
+  Lift_Lantai_1: ["Check_Point_Lift"],
+  "Lift_Lantai_1-2": ["Check_Point_Lift_Turun"],
+  Tangga_Lantai_1: ["Check_Point_Tangga"],
+  "Tangga_Lantai_1-7": ["Check_Point_Tangga_Turun"],
+  // Keep evacuation stairs isolated from the main-stair checkpoint so floor transitions stay consistent.
+  // Floor 1 SVG uses legacy id "path4" for evacuation checkpoint label.
+  Tangga_Evakuasi_Lantai_1: ["path4", "Check_Point_Tangga_Evakuasi"],
+  Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi"],
 };
 
 const isRoadPath = (
@@ -543,6 +408,27 @@ const isRoadPath = (
   }
   if (EXPLICIT_ROUTE_PATH_IDS.has(pathId)) return true;
   return pathId.includes("jalan") || pathLabel.includes("jalan");
+};
+
+const isCenterlineRoadPath = (
+  path: SVGPathElement,
+  options?: { allowIgdEntrancePath?: boolean },
+): boolean => {
+  const pathId = path.id?.toLowerCase() || "";
+  const pathLabel = (
+    path.getAttribute("inkscape:label") ||
+    path.getAttribute("label") ||
+    ""
+  ).toLowerCase();
+
+  if (
+    isBlockedIgdEntranceElement(pathId, pathLabel) &&
+    !options?.allowIgdEntrancePath
+  ) {
+    return false;
+  }
+
+  return true;
 };
 
 const isElementNodeLike = (
@@ -641,6 +527,38 @@ const addEdge = (
   }
 };
 
+const connectExplicitNodesToNearestRoadNode = (
+  graph: Graph,
+  nodes: Record<string, GraphNode>,
+  explicitNodeIds: Set<string>,
+) => {
+  const roadNodes = Object.values(nodes).filter(
+    (node) =>
+      !explicitNodeIds.has(node.id) && !node.id.startsWith("node_room_") && (graph[node.id]?.length || 0) > 0,
+  );
+
+  explicitNodeIds.forEach((nodeId) => {
+    if (nodeId.startsWith("node_room_")) return;
+    const explicitNode = nodes[nodeId];
+    if (!explicitNode) return;
+    if ((graph[nodeId]?.length || 0) > 0) return;
+
+    let nearestRoadNode: GraphNode | null = null;
+    let nearestDistance = EXPLICIT_NODE_CONNECT_THRESHOLD;
+
+    roadNodes.forEach((roadNode) => {
+      const d = distance(explicitNode, roadNode);
+      if (d <= nearestDistance) {
+        nearestRoadNode = roadNode;
+        nearestDistance = d;
+      }
+    });
+
+    if (!nearestRoadNode) return;
+    addEdge(graph, nodeId, nearestRoadNode.id, nearestDistance);
+  });
+};
+
 const buildRoadGraphFromSvg = (
   svgDoc: Document,
   options?: { allowIgdEntrancePath?: boolean },
@@ -696,16 +614,14 @@ const buildRoadGraphFromSvg = (
   );
   const centerlineRoadPaths = centerlineLayer
     ? Array.from(centerlineLayer.querySelectorAll("path")).filter((path) =>
-        isRoadPath(path, options),
+        isCenterlineRoadPath(path, options),
       )
     : [];
-  const roadPaths = Array.from(
-    new Set(
-      centerlineRoadPaths.length
-        ? [...centerlineRoadPaths, ...globalRoadPaths]
-        : globalRoadPaths,
-    ),
-  );
+  // If a dedicated centerline layer exists, use it as the single routing source.
+  // Mixing thick road-area paths with centerlines lets Dijkstra drift to road edges.
+  const roadPaths = centerlineRoadPaths.length
+    ? centerlineRoadPaths
+    : globalRoadPaths;
 
   roadPaths.forEach((path) => {
     const totalLength = path.getTotalLength();
@@ -731,6 +647,8 @@ const buildRoadGraphFromSvg = (
       previousNode = currentNode;
     }
   });
+
+  connectExplicitNodesToNearestRoadNode(graph, nodes, explicitNodeIds);
 
   return { graph, nodes };
 };
@@ -990,12 +908,14 @@ const getBestMatchingCheckpointNodeId = (
 const resolveRoomCheckpointNodeId = (
   roomId: string,
   nodes: Record<string, GraphNode>,
-  graph: Graph,
   roomCenter: { x: number; y: number },
 ): string | null => {
   const specialNodeIds = ROOM_SPECIAL_ROUTE_NODE_IDS[roomId];
   if (specialNodeIds?.length) {
-    return resolvePreferredNodeId(specialNodeIds, nodes, graph, roomCenter);
+    for (const specialNodeId of specialNodeIds) {
+      if (nodes[specialNodeId]) return specialNodeId;
+    }
+    return null;
   }
 
   const checkpointCandidateIds = getRoomCheckpointCandidateIds(roomId, nodes);
@@ -1008,9 +928,48 @@ const resolveRoomCheckpointNodeId = (
     roomCenter,
   );
   if (!bestCheckpointNodeId) return null;
-  if ((graph[bestCheckpointNodeId]?.length || 0) <= 0) return null;
 
   return bestCheckpointNodeId;
+};
+
+const resolveRouteEndpoint = (
+  preferredAnchorNodeId: string | null,
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  fallbackPoint: { x: number; y: number },
+): RouteEndpointResolution | null => {
+  if (
+    preferredAnchorNodeId &&
+    nodes[preferredAnchorNodeId] &&
+    (graph[preferredAnchorNodeId]?.length || 0) > 0
+  ) {
+    return {
+      anchorNodeId: preferredAnchorNodeId,
+      graphNodeId: preferredAnchorNodeId,
+    };
+  }
+
+  if (preferredAnchorNodeId && nodes[preferredAnchorNodeId]) {
+    const nearestGraphNodeId = getNearestNodeId(
+      nodes,
+      graph,
+      nodes[preferredAnchorNodeId],
+    );
+    if (nearestGraphNodeId) {
+      return {
+        anchorNodeId: preferredAnchorNodeId,
+        graphNodeId: nearestGraphNodeId,
+      };
+    }
+  }
+
+  const nearestFallbackNodeId = getNearestNodeId(nodes, graph, fallbackPoint);
+  if (!nearestFallbackNodeId) return null;
+
+  return {
+    anchorNodeId: nearestFallbackNodeId,
+    graphNodeId: nearestFallbackNodeId,
+  };
 };
 
 const resolvePreferredNodeId = (
@@ -1034,20 +993,29 @@ const resolvePreferredStartNodeId = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   fallbackStartPoint: { x: number; y: number },
-): string | null => {
+): RouteEndpointResolution | null => {
   const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
     startRoomId,
     nodes,
-    graph,
     fallbackStartPoint,
   );
   if (roomCheckpointNodeId) {
-    return roomCheckpointNodeId;
+    return resolveRouteEndpoint(
+      roomCheckpointNodeId,
+      nodes,
+      graph,
+      fallbackStartPoint,
+    );
   }
 
   if (isKamarMayatRoom(startRoomId)) {
-    return resolvePreferredNodeId(
-      KAMAR_MAYAT_PREFERRED_NODE_IDS,
+    return resolveRouteEndpoint(
+      resolvePreferredNodeId(
+        KAMAR_MAYAT_PREFERRED_NODE_IDS,
+        nodes,
+        graph,
+        fallbackStartPoint,
+      ),
       nodes,
       graph,
       fallbackStartPoint,
@@ -1058,11 +1026,14 @@ const resolvePreferredStartNodeId = (
     const igdExitNodeId = "Persimpangan_Keluar_IGD";
     const igdExitNode = nodes[igdExitNodeId];
     if (igdExitNode && (graph[igdExitNodeId]?.length || 0) > 0) {
-      return igdExitNodeId;
+      return {
+        anchorNodeId: igdExitNodeId,
+        graphNodeId: igdExitNodeId,
+      };
     }
   }
 
-  return getNearestNodeId(nodes, graph, fallbackStartPoint);
+  return resolveRouteEndpoint(null, nodes, graph, fallbackStartPoint);
 };
 
 const resolvePreferredEndNodeId = (
@@ -1070,27 +1041,36 @@ const resolvePreferredEndNodeId = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
-): string | null => {
+): RouteEndpointResolution | null => {
   const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
     endRoomId,
     nodes,
-    graph,
     fallbackEndPoint,
   );
   if (roomCheckpointNodeId) {
-    return roomCheckpointNodeId;
-  }
-
-  if (isKamarMayatRoom(endRoomId)) {
-    return resolvePreferredNodeId(
-      KAMAR_MAYAT_PREFERRED_NODE_IDS,
+    return resolveRouteEndpoint(
+      roomCheckpointNodeId,
       nodes,
       graph,
       fallbackEndPoint,
     );
   }
 
-  return getNearestNodeId(nodes, graph, fallbackEndPoint);
+  if (isKamarMayatRoom(endRoomId)) {
+    return resolveRouteEndpoint(
+      resolvePreferredNodeId(
+        KAMAR_MAYAT_PREFERRED_NODE_IDS,
+        nodes,
+        graph,
+        fallbackEndPoint,
+      ),
+      nodes,
+      graph,
+      fallbackEndPoint,
+    );
+  }
+
+  return resolveRouteEndpoint(null, nodes, graph, fallbackEndPoint);
 };
 
 const shouldExcludeFromRouting = (roomId: string): boolean => {
@@ -1182,37 +1162,49 @@ export const buildRouteForRooms = (
   const { graph, nodes } = buildRoadGraphFromSvg(svgDoc, {
     allowIgdEntrancePath,
   });
-  const startNodeId = resolvePreferredStartNodeId(
+  const startResolution = resolvePreferredStartNodeId(
     startRoomId,
     nodes,
     graph,
     startSourcePoint,
   );
-  const endNodeId = resolvePreferredEndNodeId(
+  const endResolution = resolvePreferredEndNodeId(
     endRoomId,
     nodes,
     graph,
     endSourcePoint,
   );
-  if (!startNodeId || !endNodeId) return null;
+  if (!startResolution || !endResolution) return null;
 
-  const shortest = dijkstra(graph, startNodeId, endNodeId);
+  const shortest = dijkstra(
+    graph,
+    startResolution.graphNodeId,
+    endResolution.graphNodeId,
+  );
   if (!shortest) return null;
 
-  const roadPoints = shortest.path
+  const checkpointIds = [...shortest.path];
+  if (checkpointIds[0] !== startResolution.anchorNodeId) {
+    checkpointIds.unshift(startResolution.anchorNodeId);
+  }
+  if (checkpointIds[checkpointIds.length - 1] !== endResolution.anchorNodeId) {
+    checkpointIds.push(endResolution.anchorNodeId);
+  }
+
+  const roadPoints = checkpointIds
     .map((nodeId) => nodes[nodeId])
     .filter(Boolean)
     .map((node) => ({ x: node.x, y: node.y }));
 
-  const points = smoothRoutePoints(roadPoints);
+  const points = roadPoints;
 
   if (points.length < 2) return null;
 
   return {
     startRoomId,
     endRoomId,
-    checkpointIds: shortest.path,
+    checkpointIds,
     points,
-    totalDistance: polylineDistance(points),
+    totalDistance: shortest.distance,
   };
 };

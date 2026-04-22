@@ -299,9 +299,16 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Sisi kanan bawah peta",
     description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
   },
-  "Tangga_Lantai_1-2": {
-    id: "Tangga_Lantai_1-2",
+  "Tangga_Evakuasi_Lantai_1": {
+    id: "Tangga_Evakuasi_Lantai_1",
     name: "Tangga Evakuasi Lantai 1",
+    category: "Facility",
+    locationHint: "Sisi kiri atas peta",
+    description: "Tangga Darurat",
+  },
+  "Tangga_Evakuasi_Lantai_2": {
+    id: "Tangga_Evakuasi_Lantai_2",
+    name: "Tangga Evakuasi Lantai 2",
     category: "Facility",
     locationHint: "Sisi kiri atas peta",
     description: "Tangga Darurat",
