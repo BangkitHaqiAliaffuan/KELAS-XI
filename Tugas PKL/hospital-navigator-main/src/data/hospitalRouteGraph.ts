@@ -320,6 +320,10 @@ type Graph = Record<string, Array<{ id: string; weight: number }>>;
 
 const NODE_SNAP_SIZE = 12;
 const SAMPLE_STEP = 24;
+const ROUTE_POINT_MERGE_EPSILON = 4;
+const ROUTE_STRAIGHT_ANGLE_THRESHOLD = 18;
+const ROUTE_LINE_DEVIATION_EPSILON = 3;
+const ROUTE_AXIS_ALIGN_EPSILON = 6;
 
 const distance = (
   from: { x: number; y: number },
@@ -328,6 +332,158 @@ const distance = (
   const dx = from.x - to.x;
   const dy = from.y - to.y;
   return Math.hypot(dx, dy);
+};
+
+const signedTurnAngleDegrees = (
+  prev: { x: number; y: number },
+  curr: { x: number; y: number },
+  next: { x: number; y: number },
+): number => {
+  const v1 = { x: curr.x - prev.x, y: curr.y - prev.y };
+  const v2 = { x: next.x - curr.x, y: next.y - curr.y };
+  const cross = v1.x * v2.y - v1.y * v2.x;
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  return (Math.atan2(cross, dot) * 180) / Math.PI;
+};
+
+const perpendicularDistanceToLine = (
+  point: { x: number; y: number },
+  lineStart: { x: number; y: number },
+  lineEnd: { x: number; y: number },
+): number => {
+  const lineLength = distance(lineStart, lineEnd);
+  if (lineLength === 0) return distance(point, lineStart);
+
+  const area = Math.abs(
+    (lineEnd.x - lineStart.x) * (lineStart.y - point.y) -
+      (lineStart.x - point.x) * (lineEnd.y - lineStart.y),
+  );
+  return area / lineLength;
+};
+
+const mergeNearbyRoutePoints = (
+  points: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> => {
+  if (points.length <= 1) return points;
+
+  const merged = [points[0]];
+  for (let i = 1; i < points.length; i += 1) {
+    const current = points[i];
+    const prev = merged[merged.length - 1];
+    if (distance(prev, current) <= ROUTE_POINT_MERGE_EPSILON) continue;
+    merged.push(current);
+  }
+
+  return merged;
+};
+
+const removeMinorRouteTurns = (
+  points: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> => {
+  if (points.length <= 2) return points;
+
+  const simplified = [points[0]];
+
+  for (let i = 1; i < points.length - 1; i += 1) {
+    const prev = simplified[simplified.length - 1];
+    const curr = points[i];
+    const next = points[i + 1];
+
+    const turnAngle = Math.abs(signedTurnAngleDegrees(prev, curr, next));
+    const lineDeviation = perpendicularDistanceToLine(curr, prev, next);
+
+    if (
+      turnAngle <= ROUTE_STRAIGHT_ANGLE_THRESHOLD &&
+      lineDeviation <= ROUTE_LINE_DEVIATION_EPSILON
+    ) {
+      continue;
+    }
+
+    simplified.push(curr);
+  }
+
+  simplified.push(points[points.length - 1]);
+  return simplified;
+};
+
+const alignAxisRuns = (
+  points: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> => {
+  if (points.length <= 2) return points;
+
+  const aligned = points.map((point) => ({ ...point }));
+
+  const classifySegment = (
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+  ): "horizontal" | "vertical" | null => {
+    const dx = Math.abs(b.x - a.x);
+    const dy = Math.abs(b.y - a.y);
+
+    if (dy <= ROUTE_AXIS_ALIGN_EPSILON && dx > dy) return "horizontal";
+    if (dx <= ROUTE_AXIS_ALIGN_EPSILON && dy > dx) return "vertical";
+    return null;
+  };
+
+  let i = 0;
+  while (i < aligned.length - 1) {
+    const segmentType = classifySegment(aligned[i], aligned[i + 1]);
+    if (!segmentType) {
+      i += 1;
+      continue;
+    }
+
+    let j = i;
+    while (j < aligned.length - 1) {
+      const typeAtJ = classifySegment(aligned[j], aligned[j + 1]);
+      if (typeAtJ !== segmentType) break;
+      j += 1;
+    }
+
+    if (j > i) {
+      if (segmentType === "horizontal") {
+        const yAverage =
+          aligned.slice(i, j + 2).reduce((sum, point) => sum + point.y, 0) /
+          (j + 2 - i);
+        for (let k = i; k <= j + 1; k += 1) {
+          aligned[k].y = yAverage;
+        }
+      } else {
+        const xAverage =
+          aligned.slice(i, j + 2).reduce((sum, point) => sum + point.x, 0) /
+          (j + 2 - i);
+        for (let k = i; k <= j + 1; k += 1) {
+          aligned[k].x = xAverage;
+        }
+      }
+    }
+
+    i = j + 1;
+  }
+
+  return aligned;
+};
+
+const smoothRoutePoints = (
+  points: Array<{ x: number; y: number }>,
+): Array<{ x: number; y: number }> => {
+  if (points.length <= 2) return points;
+
+  const merged = mergeNearbyRoutePoints(points);
+  const coarseSimplified = removeMinorRouteTurns(merged);
+  const axisAligned = alignAxisRuns(coarseSimplified);
+  const finalSimplified = removeMinorRouteTurns(axisAligned);
+
+  return finalSimplified.length >= 2 ? finalSimplified : points;
+};
+
+const polylineDistance = (points: Array<{ x: number; y: number }>): number => {
+  if (points.length <= 1) return 0;
+  let total = 0;
+  for (let i = 1; i < points.length; i += 1) {
+    total += distance(points[i - 1], points[i]);
+  }
+  return total;
 };
 
 const normalizeElementId = (raw: string): string => raw.toLowerCase().trim();
@@ -365,20 +521,8 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
   "Belok_ke_Kamar_Mayat",
 ] as const;
 
-const ROOM_PREFERRED_START_NODE_IDS: Record<string, readonly string[]> = {
-  // Prefer drop to the lower corridor near QR-F2-N02 instead of taking the long top loop.
-  "R._Inggris": [
-    "Persimpangan_Jalan_R._Rawat_Inap_Kelas_1",
-    "Check_Point_R._Inggris",
-  ],
-};
-
-const ROOM_PREFERRED_END_NODE_IDS: Record<string, readonly string[]> = {
-  "Meja_Resepsionis_Lantai_2": [
-    "Check_Point_Resepsionis_Lantai_2",
-    "Check_Point_Lift_Turun",
-    "Persimpangan_Jalan_R._Rawat_Inap_Kelas_1",
-  ],
+const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
+  "R._Direktur___Manajemen": ["Persimpangan_ke_R._Istirahat_Perawat"],
 };
 
 const isRoadPath = (
@@ -748,6 +892,127 @@ const isIgdRelatedRoom = (roomId: string): boolean => {
 
 const isKamarMayatRoom = (roomId: string): boolean => roomId === "K._Mayat";
 
+const normalizeRouteToken = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/check[\s._-]*point/gi, "")
+    .replace(/persimpangan/gi, "")
+    .replace(/keluar/gi, "")
+    .replace(/masuk/gi, "")
+    .replace(/menuju/gi, "")
+    .replace(/ruang|ruangan/gi, "r")
+    .replace(/direktur/g, "manajemen")
+    .replace(/[^a-z0-9]/g, "");
+
+const getRoomCheckpointCandidateIds = (
+  roomId: string,
+  nodes: Record<string, GraphNode>,
+): string[] => {
+  const roomInfo = roomInfoBySvgId[roomId];
+  const roomTokens = new Set(
+    [roomId, roomInfo?.name ?? ""]
+      .filter(Boolean)
+      .map(normalizeRouteToken)
+      .filter(Boolean),
+  );
+
+  return Object.keys(nodes).filter((nodeId) => {
+    if (!/^check[_-]?point/i.test(nodeId)) return false;
+
+    const normalizedNodeId = normalizeRouteToken(nodeId);
+    if (!normalizedNodeId) return false;
+
+    for (const roomToken of roomTokens) {
+      if (!roomToken) continue;
+      if (
+        normalizedNodeId === roomToken ||
+        normalizedNodeId.includes(roomToken) ||
+        roomToken.includes(normalizedNodeId)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+};
+
+const getBestMatchingCheckpointNodeId = (
+  roomId: string,
+  candidateNodeIds: string[],
+  nodes: Record<string, GraphNode>,
+  roomCenter: { x: number; y: number },
+): string | null => {
+  const roomInfo = roomInfoBySvgId[roomId];
+  const roomTokens = [roomId, roomInfo?.name ?? ""]
+    .filter(Boolean)
+    .map(normalizeRouteToken)
+    .filter(Boolean);
+
+  const scoredCandidates = candidateNodeIds
+    .map((nodeId) => {
+      const node = nodes[nodeId];
+      if (!node) return null;
+
+      const normalizedNodeId = normalizeRouteToken(nodeId);
+      const exactScore = roomTokens.some((token) => normalizedNodeId === token)
+        ? 2
+        : roomTokens.some(
+              (token) =>
+                normalizedNodeId.includes(token) || token.includes(normalizedNodeId),
+            )
+          ? 1
+          : 0;
+
+      return {
+        nodeId,
+        exactScore,
+        distanceToRoom: distance(node, roomCenter),
+      };
+    })
+    .filter(
+      (
+        candidate,
+      ): candidate is {
+        nodeId: string;
+        exactScore: number;
+        distanceToRoom: number;
+      } => Boolean(candidate),
+    )
+    .sort((a, b) => {
+      if (b.exactScore !== a.exactScore) return b.exactScore - a.exactScore;
+      return a.distanceToRoom - b.distanceToRoom;
+    });
+
+  return scoredCandidates[0]?.nodeId || null;
+};
+
+const resolveRoomCheckpointNodeId = (
+  roomId: string,
+  nodes: Record<string, GraphNode>,
+  graph: Graph,
+  roomCenter: { x: number; y: number },
+): string | null => {
+  const specialNodeIds = ROOM_SPECIAL_ROUTE_NODE_IDS[roomId];
+  if (specialNodeIds?.length) {
+    return resolvePreferredNodeId(specialNodeIds, nodes, graph, roomCenter);
+  }
+
+  const checkpointCandidateIds = getRoomCheckpointCandidateIds(roomId, nodes);
+  if (!checkpointCandidateIds.length) return null;
+
+  const bestCheckpointNodeId = getBestMatchingCheckpointNodeId(
+    roomId,
+    checkpointCandidateIds,
+    nodes,
+    roomCenter,
+  );
+  if (!bestCheckpointNodeId) return null;
+  if ((graph[bestCheckpointNodeId]?.length || 0) <= 0) return null;
+
+  return bestCheckpointNodeId;
+};
+
 const resolvePreferredNodeId = (
   preferredNodeIds: readonly string[],
   nodes: Record<string, GraphNode>,
@@ -770,14 +1035,14 @@ const resolvePreferredStartNodeId = (
   graph: Graph,
   fallbackStartPoint: { x: number; y: number },
 ): string | null => {
-  const roomPreferredNodeIds = ROOM_PREFERRED_START_NODE_IDS[startRoomId];
-  if (roomPreferredNodeIds?.length) {
-    return resolvePreferredNodeId(
-      roomPreferredNodeIds,
-      nodes,
-      graph,
-      fallbackStartPoint,
-    );
+  const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
+    startRoomId,
+    nodes,
+    graph,
+    fallbackStartPoint,
+  );
+  if (roomCheckpointNodeId) {
+    return roomCheckpointNodeId;
   }
 
   if (isKamarMayatRoom(startRoomId)) {
@@ -806,14 +1071,14 @@ const resolvePreferredEndNodeId = (
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
 ): string | null => {
-  const roomPreferredNodeIds = ROOM_PREFERRED_END_NODE_IDS[endRoomId];
-  if (roomPreferredNodeIds?.length) {
-    return resolvePreferredNodeId(
-      roomPreferredNodeIds,
-      nodes,
-      graph,
-      fallbackEndPoint,
-    );
+  const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
+    endRoomId,
+    nodes,
+    graph,
+    fallbackEndPoint,
+  );
+  if (roomCheckpointNodeId) {
+    return roomCheckpointNodeId;
   }
 
   if (isKamarMayatRoom(endRoomId)) {
@@ -939,7 +1204,7 @@ export const buildRouteForRooms = (
     .filter(Boolean)
     .map((node) => ({ x: node.x, y: node.y }));
 
-  const points = roadPoints;
+  const points = smoothRoutePoints(roadPoints);
 
   if (points.length < 2) return null;
 
@@ -948,6 +1213,6 @@ export const buildRouteForRooms = (
     endRoomId,
     checkpointIds: shortest.path,
     points,
-    totalDistance: shortest.distance,
+    totalDistance: polylineDistance(points),
   };
 };
