@@ -11,6 +11,7 @@ type RoomHighlightCategory = "departments" | "facilities" | "emergency" | null;
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [language, setLanguage] = useState<"id" | "en">("id");
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
   const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
@@ -67,6 +68,8 @@ const Index = () => {
         onStartNavigation={handleStartNavigation}
         isSidebarOpen={isMobileSidebarOpen}
         onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+        language={language}
+        onToggleLanguage={() => setLanguage((prev) => (prev === "id" ? "en" : "id"))}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -76,12 +79,13 @@ const Index = () => {
           onStartNavigation={handleStartNavigation}
           mobileOpen={isMobileSidebarOpen}
           onMobileOpenChange={setIsMobileSidebarOpen}
+          language={language}
         />
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           {/* Search */}
           <div className="px-4 pt-4 pb-2 z-10">
-            <SearchBar onSelectLocation={setSelectedLocation} />
+            <SearchBar onSelectLocation={setSelectedLocation} language={language} />
           </div>
 
           {/* Map area */}
@@ -92,6 +96,7 @@ const Index = () => {
                 onClearSelection={handleClearSelection}
                 highlightCategory={highlightCategory}
                 onStartNavigation={handleStartNavigation}
+                language={language}
                 navigationStartRequest={navigationStartRequest}
                 onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
               />
@@ -104,6 +109,7 @@ const Index = () => {
         open={isNavDialogOpen} 
         onOpenChange={setIsNavDialogOpen} 
         defaultMode={navDialogMode}
+        language={language}
         onConfirmStart={handleConfirmNavigationStart}
       />
     </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -24,6 +24,7 @@ interface NavigationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultMode?: "manual" | "qr";
+  language: "id" | "en";
   onConfirmStart?: (payload: {
     roomId: string;
     source: "manual" | "qr";
@@ -35,8 +36,46 @@ const NavigationDialog = ({
   open,
   onOpenChange,
   defaultMode = "manual",
+  language,
   onConfirmStart,
 }: NavigationDialogProps) => {
+  const copy = useMemo(() => (
+    language === "id"
+      ? {
+          title: "Atur Titik Awal",
+          description: "Pindai QR code terdekat atau pilih lokasi Anda secara manual untuk memulai navigasi.",
+          initializingCamera: "Menyiapkan kamera...",
+          cameraInactive: "Kamera tidak aktif",
+          enableCamera: "Aktifkan Kamera",
+          switchManual: "Pilih Manual",
+          orSelect: "Atau pilih manual",
+          startingLocation: "Lokasi Awal",
+          whereNow: "Di mana posisi Anda?",
+          startNavigating: "Mulai Navigasi",
+          scanHint: "Arahkan kamera ke QR code...",
+          startingCamera: "Menyalakan kamera...",
+          qrUnknown: (payload: string) => `QR tidak dikenali: ${payload}`,
+          qrDetected: (payload: string, roomName: string) => `QR terdeteksi: ${payload} → ${roomName}`,
+          cameraError: "Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan di pengaturan browser.",
+        }
+      : {
+          title: "Set Your Starting Point",
+          description: "Scan a QR code nearby or select your current location manually to start navigation.",
+          initializingCamera: "Initializing camera...",
+          cameraInactive: "Camera is inactive",
+          enableCamera: "Enable Camera",
+          switchManual: "Switch to Manual",
+          orSelect: "Or select manually",
+          startingLocation: "Starting Location",
+          whereNow: "Where are you now?",
+          startNavigating: "Start Navigating",
+          scanHint: "Point the camera at a QR code...",
+          startingCamera: "Starting camera...",
+          qrUnknown: (payload: string) => `QR not recognized: ${payload}`,
+          qrDetected: (payload: string, roomName: string) => `QR detected: ${payload} → ${roomName}`,
+          cameraError: "Could not access camera. Please ensure you have given permission in your browser settings.",
+        }
+  ), [language]);
   const [startLocation, setStartLocation] = useState<string>("");
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,12 +125,12 @@ const NavigationDialog = ({
       streamRef.current = stream;
       setIsCameraActive(true);
       setIsLoading(false);
-      setQrScanStatus("Arahkan kamera ke QR code...");
+      setQrScanStatus(copy.scanHint);
     } catch (err) {
       console.error("Error accessing camera:", err);
       setIsLoading(false);
       setIsCameraActive(false);
-      alert("Could not access camera. Please ensure you have given permission in your browser settings.");
+      alert(copy.cameraError);
     }
   };
 
@@ -123,13 +162,16 @@ const NavigationDialog = ({
         null;
 
       if (!resolvedRoomId) {
-        setQrScanStatus(`QR tidak dikenali: ${normalizedPayload}`);
+        setQrScanStatus(copy.qrUnknown(normalizedPayload));
         return;
       }
 
       isHandlingDetectionRef.current = true;
       setStartLocation(resolvedRoomId);
-      setQrScanStatus(`QR terdeteksi: ${normalizedPayload} → ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+      setQrScanStatus(copy.qrDetected(
+        normalizedPayload,
+        roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId,
+      ));
 
       onConfirmStart?.({
         roomId: resolvedRoomId,
@@ -140,7 +182,7 @@ const NavigationDialog = ({
       onOpenChange(false);
       stopCamera();
     },
-    [onConfirmStart, onOpenChange, stopCamera],
+    [copy, onConfirmStart, onOpenChange, stopCamera],
   );
 
   useEffect(() => {
@@ -201,9 +243,9 @@ const NavigationDialog = ({
     if (!open) return;
     if (defaultMode !== "qr") return;
     if (isCameraActive || isLoading) return;
-    setQrScanStatus("Menyalakan kamera...");
+    setQrScanStatus(copy.startingCamera);
     void startCamera();
-  }, [open, defaultMode, isCameraActive, isLoading]);
+  }, [copy, open, defaultMode, isCameraActive, isLoading]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -211,10 +253,10 @@ const NavigationDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-primary" />
-            Set Your Starting Point
+            {copy.title}
           </DialogTitle>
           <DialogDescription>
-            Scan a QR code nearby or select your current location manually to start navigation.
+            {copy.description}
           </DialogDescription>
         </DialogHeader>
 
@@ -237,10 +279,10 @@ const NavigationDialog = ({
                   ) : (
                     <Camera className="h-10 w-10 opacity-20" />
                   )}
-                  <p className="text-sm">{isLoading ? "Initializing camera..." : "Camera is inactive"}</p>
+                  <p className="text-sm">{isLoading ? copy.initializingCamera : copy.cameraInactive}</p>
                   {!isLoading && (
                     <Button variant="outline" size="sm" onClick={startCamera}>
-                      Enable Camera
+                      {copy.enableCamera}
                     </Button>
                   )}
                 </div>
@@ -256,7 +298,7 @@ const NavigationDialog = ({
             {isCameraActive && (
               <Button variant="ghost" size="sm" onClick={stopCamera} className="gap-2">
                 <RefreshCcw className="h-3.5 w-3.5" />
-                Switch to Manual
+                {copy.switchManual}
               </Button>
             )}
 
@@ -274,18 +316,18 @@ const NavigationDialog = ({
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Or select manually</span>
+              <span className="bg-background px-2 text-muted-foreground">{copy.orSelect}</span>
             </div>
           </div>
 
           {/* Manual Dropdown Section */}
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none">
-              Starting Location
+              {copy.startingLocation}
             </label>
             <Select value={startLocation} onValueChange={setStartLocation}>
               <SelectTrigger>
-                <SelectValue placeholder="Where are you now?" />
+                <SelectValue placeholder={copy.whereNow} />
               </SelectTrigger>
               <SelectContent>
                 {roomOptions.map((loc) => (
@@ -311,7 +353,7 @@ const NavigationDialog = ({
             }}
             className="w-full"
           >
-            Start Navigating
+            {copy.startNavigating}
           </Button>
         </DialogFooter>
       </DialogContent>

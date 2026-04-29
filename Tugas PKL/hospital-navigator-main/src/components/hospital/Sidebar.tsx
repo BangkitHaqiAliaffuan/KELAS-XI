@@ -8,14 +8,8 @@ interface SidebarProps {
   onStartNavigation?: () => void;
   mobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
+  language: "id" | "en";
 }
-
-const navItems = [
-  { id: "map", label: "Map", icon: Map },
-  { id: "departments", label: "Departments", icon: Building2 },
-  { id: "facilities", label: "Facilities", icon: Wrench },
-  { id: "emergency", label: "Emergency", icon: AlertTriangle },
-];
 
 const Sidebar = ({
   activeTab,
@@ -23,7 +17,38 @@ const Sidebar = ({
   onStartNavigation,
   mobileOpen = false,
   onMobileOpenChange,
+  language,
 }: SidebarProps) => {
+  const copy = language === "id"
+    ? {
+        title: "Konsier Klinik",
+        subtitle: "Panduan Arah Rumah Sakit",
+        nav: {
+          map: "Peta",
+          departments: "Departemen",
+          facilities: "Fasilitas",
+          emergency: "Darurat",
+        },
+        startNavigation: "Mulai Navigasi",
+      }
+    : {
+        title: "Clinical Concierge",
+        subtitle: "Hospital Wayfinding",
+        nav: {
+          map: "Map",
+          departments: "Departments",
+          facilities: "Facilities",
+          emergency: "Emergency",
+        },
+        startNavigation: "Start Navigation",
+      };
+
+  const navItems = [
+    { id: "map", label: copy.nav.map, icon: Map },
+    { id: "departments", label: copy.nav.departments, icon: Building2 },
+    { id: "facilities", label: copy.nav.facilities, icon: Wrench },
+    { id: "emergency", label: copy.nav.emergency, icon: AlertTriangle },
+  ];
   const handleTabClick = (tab: string) => {
     onTabChange(tab);
     onMobileOpenChange?.(false);
@@ -38,8 +63,8 @@ const Sidebar = ({
     <>
       <aside className="hidden lg:flex flex-col w-[240px] bg-card border-r border-border h-full">
         <div className="p-5 border-b border-border">
-          <h2 className="text-lg font-bold text-primary">Clinical Concierge</h2>
-          <p className="text-sm text-muted-foreground">Hospital Wayfinding</p>
+          <h2 className="text-lg font-bold text-primary">{copy.title}</h2>
+          <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
         </div>
 
         <nav className="flex-1 py-4">
@@ -72,7 +97,7 @@ const Sidebar = ({
             className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
           >
             <Navigation className="h-4 w-4" />
-            Start Navigation
+            {copy.startNavigation}
           </Button>
         </div>
       </aside>
@@ -81,8 +106,8 @@ const Sidebar = ({
         <SheetContent side="left" className="w-[280px] p-0 lg:hidden">
           <div className="flex h-full flex-col bg-card">
             <div className="p-5 border-b border-border">
-              <h2 className="text-lg font-bold text-primary">Clinical Concierge</h2>
-              <p className="text-sm text-muted-foreground">Hospital Wayfinding</p>
+              <h2 className="text-lg font-bold text-primary">{copy.title}</h2>
+              <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
             </div>
 
             <nav className="flex-1 py-4">
@@ -115,7 +140,7 @@ const Sidebar = ({
                 className="w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md"
               >
                 <Navigation className="h-4 w-4" />
-                Start Navigation
+                {copy.startNavigation}
               </Button>
             </div>
           </div>

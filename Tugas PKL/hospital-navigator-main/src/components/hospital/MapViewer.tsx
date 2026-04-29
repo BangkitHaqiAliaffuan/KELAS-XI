@@ -14,6 +14,8 @@ import {
 } from "@/data/hospitalRoomInfo";
 import {
   buildRouteForRooms,
+  buildRouteFromPoint,
+  injectVirtualAnchorNode,
   QR_ANCHOR_REGISTRY,
   getRoutingRoomIds,
   resolveQrAnchor,
@@ -33,6 +35,7 @@ interface MapViewerProps {
   onClearSelection?: () => void;
   highlightCategory?: "departments" | "facilities" | "emergency" | null;
   onStartNavigation?: (options?: { mode?: "manual" | "qr" }) => void;
+  language?: "id" | "en";
   navigationStartRequest?: {
     requestId: number;
     roomId: string;
@@ -47,9 +50,27 @@ const MapViewer = ({
   onClearSelection,
   highlightCategory,
   onStartNavigation,
+  language = "id",
   navigationStartRequest,
   onNavigationStartRequestHandled,
 }: MapViewerProps) => {
+  const floorCopy = language === "id"
+    ? {
+        floor1: "Lantai 1",
+        floor2: "Lantai 2",
+        parking1: "Parkir L1",
+        parking2: "Parkir L2",
+        parking1Title: "Tampilkan peta lahan parkir lantai 1",
+        parking2Title: "Tampilkan peta lahan parkir lantai 2",
+      }
+    : {
+        floor1: "Floor 1",
+        floor2: "Floor 2",
+        parking1: "Parking L1",
+        parking2: "Parking L2",
+        parking1Title: "Show parking map level 1",
+        parking2Title: "Show parking map level 2",
+      };
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
@@ -103,6 +124,8 @@ const MapViewer = ({
   const [liveSvgPoint, setLiveSvgPoint] = useState<{ x: number; y: number } | null>(null);
   const [showQrAnchorHints, setShowQrAnchorHints] = useState(true);
   const [lastQrAnchor, setLastQrAnchor] = useState<QrAnchor | null>(null);
+  const [showParkingMap, setShowParkingMap] = useState(false);
+  const [parkingFloor, setParkingFloor] = useState<1 | 2>(1); // Track which parking floor to show
   const [qrCalibrationHistory, setQrCalibrationHistory] = useState<QrAnchor[]>([]);
   const [navSteps, setNavSteps] = useState<NavigationStep[]>([]);
   const [activeStepIndex, setActiveStepIndex] = useState(0);
@@ -132,8 +155,12 @@ const MapViewer = ({
     "tangga",
   ];
   const allRegisteredQrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
-  const activeQrAnchors = allRegisteredQrAnchors.filter((anchor) => anchor.floor === activeFloor);
-  const activeMapSvgPath = activeFloor === 1
+  const activeQrAnchors = showParkingMap
+    ? allRegisteredQrAnchors.filter((anchor) => anchor.floor === (parkingFloor === 1 ? 0 : -1))
+    : allRegisteredQrAnchors.filter((anchor) => anchor.floor === activeFloor);
+  const activeMapSvgPath = showParkingMap
+    ? (parkingFloor === 1 ? "/images/Lahan%20Parkir%20Lantai%201.svg" : "/images/Lahan%20Parkir%20Lantai%202.svg")
+    : activeFloor === 1
     ? "/images/hospital-map.svg"
     : "/images/hospital-map-lantai-2.svg";
   const roomFloorById = allRegisteredQrAnchors.reduce<Record<string, 1 | 2>>((acc, anchor) => {
@@ -143,13 +170,15 @@ const MapViewer = ({
     return acc;
   }, {});
   const [multiFloorSvgDocs, setMultiFloorSvgDocs] = useState<Partial<Record<1 | 2, Document>>>({});
+  const [parkingSvgDoc, setParkingSvgDoc] = useState<Document | null>(null);
+  const [parking2SvgDoc, setParking2SvgDoc] = useState<Document | null>(null);
   const multiFloorConnectors = [
     {
       id: "lift",
       label: "Lift",
       rooms: {
         1: "Lift_Lantai_1",
-        2: "Lift_Lantai_1-2",
+        2: "Lift_Lantai_2",
       } as const,
     },
     {
@@ -157,7 +186,7 @@ const MapViewer = ({
       label: "Tangga utama",
       rooms: {
         1: "Tangga_Lantai_1",
-        2: "Tangga_Lantai_1-7",
+        2: "Tangga_Lantai_2",
       } as const,
     },
     {
@@ -187,7 +216,7 @@ const MapViewer = ({
       const nextDocs: Partial<Record<1 | 2, Document>> = {};
 
       for (const floor of [1, 2] as const) {
-        const liveDoc = floor === activeFloor ? objectRef.current?.contentDocument ?? null : null;
+        const liveDoc = floor === activeFloor && !showParkingMap ? objectRef.current?.contentDocument ?? null : null;
         if (liveDoc) {
           nextDocs[floor] = liveDoc;
           continue;
@@ -211,6 +240,42 @@ const MapViewer = ({
           ...nextDocs,
         }));
       }
+
+      // Load parking SVG for pathfinding
+      try {
+        const parkingDoc = showParkingMap && parkingFloor === 1
+          ? objectRef.current?.contentDocument ?? null
+          : null;
+        if (parkingDoc) {
+          if (!isCancelled) setParkingSvgDoc(parkingDoc);
+        } else {
+          const res = await fetch("/images/Lahan%20Parkir%20Lantai%201.svg");
+          if (res.ok) {
+            const text = await res.text();
+            if (!isCancelled) setParkingSvgDoc(parser.parseFromString(text, "image/svg+xml"));
+          }
+        }
+      } catch {
+        // parking SVG optional
+      }
+
+      // Load parking floor 2 SVG for pathfinding
+      try {
+        const parking2Doc = showParkingMap && parkingFloor === 2
+          ? objectRef.current?.contentDocument ?? null
+          : null;
+        if (parking2Doc) {
+          if (!isCancelled) setParking2SvgDoc(parking2Doc);
+        } else {
+          const res = await fetch("/images/Lahan%20Parkir%20Lantai%202.svg");
+          if (res.ok) {
+            const text = await res.text();
+            if (!isCancelled) setParking2SvgDoc(parser.parseFromString(text, "image/svg+xml"));
+          }
+        }
+      } catch {
+        // parking floor 2 SVG optional
+      }
     };
 
     void loadMultiFloorSvgDocs();
@@ -218,7 +283,7 @@ const MapViewer = ({
     return () => {
       isCancelled = true;
     };
-  }, [activeFloor, svgReadyVersion]);
+  }, [activeFloor, showParkingMap, parkingFloor, svgReadyVersion]);
 
   useEffect(() => {
     if (!routingRoomOptions.length) return;
@@ -346,15 +411,71 @@ const MapViewer = ({
 
   const getRouteSegmentForFloor = useCallback((route: RoomRouteResult | null, floor: 1 | 2) => {
     if (!route) return null;
+    if (showParkingMap && parkingFloor === 2) {
+      const startFloor = Object.values(QR_ANCHOR_REGISTRY).find((anchor) => anchor.roomId === route.startRoomId)?.floor;
+      const endFloor = Object.values(QR_ANCHOR_REGISTRY).find((anchor) => anchor.roomId === route.endRoomId)?.floor;
+      const involvesParkingFloor2 = startFloor === -1 || endFloor === -1;
+      if (involvesParkingFloor2) {
+        return {
+          floor,
+          checkpointIds: route.checkpointIds,
+          points: route.points,
+          totalDistance: route.totalDistance,
+        };
+      }
+    }
+
     const segment = route.floorSegments?.find((item) => item.floor === floor);
     if (segment) return segment;
-    return {
-      floor,
-      checkpointIds: route.checkpointIds,
-      points: route.points,
-      totalDistance: route.totalDistance,
-    };
-  }, []);
+    
+    // If no specific segment for this floor, check if route is single-floor
+    // Only show route if it doesn't have floorSegments (meaning it's a single-floor route)
+    if (!route.floorSegments || route.floorSegments.length === 0) {
+      return {
+        floor,
+        checkpointIds: route.checkpointIds,
+        points: route.points,
+        totalDistance: route.totalDistance,
+      };
+    }
+    
+    // Route exists but not on this floor - don't show anything
+    return null;
+  }, [parkingFloor, showParkingMap]);
+
+  // Resolve floor including parking (floor 0 for parking L1, floor -1 for parking L2)
+  const resolveFloorForRoomExtended = useCallback((roomId: string): -1 | 0 | 1 | 2 => {
+    const anchor = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === roomId);
+    if (anchor?.floor === 0) return 0;   // Parking L1
+    if (anchor?.floor === -1) return -1; // Parking L2
+    const room = roomInfoBySvgId[roomId];
+    if (!room) return 1;
+    return resolveFloorForRoom(room);
+  }, [resolveFloorForRoom]);
+
+  // Physical connection points between the parking SVG and hospital floor-1 SVG.
+  // Hospital SVG: Check_Point_Lahan_Parkir  cx=463.429  cy=133.196
+  // Parking SVG:  Check_Point_Keluar_dari_Lahan_Parkir  cx=1181.4375  cy=751.0
+  const PARKING_CONN = useMemo(() => ({
+    hospitalNodeId: "Check_Point_Lahan_Parkir",
+    hospitalX: 463.429,
+    hospitalY: 133.196,
+    parkingNodeId: "Check_Point_Keluar_dari_Lahan_Parkir",
+    parkingX: 1181.4375,
+    parkingY: 751.0,
+  }), []);
+
+  // Physical connection points between parking floor 2 SVG and hospital floor-2 SVG.
+  // Hospital Floor 2: Jalan_menuju_ke_Lahan_Parkir__Pengunjung_ path starts at (463.4375, 105.25)
+  // Parking Floor 2: Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2 path ends at (471.46345, 766.68053)
+  const PARKING2_CONN = useMemo(() => ({
+    hospitalNodeId: "Check_Point_Jembatan_Parkir_L2",
+    hospitalX: 463.4375,
+    hospitalY: 105.25,
+    parkingNodeId: "Check_Point_Jembatan_Parkir_L2_Parking",
+    parkingX: 471.46345,
+    parkingY: 766.68053,
+  }), []);
 
   const buildDebugRouteForRooms = useCallback((
     startRoomIdParam: string,
@@ -362,51 +483,523 @@ const MapViewer = ({
     options?: {
       startPoint?: { x: number; y: number };
       endPoint?: { x: number; y: number };
+      useExactStartPoint?: boolean;
+      startNodeId?: string;
     },
   ): RoomRouteResult | null => {
-    const startRoom = roomInfoBySvgId[startRoomIdParam];
-    const endRoom = roomInfoBySvgId[endRoomIdParam];
-    const startFloor = startRoom ? resolveFloorForRoom(startRoom) : 1;
-    const endFloor = endRoom ? resolveFloorForRoom(endRoom) : 1;
+    const startFloor = resolveFloorForRoomExtended(startRoomIdParam);
+    const endFloor   = resolveFloorForRoomExtended(endRoomIdParam);
 
+    const getDoc = (floor: -1 | 0 | 1 | 2): Document | null => {
+      if (floor === 0) return parkingSvgDoc;
+      if (floor === -1) return parking2SvgDoc;
+      return getFloorSvgDoc(floor);
+    };
+
+    // ── Same floor ────────────────────────────────────────────────────────────
     if (startFloor === endFloor) {
-      const svgDoc = getFloorSvgDoc(startFloor);
+      const svgDoc = getDoc(startFloor);
       if (!svgDoc) return null;
 
-      const singleFloorRoute = buildRouteForRooms(startRoomIdParam, endRoomIdParam, svgDoc, options);
-      if (!singleFloorRoute) return null;
+      // Inject QR anchor coords as virtual nodes for parking-only routes
+      if (startFloor === 0 || startFloor === -1) {
+        const sa = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === startRoomIdParam && a.floor === startFloor);
+        const ea = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === endRoomIdParam   && a.floor === startFloor);
+        if (sa) injectVirtualAnchorNode(svgDoc, startRoomIdParam, sa.svgX, sa.svgY);
+        if (ea) injectVirtualAnchorNode(svgDoc, endRoomIdParam,   ea.svgX, ea.svgY);
+      }
 
+      // If using exact start point (QR scan), inject virtual node at QR coordinates
+      if (options?.useExactStartPoint && options?.startPoint) {
+        const route = buildRouteForRooms(startRoomIdParam, endRoomIdParam, svgDoc, options);
+        if (!route) return null;
+        return {
+          ...route,
+          startRoomId: startRoomIdParam,
+          endRoomId: endRoomIdParam,
+          floorSegments: (startFloor !== 0 && startFloor !== -1) ? [{ floor: startFloor as 1 | 2, checkpointIds: route.checkpointIds, points: route.points, totalDistance: route.totalDistance }] : undefined,
+          floorsInvolved: (startFloor !== 0 && startFloor !== -1) ? [startFloor as 1 | 2] : undefined,
+        };
+      }
+
+      const route = buildRouteForRooms(startRoomIdParam, endRoomIdParam, svgDoc, {
+        ...options,
+        useExactStartPoint: !preferRoomCenterStartRef.current && Boolean(options?.startPoint),
+      });
+      if (!route) return null;
       return {
-        ...singleFloorRoute,
-        floorSegments: [
-          {
-            floor: startFloor,
-            checkpointIds: singleFloorRoute.checkpointIds,
-            points: singleFloorRoute.points,
-            totalDistance: singleFloorRoute.totalDistance,
-          },
-        ],
-        floorsInvolved: [startFloor],
+        ...route,
+        floorSegments: (startFloor !== 0 && startFloor !== -1) ? [{ floor: startFloor as 1 | 2, checkpointIds: route.checkpointIds, points: route.points, totalDistance: route.totalDistance }] : undefined,
+        floorsInvolved: (startFloor !== 0 && startFloor !== -1) ? [startFloor as 1 | 2] : undefined,
       };
     }
 
-    const startDoc = getFloorSvgDoc(startFloor);
-    const endDoc = getFloorSvgDoc(endFloor);
+    // ── Cross: parking L1 (0) ↔ hospital L1 ──────────────────────────────────
+    if (startFloor === 0 || endFloor === 0) {
+      const hospitalFloor: 1 | 2 = startFloor === 0 ? (endFloor as 1 | 2) : (startFloor as 1 | 2);
+      const hospitalRoomId = startFloor === 0 ? endRoomIdParam   : startRoomIdParam;
+      const parkingRoomId  = startFloor === 0 ? startRoomIdParam : endRoomIdParam;
+      const isParkingStart = startFloor === 0;
+
+      const hospitalDoc = getDoc(hospitalFloor);
+      const parkDoc     = getDoc(0);
+      if (!hospitalDoc || !parkDoc) return null;
+
+      const conn = PARKING_CONN;
+
+      // Inject the parking QR anchor as a virtual node so the graph can find it
+      const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+        (a) => a.roomId === parkingRoomId && a.floor === 0
+      );
+      if (parkAnchor) injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
+
+      // Inject connector nodes into both SVGs
+      injectVirtualAnchorNode(parkDoc,     conn.parkingNodeId,  conn.parkingX,  conn.parkingY);
+      injectVirtualAnchorNode(hospitalDoc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
+
+      let parkingSegment, hospitalSegment;
+
+      if (isParkingStart) {
+        // Parking → Hospital: QR anchor → connector, connector → hospitalRoom
+        // Find QR anchor for parking
+        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+          (a) => a.roomId === parkingRoomId && a.floor === 0
+        );
+        
+        if (parkAnchor && parkAnchor.svgX && parkAnchor.svgY) {
+          // Create a unique virtual node ID for the QR anchor start point
+          const virtualQrNodeId = `virtual_qr_start_${parkingRoomId}`;
+          
+          // Inject virtual node at QR anchor coordinates
+          injectVirtualAnchorNode(parkDoc, virtualQrNodeId, parkAnchor.svgX, parkAnchor.svgY);
+          
+          console.log(`[Parking L1] Routing from QR anchor (${parkAnchor.svgX}, ${parkAnchor.svgY}) to connector (${conn.parkingX}, ${conn.parkingY})`);
+          
+          // Route from QR anchor to connector using point_to_room
+          // The connector will be treated as the "room" destination
+          parkingSegment = buildRouteFromPoint(
+            virtualQrNodeId, parkAnchor.svgX, parkAnchor.svgY,
+            conn.parkingNodeId, parkDoc,
+            "point_to_room",
+          );
+          
+          if (!parkingSegment) {
+            console.warn(`[Parking L1] Failed to route from virtual QR node, trying room_to_point`);
+            // Fallback: use room_to_point
+            parkingSegment = buildRouteFromPoint(
+              conn.parkingNodeId, conn.parkingX, conn.parkingY,
+              parkingRoomId, parkDoc,
+              "room_to_point",
+            );
+          }
+        } else {
+          console.warn(`[Parking L1] No QR anchor found for ${parkingRoomId}, using fallback routing`);
+          // Fallback: route from room to connector
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            parkingRoomId, parkDoc,
+            "room_to_point",
+          );
+        }
+        
+        hospitalSegment = buildRouteFromPoint(
+          conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+          hospitalRoomId, hospitalDoc,
+          "point_to_room",
+        );
+      } else {
+        // Hospital → Parking: hospitalRoom → connector, connector → parkingRoom
+        if (options?.useExactStartPoint && options?.startPoint) {
+          hospitalSegment = buildRouteForRooms(
+            hospitalRoomId,
+            conn.hospitalNodeId,
+            hospitalDoc,
+            options,
+          );
+          if (!hospitalSegment) {
+            const virtualStartNodeId = `virtual_qr_start_${hospitalRoomId}`;
+            injectVirtualAnchorNode(
+              hospitalDoc,
+              virtualStartNodeId,
+              options.startPoint.x,
+              options.startPoint.y,
+            );
+
+            hospitalSegment = buildRouteFromPoint(
+              virtualStartNodeId,
+              options.startPoint.x,
+              options.startPoint.y,
+              conn.hospitalNodeId,
+              hospitalDoc,
+              "point_to_point",
+            );
+          }
+          if (!hospitalSegment) {
+            hospitalSegment = buildRouteFromPoint(
+              conn.hospitalNodeId,
+              conn.hospitalX,
+              conn.hospitalY,
+              hospitalRoomId,
+              hospitalDoc,
+              "room_to_point",
+            );
+          }
+        } else {
+          hospitalSegment = buildRouteFromPoint(
+            conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+            hospitalRoomId, hospitalDoc,
+            "room_to_point",
+          );
+        }
+        
+        // For Hospital → Parking L1, route to the QR anchor coordinates (QR-PK-N01)
+        // This ensures clear pathfinding in the parking lot
+        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+          (a) => a.roomId === parkingRoomId && a.floor === 0
+        );
+        
+        if (parkAnchor && parkAnchor.svgX && parkAnchor.svgY) {
+          // Create a unique virtual node ID for the QR anchor destination
+          const virtualQrNodeId = `virtual_qr_destination_${parkingRoomId}`;
+          
+          // Inject virtual node at QR anchor coordinates
+          injectVirtualAnchorNode(parkDoc, virtualQrNodeId, parkAnchor.svgX, parkAnchor.svgY);
+          
+          console.log(`[Parking L1] Routing from connector (${conn.parkingX}, ${conn.parkingY}) to QR anchor (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
+          
+          // Route from connector to QR anchor using point_to_room
+          // The virtual node will be treated as the "room" destination
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            virtualQrNodeId, parkDoc,
+            "point_to_room",
+          );
+          
+          if (!parkingSegment) {
+            console.warn(`[Parking L1] Failed to route to virtual QR node, trying direct room routing`);
+            // Fallback: inject parkingRoomId at QR coordinates and route to it
+            injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
+            parkingSegment = buildRouteFromPoint(
+              conn.parkingNodeId, conn.parkingX, conn.parkingY,
+              parkingRoomId, parkDoc,
+              "point_to_room",
+            );
+          }
+        } else {
+          console.warn(`[Parking L1] No QR anchor found for ${parkingRoomId}, using fallback routing`);
+          // Fallback: route to room center
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            parkingRoomId, parkDoc,
+            "point_to_room",
+          );
+        }
+      }
+
+      // Show whichever segment matches the currently visible map
+      const activeSegment = (showParkingMap && parkingFloor === 1) ? parkingSegment : hospitalSegment;
+      if (!activeSegment) return null;
+
+      return {
+        startRoomId: startRoomIdParam,
+        endRoomId: endRoomIdParam,
+        checkpointIds: [
+          ...(isParkingStart ? parkingSegment?.checkpointIds ?? [] : hospitalSegment?.checkpointIds ?? []),
+          "transition_parking",
+          ...(isParkingStart ? hospitalSegment?.checkpointIds ?? [] : parkingSegment?.checkpointIds ?? []),
+        ],
+        points: activeSegment.points,
+        totalDistance: (parkingSegment?.totalDistance ?? 0) + (hospitalSegment?.totalDistance ?? 0),
+        floorSegments: hospitalSegment ? [{
+          floor: hospitalFloor,
+          checkpointIds: hospitalSegment.checkpointIds,
+          points: hospitalSegment.points,
+          totalDistance: hospitalSegment.totalDistance,
+        }] : undefined,
+        floorsInvolved: [hospitalFloor],
+        transitionLabel: "Tangga Pengunjung Parkir",
+      };
+    }
+
+    // ── Cross: parking L2 (-1) ↔ hospital L2 ─────────────────────────────────
+    if (startFloor === -1 || endFloor === -1) {
+      // Special case: Parking L2 ↔ Hospital L1 (must go through Hospital L2)
+      if ((startFloor === -1 && endFloor === 1) || (startFloor === 1 && endFloor === -1)) {
+        const isParkingStart = startFloor === -1;
+        const parkingRoomId = isParkingStart ? startRoomIdParam : endRoomIdParam;
+        const hospitalL1RoomId = isParkingStart ? endRoomIdParam : startRoomIdParam;
+
+        const parkDoc = getDoc(-1);
+        const hospitalL2Doc = getDoc(2);
+        const hospitalL1Doc = getDoc(1);
+        if (!parkDoc || !hospitalL2Doc || !hospitalL1Doc) return null;
+
+        const conn = PARKING2_CONN;
+
+        // Inject the parking L2 QR anchor as a virtual node
+        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+          (a) => a.roomId === parkingRoomId && a.floor === -1
+        );
+        if (parkAnchor) injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
+
+        // Inject connector nodes
+        injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
+        injectVirtualAnchorNode(hospitalL2Doc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
+
+        // Find best connector between L2 and L1
+        let bestL2L1Route: RoomRouteResult | null = null;
+        let bestConnectorLabel: string | null = null;
+
+        multiFloorConnectors.forEach((connector) => {
+          const l2ConnectorRoomId = connector.rooms[2];
+          const l1ConnectorRoomId = connector.rooms[1];
+
+          const l2Segment = buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc);
+          const l1Segment = buildRouteForRooms(l1ConnectorRoomId, hospitalL1RoomId, hospitalL1Doc, { endPoint: options?.endPoint });
+          if (!l2Segment || !l1Segment) return;
+
+          const candidateDistance = l2Segment.totalDistance + l1Segment.totalDistance;
+          if (bestL2L1Route && bestL2L1Route.totalDistance <= candidateDistance) return;
+
+          bestL2L1Route = {
+            startRoomId: conn.hospitalNodeId,
+            endRoomId: hospitalL1RoomId,
+            checkpointIds: [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds],
+            points: l1Segment.points,
+            totalDistance: candidateDistance,
+            floorSegments: [
+              { floor: 2, checkpointIds: l2Segment.checkpointIds, points: l2Segment.points, totalDistance: l2Segment.totalDistance },
+              { floor: 1, checkpointIds: l1Segment.checkpointIds, points: l1Segment.points, totalDistance: l1Segment.totalDistance },
+            ],
+            floorsInvolved: [2, 1],
+            transitionLabel: connector.label,
+          };
+          bestConnectorLabel = connector.label;
+        });
+
+        if (!bestL2L1Route || !bestConnectorLabel) return null;
+
+        // Build parking L2 segment
+        let parkingSegment: RoomRouteResult | null = null;
+        if (isParkingStart) {
+          if (parkAnchor) {
+            parkingSegment = buildRouteForRooms(
+              parkingRoomId,
+              conn.parkingNodeId,
+              parkDoc,
+              {
+                startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
+                useExactStartPoint: true,
+                startNodeId: parkAnchor.routeNodeId,
+              },
+            );
+          }
+          if (!parkingSegment) {
+            parkingSegment = buildRouteFromPoint(
+              conn.parkingNodeId, conn.parkingX, conn.parkingY,
+              parkingRoomId, parkDoc,
+              "room_to_point",
+            );
+          }
+        } else {
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            parkingRoomId, parkDoc,
+            "point_to_room",
+          );
+        }
+
+        if (!parkingSegment) return null;
+
+        // Determine which segment to show based on current map view
+        let activeSegment: RoomRouteResult | null = null;
+        if (showParkingMap && parkingFloor === 2) {
+          activeSegment = parkingSegment;
+        } else if (activeFloor === 2) {
+          activeSegment = bestL2L1Route.floorSegments?.[0] ? {
+            ...bestL2L1Route,
+            points: bestL2L1Route.floorSegments[0].points,
+            checkpointIds: bestL2L1Route.floorSegments[0].checkpointIds,
+            totalDistance: bestL2L1Route.floorSegments[0].totalDistance,
+          } : null;
+        } else if (activeFloor === 1) {
+          activeSegment = bestL2L1Route.floorSegments?.[1] ? {
+            ...bestL2L1Route,
+            points: bestL2L1Route.floorSegments[1].points,
+            checkpointIds: bestL2L1Route.floorSegments[1].checkpointIds,
+            totalDistance: bestL2L1Route.floorSegments[1].totalDistance,
+          } : null;
+        }
+
+        if (!activeSegment) return null;
+
+        return {
+          startRoomId: startRoomIdParam,
+          endRoomId: endRoomIdParam,
+          checkpointIds: [
+            ...(parkingSegment.checkpointIds ?? []),
+            "transition_parking_l2",
+            ...(bestL2L1Route.checkpointIds ?? []),
+          ],
+          points: activeSegment.points,
+          totalDistance: parkingSegment.totalDistance + bestL2L1Route.totalDistance,
+          floorSegments: [
+            ...(bestL2L1Route.floorSegments ?? []),
+          ],
+          floorsInvolved: [2, 1],
+          transitionLabel: `Jembatan Parkir L2 → ${bestConnectorLabel}`,
+        };
+      }
+
+      // Normal case: Parking L2 ↔ Hospital L2 (same floor routing)
+      const hospitalFloor = 2;
+      const hospitalRoomId = startFloor === -1 ? endRoomIdParam   : startRoomIdParam;
+      const parkingRoomId  = startFloor === -1 ? startRoomIdParam : endRoomIdParam;
+      const isParkingStart = startFloor === -1;
+
+      const hospitalDoc = getDoc(2);
+      const parkDoc     = getDoc(-1);
+      if (!hospitalDoc || !parkDoc) return null;
+
+      const conn = PARKING2_CONN;
+
+      // Inject the parking L2 QR anchor as a virtual node
+      const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+        (a) => a.roomId === parkingRoomId && a.floor === -1
+      );
+      if (parkAnchor) injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
+
+      // Inject connector nodes into both SVGs
+      injectVirtualAnchorNode(parkDoc,     conn.parkingNodeId,  conn.parkingX,  conn.parkingY);
+      injectVirtualAnchorNode(hospitalDoc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
+
+      let parkingSegment, hospitalSegment;
+
+      if (isParkingStart) {
+        // Parking L2 → Hospital L2: parkingRoom → connector, connector → hospitalRoom
+        if (parkAnchor) {
+          parkingSegment = buildRouteForRooms(
+            parkingRoomId,
+            conn.parkingNodeId,
+            parkDoc,
+            {
+              startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
+              useExactStartPoint: true,
+              startNodeId: parkAnchor.routeNodeId,
+            },
+          );
+        }
+        if (!parkingSegment) {
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            parkingRoomId, parkDoc,
+            "room_to_point",
+          );
+        }
+
+        hospitalSegment = buildRouteFromPoint(
+          conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+          hospitalRoomId, hospitalDoc,
+          "point_to_room",
+        );
+      } else {
+        // Hospital L2 → Parking L2: hospitalRoom → connector, connector → parkingRoom
+        
+        // If using exact start point (QR scan at hospital), route from QR to connector
+        if (options?.useExactStartPoint && options?.startPoint) {
+          hospitalSegment = buildRouteForRooms(
+            hospitalRoomId,
+            conn.hospitalNodeId,
+            hospitalDoc,
+            options,
+          );
+          if (!hospitalSegment) {
+          const virtualStartNodeId = `virtual_qr_start_${hospitalRoomId}`;
+          injectVirtualAnchorNode(hospitalDoc, virtualStartNodeId, options.startPoint.x, options.startPoint.y);
+          console.log(`[Parking L2] Hospital→Parking: Injected virtual start node at QR coordinates:`, options.startPoint);
+          
+          // Route from virtual QR node (exact coordinates) to connector node (exact coordinates)
+          hospitalSegment = buildRouteFromPoint(
+            virtualStartNodeId,
+            options.startPoint.x,
+            options.startPoint.y,
+            conn.hospitalNodeId,
+            hospitalDoc,
+            "point_to_point"
+          );
+          }
+          if (!hospitalSegment) {
+            // Fallback to normal routing
+            hospitalSegment = buildRouteFromPoint(
+              conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+              hospitalRoomId, hospitalDoc,
+              "room_to_point",
+            );
+          }
+        } else {
+          hospitalSegment = buildRouteFromPoint(
+            conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+            hospitalRoomId, hospitalDoc,
+            "room_to_point",
+          );
+        }
+        
+        parkingSegment = buildRouteFromPoint(
+          conn.parkingNodeId, conn.parkingX, conn.parkingY,
+          parkingRoomId, parkDoc,
+          "point_to_room",
+        );
+      }
+
+      // Determine which segment to show based on current map view
+      const activeSegment = (showParkingMap && parkingFloor === 2) ? parkingSegment : hospitalSegment;
+      if (!activeSegment) return null;
+
+      return {
+        startRoomId: startRoomIdParam,
+        endRoomId: endRoomIdParam,
+        checkpointIds: [
+          ...(isParkingStart ? parkingSegment?.checkpointIds ?? [] : hospitalSegment?.checkpointIds ?? []),
+          "transition_parking_l2",
+          ...(isParkingStart ? hospitalSegment?.checkpointIds ?? [] : parkingSegment?.checkpointIds ?? []),
+        ],
+        points: activeSegment.points,
+        totalDistance: (parkingSegment?.totalDistance ?? 0) + (hospitalSegment?.totalDistance ?? 0),
+        floorSegments: hospitalSegment ? [{
+          floor: 2,
+          checkpointIds: hospitalSegment.checkpointIds,
+          points: hospitalSegment.points,
+          totalDistance: hospitalSegment.totalDistance,
+        }] : undefined,
+        floorsInvolved: [2],
+        transitionLabel: "Jembatan Parkir Lantai 2",
+      };
+    }
+
+    // ── Both hospital floors (1 ↔ 2) ─────────────────────────────────────────
+    const startDoc = getDoc(startFloor as 1 | 2);
+    const endDoc   = getDoc(endFloor   as 1 | 2);
     if (!startDoc || !endDoc) return null;
 
     let bestRoute: RoomRouteResult | null = null;
 
     multiFloorConnectors.forEach((connector) => {
-      const startConnectorRoomId = connector.rooms[startFloor];
-      const endConnectorRoomId = connector.rooms[endFloor];
+      const startConnectorRoomId = connector.rooms[startFloor as 1 | 2];
+      const endConnectorRoomId   = connector.rooms[endFloor   as 1 | 2];
 
-      const startSegment = buildRouteForRooms(startRoomIdParam, startConnectorRoomId, startDoc, {
-        startPoint: options?.startPoint,
-      });
-      const endSegment = buildRouteForRooms(endConnectorRoomId, endRoomIdParam, endDoc, {
-        endPoint: options?.endPoint,
-      });
+      let startSegment: RoomRouteResult | null = null;
 
+      // If using exact start point (QR scan), route from QR coordinates to connector
+      if (options?.useExactStartPoint && options?.startPoint) {
+        startSegment = buildRouteForRooms(startRoomIdParam, startConnectorRoomId, startDoc, options);
+      } else {
+        startSegment = buildRouteForRooms(startRoomIdParam, startConnectorRoomId, startDoc, { 
+          startPoint: options?.startPoint,
+          useExactStartPoint: options?.useExactStartPoint,
+        });
+      }
+
+      const endSegment   = buildRouteForRooms(endConnectorRoomId, endRoomIdParam,     endDoc,   { endPoint:   options?.endPoint   });
       if (!startSegment || !endSegment) return;
 
       const candidateDistance = startSegment.totalDistance + endSegment.totalDistance;
@@ -415,34 +1008,20 @@ const MapViewer = ({
       bestRoute = {
         startRoomId: startRoomIdParam,
         endRoomId: endRoomIdParam,
-        checkpointIds: [
-          ...startSegment.checkpointIds,
-          `transition_${connector.id}`,
-          ...endSegment.checkpointIds,
-        ],
+        checkpointIds: [...startSegment.checkpointIds, `transition_${connector.id}`, ...endSegment.checkpointIds],
         points: activeFloor === startFloor ? startSegment.points : endSegment.points,
         totalDistance: candidateDistance,
         floorSegments: [
-          {
-            floor: startFloor,
-            checkpointIds: startSegment.checkpointIds,
-            points: startSegment.points,
-            totalDistance: startSegment.totalDistance,
-          },
-          {
-            floor: endFloor,
-            checkpointIds: endSegment.checkpointIds,
-            points: endSegment.points,
-            totalDistance: endSegment.totalDistance,
-          },
+          { floor: startFloor as 1 | 2, checkpointIds: startSegment.checkpointIds, points: startSegment.points, totalDistance: startSegment.totalDistance },
+          { floor: endFloor   as 1 | 2, checkpointIds: endSegment.checkpointIds,   points: endSegment.points,   totalDistance: endSegment.totalDistance   },
         ],
-        floorsInvolved: [startFloor, endFloor],
+        floorsInvolved: [startFloor as 1 | 2, endFloor as 1 | 2],
         transitionLabel: connector.label,
       };
     });
 
     return bestRoute;
-  }, [activeFloor, getFloorSvgDoc, multiFloorConnectors, resolveFloorForRoom]);
+  }, [activeFloor, showParkingMap, parkingFloor, parkingSvgDoc, parking2SvgDoc, getFloorSvgDoc, multiFloorConnectors, resolveFloorForRoomExtended, PARKING_CONN, PARKING2_CONN]);
 
   // ---------------------------------------------------------------------------
   // Drag — startDrag snapshots positionRef (always current), window listeners
@@ -982,7 +1561,7 @@ const MapViewer = ({
     svgRoot.insertBefore(style, svgRoot.firstChild);
   }, []);
 
-  const renderQrAnchorHints = useCallback((svgDoc: Document, anchors: QrAnchor[], activeQrId: string | null) => {
+  const renderQrAnchorHints = useCallback((svgDoc: Document, anchors: QrAnchor[], activeQrId: string | null, showLabel = true) => {
     const namespace = "http://www.w3.org/2000/svg";
     svgDoc.getElementById("dynamic-qr-anchor-layer")?.remove();
     if (!showQrAnchorHints || !anchors.length) return;
@@ -1014,22 +1593,24 @@ const MapViewer = ({
       qrText.textContent = "QR";
       group.appendChild(qrText);
 
-      const labelWidth = Math.max(52, anchor.qrId.length * 4.5 + 12);
-      const labelBg = svgDoc.createElementNS(namespace, "rect");
-      labelBg.setAttribute("x", String(14));
-      labelBg.setAttribute("y", String(-20));
-      labelBg.setAttribute("width", String(labelWidth));
-      labelBg.setAttribute("height", "14");
-      labelBg.setAttribute("rx", "4");
-      labelBg.setAttribute("class", "qr-anchor-label-bg");
-      group.appendChild(labelBg);
+      if (showLabel) {
+        const labelWidth = Math.max(52, anchor.qrId.length * 4.5 + 12);
+        const labelBg = svgDoc.createElementNS(namespace, "rect");
+        labelBg.setAttribute("x", String(14));
+        labelBg.setAttribute("y", String(-20));
+        labelBg.setAttribute("width", String(labelWidth));
+        labelBg.setAttribute("height", "14");
+        labelBg.setAttribute("rx", "4");
+        labelBg.setAttribute("class", "qr-anchor-label-bg");
+        group.appendChild(labelBg);
 
-      const labelText = svgDoc.createElementNS(namespace, "text");
-      labelText.setAttribute("x", String(19));
-      labelText.setAttribute("y", String(-10));
-      labelText.setAttribute("class", "qr-anchor-label-text");
-      labelText.textContent = anchor.qrId;
-      group.appendChild(labelText);
+        const labelText = svgDoc.createElementNS(namespace, "text");
+        labelText.setAttribute("x", String(19));
+        labelText.setAttribute("y", String(-10));
+        labelText.setAttribute("class", "qr-anchor-label-text");
+        labelText.textContent = anchor.qrId;
+        group.appendChild(labelText);
+      }
 
       layer.appendChild(group);
     });
@@ -1224,6 +1805,12 @@ const MapViewer = ({
       const svgRoot = svgDoc.querySelector("svg");
       if (!svgRoot) return;
 
+      // Parking map has its own built-in labels — skip all dynamic labels.
+      if (showParkingMap) {
+        svgDoc.getElementById("dynamic-room-label-layer")?.remove();
+        return;
+      }
+
       const namespace = "http://www.w3.org/2000/svg";
       const oldLayer = svgDoc.getElementById("dynamic-room-label-layer");
       oldLayer?.remove();
@@ -1347,7 +1934,7 @@ const MapViewer = ({
 
       svgRoot.appendChild(labelLayer);
     },
-    [activeFloor, buildLabelLines, asSvgGraphicsElement, roomFromPath]
+    [showParkingMap, activeFloor, buildLabelLines, asSvgGraphicsElement, roomFromPath]
   );
 
   const setupSvgRoomInteraction = useCallback(() => {
@@ -1765,11 +2352,20 @@ const MapViewer = ({
       if ((anchor.floor === 1 || anchor.floor === 2) && anchor.floor !== activeFloor) {
         setActiveFloor(anchor.floor);
       }
+      if (anchor.floor === 0) {
+        setShowParkingMap(true);
+        setParkingFloor(1);
+      } else if (anchor.floor === -1) {
+        setShowParkingMap(true);
+        setParkingFloor(2);
+      }
 
       const routeAfterCalibration =
         endRoomIdRef.current && endRoomIdRef.current !== anchor.roomId
           ? buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
               startPoint: { x: anchor.svgX, y: anchor.svgY },
+              useExactStartPoint: true,
+              startNodeId: anchor.routeNodeId,
             })
           : null;
 
@@ -2025,6 +2621,8 @@ const MapViewer = ({
         if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
           const anchorRoute = buildDebugRouteForRooms(anchor.roomId, targetEndFromAnchor, {
             startPoint: { x: anchor.svgX, y: anchor.svgY },
+            useExactStartPoint: true,
+            startNodeId: anchor.routeNodeId,
           });
           if (anchorRoute) {
             setActiveRoute(anchorRoute);
@@ -2103,28 +2701,91 @@ const MapViewer = ({
       return;
     }
 
+    // Check if parking is involved in the route
+    const startFloorExtended = resolveFloorForRoomExtended(effectiveStartRoomId);
+    const endFloorExtended = resolveFloorForRoomExtended(effectiveEndRoomId);
+    const isParkingInvolved = startFloorExtended === 0 || startFloorExtended === -1 || endFloorExtended === 0 || endFloorExtended === -1;
+
     const startRoomInfo = roomInfoBySvgId[effectiveStartRoomId];
     const startFloor = startRoomInfo ? resolveFloorForRoom(startRoomInfo) : activeFloor;
-    const targetStartDoc = getFloorSvgDoc(startFloor);
-    if (!targetStartDoc) {
+    const targetStartDoc = (startFloorExtended === 0 || startFloorExtended === -1) 
+      ? (startFloorExtended === 0 ? parkingSvgDoc : parking2SvgDoc)
+      : getFloorSvgDoc(startFloor);
+    if (!targetStartDoc && startFloorExtended !== 0 && startFloorExtended !== -1) {
       setRouteDebugMessage("Data SVG multi-floor belum siap. Coba beberapa detik lagi.");
       return;
     }
 
-    const roomCenterStart = preferRoomCenterStartRef.current
-      ? getRoomCenterById(targetStartDoc, effectiveStartRoomId)
+    const roomCenterStart = preferRoomCenterStartRef.current && startFloorExtended !== 0 && startFloorExtended !== -1
+      ? getRoomCenterById(targetStartDoc!, effectiveStartRoomId)
       : null;
 
-    if (preferRoomCenterStartRef.current && !roomCenterStart) {
+    if (preferRoomCenterStartRef.current && !roomCenterStart && startFloorExtended !== 0 && startFloorExtended !== -1) {
       setRouteDebugMessage("Start ruangan tidak valid di SVG. Scan ulang atau pilih start dari dropdown.");
       setActiveRoute(null);
       return;
     }
 
+    // Determine start point: use QR anchor coordinates if available, otherwise use room center or liveSvgPoint
+    let startPoint: { x: number; y: number } | undefined = undefined;
+    const exactQrStartNodeId =
+      !preferRoomCenterStartRef.current &&
+      lastQrAnchor?.roomId === effectiveStartRoomId
+        ? lastQrAnchor.routeNodeId
+        : undefined;
+    
+    // When routing to parking, use the EXACT coordinates from the scanned QR code
+    // Do NOT search by roomId because multiple QR codes can point to the same room
+    if (endFloorExtended === 0 || endFloorExtended === -1) {
+      // Destination is parking - use liveSvgPoint which contains the exact QR coordinates that were scanned
+      if (liveSvgPointRef.current) {
+        startPoint = liveSvgPointRef.current;
+        console.log(`[Routing] Destination is parking - using exact scanned QR coordinates from liveSvgPoint:`, startPoint);
+      } else {
+        // Fallback: try to get QR anchor coordinates from registry (but this may not be accurate)
+        const startAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+          (a) => a.roomId === effectiveStartRoomId && a.floor === startFloorExtended
+        );
+        if (startAnchor) {
+          startPoint = { x: startAnchor.svgX, y: startAnchor.svgY };
+          console.log(`[Routing] Destination is parking - using QR anchor from registry as fallback:`, startPoint);
+        }
+      }
+    } else if (!preferRoomCenterStartRef.current && liveSvgPointRef.current) {
+      // User scanned QR code - use the exact QR anchor coordinates
+      startPoint = liveSvgPointRef.current;
+      console.log(`[Routing] Using QR anchor coordinates as start point:`, startPoint);
+      console.log(`[Routing] preferRoomCenterStartRef.current:`, preferRoomCenterStartRef.current);
+      console.log(`[Routing] effectiveStartRoomId:`, effectiveStartRoomId);
+    } else if (preferRoomCenterStartRef.current && roomCenterStart) {
+      // User selected from dropdown - use room center
+      startPoint = roomCenterStart;
+      console.log(`[Routing] Using room center as start point:`, startPoint);
+    } else {
+      // Fallback: try to get QR anchor coordinates from registry
+      const startAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+        (a) => a.roomId === effectiveStartRoomId && a.floor === startFloorExtended
+      );
+      if (startAnchor) {
+        startPoint = { x: startAnchor.svgX, y: startAnchor.svgY };
+        console.log(`[Routing] Using QR anchor from registry as start point:`, startPoint);
+      }
+    }
+
+    console.log(`[Routing] Final startPoint:`, startPoint);
+    
+    // When routing to parking, ALWAYS use exact start point (QR anchor coordinates)
+    // Otherwise, use the normal logic based on preferRoomCenterStartRef
+    const useExactStartPoint = (endFloorExtended === 0 || endFloorExtended === -1)
+      ? true  // Always use exact point when destination is parking
+      : !preferRoomCenterStartRef.current && Boolean(startPoint);
+    
+    console.log(`[Routing] useExactStartPoint:`, useExactStartPoint);
+
     const result = buildDebugRouteForRooms(effectiveStartRoomId, effectiveEndRoomId, {
-      startPoint: preferRoomCenterStartRef.current
-        ? roomCenterStart ?? undefined
-        : (liveSvgPointRef.current ?? undefined),
+      startPoint,
+      useExactStartPoint,
+      startNodeId: exactQrStartNodeId,
     });
     if (!result) {
       setRouteDebugMessage("Rute tidak ditemukan pada jalur 'jalan' di denah.");
@@ -2136,17 +2797,36 @@ const MapViewer = ({
     const endFloor = endRoomInfo ? resolveFloorForRoom(endRoomInfo) : activeFloor;
 
     setActiveRoute(result);
-    if (startFloor !== activeFloor) {
+    
+    // Switch to appropriate floor/map view based on destination (end point)
+    if (isParkingInvolved) {
+      // If parking is the destination, show parking map
+      if (endFloorExtended === 0) {
+        setShowParkingMap(true);
+        setParkingFloor(1);
+      } else if (endFloorExtended === -1) {
+        setShowParkingMap(true);
+        setParkingFloor(2);
+      } else {
+        // If parking is start and hospital is destination, show hospital floor
+        setShowParkingMap(false);
+        if (endFloor !== activeFloor) {
+          setActiveFloor(endFloor);
+        }
+      }
+    } else if (startFloor !== activeFloor) {
       setActiveFloor(startFloor);
+      setShowParkingMap(false);
     }
+    
     setRouteDebugMessage(
       `Rute ditemukan: ${roomInfoBySvgId[effectiveStartRoomId]?.name || effectiveStartRoomId} → ${roomInfoBySvgId[effectiveEndRoomId]?.name || effectiveEndRoomId}`
     );
 
-    if (endFloor === startFloor) {
+    if (endFloor === startFloor && !isParkingInvolved) {
       zoomToSvgElement(effectiveEndRoomId);
     }
-  }, [startRoomId, endRoomId, zoomToSvgElement, getRoomCenterById, resolveFloorForRoom, activeFloor, getFloorSvgDoc, buildDebugRouteForRooms]);
+  }, [startRoomId, endRoomId, zoomToSvgElement, getRoomCenterById, resolveFloorForRoom, activeFloor, getFloorSvgDoc, buildDebugRouteForRooms, resolveFloorForRoomExtended, parkingSvgDoc, parking2SvgDoc, lastQrAnchor]);
 
   const handleClearRoute = useCallback(() => {
     setActiveRoute(null);
@@ -2154,6 +2834,42 @@ const MapViewer = ({
     setNavSteps([]);
     setActiveStepIndex(0);
   }, []);
+
+  // Rebuild route when user switches between parking map and hospital floors
+  // (only if there's an active route involving parking)
+  useEffect(() => {
+    if (!activeRoute) return;
+    
+    // Check if this is a parking ↔ hospital route
+    const startFloor = resolveFloorForRoomExtended(activeRoute.startRoomId);
+    const endFloor   = resolveFloorForRoomExtended(activeRoute.endRoomId);
+    const isParkingRoute = startFloor === 0 || startFloor === -1 || endFloor === 0 || endFloor === -1;
+    
+    if (!isParkingRoute) return;
+
+    const startPoint = liveSvgPointRef.current ?? undefined;
+    const scannedQrStartNodeId =
+      !preferRoomCenterStartRef.current &&
+      lastQrAnchor?.roomId === activeRoute.startRoomId
+        ? lastQrAnchor.routeNodeId
+        : undefined;
+
+    // Rebuild to get the correct segment for the current view
+    const rebuilt = buildDebugRouteForRooms(
+      activeRoute.startRoomId,
+      activeRoute.endRoomId,
+      {
+        startPoint,
+        useExactStartPoint: !preferRoomCenterStartRef.current && Boolean(startPoint),
+        startNodeId: scannedQrStartNodeId,
+      }
+    );
+    
+    if (rebuilt) {
+      setActiveRoute(rebuilt);
+    }
+  }, [showParkingMap, parkingFloor, activeFloor, buildDebugRouteForRooms, resolveFloorForRoomExtended, lastQrAnchor]);
+  // Note: activeRoute is intentionally NOT in deps to avoid infinite loop
 
   useEffect(() => {
     const activeFloorSegment = getRouteSegmentForFloor(activeRoute, activeFloor);
@@ -2204,7 +2920,7 @@ const MapViewer = ({
     applyRoute();
     objectElement.addEventListener("load", applyRoute);
     return () => objectElement.removeEventListener("load", applyRoute);
-  }, [activeRoute, renderRouteOverlay, activeFloor]);
+  }, [activeRoute, renderRouteOverlay, activeFloor, showParkingMap, parkingFloor, svgReadyVersion]);
 
   useEffect(() => {
     const svgDoc = objectRef.current?.contentDocument;
@@ -2215,8 +2931,8 @@ const MapViewer = ({
   useEffect(() => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
-    renderQrAnchorHints(svgDoc, activeQrAnchors, lastQrAnchor?.qrId || null);
-  }, [renderQrAnchorHints, activeQrAnchors, lastQrAnchor, svgReadyVersion]);
+    renderQrAnchorHints(svgDoc, activeQrAnchors, lastQrAnchor?.qrId || null, true);
+  }, [renderQrAnchorHints, activeQrAnchors, lastQrAnchor, svgReadyVersion, showParkingMap]);
 
   // ---------------------------------------------------------------------------
   // Center / reset
@@ -2303,7 +3019,7 @@ const MapViewer = ({
               data={activeMapSvgPath}
               type="image/svg+xml"
               className="max-w-[90%] max-h-[90%]"
-              aria-label="Hospital interactive map"
+              aria-label={showParkingMap ? "Peta lahan parkir" : "Hospital interactive map"}
             />
           </div>
         </div>
@@ -2364,7 +3080,7 @@ const MapViewer = ({
               value={startRoomId}
               onChange={(event) => {
                 if (isLiveMode) stopLiveMode("Live mode dimatikan karena start dipilih manual.");
-                preferRoomCenterStartRef.current = false;
+                preferRoomCenterStartRef.current = true;
                 liveSvgPointRef.current = null;
                 gpsBufferRef.current = [];
                 setLiveSvgPoint(null);
@@ -2525,24 +3241,46 @@ const MapViewer = ({
 
       <div className="absolute top-4 left-4 z-30 inline-flex items-center rounded-md border border-border bg-background/90 shadow">
         <button
-          onClick={() => setActiveFloor(1)}
+          onClick={() => { setActiveFloor(1); setShowParkingMap(false); }}
           className={`px-3 py-1.5 text-[11px] font-semibold ${
-            activeFloor === 1
+            activeFloor === 1 && !showParkingMap
               ? "bg-primary text-primary-foreground"
               : "text-foreground hover:bg-muted"
           }`}
         >
-          Lantai 1
+          {floorCopy.floor1}
         </button>
         <button
-          onClick={() => setActiveFloor(2)}
+          onClick={() => { setActiveFloor(2); setShowParkingMap(false); }}
           className={`px-3 py-1.5 text-[11px] font-semibold ${
-            activeFloor === 2
+            activeFloor === 2 && !showParkingMap
               ? "bg-primary text-primary-foreground"
               : "text-foreground hover:bg-muted"
           }`}
         >
-          Lantai 2
+          {floorCopy.floor2}
+        </button>
+        <button
+          onClick={() => { setShowParkingMap(true); setParkingFloor(1); setActiveFloor(1); }}
+          className={`border-l border-border px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+            showParkingMap && parkingFloor === 1
+              ? "bg-emerald-600 text-white"
+              : "text-foreground hover:bg-muted"
+          }`}
+          title={floorCopy.parking1Title}
+        >
+          🅿 {floorCopy.parking1}
+        </button>
+        <button
+          onClick={() => { setShowParkingMap(true); setParkingFloor(2); setActiveFloor(2); }}
+          className={`px-3 py-1.5 text-[11px] font-semibold transition-colors ${
+            showParkingMap && parkingFloor === 2
+              ? "bg-emerald-600 text-white"
+              : "text-foreground hover:bg-muted"
+          }`}
+          title={floorCopy.parking2Title}
+        >
+          🅿 {floorCopy.parking2}
         </button>
       </div>
 

@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   version="1.1"
+   id="svg1"
+   width="1536"
+   height="1024"
+   viewBox="0 0 1536 1024"
+   sodipodi:docname="Lahan Parkir Lantai 2.svg"
+   xml:space="preserve"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+     id="defs1"><style
+       id="room-interaction-style"><![CDATA[
+      .room-interactive {
+        cursor: pointer;
+        transition: fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+      }
+      .room-interactive:hover {
+        fill: #dbeafe !important;
+        stroke: #1d4ed8 !important;
+        stroke-width: 1.6 !important;
+        opacity: 1 !important;
+        filter: brightness(1.04);
+      }
+      .region-active {
+        fill: #bfdbfe !important;
+        stroke: #2563eb !important;
+        stroke-width: 2.1 !important;
+        opacity: 1 !important;
+      }
+    ]]></style><inkscape:path-effect
+       effect="bspline"
+       id="path-effect45"
+       is_visible="true"
+       lpeversion="1.3"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" /><style
+       id="room-interaction-style-4"><![CDATA[
+      .room-interactive {
+        cursor: pointer;
+        transition: fill 0.2s ease, stroke 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+      }
+      .room-interactive:hover {
+        fill: #dbeafe !important;
+        stroke: #1d4ed8 !important;
+        stroke-width: 1.6 !important;
+        opacity: 1 !important;
+        filter: brightness(1.04);
+      }
+      .region-active {
+        fill: #bfdbfe !important;
+        stroke: #2563eb !important;
+        stroke-width: 2.1 !important;
+        opacity: 1 !important;
+      }
+    ]]></style><inkscape:path-effect
+       effect="bspline"
+       id="path-effect45-8"
+       is_visible="true"
+       lpeversion="1.3"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false"
+       uniform="false" /></defs><sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     showguides="false"
+     inkscape:zoom="0.35355339"
+     inkscape:cx="724.07734"
+     inkscape:cy="513.35952"
+     inkscape:window-width="1920"
+     inkscape:window-height="1094"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer17"
+     showgrid="false" /><g
+     inkscape:groupmode="layer"
+     id="layer15"
+     inkscape:label="Lahan Parkir Lantai 2"
+     style="display:inline;opacity:1"><path
+       style="fill:#afafae;fill-opacity:1;stroke-width:4.006;stroke-linejoin:round;stroke-dasharray:none;stroke:#000000;stroke-opacity:1"
+       d="M 218.84955,164.75588 V 688.54523 H 1339.0835 l 0.044,-523.78935 z"
+       id="path2"
+       sodipodi:nodetypes="ccccc" /><path
+       style="fill:#afafae;fill-opacity:1;stroke:#ffffff;stroke-width:4.01844;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       d="m 334.80147,445.67106 v 176.83992 l 846.01483,-0.19214 V 445.68357 c -154.8642,2.3197 -561.08222,0.0452 -846.01483,-0.0125 z"
+       id="Area_Parkir_Mobil_Pengunjung_Bawah"
+       sodipodi:nodetypes="ccccc"
+       inkscape:label="Area Parkir Mobil Pengunjung Bawah" /><path
+       style="fill:#afafae;fill-opacity:1;stroke:#ffffff;stroke-width:4.00162;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       d="m 334.60456,166.64165 0.007,179.85166 795.12344,0.009 0.2646,-179.77821 z"
+       id="Area_Parkir_Mobil_Pengunjung_Atas"
+       sodipodi:nodetypes="ccccc"
+       inkscape:label="Area Parkir Mobil Pengunjung Atas" /><path
+       style="fill:#afafae;fill-opacity:1;stroke:#000000;stroke-width:1.46775;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       d="m 484.06327,690.1334 v 79.53267 h -25.10066 v -79.60878 z"
+       id="Jembatan_Penghubung_Gedung_Rumah_Sakit_Lantai_2"
+       inkscape:label="Jembatan Penghubung Gedung Rumah Sakit Lantai 2" /><g
+       id="g1-9-1-5-1"
+       inkscape:label="Ramp Parkir"
+       style="display:inline"
+       transform="matrix(4.9630864,0,0,5.2129111,-4008.9862,-2562.708)"><path
+         style="fill:#e0e1e0;fill-opacity:1;stroke:#000000;stroke-width:0.473723;stroke-linejoin:round;stroke-opacity:1"
+         d="m 1036.0197,523.04107 41.7607,0.06 -0.041,35.41679 -41.6222,-0.0979 z"
+         id="Ramp_Lantai_2"
+         inkscape:label="Ramp Lantai 2"
+         sodipodi:nodetypes="ccccc" /><path
+         style="fill:#000000;stroke-width:0.161536"
+         d="m 1042.0165,549.40758 c -0.034,-0.22764 -0.028,-0.28771 0.035,-0.34667 0.031,-0.0293 2.3107,-1.32928 5.0653,-2.88888 2.7545,-1.55959 5.0125,-2.83961 5.0176,-2.84449 0.01,-0.005 -0.055,-0.113 -0.1348,-0.24028 -0.5107,-0.82008 -0.6597,-1.16236 -0.6586,-1.51318 0,-0.34643 0.054,-0.42769 0.6731,-1.03784 0.2261,-0.22276 0.4662,-0.47459 0.5336,-0.55962 0.068,-0.085 0.2393,-0.39642 0.3818,-0.69198 0.3298,-0.68384 0.3858,-0.783 0.5938,-1.05095 0.3511,-0.45227 0.93,-0.93659 1.5359,-1.28497 1.0467,-0.60182 2.2316,-1.00201 3.3707,-1.13844 0.456,-0.0546 1.1925,-0.0453 1.7655,0.0224 0.3469,0.041 0.3673,0.0371 0.866,-0.16403 0.4486,-0.18095 1.1393,-0.4056 1.499,-0.48754 0.4142,-0.0944 0.8264,-0.096 1.0243,-0.004 0.2866,0.13325 0.6196,0.48679 0.8747,0.9287 l 0.1086,0.18802 0.1444,-0.0835 c 0.2592,-0.14984 7.4386,-4.21178 7.8528,-4.44292 0.2217,-0.12371 0.4314,-0.22494 0.4659,-0.22494 0.035,0 0.098,0.0264 0.1413,0.0587 0.043,0.0323 0.1143,0.0587 0.1582,0.0587 h 0.08 v 8.83347 8.83346 h -0.092 c -0.087,0 -0.092,0.007 -0.092,0.11739 v 0.11738 h -15.5928 -15.5928 z m 30.9006,-8.79678 c 0,-4.66471 -0.01,-8.4813 -0.014,-8.4813 -0.01,0 -0.7536,0.4181 -1.6568,0.92911 -2.3598,1.33499 -6.4077,3.62992 -6.9133,3.91934 -0.2373,0.13587 -0.5148,0.29036 -0.6165,0.34331 l -0.185,0.0963 v 0.31271 c 10e-5,0.29004 -0.01,0.32653 -0.096,0.50346 -0.3384,0.67004 -1.1967,0.86749 -1.824,0.41959 -0.1142,-0.0815 -0.1318,-0.0784 -0.3554,0.0618 -0.319,0.20009 -5.263,3.01093 -5.2999,3.01318 -0.021,10e-4 -0.1004,0.0387 -0.1767,0.0833 -0.1083,0.0632 -0.1373,0.0965 -0.1324,0.15177 0.037,0.41176 -0.012,0.66371 -0.1757,0.90692 -0.3726,0.55293 -1.2008,0.68088 -1.738,0.26854 l -0.1195,-0.0918 -0.1502,0.0778 c -0.083,0.0428 -0.1503,0.0922 -0.1504,0.10984 0,0.0433 -0.3781,0.26245 -0.5752,0.33376 -0.1315,0.0476 -9.6724,5.42035 -9.7646,5.49874 -0.016,0.0137 6.7148,0.0249 14.9575,0.0249 h 14.9868 z m -10.552,5.60698 -0.3249,-0.52656 0.3674,-0.87278 c 0.2021,-0.48003 0.3641,-0.87571 0.3602,-0.87929 0,-0.004 -0.4165,-0.0544 -0.9166,-0.11291 -0.5001,-0.0585 -0.9403,-0.11281 -0.9781,-0.12063 -0.05,-0.0104 -0.1514,-0.14691 -0.3772,-0.50929 -0.1696,-0.27229 -0.3161,-0.51428 -0.3256,-0.53775 -0.014,-0.0344 0.3753,0.005 1.9955,0.20083 1.107,0.13392 2.0282,0.24404 2.0471,0.2447 0.035,10e-4 -1.467,3.63893 -1.5031,3.63977 -0.011,3.2e-4 -0.166,-0.23649 -0.3447,-0.52609 z m 1.0744,-1.34539 c 0.4067,-0.97285 0.6909,-1.69113 0.6746,-1.70478 -0.029,-0.0239 -3.8319,-0.48698 -3.8486,-0.46854 0,0.006 0.1182,0.21409 0.2738,0.46348 0.2399,0.38472 0.2965,0.45664 0.3735,0.47454 0.05,0.0116 0.493,0.0691 0.9847,0.12778 0.4916,0.0587 0.9103,0.11181 0.9304,0.11807 0.024,0.007 -0.093,0.31804 -0.3318,0.88614 -0.2025,0.48111 -0.3714,0.88803 -0.3754,0.90428 0,0.0162 0.1228,0.23943 0.2817,0.49597 0.1944,0.31384 0.2963,0.45299 0.3116,0.42534 0.012,-0.0226 0.3389,-0.79763 0.7255,-1.72228 z m 1.5457,-0.12056 -0.3261,-0.52515 0.368,-0.87419 c 0.2024,-0.4808 0.3627,-0.87915 0.3564,-0.88522 -0.01,-0.006 -0.4454,-0.0626 -0.9756,-0.12567 -0.5302,-0.063 -0.9777,-0.12774 -0.9946,-0.14377 -0.032,-0.0309 -0.6625,-1.04013 -0.6554,-1.04975 0,-0.005 3.6366,0.42859 3.9823,0.47516 l 0.1266,0.017 -0.7585,1.81812 c -0.4172,0.99997 -0.7672,1.81823 -0.7778,1.81835 -0.011,1.2e-4 -0.1659,-0.2361 -0.3453,-0.52493 z m 1.0562,-1.30762 c 0.391,-0.93472 0.7109,-1.7169 0.7109,-1.7382 0,-0.0213 -0.017,-0.0386 -0.038,-0.0384 -0.021,1.5e-4 -0.8815,-0.10081 -1.9117,-0.22445 -1.0303,-0.12364 -1.8813,-0.21703 -1.8913,-0.20754 -0.02,0.0192 0.538,0.93076 0.5696,0.93015 0.037,-6.3e-4 1.9926,0.24149 1.9999,0.24768 0,0.003 -0.159,0.40104 -0.3622,0.88372 -0.2032,0.48268 -0.3694,0.89481 -0.3694,0.91586 0,0.0399 0.5576,0.9537 0.573,0.93902 0,-0.005 0.3287,-0.77317 0.7197,-1.70788 z m 1.5688,-0.16398 -0.3274,-0.5294 0.3661,-0.86994 c 0.2014,-0.47847 0.3606,-0.87528 0.3537,-0.88181 -0.01,-0.007 -0.447,-0.0647 -0.9781,-0.12934 -0.5312,-0.0646 -0.9751,-0.12619 -0.9866,-0.13685 -0.045,-0.0417 -0.6472,-1.0366 -0.6347,-1.04846 0.012,-0.0115 3.8659,0.44135 4.0192,0.47223 0.061,0.0123 0.017,0.12878 -0.6936,1.83269 -0.4174,1.00072 -0.7662,1.81968 -0.775,1.81989 -0.01,1.6e-4 -0.1635,-0.23784 -0.3436,-0.52901 z m 1.0816,-1.37816 c 0.3875,-0.9281 0.7027,-1.68957 0.7003,-1.69215 -0.016,-0.0174 -3.8448,-0.45722 -3.8594,-0.44334 -0.015,0.0141 0.4739,0.83806 0.5386,0.90799 0.01,0.0109 0.4691,0.075 1.0201,0.14259 0.5509,0.0676 1.005,0.12561 1.009,0.12897 0,0.003 -0.1595,0.40142 -0.3632,0.88456 -0.2037,0.48313 -0.3643,0.90147 -0.3569,0.92964 0.01,0.0282 0.1361,0.24983 0.2859,0.49258 0.2127,0.34456 0.2778,0.42989 0.2967,0.389 0.013,-0.0288 0.3413,-0.81174 0.7289,-1.73984 z m -15.3659,0.68966 c -0.011,-0.0323 -0.027,-0.15846 -0.035,-0.28038 -0.032,-0.48559 0.2183,-0.88349 0.6963,-1.10521 0.1533,-0.0711 0.209,-0.0805 0.4816,-0.0809 0.2691,-4.7e-4 0.3303,0.009 0.4815,0.0767 0.095,0.0424 0.2298,0.12585 0.299,0.18535 l 0.1258,0.10818 0.1402,-0.0782 c 0.077,-0.043 0.1471,-0.0889 0.1556,-0.10192 0.027,-0.0412 -0.3154,-0.31443 -0.5092,-0.40663 -0.2491,-0.11855 -0.4859,-0.16165 -0.7854,-0.14301 -0.2892,0.018 -0.4689,0.0718 -0.7256,0.21742 -0.5611,0.31823 -0.8622,1.01693 -0.6954,1.61343 0.063,0.22544 0.065,0.22669 0.2377,0.13521 0.1254,-0.0665 0.1495,-0.0919 0.1329,-0.13993 z m 0.9591,-3.24777 c 0.3554,-0.20003 0.9687,-0.54115 1.3628,-0.75805 0.3942,-0.21689 0.7167,-0.40954 0.7167,-0.42811 0,-0.0381 -0.6979,-0.90212 -0.7404,-0.91658 -0.038,-0.0131 -0.2601,0.1144 -0.5147,0.29591 -0.597,0.42554 -1.02,0.87763 -1.2845,1.37288 -0.2531,0.4738 -0.3607,0.86147 -0.2254,0.81206 0.022,-0.008 0.3302,-0.17808 0.6855,-0.37811 z m 6.8266,-1.09571 c 0.091,-0.0546 0.1227,-0.0908 0.1092,-0.12416 -0.1281,-0.31797 -0.074,-0.69099 0.1437,-0.99778 0.1307,-0.18387 0.2628,-0.29197 0.486,-0.39757 0.1828,-0.0865 0.2246,-0.0945 0.4932,-0.0945 0.2653,0 0.3128,0.009 0.4939,0.0916 0.1102,0.0504 0.2554,0.13763 0.3226,0.1939 l 0.1223,0.10233 0.1485,-0.087 c 0.129,-0.0756 0.1433,-0.0933 0.1089,-0.13491 -0.1786,-0.21629 -0.5728,-0.44031 -0.8811,-0.50074 -0.4836,-0.0948 -0.9925,0.0439 -1.3659,0.37232 -0.3366,0.29603 -0.4964,0.63638 -0.4991,1.06302 0,0.2835 0.084,0.62908 0.1503,0.60489 0.022,-0.008 0.097,-0.0491 0.1675,-0.0914 z m -3.8133,-0.54786 c 0.19,-0.0996 0.4772,-0.2496 0.6382,-0.33327 0.1611,-0.0837 0.4177,-0.21785 0.5703,-0.29816 0.1526,-0.0803 0.3745,-0.19634 0.4932,-0.25783 0.7037,-0.36466 0.7812,-0.42538 0.618,-0.48445 -0.1327,-0.048 -0.5773,-0.0825 -0.8954,-0.0694 -0.802,0.0331 -1.5329,0.20127 -2.2502,0.51785 -0.2714,0.1198 -0.3305,0.15823 -0.315,0.20511 0.016,0.0488 0.7429,0.90124 0.7685,0.90124 0.015,0 0.1824,-0.0815 0.3724,-0.18113 z"
+         id="path7-5" /></g><g
+       id="g1-9-1-4"
+       inkscape:label="Tangga Pengunjung di Lahan Parkir lantai 2"
+       style="display:inline"
+       transform="matrix(1.0334952,0,0,1.0325334,223.92862,106.22853)"><path
+         style="fill:#e0e1e0;fill-opacity:1;stroke:#000000;stroke-width:0.5;stroke-linejoin:round;stroke-opacity:1"
+         d="m 1036.0332,523.05452 41.7337,0.0669 -0.041,39.48028 -41.5953,-0.10914 z"
+         id="Tangga_Pengunjung_Lahan_Parkir_ke_Lantai_2-2"
+         inkscape:label="Tangga Pengunjung Lahan Parkir ke Lantai 1"
+         sodipodi:nodetypes="ccccc" /><path
+         style="fill:#000000"
+         d="m 1042.1333,558.51603 c -0.04,-0.0146 -0.1336,-0.0829 -0.2074,-0.15169 -0.2418,-0.22525 -0.1643,-0.67585 0.1432,-0.83311 0.075,-0.0384 0.9751,-0.0545 3.0379,-0.0545 h 2.9314 v -2.05127 c 0,-2.20125 0.01,-2.28784 0.2497,-2.45658 0.1016,-0.0711 0.3888,-0.0796 2.7122,-0.0796 h 2.5986 l 0.014,-2.14641 0.014,-2.1464 0.1595,-0.15951 0.1595,-0.15951 2.61,-0.0142 2.6101,-0.0142 v -2.05252 c 0,-2.24994 0,-2.27898 0.2889,-2.44763 0.128,-0.0756 0.376,-0.0833 2.7077,-0.0833 h 2.5668 v -2.05127 c 0,-2.21718 0.01,-2.28748 0.2601,-2.45298 0.1158,-0.0759 0.3689,-0.0832 2.8908,-0.0832 h 2.764 l 0.1659,0.16593 c 0.1868,0.18676 0.2154,0.37777 0.092,0.61589 -0.1396,0.27002 -0.1061,0.26643 -2.6104,0.27993 -1.275,0.007 -2.3565,0.0124 -2.4035,0.0122 -0.08,-2.7e-4 -0.085,0.13101 -0.085,2.07623 0,1.76065 -0.011,2.09831 -0.074,2.21969 -0.1528,0.29531 -0.1117,0.29122 -2.9235,0.29122 h -2.563 l -0.014,2.14623 -0.014,2.14624 -0.1353,0.13527 -0.1353,0.13528 -2.6342,0.0134 -2.6343,0.0134 v 2.12091 2.1209 l -0.1423,0.15938 -0.1424,0.15938 -2.6272,0.0244 -2.6271,0.0244 -0.024,2.12291 c -0.019,1.64097 -0.039,2.14877 -0.089,2.23684 -0.1437,0.25215 -0.147,0.25238 -3.6059,0.24823 -1.7656,-0.002 -3.2432,-0.0158 -3.2835,-0.0305 z m 7.3689,-5.81875 c -0.3722,-0.11319 -0.7368,-0.45585 -0.8354,-0.78506 -0.089,-0.29683 -0.027,-0.62912 0.532,-2.85392 0.5329,-2.12088 0.6817,-2.72913 1.4001,-5.72521 l 0.3664,-1.5282 -0.091,-0.17989 c -0.1531,-0.30282 -0.2066,-0.67535 -0.1761,-1.22822 0.045,-0.81417 0.1741,-4.99166 0.1551,-5.01069 -0.022,-0.022 -1.6013,1.16387 -1.6729,1.2561 -0.029,0.038 -0.2124,0.87068 -0.4065,1.85039 -0.1941,0.9797 -0.3756,1.86057 -0.4035,1.95748 -0.062,0.21643 -0.2933,0.47144 -0.5091,0.56162 -0.5496,0.22965 -1.1811,-0.14603 -1.2256,-0.72914 -0.022,-0.28558 0.7621,-4.32484 0.8849,-4.56003 0.038,-0.0735 0.1322,-0.19095 0.2084,-0.26096 0.2681,-0.24627 3.947,-2.98579 4.0924,-3.04743 0.2356,-0.0999 0.8033,-0.15955 1.1137,-0.11698 0.6409,0.0879 1.2054,0.54633 2.0099,1.63241 0.2386,0.32209 0.6861,0.90979 0.9945,1.306 l 0.5606,0.72037 0.8568,0.27196 c 0.4712,0.14959 1.2021,0.38174 1.6242,0.5159 0.422,0.13416 0.8389,0.29219 0.9265,0.35117 0.5064,0.34131 0.4937,1.14312 -0.024,1.48544 -0.3408,0.22549 -0.5134,0.19484 -2.5145,-0.44643 -0.9743,-0.3122 -1.8088,-0.58803 -1.8545,-0.61293 -0.1199,-0.0653 -0.3379,-0.30931 -0.7221,-0.80831 l -0.3371,-0.43779 -0.031,0.6818 c -0.081,1.80546 -0.1031,3.24393 -0.049,3.24393 0.073,0 3.2022,1.20576 3.4225,1.31874 0.3168,0.16248 0.555,0.49686 0.6127,0.86005 0.041,0.25942 -0.3101,4.51914 -0.3991,4.84029 -0.1835,0.66174 -1.001,1.02299 -1.6341,0.72206 -0.2468,-0.11732 -0.4812,-0.35876 -0.5938,-0.61176 -0.1226,-0.2756 -0.1194,-0.48314 0.036,-2.29634 0.1424,-1.65782 0.1442,-1.70927 0.062,-1.71089 -0.034,-6.7e-4 -0.5881,-0.20586 -1.2323,-0.45599 -0.8846,-0.34346 -1.1933,-0.44367 -1.2612,-0.40943 -0.1325,0.0667 -0.2593,0.39402 -0.3454,0.89165 -0.1401,0.81014 -1.9228,8.11401 -2.0886,8.55694 -0.2241,0.59919 -0.8914,0.96237 -1.4537,0.7913 z m 3.6171,-20.72376 c -0.807,-0.21704 -1.4613,-0.85568 -1.6903,-1.64984 -0.1185,-0.41077 -0.081,-1.12385 0.079,-1.50998 0.2298,-0.55491 0.7812,-1.10532 1.3049,-1.30272 0.8997,-0.33906 1.8717,-0.13833 2.5295,0.52236 0.461,0.46305 0.6976,1.03028 0.6993,1.67675 0,1.4875 -1.4936,2.64756 -2.922,2.26343 z"
+         id="path2-3-1-3" /></g><g
+       inkscape:groupmode="layer"
+       id="layer16-8"
+       inkscape:label="Icon Parkir Mobil"
+       transform="matrix(0.13457864,0,0,0.13457864,693.71321,470.46608)"
+       style="display:inline;opacity:1"><path
+         style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 465,339 4,249 c 0,0 140,69 243,30 103,-39 103,-39 103,-39 L 825,494 781,370 627,300 Z"
+         id="path11-9" /><path
+         style="display:inline;opacity:1;fill:#000000"
+         d="M 599.11932,722.63004 C 544.90164,716.41825 494.18275,691.93958 455.62652,653.37552 391.53775,589.27373 369.10557,495.72433 397.10771,409.33333 424.08848,326.09347 498.06322,262.36315 585,247.4614 c 80.37132,-13.77638 164.73008,15.97309 218.92624,77.20527 56.94418,64.33694 75.38895,152.48122 48.96605,234 C 825.90918,641.91377 752.2997,705.34469 665,720.57763 c -15.06091,2.62798 -51.06661,3.74968 -65.88068,2.05241 z M 543.24818,577.02455 c 3.07294,-3.07294 3.59445,-4.8712 4.13856,-14.27028 L 548.00929,552 l 73.49536,-0.2083 c 40.42244,-0.11456 75.14535,-0.2849 77.16202,-0.37853 3.64867,-0.1694 3.66666,-0.12681 3.66666,8.676 0,15.66872 2.87418,19.57447 15.35223,20.86232 10.51921,1.08568 21.50675,-0.66699 25.40761,-4.05287 5.26699,-4.57165 6.15609,-14.87422 4.79522,-55.56529 -1.10814,-33.13429 -1.40379,-35.98724 -4.7505,-45.84009 -1.96285,-5.77872 -3.39685,-10.57872 -3.18668,-10.66667 0.21017,-0.0879 2.75574,-1.3599 5.65682,-2.82657 9.23931,-4.67101 13.41906,-16.5655 7.79682,-22.18774 -3.44718,-3.44718 -12.76387,-5.51621 -20.39839,-4.53005 L 727,436.05808 720.48866,419.34787 c -4.55716,-11.69517 -8.05982,-18.46938 -11.67093,-22.57182 -8.97571,-10.19694 -8.25299,-10.11043 -84.38858,-10.10195 -41.03041,0.005 -68.63947,0.52878 -71.63237,1.36008 -8.17554,2.27081 -14.7726,10.28267 -21.09447,25.61836 -9.87511,23.95522 -7.85412,21.68079 -19.26495,21.68079 -10.59688,0 -16.06078,2.43785 -18.15554,8.10054 -2.38631,6.45081 7.09233,20.56613 13.81047,20.56613 1.86146,0 2.28848,0.61409 1.62255,2.33333 -0.49709,1.28334 -2.36129,7.35046 -4.14266,13.48249 -3.10918,10.70279 -3.23885,12.74727 -3.23885,51.06622 0,44.49301 0.35739,46.59184 8.35011,49.03832 2.37411,0.72669 9.8813,1.16351 16.68265,0.97072 11.34977,-0.32172 12.65505,-0.63949 15.88209,-3.86653 z M 525.476,525.34456 c -7.05103,-2.84544 -9.48769,-14.00372 -4.45515,-20.40156 3.6199,-4.60196 10.44158,-6.79492 15.34171,-4.93189 7.95453,3.02431 11.6613,11.51886 8.06295,18.4773 -3.804,7.35614 -11.13646,10.00911 -18.94951,6.85615 z M 710.65905,524.677 c -9.64809,-6.9682 -8.01583,-20.48589 2.97839,-24.66589 12.36816,-4.70236 23.67934,11.93821 14.98523,22.04571 -3.88673,4.51859 -13.4115,5.90788 -17.96362,2.62018 z M 563.4313,509.88285 c -0.23722,-6.29777 -0.1813,-11.69777 0.12426,-12 0.30555,-0.30224 28.05555,-0.54952 61.66666,-0.54952 h 61.11111 v 12 12 H 625.09796 563.8626 Z m -23.75928,-42.87184 c -5.57857,-0.67286 -8.00535,-2.45014 -8.00535,-5.86282 0,-3.26186 18.2765,-48.56681 21.71202,-53.82113 1.44072,-2.20345 4.1949,-5.20345 6.1204,-6.66667 3.35542,-2.54983 5.939,-2.67713 62.16758,-3.06328 32.26666,-0.2216 60.61656,-0.0444 62.99976,0.3937 8.48127,1.55921 10.42382,4.68237 25.67781,41.2838 10.74427,25.78051 10.63048,26.36509 -5.37106,27.59306 -12.24789,0.93991 -157.65157,1.06599 -165.30116,0.14334 z"
+         id="path10-2" /></g><g
+       inkscape:groupmode="layer"
+       id="layer16"
+       inkscape:label="Icon Parkir Mobil"
+       transform="matrix(0.13459896,0,0,0.13459896,675.78247,193.56479)"><path
+         style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 465,339 4,249 c 0,0 140,69 243,30 103,-39 103,-39 103,-39 L 825,494 781,370 627,300 Z"
+         id="path11" /><path
+         style="display:inline;opacity:1;fill:#000000"
+         d="M 599.11932,722.63004 C 544.90164,716.41825 494.18275,691.93958 455.62652,653.37552 391.53775,589.27373 369.10557,495.72433 397.10771,409.33333 424.08848,326.09347 498.06322,262.36315 585,247.4614 c 80.37132,-13.77638 164.73008,15.97309 218.92624,77.20527 56.94418,64.33694 75.38895,152.48122 48.96605,234 C 825.90918,641.91377 752.2997,705.34469 665,720.57763 c -15.06091,2.62798 -51.06661,3.74968 -65.88068,2.05241 z M 543.24818,577.02455 c 3.07294,-3.07294 3.59445,-4.8712 4.13856,-14.27028 L 548.00929,552 l 73.49536,-0.2083 c 40.42244,-0.11456 75.14535,-0.2849 77.16202,-0.37853 3.64867,-0.1694 3.66666,-0.12681 3.66666,8.676 0,15.66872 2.87418,19.57447 15.35223,20.86232 10.51921,1.08568 21.50675,-0.66699 25.40761,-4.05287 5.26699,-4.57165 6.15609,-14.87422 4.79522,-55.56529 -1.10814,-33.13429 -1.40379,-35.98724 -4.7505,-45.84009 -1.96285,-5.77872 -3.39685,-10.57872 -3.18668,-10.66667 0.21017,-0.0879 2.75574,-1.3599 5.65682,-2.82657 9.23931,-4.67101 13.41906,-16.5655 7.79682,-22.18774 -3.44718,-3.44718 -12.76387,-5.51621 -20.39839,-4.53005 L 727,436.05808 720.48866,419.34787 c -4.55716,-11.69517 -8.05982,-18.46938 -11.67093,-22.57182 -8.97571,-10.19694 -8.25299,-10.11043 -84.38858,-10.10195 -41.03041,0.005 -68.63947,0.52878 -71.63237,1.36008 -8.17554,2.27081 -14.7726,10.28267 -21.09447,25.61836 -9.87511,23.95522 -7.85412,21.68079 -19.26495,21.68079 -10.59688,0 -16.06078,2.43785 -18.15554,8.10054 -2.38631,6.45081 7.09233,20.56613 13.81047,20.56613 1.86146,0 2.28848,0.61409 1.62255,2.33333 -0.49709,1.28334 -2.36129,7.35046 -4.14266,13.48249 -3.10918,10.70279 -3.23885,12.74727 -3.23885,51.06622 0,44.49301 0.35739,46.59184 8.35011,49.03832 2.37411,0.72669 9.8813,1.16351 16.68265,0.97072 11.34977,-0.32172 12.65505,-0.63949 15.88209,-3.86653 z M 525.476,525.34456 c -7.05103,-2.84544 -9.48769,-14.00372 -4.45515,-20.40156 3.6199,-4.60196 10.44158,-6.79492 15.34171,-4.93189 7.95453,3.02431 11.6613,11.51886 8.06295,18.4773 -3.804,7.35614 -11.13646,10.00911 -18.94951,6.85615 z M 710.65905,524.677 c -9.64809,-6.9682 -8.01583,-20.48589 2.97839,-24.66589 12.36816,-4.70236 23.67934,11.93821 14.98523,22.04571 -3.88673,4.51859 -13.4115,5.90788 -17.96362,2.62018 z M 563.4313,509.88285 c -0.23722,-6.29777 -0.1813,-11.69777 0.12426,-12 0.30555,-0.30224 28.05555,-0.54952 61.66666,-0.54952 h 61.11111 v 12 12 H 625.09796 563.8626 Z m -23.75928,-42.87184 c -5.57857,-0.67286 -8.00535,-2.45014 -8.00535,-5.86282 0,-3.26186 18.2765,-48.56681 21.71202,-53.82113 1.44072,-2.20345 4.1949,-5.20345 6.1204,-6.66667 3.35542,-2.54983 5.939,-2.67713 62.16758,-3.06328 32.26666,-0.2216 60.61656,-0.0444 62.99976,0.3937 8.48127,1.55921 10.42382,4.68237 25.67781,41.2838 10.74427,25.78051 10.63048,26.36509 -5.37106,27.59306 -12.24789,0.93991 -157.65157,1.06599 -165.30116,0.14334 z"
+         id="path10" /></g><g
+       inkscape:groupmode="layer"
+       id="layer17"
+       inkscape:label="Centerline"
+       style="opacity:0"><path
+         style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 1180.5148,348.25009 v 50.55814 z"
+         id="Jalan_Keluar_dari_Ramp_Parkir"
+         inkscape:label="Jalan Keluar dari Ramp Parkir" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="M 1180.5,398.75 275,399 Z"
+         id="path13"
+         inkscape:label="Jalan Atas" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="M 274.9375,398.9375 275,252.5 Z"
+         id="Belok_ke_Area_Parkir_Mobil_Atas"
+         inkscape:label="Belok ke Area Parkir Mobil Atas" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 275,252.5 h 89.5 z"
+         id="Masuk_ke_Area_Parkir_Mobil_Atas"
+         inkscape:label="Masuk ke Area Parkir Mobil Atas" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.50597;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 274.88859,398.88891 0.17512,251.682 z"
+         id="Belok_ke_Area_Parkir_Mobil_Bawah"
+         sodipodi:nodetypes="ccc"
+         inkscape:label="Belok ke Area Parkir Mobil Bawah" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 274.94268,546.63774 h 90.59806 z"
+         id="Masuk_ke_Area_Parkir_Mobil_Bawah"
+         inkscape:label="Masuk ke Area Parkir Mobil Bawah" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="M 274.96875,651.4375 1246,652 Z"
+         id="Jalan_Bawah_Untuk_Masuk_Ramp_Parkir"
+         inkscape:label="Jalan Bawah Untuk Masuk Ramp Parkir" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="M 1246,651.8125 V 348 Z"
+         id="Masuk_Ramp_Parkir_Untuk_Turun_ke_Lantai_1"
+         inkscape:label="Masuk Ramp Parkir Untuk Turun ke Lantai 1" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="m 1246.0768,652.07399 h 48.5694 z"
+         id="Masuk_ke_Tangga_Pengunjung"
+         inkscape:label="Masuk ke Tangga Pengunjung" /><path
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         d="M 471.46345,651.24535 V 766.68053 Z"
+         id="Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2"
+         inkscape:label="Akses Jembatan Menuju Gedung Rumah Sakit Lantai 2" /></g><g
+       inkscape:groupmode="layer"
+       id="layer18"
+       inkscape:label="Node"
+       style="opacity:0"><ellipse
+         style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Keluar_Dari_Ramp_Parkir_"
+         cx="1180.6473"
+         cy="349.63116"
+         rx="2.342"
+         ry="1.2042912"
+         inkscape:label="Keluar Dari Ramp Parkir " /><ellipse
+         style="display:inline;opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Belok_Masuk_ke_Jalan_Atas"
+         cx="1179.6309"
+         cy="398.01273"
+         rx="3.536"
+         ry="2.032932"
+         inkscape:label="Belok Masuk ke Jalan Atas" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Persimpangan_Mengarah_ke_2_Jalur_Area_Parkir_Mobil_Atas___Bawah"
+         cx="275.15625"
+         cy="398.90625"
+         rx="2.34375"
+         ry="1.46875"
+         inkscape:label="Persimpangan Mengarah ke 2 Jalur Area Parkir Mobil Atas &amp; Bawah" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Masuk_dan_Keluar_Area_Parkir_Mobil_Atas"
+         cx="275.65625"
+         cy="253"
+         rx="2.7190001"
+         ry="1.8125"
+         inkscape:label="Masuk dan Keluar Area Parkir Mobil Atas " /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Check_Point_Area_Parkir_Mobil_Atas"
+         cx="329.1875"
+         cy="252.6875"
+         rx="3.125"
+         ry="2.1875"
+         inkscape:label="Check Point Area Parkir Mobil Atas" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Check_Point_Area_Parkir_Mobil_Bawah"
+         cx="330.87073"
+         cy="546.77032"
+         rx="2.066"
+         ry="1.4142135"
+         inkscape:label="Check Point Area Parkir Mobil Bawah" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Persimpangan_Masuk_Dan_Keluar_Area_Parkir_Mobil_Atas"
+         cx="275.10873"
+         cy="546.37256"
+         rx="3.314563"
+         ry="2.9610097"
+         inkscape:label="Persimpangan Masuk Dan Keluar Area Parkir Mobil Atas" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Belok_Masuk_ke_Jalan_Bawah_Menuju_ke_Ramp_Parkir"
+         cx="276.30197"
+         cy="650.71503"
+         rx="5.1269999"
+         ry="3.3587573"
+         inkscape:label="Belok Masuk ke Jalan Bawah Menuju ke Ramp Parkir" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Persimpangan_Khusus_Pengunjung_RS"
+         cx="471.99377"
+         cy="652.48279"
+         rx="8.132"
+         ry="4.7729707"
+         inkscape:label=" Persimpangan Khusus Pengunjung Untuk Akses ke Gedung RS" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung"
+         cx="1246.0989"
+         cy="651.42212"
+         rx="4.4190001"
+         ry="3.7123106"
+         inkscape:label="Persimpangan Khusus Pengunjung RS Untuk ke Tangga Pengunjung" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Masuk_ke_Ramp_Parkir_Untuk_Keluar_dari_Area_Parkir"
+         cx="1246.2758"
+         cy="350.3714"
+         rx="3.1819999"
+         ry="2.8284271"
+         inkscape:label="Masuk ke Ramp Parkir Untuk Keluar dari Area Parkir" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Check_Point_Tangga_Pengunjung_Parkir_Lantai_2"
+         cx="1293.6519"
+         cy="651.59888"
+         rx="2.1210001"
+         ry="3.1819806"
+         inkscape:label="Check Point Tangga Pengunjung Parkir Lantai 2" /><ellipse
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.157;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         id="Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_"
+         cx="471.79489"
+         cy="766.23859"
+         rx="3.9549999"
+         ry="1.7235727"
+         inkscape:label="Check Point Jembatan Keluar Dari Area Parkir (Pengunjung)" /></g></g></svg>

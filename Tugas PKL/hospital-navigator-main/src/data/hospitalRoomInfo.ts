@@ -313,6 +313,20 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Sisi kiri atas peta",
     description: "Tangga Darurat",
   },
+  Lift_Lantai_2: {
+    id: "Lift_Lantai_2",
+    name: "Lift Lantai 2",
+    category: "Facility",
+    locationHint: "Koridor tengah-kanan peta lantai 2",
+    description: "Akses lift untuk perpindahan antar lantai rumah sakit.",
+  },
+  Tangga_Lantai_2: {
+    id: "Tangga_Lantai_2",
+    name: "Tangga Lantai 2",
+    category: "Facility",
+    locationHint: "Koridor tengah-kanan peta lantai 2",
+    description: "Akses tangga untuk perpindahan antar lantai rumah sakit.",
+  },
   "R._Korea": {
     id: "R._Korea",
     name: "R. Korea",
@@ -523,6 +537,20 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Lantai 2",
     description: "Ruang konsultasi dokter untuk pasien rawat jalan.",
   },
+  Parking_Lantai_1: {
+    id: "Parking_Lantai_1",
+    name: "Lahan Parkir",
+    category: "Facility",
+    locationHint: "Area parkir kendaraan rumah sakit",
+    description: "Area parkir kendaraan pengunjung dan tenaga medis. Tersedia parkir sepeda motor dan mobil.",
+  },
+  Parking_Lantai_2: {
+    id: "Parking_Lantai_2",
+    name: "Lahan Parkir Lantai 2",
+    category: "Facility",
+    locationHint: "Area parkir lantai 2 rumah sakit",
+    description: "Area parkir lantai 2 dengan akses langsung ke gedung rumah sakit lantai 2 melalui jembatan penghubung.",
+  },
 };
 
 const FLOOR_1_LABEL_CONFIG_BY_SVG_ID: Record<string, HospitalRoomLabelConfig> = {
@@ -605,6 +633,7 @@ const FLOOR_2_LABEL_CONFIG_BY_SVG_ID: Record<string, HospitalRoomLabelConfig> = 
   "R._Arsip_Utama": { ...FLOOR_2_LABEL_BASE_CONFIG, width: 112, x: 0, y: 0, fontSize: 8.4, fill: "#1a53c8" },
   "R._Konsultasi_Dokter": { ...FLOOR_2_LABEL_BASE_CONFIG, width: 80, x: 1, y: -7, fontSize: 7.8 },
   Gudang_Alat_Medis_Steril: { ...FLOOR_2_LABEL_BASE_CONFIG, width: 90, x: 0, y: 0, fontSize: 11 },
+  Parking_Lantai_1: { ...FLOOR_2_LABEL_BASE_CONFIG, width: 130, x: 0, y: 0, fontSize: 9 },
 };
 
 export const roomLabelConfigBySvgId: Record<string, HospitalRoomLabelConfig> = {
