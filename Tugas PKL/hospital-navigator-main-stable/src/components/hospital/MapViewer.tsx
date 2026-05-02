@@ -35,7 +35,6 @@ interface MapViewerProps {
   onClearSelection?: () => void;
   highlightCategory?: "departments" | "facilities" | "emergency" | null;
   onStartNavigation?: (options?: { mode?: "manual" | "qr" }) => void;
-  language?: "id" | "en";
   navigationStartRequest?: {
     requestId: number;
     roomId: string;
@@ -50,27 +49,9 @@ const MapViewer = ({
   onClearSelection,
   highlightCategory,
   onStartNavigation,
-  language = "id",
   navigationStartRequest,
   onNavigationStartRequestHandled,
 }: MapViewerProps) => {
-  const floorCopy = language === "id"
-    ? {
-        floor1: "Lantai 1",
-        floor2: "Lantai 2",
-        parking1: "Parkir L1",
-        parking2: "Parkir L2",
-        parking1Title: "Tampilkan peta lahan parkir lantai 1",
-        parking2Title: "Tampilkan peta lahan parkir lantai 2",
-      }
-    : {
-        floor1: "Floor 1",
-        floor2: "Floor 2",
-        parking1: "Parking L1",
-        parking2: "Parking L2",
-        parking1Title: "Show parking map level 1",
-        parking2Title: "Show parking map level 2",
-      };
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
@@ -139,7 +120,6 @@ const MapViewer = ({
   const lastRerouteAtRef = useRef(0);
   const preferRoomCenterStartRef = useRef(false);
   const pendingSearchZoomRoomIdRef = useRef<string | null>(null);
-  const lastLoggedRouteRef = useRef<string | null>(null); // Track last logged route to avoid duplicate logs
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
@@ -179,7 +159,7 @@ const MapViewer = ({
       label: "Lift",
       rooms: {
         1: "Lift_Lantai_1",
-        2: "Lift_Lantai_2",
+        2: "Lift_Lantai_1-2",
       } as const,
     },
     {
@@ -187,7 +167,7 @@ const MapViewer = ({
       label: "Tangga utama",
       rooms: {
         1: "Tangga_Lantai_1",
-        2: "Tangga_Lantai_2",
+        2: "Tangga_Lantai_1-7",
       } as const,
     },
     {
@@ -231,7 +211,7 @@ const MapViewer = ({
           const svgText = await response.text();
           nextDocs[floor] = parser.parseFromString(svgText, "image/svg+xml");
         } catch (error) {
-          // SVG preload failed
+          console.warn(`[MapViewer] gagal preload SVG lantai ${floor}`, error);
         }
       }
 
@@ -244,10 +224,17 @@ const MapViewer = ({
 
       // Load parking SVG for pathfinding
       try {
-        const res = await fetch("/images/Lahan%20Parkir%20Lantai%201.svg");
-        if (res.ok) {
-          const text = await res.text();
-          if (!isCancelled) setParkingSvgDoc(parser.parseFromString(text, "image/svg+xml"));
+        const parkingDoc = showParkingMap && parkingFloor === 1
+          ? objectRef.current?.contentDocument ?? null
+          : null;
+        if (parkingDoc) {
+          if (!isCancelled) setParkingSvgDoc(parkingDoc);
+        } else {
+          const res = await fetch("/images/Lahan%20Parkir%20Lantai%201.svg");
+          if (res.ok) {
+            const text = await res.text();
+            if (!isCancelled) setParkingSvgDoc(parser.parseFromString(text, "image/svg+xml"));
+          }
         }
       } catch {
         // parking SVG optional
@@ -255,10 +242,17 @@ const MapViewer = ({
 
       // Load parking floor 2 SVG for pathfinding
       try {
-        const res = await fetch("/images/Lahan%20Parkir%20Lantai%202.svg");
-        if (res.ok) {
-          const text = await res.text();
-          if (!isCancelled) setParking2SvgDoc(parser.parseFromString(text, "image/svg+xml"));
+        const parking2Doc = showParkingMap && parkingFloor === 2
+          ? objectRef.current?.contentDocument ?? null
+          : null;
+        if (parking2Doc) {
+          if (!isCancelled) setParking2SvgDoc(parking2Doc);
+        } else {
+          const res = await fetch("/images/Lahan%20Parkir%20Lantai%202.svg");
+          if (res.ok) {
+            const text = await res.text();
+            if (!isCancelled) setParking2SvgDoc(parser.parseFromString(text, "image/svg+xml"));
+          }
         }
       } catch {
         // parking floor 2 SVG optional
@@ -398,16 +392,11 @@ const MapViewer = ({
 
   const getRouteSegmentForFloor = useCallback((route: RoomRouteResult | null, floor: 1 | 2) => {
     if (!route) return null;
-    const visibleFloor: -1 | 0 | 1 | 2 = showParkingMap ? (parkingFloor === 1 ? 0 : -1) : floor;
-    const segment = route.floorSegments?.find((item) => item.floor === visibleFloor);
-    if (segment) return segment;
-
-    if (showParkingMap) {
+    if (showParkingMap && parkingFloor === 2) {
       const startFloor = Object.values(QR_ANCHOR_REGISTRY).find((anchor) => anchor.roomId === route.startRoomId)?.floor;
       const endFloor = Object.values(QR_ANCHOR_REGISTRY).find((anchor) => anchor.roomId === route.endRoomId)?.floor;
-      const parkingFloorValue = parkingFloor === 1 ? 0 : -1;
-      const involvesActiveParkingFloor = startFloor === parkingFloorValue || endFloor === parkingFloorValue;
-      if (involvesActiveParkingFloor && (!route.floorSegments || route.floorSegments.length === 0)) {
+      const involvesParkingFloor2 = startFloor === -1 || endFloor === -1;
+      if (involvesParkingFloor2) {
         return {
           floor,
           checkpointIds: route.checkpointIds,
@@ -417,6 +406,9 @@ const MapViewer = ({
       }
     }
 
+    const segment = route.floorSegments?.find((item) => item.floor === floor);
+    if (segment) return segment;
+    
     // If no specific segment for this floor, check if route is single-floor
     // Only show route if it doesn't have floorSegments (meaning it's a single-floor route)
     if (!route.floorSegments || route.floorSegments.length === 0) {
@@ -443,13 +435,13 @@ const MapViewer = ({
   }, [resolveFloorForRoom]);
 
   // Physical connection points between the parking SVG and hospital floor-1 SVG.
-  // Hospital SVG: Check_Point_Lahan_Parkir  cx=704.67902  cy=108.32964
-  // Parking SVG:  Check_Point_Keluar_dari_Lahan_Parkir  cx=1181.4375  cy=751.0
+  // Hospital SVG: Check_Point_Lahan_Parkir  cx=463.429  cy=133.196
+  // Parking SVG:  Check_Point_Tangga_Pengunjung  cx=1181.4375  cy=751.0
   const PARKING_CONN = useMemo(() => ({
     hospitalNodeId: "Check_Point_Lahan_Parkir",
-    hospitalX: 704.67902,
-    hospitalY: 108.32964,
-    parkingNodeId: "Check_Point_Keluar_dari_Lahan_Parkir",
+    hospitalX: 463.429,
+    hospitalY: 133.196,
+    parkingNodeId: "Check_Point_Tangga_Pengunjung",
     parkingX: 1181.4375,
     parkingY: 751.0,
   }), []);
@@ -523,270 +515,6 @@ const MapViewer = ({
       };
     }
 
-    // Parking L1 <-> Parking L2 uses the visitor stair between the two parking maps.
-    if ((startFloor === 0 && endFloor === -1) || (startFloor === -1 && endFloor === 0)) {
-      const parkL1Doc = getDoc(0);
-      const parkL2Doc = getDoc(-1);
-      if (!parkL1Doc || !parkL2Doc) return null;
-
-      const isL1Start = startFloor === 0;
-      const parkingL1RoomId = isL1Start ? startRoomIdParam : endRoomIdParam;
-      const parkingL2RoomId = isL1Start ? endRoomIdParam : startRoomIdParam;
-
-      const l1Anchor = Object.values(QR_ANCHOR_REGISTRY).find(
-        (a) => a.roomId === parkingL1RoomId && a.floor === 0
-      );
-      const l2Anchor = Object.values(QR_ANCHOR_REGISTRY).find(
-        (a) => a.roomId === parkingL2RoomId && a.floor === -1
-      );
-      if (!l1Anchor || !l2Anchor) return null;
-
-      const l1StairCheckpoint = {
-        nodeId: "Check_Point_Tangga_Pengunjung",
-        x: 1293.9375,
-        y: 644.75,
-      };
-      const l2StairExit = {
-        nodeId: "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2",
-        x: 1293.6519,
-        y: 651.59888,
-      };
-
-      const l1AnchorNodeId = l1Anchor.routeNodeId || parkingL1RoomId;
-      const l2AnchorNodeId = l2Anchor.routeNodeId || parkingL2RoomId;
-
-      injectVirtualAnchorNode(parkL1Doc, l1AnchorNodeId, l1Anchor.svgX, l1Anchor.svgY);
-      injectVirtualAnchorNode(parkL1Doc, l1StairCheckpoint.nodeId, l1StairCheckpoint.x, l1StairCheckpoint.y);
-      injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
-      injectVirtualAnchorNode(parkL2Doc, l2AnchorNodeId, l2Anchor.svgX, l2Anchor.svgY);
-
-      const parkingL1Segment = isL1Start
-        ? buildRouteFromPoint(
-            l1AnchorNodeId,
-            l1Anchor.svgX,
-            l1Anchor.svgY,
-            l1StairCheckpoint.nodeId,
-            parkL1Doc,
-            "point_to_point",
-          )
-        : buildRouteFromPoint(
-            l1StairCheckpoint.nodeId,
-            l1StairCheckpoint.x,
-            l1StairCheckpoint.y,
-            l1AnchorNodeId,
-            parkL1Doc,
-            "point_to_point",
-          );
-
-      const parkingL2Segment = isL1Start
-        ? buildRouteFromPoint(
-            l2StairExit.nodeId,
-            l2StairExit.x,
-            l2StairExit.y,
-            l2AnchorNodeId,
-            parkL2Doc,
-            "point_to_point",
-          )
-        : buildRouteFromPoint(
-            l2AnchorNodeId,
-            l2Anchor.svgX,
-            l2Anchor.svgY,
-            l2StairExit.nodeId,
-            parkL2Doc,
-            "point_to_point",
-          );
-
-      if (!parkingL1Segment || !parkingL2Segment) return null;
-
-      const activeSegment = showParkingMap && parkingFloor === 2 ? parkingL2Segment : parkingL1Segment;
-
-      return {
-        startRoomId: startRoomIdParam,
-        endRoomId: endRoomIdParam,
-        checkpointIds: isL1Start
-          ? [
-              ...parkingL1Segment.checkpointIds,
-              "transition_parking_l1_stair",
-              ...parkingL2Segment.checkpointIds,
-            ]
-          : [
-              ...parkingL2Segment.checkpointIds,
-              "transition_parking_l2_stair",
-              ...parkingL1Segment.checkpointIds,
-            ],
-        points: activeSegment.points,
-        totalDistance: parkingL1Segment.totalDistance + parkingL2Segment.totalDistance,
-        floorSegments: [
-          {
-            floor: 0,
-            checkpointIds: parkingL1Segment.checkpointIds,
-            points: parkingL1Segment.points,
-            totalDistance: parkingL1Segment.totalDistance,
-          },
-          {
-            floor: -1,
-            checkpointIds: parkingL2Segment.checkpointIds,
-            points: parkingL2Segment.points,
-            totalDistance: parkingL2Segment.totalDistance,
-          },
-        ],
-        floorsInvolved: [0, -1],
-        transitionLabel: "Tangga Pengunjung Parkir L1 ke Parkir L2",
-      };
-    }
-
-    // Parking L1 -> Hospital L2 must go through the visitor stair to Parking L2,
-    // then continue across the Parking L2 bridge into the hospital.
-    if (startFloor === 0 && endFloor === 2) {
-      const parkL1Doc = getDoc(0);
-      const parkL2Doc = getDoc(-1);
-      const hospitalL2Doc = getDoc(2);
-      if (!parkL1Doc || !parkL2Doc || !hospitalL2Doc) return null;
-
-      const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
-        (a) => a.roomId === startRoomIdParam && a.floor === 0
-      );
-      if (!parkAnchor) return null;
-
-      const l1StairCheckpoint = {
-        nodeId: "Check_Point_Tangga_Pengunjung",
-        x: 1293.9375,
-        y: 644.75,
-      };
-      const l2StairExit = {
-        nodeId: "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2",
-        roomId: "Tangga_Pengunjung_Lahan_Parkir_ke_Lantai_2-2",
-        x: 1293.6519,
-        y: 651.59888,
-      };
-      const l2BridgeTurn = {
-        nodeId: "Persimpangan_Khusus_Pengunjung_RS",
-        x: 471.99377,
-        y: 652.48279,
-      };
-
-      const startNodeId = parkAnchor.routeNodeId || startRoomIdParam;
-      injectVirtualAnchorNode(parkL1Doc, startNodeId, parkAnchor.svgX, parkAnchor.svgY);
-      injectVirtualAnchorNode(
-        parkL1Doc,
-        l1StairCheckpoint.nodeId,
-        l1StairCheckpoint.x,
-        l1StairCheckpoint.y,
-      );
-      injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
-      injectVirtualAnchorNode(parkL2Doc, l2BridgeTurn.nodeId, l2BridgeTurn.x, l2BridgeTurn.y);
-      injectVirtualAnchorNode(
-        parkL2Doc,
-        PARKING2_CONN.parkingNodeId,
-        PARKING2_CONN.parkingX,
-        PARKING2_CONN.parkingY,
-      );
-      injectVirtualAnchorNode(
-        hospitalL2Doc,
-        PARKING2_CONN.hospitalNodeId,
-        PARKING2_CONN.hospitalX,
-        PARKING2_CONN.hospitalY,
-      );
-
-      const parkingL1Segment = buildRouteFromPoint(
-        startNodeId,
-        parkAnchor.svgX,
-        parkAnchor.svgY,
-        l1StairCheckpoint.nodeId,
-        parkL1Doc,
-        "point_to_point",
-      );
-      if (!parkingL1Segment) return null;
-
-      const parkingL2ToBridgeTurn = buildRouteFromPoint(
-        l2StairExit.nodeId,
-        l2StairExit.x,
-        l2StairExit.y,
-        l2BridgeTurn.nodeId,
-        parkL2Doc,
-        "point_to_point",
-      );
-      const parkingL2ToBridgeExit = buildRouteFromPoint(
-        l2BridgeTurn.nodeId,
-        l2BridgeTurn.x,
-        l2BridgeTurn.y,
-        PARKING2_CONN.parkingNodeId,
-        parkL2Doc,
-        "point_to_point",
-      );
-      if (!parkingL2ToBridgeTurn || !parkingL2ToBridgeExit) return null;
-
-      const parkingL2Segment: RoomRouteResult = {
-        startRoomId: l2StairExit.roomId,
-        endRoomId: PARKING2_CONN.parkingNodeId,
-        checkpointIds: [
-          ...parkingL2ToBridgeTurn.checkpointIds,
-          ...parkingL2ToBridgeExit.checkpointIds.slice(1),
-        ],
-        points: [
-          ...parkingL2ToBridgeTurn.points,
-          ...parkingL2ToBridgeExit.points.slice(1),
-        ],
-        totalDistance: parkingL2ToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
-      };
-
-      const hospitalSegment = buildRouteFromPoint(
-        PARKING2_CONN.hospitalNodeId,
-        PARKING2_CONN.hospitalX,
-        PARKING2_CONN.hospitalY,
-        endRoomIdParam,
-        hospitalL2Doc,
-        "point_to_room",
-      );
-      if (!hospitalSegment) return null;
-
-      const activeSegment =
-        showParkingMap && parkingFloor === 1
-          ? parkingL1Segment
-          : showParkingMap && parkingFloor === 2
-            ? parkingL2Segment
-            : hospitalSegment;
-
-      return {
-        startRoomId: startRoomIdParam,
-        endRoomId: endRoomIdParam,
-        checkpointIds: [
-          ...parkingL1Segment.checkpointIds,
-          "transition_parking_l1_stair",
-          ...parkingL2Segment.checkpointIds,
-          "transition_parking_l2_bridge",
-          ...hospitalSegment.checkpointIds,
-        ],
-        points: activeSegment.points,
-        totalDistance:
-          parkingL1Segment.totalDistance +
-          parkingL2Segment.totalDistance +
-          hospitalSegment.totalDistance,
-        floorSegments: [
-          {
-            floor: 0,
-            checkpointIds: parkingL1Segment.checkpointIds,
-            points: parkingL1Segment.points,
-            totalDistance: parkingL1Segment.totalDistance,
-          },
-          {
-            floor: -1,
-            checkpointIds: parkingL2Segment.checkpointIds,
-            points: parkingL2Segment.points,
-            totalDistance: parkingL2Segment.totalDistance,
-          },
-          {
-            floor: 2,
-            checkpointIds: hospitalSegment.checkpointIds,
-            points: hospitalSegment.points,
-            totalDistance: hospitalSegment.totalDistance,
-          },
-        ],
-        floorsInvolved: [0, -1, 2],
-        transitionLabel: "Tangga Pengunjung Parkir L1 ke Jembatan Parkir L2",
-      };
-    }
-
     // ── Cross: parking L1 (0) ↔ hospital L1 ──────────────────────────────────
     if (startFloor === 0 || endFloor === 0) {
       const hospitalFloor: 1 | 2 = startFloor === 0 ? (endFloor as 1 | 2) : (startFloor as 1 | 2);
@@ -813,65 +541,12 @@ const MapViewer = ({
       let parkingSegment, hospitalSegment;
 
       if (isParkingStart) {
-        // Parking → Hospital: Start from QR anchor, route to Check_Point_Keluar_dari_Lahan_Parkir
-        console.log(`🅿️ Parking → Hospital: Start from parking QR anchor`);
-        
-        // Find QR anchor for parking
-        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
-          (a) => a.roomId === parkingRoomId && a.floor === 0
-        );
-        
-        if (!parkAnchor) {
-          console.log(`🅿️ ⚠️ No QR anchor found for ${parkingRoomId}`);
-          return null;
-        }
-        
-        console.log(`🅿️ QR anchor: ${parkAnchor.qrId} at (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
-        console.log(`🅿️ Route node ID: ${parkAnchor.routeNodeId || 'none'}`);
-        
-        // Use the routeNodeId if available, otherwise use parkingRoomId
-        const startNodeId = parkAnchor.routeNodeId || parkingRoomId;
-        
-        // Inject both start and end nodes
-        injectVirtualAnchorNode(parkDoc, startNodeId, parkAnchor.svgX, parkAnchor.svgY);
-        injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
-        
-        console.log(`🅿️ Routing point-to-point: ${startNodeId} (${parkAnchor.svgX}, ${parkAnchor.svgY}) → ${conn.parkingNodeId} (${conn.parkingX}, ${conn.parkingY})`);
-        
-        // Use buildRouteFromPoint with point_to_point mode
+        // Parking → Hospital: parkingRoom → connector, connector → hospitalRoom
         parkingSegment = buildRouteFromPoint(
-          startNodeId,
-          parkAnchor.svgX,
-          parkAnchor.svgY,
-          conn.parkingNodeId,
-          parkDoc,
-          "point_to_point",
+          conn.parkingNodeId, conn.parkingX, conn.parkingY,
+          parkingRoomId, parkDoc,
+          "room_to_point",
         );
-        
-        if (parkingSegment) {
-          // ✅ FORCE OVERRIDE: Ensure first & last checkpoints are correct
-          const ids = parkingSegment.checkpointIds;
-          
-          // Force start checkpoint to be the start node
-          if (ids[0] !== startNodeId) {
-            ids.unshift(startNodeId);
-            console.log(`🅿️ ✓ Forced start checkpoint: ${startNodeId}`);
-          }
-          
-          // Force end checkpoint to be the parking connector
-          if (ids[ids.length - 1] !== conn.parkingNodeId) {
-            ids.push(conn.parkingNodeId);
-            console.log(`🅿️ ✓ Forced end checkpoint: ${conn.parkingNodeId}`);
-          }
-          
-          console.log(`🅿️ ✓ Parking segment: ${startNodeId} → ${conn.parkingNodeId}`);
-          console.log(`🅿️   Checkpoints: ${parkingSegment.checkpointIds.length} nodes`);
-          console.log(`🅿️   First: ${parkingSegment.checkpointIds[0]}`);
-          console.log(`🅿️   Last: ${parkingSegment.checkpointIds[parkingSegment.checkpointIds.length - 1]}`);
-        } else {
-          console.log(`🅿️ ⚠️ Failed to create parking segment`);
-        }
-        
         hospitalSegment = buildRouteFromPoint(
           conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
           hospitalRoomId, hospitalDoc,
@@ -879,109 +554,16 @@ const MapViewer = ({
         );
       } else {
         // Hospital → Parking: hospitalRoom → connector, connector → parkingRoom
-        if (options?.useExactStartPoint && options?.startPoint) {
-          hospitalSegment = buildRouteForRooms(
-            hospitalRoomId,
-            conn.hospitalNodeId,
-            hospitalDoc,
-            options,
-          );
-          if (!hospitalSegment) {
-            const virtualStartNodeId = `virtual_qr_start_${hospitalRoomId}`;
-            injectVirtualAnchorNode(
-              hospitalDoc,
-              virtualStartNodeId,
-              options.startPoint.x,
-              options.startPoint.y,
-            );
-
-            hospitalSegment = buildRouteFromPoint(
-              virtualStartNodeId,
-              options.startPoint.x,
-              options.startPoint.y,
-              conn.hospitalNodeId,
-              hospitalDoc,
-              "point_to_point",
-            );
-          }
-          if (!hospitalSegment) {
-            hospitalSegment = buildRouteFromPoint(
-              conn.hospitalNodeId,
-              conn.hospitalX,
-              conn.hospitalY,
-              hospitalRoomId,
-              hospitalDoc,
-              "room_to_point",
-            );
-          }
-        } else {
-          hospitalSegment = buildRouteFromPoint(
-            conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
-            hospitalRoomId, hospitalDoc,
-            "room_to_point",
-          );
-        }
-        
-        // For Hospital → Parking L1, ALWAYS route from Check_Point_Keluar_dari_Lahan_Parkir
-        // to the specific QR anchor location using point-to-point routing
-        console.log(`🅿️ Hospital → Parking L1: Using fixed start point: ${conn.parkingNodeId}`);
-        
-        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
-          (a) => a.roomId === parkingRoomId && a.floor === 0
+        hospitalSegment = buildRouteFromPoint(
+          conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
+          hospitalRoomId, hospitalDoc,
+          "room_to_point",
         );
-
-        if (!parkAnchor) {
-          console.log(`🅿️ ⚠️ No QR anchor found for ${parkingRoomId}`);
-          return null;
-        }
-
-        console.log(`🅿️ QR anchor: ${parkAnchor.qrId} at (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
-        console.log(`🅿️ Route node ID: ${parkAnchor.routeNodeId || 'none'}`);
-
-        // Use the routeNodeId if available, otherwise use parkingRoomId
-        const endpointNodeId = parkAnchor.routeNodeId || parkingRoomId;
-        
-        // Inject both start and end nodes to ensure they exist
-        injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
-        injectVirtualAnchorNode(parkDoc, endpointNodeId, parkAnchor.svgX, parkAnchor.svgY);
-        
-        console.log(`🅿️ Routing point-to-point: ${conn.parkingNodeId} (${conn.parkingX}, ${conn.parkingY}) → ${endpointNodeId} (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
-
-        // Use buildRouteFromPoint with point_to_point mode to ensure exact coordinates are used
         parkingSegment = buildRouteFromPoint(
-          conn.parkingNodeId,
-          conn.parkingX,
-          conn.parkingY,
-          endpointNodeId,
-          parkDoc,
-          "point_to_point",
+          conn.parkingNodeId, conn.parkingX, conn.parkingY,
+          parkingRoomId, parkDoc,
+          "point_to_room",
         );
-        
-        if (parkingSegment) {
-          // ✅ FORCE OVERRIDE: Ensure first & last checkpoints are correct
-          // This fixes the issue where virtual nodes don't have edges in graph
-          const ids = parkingSegment.checkpointIds;
-          
-          // Force start checkpoint to be the parking connector
-          if (ids[0] !== conn.parkingNodeId) {
-            ids.unshift(conn.parkingNodeId);
-            console.log(`🅿️ ✓ Forced start checkpoint: ${conn.parkingNodeId}`);
-          }
-          
-          // Force end checkpoint to be the endpoint node
-          if (ids[ids.length - 1] !== endpointNodeId) {
-            ids.push(endpointNodeId);
-            console.log(`🅿️ ✓ Forced end checkpoint: ${endpointNodeId}`);
-          }
-          
-          console.log(`🅿️ ✓ Parking segment created successfully`);
-          console.log(`🅿️   Checkpoints: ${parkingSegment.checkpointIds.length} nodes`);
-          console.log(`🅿️   First: ${parkingSegment.checkpointIds[0]}`);
-          console.log(`🅿️   Last: ${parkingSegment.checkpointIds[parkingSegment.checkpointIds.length - 1]}`);
-          console.log(`🅿️   Distance: ${parkingSegment.totalDistance.toFixed(2)} units`);
-        } else {
-          console.log(`🅿️ ⚠️ Failed to create parking segment`);
-        }
       }
 
       // Show whichever segment matches the currently visible map
@@ -998,20 +580,12 @@ const MapViewer = ({
         ],
         points: activeSegment.points,
         totalDistance: (parkingSegment?.totalDistance ?? 0) + (hospitalSegment?.totalDistance ?? 0),
-        floorSegments: [
-          ...(parkingSegment ? [{
-            floor: 0 as const,
-            checkpointIds: parkingSegment.checkpointIds,
-            points: parkingSegment.points,
-            totalDistance: parkingSegment.totalDistance,
-          }] : []),
-          ...(hospitalSegment ? [{
-            floor: hospitalFloor,
-            checkpointIds: hospitalSegment.checkpointIds,
-            points: hospitalSegment.points,
-            totalDistance: hospitalSegment.totalDistance,
-          }] : []),
-        ],
+        floorSegments: hospitalSegment ? [{
+          floor: hospitalFloor,
+          checkpointIds: hospitalSegment.checkpointIds,
+          points: hospitalSegment.points,
+          totalDistance: hospitalSegment.totalDistance,
+        }] : undefined,
         floorsInvolved: [hospitalFloor],
         transitionLabel: "Tangga Pengunjung Parkir",
       };
@@ -1050,39 +624,18 @@ const MapViewer = ({
           const l2ConnectorRoomId = connector.rooms[2];
           const l1ConnectorRoomId = connector.rooms[1];
 
-          const l2Segment = isParkingStart
-            ? buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc)
-            : buildRouteForRooms(l2ConnectorRoomId, conn.hospitalNodeId, hospitalL2Doc);
-
-          const l1Segment = isParkingStart
-            ? buildRouteForRooms(
-                l1ConnectorRoomId,
-                hospitalL1RoomId,
-                hospitalL1Doc,
-                { endPoint: options?.endPoint },
-              )
-            : buildRouteForRooms(
-                hospitalL1RoomId,
-                l1ConnectorRoomId,
-                hospitalL1Doc,
-                {
-                  startPoint: options?.startPoint,
-                  useExactStartPoint: options?.useExactStartPoint,
-                  startNodeId: options?.startNodeId,
-                },
-              );
+          const l2Segment = buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc);
+          const l1Segment = buildRouteForRooms(l1ConnectorRoomId, hospitalL1RoomId, hospitalL1Doc, { endPoint: options?.endPoint });
           if (!l2Segment || !l1Segment) return;
 
           const candidateDistance = l2Segment.totalDistance + l1Segment.totalDistance;
           if (bestL2L1Route && bestL2L1Route.totalDistance <= candidateDistance) return;
 
           bestL2L1Route = {
-            startRoomId: isParkingStart ? conn.hospitalNodeId : hospitalL1RoomId,
-            endRoomId: isParkingStart ? hospitalL1RoomId : conn.hospitalNodeId,
-            checkpointIds: isParkingStart
-              ? [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds]
-              : [...l1Segment.checkpointIds, `transition_${connector.id}`, ...l2Segment.checkpointIds],
-            points: isParkingStart ? l1Segment.points : l2Segment.points,
+            startRoomId: conn.hospitalNodeId,
+            endRoomId: hospitalL1RoomId,
+            checkpointIds: [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds],
+            points: l1Segment.points,
             totalDistance: candidateDistance,
             floorSegments: [
               { floor: 2, checkpointIds: l2Segment.checkpointIds, points: l2Segment.points, totalDistance: l2Segment.totalDistance },
@@ -1099,25 +652,11 @@ const MapViewer = ({
         // Build parking L2 segment
         let parkingSegment: RoomRouteResult | null = null;
         if (isParkingStart) {
-          if (parkAnchor) {
-            parkingSegment = buildRouteForRooms(
-              parkingRoomId,
-              conn.parkingNodeId,
-              parkDoc,
-              {
-                startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
-                useExactStartPoint: true,
-                startNodeId: parkAnchor.routeNodeId,
-              },
-            );
-          }
-          if (!parkingSegment) {
-            parkingSegment = buildRouteFromPoint(
-              conn.parkingNodeId, conn.parkingX, conn.parkingY,
-              parkingRoomId, parkDoc,
-              "room_to_point",
-            );
-          }
+          parkingSegment = buildRouteFromPoint(
+            conn.parkingNodeId, conn.parkingX, conn.parkingY,
+            parkingRoomId, parkDoc,
+            "room_to_point",
+          );
         } else {
           parkingSegment = buildRouteFromPoint(
             conn.parkingNodeId, conn.parkingX, conn.parkingY,
@@ -1153,29 +692,17 @@ const MapViewer = ({
         return {
           startRoomId: startRoomIdParam,
           endRoomId: endRoomIdParam,
-          checkpointIds: isParkingStart
-            ? [
-                ...(parkingSegment.checkpointIds ?? []),
-                "transition_parking_l2",
-                ...(bestL2L1Route.checkpointIds ?? []),
-              ]
-            : [
-                ...(bestL2L1Route.checkpointIds ?? []),
-                "transition_parking_l2",
-                ...(parkingSegment.checkpointIds ?? []),
-              ],
+          checkpointIds: [
+            ...(parkingSegment.checkpointIds ?? []),
+            "transition_parking_l2",
+            ...(bestL2L1Route.checkpointIds ?? []),
+          ],
           points: activeSegment.points,
           totalDistance: parkingSegment.totalDistance + bestL2L1Route.totalDistance,
           floorSegments: [
-            {
-              floor: -1,
-              checkpointIds: parkingSegment.checkpointIds,
-              points: parkingSegment.points,
-              totalDistance: parkingSegment.totalDistance,
-            },
             ...(bestL2L1Route.floorSegments ?? []),
           ],
-          floorsInvolved: [-1, 2, 1],
+          floorsInvolved: [2, 1],
           transitionLabel: `Jembatan Parkir L2 → ${bestConnectorLabel}`,
         };
       }
@@ -1206,26 +733,12 @@ const MapViewer = ({
 
       if (isParkingStart) {
         // Parking L2 → Hospital L2: parkingRoom → connector, connector → hospitalRoom
-        if (parkAnchor) {
-          parkingSegment = buildRouteForRooms(
-            parkingRoomId,
-            conn.parkingNodeId,
-            parkDoc,
-            {
-              startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
-              useExactStartPoint: true,
-              startNodeId: parkAnchor.routeNodeId,
-            },
-          );
-        }
-        if (!parkingSegment) {
-          parkingSegment = buildRouteFromPoint(
-            conn.parkingNodeId, conn.parkingX, conn.parkingY,
-            parkingRoomId, parkDoc,
-            "room_to_point",
-          );
-        }
-
+        parkingSegment = buildRouteFromPoint(
+          conn.parkingNodeId, conn.parkingX, conn.parkingY,
+          parkingRoomId, parkDoc,
+          "room_to_point",
+        );
+        
         hospitalSegment = buildRouteFromPoint(
           conn.hospitalNodeId, conn.hospitalX, conn.hospitalY,
           hospitalRoomId, hospitalDoc,
@@ -1245,6 +758,7 @@ const MapViewer = ({
           if (!hospitalSegment) {
           const virtualStartNodeId = `virtual_qr_start_${hospitalRoomId}`;
           injectVirtualAnchorNode(hospitalDoc, virtualStartNodeId, options.startPoint.x, options.startPoint.y);
+          console.log(`[Parking L2] Hospital→Parking: Injected virtual start node at QR coordinates:`, options.startPoint);
           
           // Route from virtual QR node (exact coordinates) to connector node (exact coordinates)
           hospitalSegment = buildRouteFromPoint(
@@ -1293,20 +807,12 @@ const MapViewer = ({
         ],
         points: activeSegment.points,
         totalDistance: (parkingSegment?.totalDistance ?? 0) + (hospitalSegment?.totalDistance ?? 0),
-        floorSegments: [
-          ...(parkingSegment ? [{
-            floor: -1 as const,
-            checkpointIds: parkingSegment.checkpointIds,
-            points: parkingSegment.points,
-            totalDistance: parkingSegment.totalDistance,
-          }] : []),
-          ...(hospitalSegment ? [{
-            floor: 2 as const,
-            checkpointIds: hospitalSegment.checkpointIds,
-            points: hospitalSegment.points,
-            totalDistance: hospitalSegment.totalDistance,
-          }] : []),
-        ],
+        floorSegments: hospitalSegment ? [{
+          floor: 2,
+          checkpointIds: hospitalSegment.checkpointIds,
+          points: hospitalSegment.points,
+          totalDistance: hospitalSegment.totalDistance,
+        }] : undefined,
         floorsInvolved: [2],
         transitionLabel: "Jembatan Parkir Lantai 2",
       };
@@ -1371,6 +877,7 @@ const MapViewer = ({
     positionAtDragStart.current = { ...positionRef.current };
     // Kill CSS transition IMMEDIATELY — synchronous DOM write, no React cycle delay.
     if (mapRef.current) mapRef.current.style.transition = 'none';
+    console.log(`[MapViewer] 🟢 startDrag from <${source}> hostCoords=(${hostClientX.toFixed(0)}, ${hostClientY.toFixed(0)}), posSnapshot=`, positionAtDragStart.current);
     setIsDragging(true);
   }, []);
 
@@ -1382,6 +889,7 @@ const MapViewer = ({
       if (!isDraggingRef.current) return;
 
       if ((buttons & 1) === 0) {
+        console.log("[MapViewer] 🔴 button released outside — stopping drag");
         isDraggingRef.current = false;
         hasDraggedRef.current = false;
         if (mapRef.current) mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
@@ -1394,6 +902,7 @@ const MapViewer = ({
 
       if (!hasDraggedRef.current && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
         hasDraggedRef.current = true;
+        console.log(`[MapViewer] ↔️  drag threshold exceeded (dx=${dx.toFixed(1)}, dy=${dy.toFixed(1)})`);
       }
 
       const newPos = {
@@ -1410,6 +919,7 @@ const MapViewer = ({
       isDraggingRef.current = false;
       if (mapRef.current) mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
       setIsDragging(false);
+      console.log(`[MapViewer] 🔵 mouseup — resolved as: ${wasDrag ? "DRAG" : "CLICK"}`);
     };
 
     applyDragMoveRef.current = applyDragMove;
@@ -1731,16 +1241,19 @@ const MapViewer = ({
 
       if (category === "emergency") {
         const match = roomCategory === "Emergency";
+        console.log(`[Category] room="${room.id}" cat="${roomCategory}" → emergency match: ${match}`);
         return match;
       }
 
       if (category === "facilities") {
         const match = ["Facility", "Service", "Administration"].includes(roomCategory);
+        console.log(`[Category] room="${room.id}" cat="${roomCategory}" → facilities match: ${match}`);
         return match;
       }
 
       // departments — includes wards, treatment, outpatient, diagnostic, surgery, critical
       const match = ["Outpatient", "Critical Care", "Diagnostic", "Surgery", "Ward", "Treatment"].includes(roomCategory);
+      console.log(`[Category] room="${room.id}" cat="${roomCategory}" → departments match: ${match}`);
       return match;
     },
     []
@@ -1748,6 +1261,7 @@ const MapViewer = ({
 
   const ensureDynamicHighlightStyle = useCallback((svgDoc: Document) => {
     if (svgDoc.getElementById("mapviewer-dynamic-highlight-style")) {
+      console.log("[Category] ensureDynamicHighlightStyle: style already injected");
       return;
     }
 
@@ -1755,6 +1269,7 @@ const MapViewer = ({
     // CSS inside <defs> is not applied by browsers to SVG elements.
     const svgRoot = svgDoc.querySelector("svg");
     if (!svgRoot) {
+      console.warn("[Category] ensureDynamicHighlightStyle: no <svg> root found");
       return;
     }
 
@@ -1772,6 +1287,7 @@ const MapViewer = ({
     `;
 
     svgRoot.insertBefore(style, svgRoot.firstChild);
+    console.log("[Category] ensureDynamicHighlightStyle: style injected into SVG root");
   }, []);
 
   const ensureRouteStyle = useCallback((svgDoc: Document) => {
@@ -2356,6 +1872,7 @@ const MapViewer = ({
     // Deselect room on background click (only if not a drag)
     const rootClickHandler = () => {
       if (hasDraggedRef.current) return;
+      console.log("[MapViewer] 🖱️  background click — deselecting room");
       setActiveRoomInfo(null);
       setActiveRoomId(null);
     };
@@ -2428,41 +1945,54 @@ const MapViewer = ({
 
   const zoomToSvgElement = useCallback(
     (elementId: string) => {
+      console.log(`[MapViewer] 🔍 zoomToSvgElement called with elementId="${elementId}"`);
       
       const svgDoc = objectRef.current?.contentDocument;
       const container = containerRef.current;
       
+      console.log(`[MapViewer] 🔍 svgDoc=`, svgDoc ? 'exists' : 'NULL');
+      console.log(`[MapViewer] 🔍 container=`, container ? 'exists' : 'NULL');
       
       if (!svgDoc || !container) {
+        console.log(`[MapViewer] ❌ zoomToSvgElement ABORT: missing svgDoc or container`);
         return;
       }
 
       const target = asSvgGraphicsElement(svgDoc.getElementById(elementId));
+      console.log(`[MapViewer] 🔍 target element=`, target ? `found (tag=${target.tagName})` : 'NOT FOUND');
       
       if (!target) {
+        console.log(`[MapViewer] ❌ zoomToSvgElement ABORT: target is not an SVGGraphicsElement (no getBBox)`);
         return;
       }
 
       const svgRoot = svgDoc.querySelector("svg");
       if (!svgRoot) {
+        console.log(`[MapViewer] ❌ zoomToSvgElement ABORT: no svg root`);
         return;
       }
 
       const viewBox = svgRoot.viewBox.baseVal;
+      console.log(`[MapViewer] 🔍 viewBox=`, { x: viewBox.x, y: viewBox.y, w: viewBox.width, h: viewBox.height });
       
       if (!viewBox.width || !viewBox.height) {
+        console.log(`[MapViewer] ❌ zoomToSvgElement ABORT: invalid viewBox dimensions`);
         return;
       }
 
       const objectRect = objectRef.current!.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
       
+      console.log(`[MapViewer] 🔍 objectRect=`, { left: objectRect.left, top: objectRect.top, w: objectRect.width, h: objectRect.height });
+      console.log(`[MapViewer] 🔍 containerRect=`, { left: containerRect.left, top: containerRect.top, w: containerRect.width, h: containerRect.height });
 
       // Get the SVG-space bbox of the target element
       const bbox = target.getBBox();
       const svgCenterX = bbox.x + bbox.width / 2;
       const svgCenterY = bbox.y + bbox.height / 2;
       
+      console.log(`[MapViewer] 🔍 target bbox=`, { x: bbox.x, y: bbox.y, w: bbox.width, h: bbox.height });
+      console.log(`[MapViewer] 🔍 svgCenter=(${svgCenterX}, ${svgCenterY})`);
 
       // We need everything in "unscaled map-space" — the coordinate system of mapRef
       // before the CSS transform (translate + scale) is applied.
@@ -2478,6 +2008,7 @@ const MapViewer = ({
       const objCenterX = (svgCenterX - viewBox.x) * scaleSvgToObjNatural;
       const objCenterY = (svgCenterY - viewBox.y) * scaleSvgToObjNatural;
 
+      console.log(`[MapViewer] 🔍 scaleSvgToObjNatural=${scaleSvgToObjNatural.toFixed(4)}, objCenter=(${objCenterX.toFixed(1)}, ${objCenterY.toFixed(1)})`);
 
       // Position of the <object>'s top-left corner in unscaled map-space.
       // screenLeft = containerLeft + currentPos.x + mapLeft * currentScale  →  mapLeft = (screenLeft - containerLeft - currentPos.x) / currentScale
@@ -2488,6 +2019,7 @@ const MapViewer = ({
       const elementInMapX = objOffsetInMapX + objCenterX;
       const elementInMapY = objOffsetInMapY + objCenterY;
 
+      console.log(`[MapViewer] 🔍 objOffsetInMap=(${objOffsetInMapX.toFixed(1)}, ${objOffsetInMapY.toFixed(1)}), elementInMap=(${elementInMapX.toFixed(1)}, ${elementInMapY.toFixed(1)})`);
 
       // Desired zoom level
       const targetScale = 2.0;
@@ -2501,6 +2033,7 @@ const MapViewer = ({
         y: containerCenterY - elementInMapY * targetScale,
       };
       
+      console.log(`[MapViewer] ✅ ZOOMING to scale=${targetScale}, pos=`, newPos, `current scale=${scaleRef.current}`);
 
       // Smooth zoom with CSS transition
       if (mapRef.current) {
@@ -2529,6 +2062,7 @@ const MapViewer = ({
   // ---------------------------------------------------------------------------
 
   useEffect(() => {
+    console.log(`[MapViewer] 📡 selectedLocation effect fired:`, selectedLocation ? `id="${selectedLocation.id}" name="${selectedLocation.name}"` : "null");
     if (!selectedLocation) {
       pendingSearchZoomRoomIdRef.current = null;
       return;
@@ -2551,11 +2085,13 @@ const MapViewer = ({
     // Delay zoom slightly to ensure SVG highlight renders first.
     const timer = setTimeout(() => {
       if (pendingSearchZoomRoomIdRef.current !== selectedLocation.id) return;
+      console.log(`[MapViewer] 📡 calling zoomToSvgElement for id="${selectedLocation.id}"`);
       zoomToSvgElement(selectedLocation.id);
       pendingSearchZoomRoomIdRef.current = null;
     }, 100);
 
     return () => {
+      console.log(`[MapViewer] 📡 selectedLocation effect cleanup, clearing timer`);
       clearTimeout(timer);
     };
   }, [selectedLocation, activeFloor, svgReadyVersion, zoomToSvgElement, resolveFloorForRoom]);
@@ -2563,12 +2099,15 @@ const MapViewer = ({
   // ---------------------------------------------------------------------------
   // Highlight all rooms by selected sidebar category
   useEffect(() => {
+    console.log(`[Category] highlightCategory effect fired: category="${highlightCategory}"`);
 
     if (!objectRef.current) {
+      console.warn("[Category] ABORT: objectRef.current is null");
       return;
     }
     const svgDoc = objectRef.current.contentDocument;
     if (!svgDoc) {
+      console.warn("[Category] ABORT: contentDocument is null — SVG may not be loaded yet");
       return;
     }
 
@@ -2577,13 +2116,16 @@ const MapViewer = ({
 
     // Clear previous category highlights
     const prevHighlighted = svgDoc.querySelectorAll(".region-category-active");
+    console.log(`[Category] clearing ${prevHighlighted.length} previously highlighted elements`);
     prevHighlighted.forEach((el) => el.classList.remove("region-category-active"));
 
     if (!highlightCategory) {
+      console.log("[Category] highlightCategory is null/empty — cleared only");
       return;
     }
 
     const roomPaths = Array.from(svgDoc.querySelectorAll("path")) as SVGPathElement[];
+    console.log(`[Category] scanning ${roomPaths.length} paths in SVG...`);
 
     let matchCount = 0;
     roomPaths.forEach((path) => {
@@ -2592,9 +2134,11 @@ const MapViewer = ({
       if (roomMatchesHighlightCategory(room, highlightCategory)) {
         path.classList.add("region-category-active");
         matchCount++;
+        console.log(`[Category] ✅ highlighted path id="${path.id}" room="${room.name}" (${room.category})`);
       }
     });
 
+    console.log(`[Category] done — ${matchCount} rooms highlighted for category="${highlightCategory}"`);
   }, [highlightCategory, roomFromPath, roomMatchesHighlightCategory, ensureDynamicHighlightStyle]);
 
   // Highlight active room / selected location in SVG
@@ -2668,14 +2212,6 @@ const MapViewer = ({
           : null;
 
       if (routeAfterCalibration) {
-        // Debug: Log route from QR scan
-        console.log(`🗺️ Route (QR): ${anchor.roomId} → ${endRoomIdRef.current}`);
-        console.log(`📍 Nodes (${routeAfterCalibration.checkpointIds.length}):`, routeAfterCalibration.checkpointIds.join(' → '));
-        console.log(`📏 Total distance: ${routeAfterCalibration.totalDistance.toFixed(2)} units`);
-        if (routeAfterCalibration.floorsInvolved && routeAfterCalibration.floorsInvolved.length > 1) {
-          console.log(`🏢 Floors involved: ${routeAfterCalibration.floorsInvolved.join(', ')}`);
-          console.log(`🔄 Transition: ${routeAfterCalibration.transitionLabel || 'N/A'}`);
-        }
         setActiveRoute(routeAfterCalibration);
       } else {
         setActiveRoute(null);
@@ -2719,14 +2255,6 @@ const MapViewer = ({
           : null;
 
       if (routeAfterRoomScan) {
-        // Debug: Log route from QR room scan
-        console.log(`🗺️ Route (QR Room): ${resolvedRoomId} → ${endRoomIdRef.current}`);
-        console.log(`📍 Nodes (${routeAfterRoomScan.checkpointIds.length}):`, routeAfterRoomScan.checkpointIds.join(' → '));
-        console.log(`📏 Total distance: ${routeAfterRoomScan.totalDistance.toFixed(2)} units`);
-        if (routeAfterRoomScan.floorsInvolved && routeAfterRoomScan.floorsInvolved.length > 1) {
-          console.log(`🏢 Floors involved: ${routeAfterRoomScan.floorsInvolved.join(', ')}`);
-          console.log(`🔄 Transition: ${routeAfterRoomScan.transitionLabel || 'N/A'}`);
-        }
         setActiveRoute(routeAfterRoomScan);
       } else {
         setActiveRoute(null);
@@ -2853,21 +2381,12 @@ const MapViewer = ({
           startPoint: smoothedPoint,
         });
         if (dynamicRoute) {
-          // Debug: Log route in live mode (already throttled by LIVE_REROUTE_INTERVAL_MS, so always log)
-          console.log(`🧭 Live Navigation Route: ${nearest.roomId} → ${currentEnd}`);
-          console.log(`📍 Nodes (${dynamicRoute.checkpointIds.length}):`, dynamicRoute.checkpointIds.join(' → '));
-          console.log(`📏 Distance: ${dynamicRoute.totalDistance.toFixed(2)} units`);
-          if (dynamicRoute.floorsInvolved && dynamicRoute.floorsInvolved.length > 1) {
-            console.log(`🏢 Floors: ${dynamicRoute.floorsInvolved.join(', ')} | Transition: ${dynamicRoute.transitionLabel || 'N/A'}`);
-          }
-          
           setActiveRoute(dynamicRoute);
           setRouteDebugMessage(
             `Rute live: ${roomInfoBySvgId[nearest.roomId]?.name || nearest.roomId} → ${roomInfoBySvgId[currentEnd]?.name || currentEnd}`
           );
           setLiveModeStatus("Navigasi live aktif dan rute diperbarui otomatis.");
         } else {
-          console.warn(`⚠️ Live route not found: ${nearest.roomId} → ${currentEnd}`);
           setRouteDebugMessage("Rute live belum ditemukan dari posisi terbaru.");
         }
       },
@@ -3057,39 +2576,33 @@ const MapViewer = ({
         ? lastQrAnchor.routeNodeId
         : undefined;
     
-    // When routing FROM parking (start is parking), use exact QR coordinates
-    if (startFloorExtended === 0 || startFloorExtended === -1) {
-      // Start is parking - use liveSvgPoint which contains the exact QR coordinates that were scanned
-      if (liveSvgPointRef.current) {
-        startPoint = liveSvgPointRef.current;
-      } else {
-        // Fallback: try to get QR anchor coordinates from registry
-        const startAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
-          (a) => a.roomId === effectiveStartRoomId && a.floor === startFloorExtended
-        );
-        if (startAnchor) {
-          startPoint = { x: startAnchor.svgX, y: startAnchor.svgY };
-        }
-      }
-    } else if (endFloorExtended === 0 || endFloorExtended === -1) {
+    // When routing to parking, use the EXACT coordinates from the scanned QR code
+    // Do NOT search by roomId because multiple QR codes can point to the same room
+    if (endFloorExtended === 0 || endFloorExtended === -1) {
       // Destination is parking - use liveSvgPoint which contains the exact QR coordinates that were scanned
       if (liveSvgPointRef.current) {
         startPoint = liveSvgPointRef.current;
+        console.log(`[Routing] Destination is parking - using exact scanned QR coordinates from liveSvgPoint:`, startPoint);
       } else {
-        // Fallback: try to get QR anchor coordinates from registry
+        // Fallback: try to get QR anchor coordinates from registry (but this may not be accurate)
         const startAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
           (a) => a.roomId === effectiveStartRoomId && a.floor === startFloorExtended
         );
         if (startAnchor) {
           startPoint = { x: startAnchor.svgX, y: startAnchor.svgY };
+          console.log(`[Routing] Destination is parking - using QR anchor from registry as fallback:`, startPoint);
         }
       }
     } else if (!preferRoomCenterStartRef.current && liveSvgPointRef.current) {
       // User scanned QR code - use the exact QR anchor coordinates
       startPoint = liveSvgPointRef.current;
+      console.log(`[Routing] Using QR anchor coordinates as start point:`, startPoint);
+      console.log(`[Routing] preferRoomCenterStartRef.current:`, preferRoomCenterStartRef.current);
+      console.log(`[Routing] effectiveStartRoomId:`, effectiveStartRoomId);
     } else if (preferRoomCenterStartRef.current && roomCenterStart) {
       // User selected from dropdown - use room center
       startPoint = roomCenterStart;
+      console.log(`[Routing] Using room center as start point:`, startPoint);
     } else {
       // Fallback: try to get QR anchor coordinates from registry
       const startAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
@@ -3097,14 +2610,19 @@ const MapViewer = ({
       );
       if (startAnchor) {
         startPoint = { x: startAnchor.svgX, y: startAnchor.svgY };
+        console.log(`[Routing] Using QR anchor from registry as start point:`, startPoint);
       }
     }
+
+    console.log(`[Routing] Final startPoint:`, startPoint);
     
-    // When routing FROM/TO parking, ALWAYS use exact start point (QR anchor coordinates)
+    // When routing to parking, ALWAYS use exact start point (QR anchor coordinates)
     // Otherwise, use the normal logic based on preferRoomCenterStartRef
-    const useExactStartPoint = (startFloorExtended === 0 || startFloorExtended === -1 || endFloorExtended === 0 || endFloorExtended === -1)
-      ? true  // Always use exact point when start OR destination is parking
+    const useExactStartPoint = (endFloorExtended === 0 || endFloorExtended === -1)
+      ? true  // Always use exact point when destination is parking
       : !preferRoomCenterStartRef.current && Boolean(startPoint);
+    
+    console.log(`[Routing] useExactStartPoint:`, useExactStartPoint);
 
     const result = buildDebugRouteForRooms(effectiveStartRoomId, effectiveEndRoomId, {
       startPoint,
@@ -3114,21 +2632,7 @@ const MapViewer = ({
     if (!result) {
       setRouteDebugMessage("Rute tidak ditemukan pada jalur 'jalan' di denah.");
       setActiveRoute(null);
-      lastLoggedRouteRef.current = null;
       return;
-    }
-
-    // Debug: Log route only if it's different from the last logged route
-    const routeKey = `${effectiveStartRoomId}→${effectiveEndRoomId}:${result.checkpointIds.join(',')}`;
-    if (lastLoggedRouteRef.current !== routeKey) {
-      console.log(`🗺️ Route: ${effectiveStartRoomId} → ${effectiveEndRoomId}`);
-      console.log(`📍 Nodes (${result.checkpointIds.length}):`, result.checkpointIds.join(' → '));
-      console.log(`📏 Total distance: ${result.totalDistance.toFixed(2)} units`);
-      if (result.floorsInvolved && result.floorsInvolved.length > 1) {
-        console.log(`🏢 Floors involved: ${result.floorsInvolved.join(', ')}`);
-        console.log(`🔄 Transition: ${result.transitionLabel || 'N/A'}`);
-      }
-      lastLoggedRouteRef.current = routeKey;
     }
 
     const endRoomInfo = roomInfoBySvgId[effectiveEndRoomId];
@@ -3203,31 +2707,11 @@ const MapViewer = ({
       }
     );
     
-    const routePointsKey = (route: RoomRouteResult) =>
-      route.points.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join("|");
-
-    // Update when either the graph path or the visible segment points change.
-    if (
-      rebuilt &&
-      (
-        rebuilt.checkpointIds.join(',') !== activeRoute.checkpointIds.join(',') ||
-        routePointsKey(rebuilt) !== routePointsKey(activeRoute)
-      )
-    ) {
+    if (rebuilt) {
       setActiveRoute(rebuilt);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    showParkingMap,
-    parkingFloor,
-    activeFloor,
-    svgReadyVersion,
-    parkingSvgDoc,
-    parking2SvgDoc,
-    resolveFloorForRoomExtended,
-    lastQrAnchor,
-  ]);
-  // Note: activeRoute and buildDebugRouteForRooms are intentionally NOT in deps to avoid infinite loop
+  }, [showParkingMap, parkingFloor, activeFloor, buildDebugRouteForRooms, resolveFloorForRoomExtended, lastQrAnchor]);
+  // Note: activeRoute is intentionally NOT in deps to avoid infinite loop
 
   useEffect(() => {
     const activeFloorSegment = getRouteSegmentForFloor(activeRoute, activeFloor);
@@ -3606,7 +3090,7 @@ const MapViewer = ({
               : "text-foreground hover:bg-muted"
           }`}
         >
-          {floorCopy.floor1}
+          Lantai 1
         </button>
         <button
           onClick={() => { setActiveFloor(2); setShowParkingMap(false); }}
@@ -3616,7 +3100,7 @@ const MapViewer = ({
               : "text-foreground hover:bg-muted"
           }`}
         >
-          {floorCopy.floor2}
+          Lantai 2
         </button>
         <button
           onClick={() => { setShowParkingMap(true); setParkingFloor(1); setActiveFloor(1); }}
@@ -3625,9 +3109,9 @@ const MapViewer = ({
               ? "bg-emerald-600 text-white"
               : "text-foreground hover:bg-muted"
           }`}
-          title={floorCopy.parking1Title}
+          title="Tampilkan peta lahan parkir lantai 1"
         >
-          🅿 {floorCopy.parking1}
+          🅿 Parkir L1
         </button>
         <button
           onClick={() => { setShowParkingMap(true); setParkingFloor(2); setActiveFloor(2); }}
@@ -3636,9 +3120,9 @@ const MapViewer = ({
               ? "bg-emerald-600 text-white"
               : "text-foreground hover:bg-muted"
           }`}
-          title={floorCopy.parking2Title}
+          title="Tampilkan peta lahan parkir lantai 2"
         >
-          🅿 {floorCopy.parking2}
+          🅿 Parkir L2
         </button>
       </div>
 

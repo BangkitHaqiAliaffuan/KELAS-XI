@@ -117,10 +117,8 @@ const parseCliArgs = (): CliOptions => {
 };
 
 const printHelp = (): void => {
-  process.stdout.write(
-    `\nQR Generator\n\nUsage:\n  npm run qr:generate -- [options]\n\nOptions:\n  --include <rooms|anchors|all>  Which QR sets to generate (default: all)\n  --outDir <path>                 Output directory (default: public/images/qr)\n  --size <number>                 PNG width in px (default: 512)\n  --margin <number>               QR margin (default: 2)\n  --clean                         Remove existing PNG files in output directory\n  --help                          Show this help\n`
-  );
-  process.stdout.write(`  --floor <1|2|all>              Filter QR by floor (default: all)\n`);
+  console.log(`\nQR Generator\n\nUsage:\n  npm run qr:generate -- [options]\n\nOptions:\n  --include <rooms|anchors|all>  Which QR sets to generate (default: all)\n  --outDir <path>                 Output directory (default: public/images/qr)\n  --size <number>                 PNG width in px (default: 512)\n  --margin <number>               QR margin (default: 2)\n  --clean                         Remove existing PNG files in output directory\n  --help                          Show this help\n`);
+  console.log(`  --floor <1|2|all>              Filter QR by floor (default: all)\n`);
 };
 
 const sanitizeFileName = (value: string): string => {
@@ -233,9 +231,7 @@ const generate = async (): Promise<void> => {
 
   if (options.clean) {
     const removed = await cleanPngFiles(absoluteOutDir);
-    process.stdout.write(
-      `🧹 Cleaned ${removed} existing PNG file(s) in ${options.outDir}\n`
-    );
+    console.log(`🧹 Cleaned ${removed} existing PNG file(s) in ${options.outDir}`);
   }
 
   const generated: GeneratedQr[] = [];
@@ -249,7 +245,7 @@ const generate = async (): Promise<void> => {
   }
 
   if (!generated.length) {
-    process.stdout.write("No QR items selected. Nothing to generate.\n");
+    console.log("No QR items selected. Nothing to generate.");
     return;
   }
 
@@ -263,13 +259,13 @@ const generate = async (): Promise<void> => {
   const roomCount = generated.filter((item) => item.type === "room").length;
   const anchorCount = generated.filter((item) => item.type === "anchor").length;
 
-  process.stdout.write("✅ QR generation completed\n");
-  process.stdout.write(`   Output dir : ${options.outDir}\n`);
-  process.stdout.write(`   Floor      : ${options.floor}\n`);
-  process.stdout.write(`   Room QR    : ${roomCount}\n`);
-  process.stdout.write(`   Anchor QR  : ${anchorCount}\n`);
-  process.stdout.write(`   Total PNG  : ${generated.length}\n`);
-  process.stdout.write("   Metadata   : index.json\n");
+  console.log("✅ QR generation completed");
+  console.log(`   Output dir : ${options.outDir}`);
+  console.log(`   Floor      : ${options.floor}`);
+  console.log(`   Room QR    : ${roomCount}`);
+  console.log(`   Anchor QR  : ${anchorCount}`);
+  console.log(`   Total PNG  : ${generated.length}`);
+  console.log("   Metadata   : index.json");
 };
 
 generate().catch((error: unknown) => {

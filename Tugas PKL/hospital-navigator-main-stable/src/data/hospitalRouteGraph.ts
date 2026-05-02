@@ -7,12 +7,12 @@ export interface RoomRouteResult {
   points: Array<{ x: number; y: number }>;
   totalDistance: number;
   floorSegments?: Array<{
-    floor: -1 | 0 | 1 | 2;
+    floor: 1 | 2;
     checkpointIds: string[];
     points: Array<{ x: number; y: number }>;
     totalDistance: number;
   }>;
-  floorsInvolved?: Array<-1 | 0 | 1 | 2>;
+  floorsInvolved?: Array<1 | 2>;
   transitionLabel?: string;
 }
 
@@ -42,7 +42,6 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 516.54614,
     label: "Persimpangan ke Lab",
     floor: 1,
-    routeNodeId: "Persimpangan_ke_Lab",
   },
   "QR-F1-N04": {
     qrId: "QR-F1-N04",
@@ -294,7 +293,6 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 417.228,
     label: "Belok ke Area Parkir Khusus Tenaga Medis",
     floor: 0,
-    routeNodeId: "Belok_ke_Area_Parkir_Sepeda_Motor_Khusus_Tenaga_Medis",
   },
   // Lahan Parkir Lantai 2 — floor: -1 (peta parkir lantai 2 terpisah)
   "QR-PK2-N01": {
@@ -406,11 +404,6 @@ const EXPLICIT_ROUTE_PATH_IDS = new Set([
   "belokan_keluar_area_parkir",
   "belok_ke_ramp_parkir",
   "persimpangan_keluar_dari_area_parkir_dan_tangga_pengunjung",
-  // Parking L1 — hospital L1 paths connecting to parking
-  "jalan_masuk_ke_lahan_parkir__pengunjung_",
-  "jalan_ke_lahan_parkir_2__pengunjung_",
-  "jalan_ke_lahan_parkir_1__pengunjung_",
-  "jalan_keluar_menuju_gedung_rumah_sakit",
   // Parking L2 — bridge access path to hospital L2
   "akses_jembatan_menuju_gedung_rumah_sakit_lantai_2",
 ]);
@@ -424,30 +417,17 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
 const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
   "R._Direktur___Manajemen": ["Persimpangan_ke_R._Istirahat_Perawat"],
   Lift_Lantai_1: ["Check_Point_Lift"],
-  Lift_Lantai_2: ["Check_Point_Lift_Turun"],
+  "Lift_Lantai_1-2": ["Check_Point_Lift_Turun"],
   Tangga_Lantai_1: ["Check_Point_Tangga"],
-  Tangga_Lantai_2: ["Check_Point_Tangga_Turun"],
+  "Tangga_Lantai_1-7": ["Check_Point_Tangga_Turun"],
   // Keep evacuation stairs isolated from the main-stair checkpoint so floor transitions stay consistent.
-  Tangga_Evakuasi_Lantai_1: ["Check_Point_Tangga_Evakuasi_Lantai_1", "Check_Point_Tangga_Evakuasi"],
-  Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi_Lantai_2", "Check_Point_Tangga_Evakuasi"],
-  // Edukasi Pasien dan Keluarga: route via specific checkpoint sequence
-  Edukasi_Pasien_dan_Keluarga: [
-    "Check_Point_Edukasi_Keluarga_Dan_Pasien",
-    "Belok_Masuk_ke_Edukasi_Keluarga___Pasien",
-    "Menuju_ke_Edukasi_Keluarga_dan_Pasien",
-  ],
-  // Gudang Alat Medis Steril: route via specific checkpoint node
-  Gudang_Alat_Medis_Steril: ["R._Dokter_Spesialis_dan_Gudang_Alat_Medis_Steril"],
-  // Parking L1: route via hospital exit checkpoint, then to parking exit checkpoint
-  // When routing TO parking (as destination), use the last checkpoint (hospital side)
-  // When routing FROM parking (as start), use the first checkpoint (parking side) - handled in resolvePreferredStartNodeId
-  Parking_Lantai_1: [
-    "Check_Point_Keluar_dari_Lahan_Parkir",
-    "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
-    "Belokan_Keluar_Area_Parkir",
-  ],
-  // Parking L2: route via bridge checkpoint (near QR-PK2-N01)
-  Parking_Lantai_2: ["Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_"],
+  // Floor 1 SVG uses legacy id "path4" for evacuation checkpoint label.
+  Tangga_Evakuasi_Lantai_1: ["path4", "Check_Point_Tangga_Evakuasi"],
+  Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi"],
+  // Parking: route via the dedicated checkpoint node in the parking SVG.
+  Parking_Lantai_1: ["Check_Point_Tangga_Pengunjung", "Persimpangan_Keluar_dari_Area_Parkir_dan_Tangga_Pengunjung"],
+  // Parking L2 should stop on the QR anchor itself, not the bridge checkpoint.
+  Parking_Lantai_2: ["node_room_Parking_Lantai_2"],
   // Virtual connector room used when routing hospital → parking; snaps to the parking exit checkpoint.
   Check_Point_Lahan_Parkir_Connector: ["Check_Point_Lahan_Parkir", "Belok_masuk_ke_Lahan_Parkir", "Belok_ke_Lahan_Parkir"],
 };
@@ -681,7 +661,6 @@ const buildRoadGraphFromSvg = (
       ).toLowerCase();
       return (
         layerLabel.includes("centerline jalan") ||
-        layerLabel === "centerline" ||
         (isParkingFloor2Svg && layerLabel === "centerline")
       );
     },
@@ -1091,6 +1070,7 @@ const resolvePreferredStartNodeId = (
     if (exactStartNodeId) {
       const exactStartNode = nodes[exactStartNodeId];
       if (exactStartNode) {
+        console.log(`[Routing] Using exact start node: ${exactStartNodeId}`);
         return resolveRouteEndpoint(
           exactStartNodeId,
           nodes,
@@ -1098,47 +1078,20 @@ const resolvePreferredStartNodeId = (
           fallbackStartPoint,
         );
       }
+      console.warn(`[Routing] Exact start node not found: ${exactStartNodeId}`);
     }
 
+    console.log(`[Routing] Using exact point for start: (${fallbackStartPoint.x}, ${fallbackStartPoint.y})`);
     const nearestNodeId = getNearestNodeId(nodes, graph, fallbackStartPoint);
     if (nearestNodeId) {
+      console.log(`[Routing] Found nearest node: ${nearestNodeId}`);
       return {
         anchorNodeId: nearestNodeId,
         graphNodeId: nearestNodeId,
       };
     }
+    console.warn(`[Routing] No nearest node found for exact point`);
     return null;
-  }
-
-  // Special handling for parking start points: use FIRST valid checkpoint (entry point from parking)
-  if (startRoomId === "Parking_Lantai_1") {
-    const parkingStartCheckpoints = [
-      "Check_Point_Keluar_dari_Lahan_Parkir",
-      "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
-      "Belokan_Keluar_Area_Parkir",
-    ];
-    for (const checkpointId of parkingStartCheckpoints) {
-      if (nodes[checkpointId]) {
-        return resolveRouteEndpoint(
-          checkpointId,
-          nodes,
-          graph,
-          fallbackStartPoint,
-        );
-      }
-    }
-  }
-
-  if (startRoomId === "Parking_Lantai_2") {
-    const parkingL2StartCheckpoint = "Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_";
-    if (nodes[parkingL2StartCheckpoint]) {
-      return resolveRouteEndpoint(
-        parkingL2StartCheckpoint,
-        nodes,
-        graph,
-        fallbackStartPoint,
-      );
-    }
   }
 
   // Normal flow: use checkpoint/room-based logic
@@ -1190,24 +1143,6 @@ const resolvePreferredEndNodeId = (
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
 ): RouteEndpointResolution | null => {
-  // Special handling for parking destinations: use the LAST valid node in the special route list
-  // This ensures routing TO parking follows the correct path sequence
-  const specialNodeIds = ROOM_SPECIAL_ROUTE_NODE_IDS[endRoomId];
-  if (specialNodeIds?.length && (endRoomId === "Parking_Lantai_1" || endRoomId === "Parking_Lantai_2")) {
-    // Iterate backwards through the special nodes to find the last valid one
-    for (let i = specialNodeIds.length - 1; i >= 0; i--) {
-      const specialNodeId = specialNodeIds[i];
-      if (nodes[specialNodeId]) {
-        return resolveRouteEndpoint(
-          specialNodeId,
-          nodes,
-          graph,
-          fallbackEndPoint,
-        );
-      }
-    }
-  }
-
   const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
     endRoomId,
     nodes,
@@ -1329,12 +1264,18 @@ export const buildRouteForRooms = (
     startNodeId?: string;
   },
 ): RoomRouteResult | null => {
+  console.log(`[buildRouteForRooms] startRoomId: ${startRoomId}, endRoomId: ${endRoomId}`);
+  console.log(`[buildRouteForRooms] options:`, options);
+  
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
   if (!startCenter || !endCenter) return null;
 
   const startSourcePoint = options?.startPoint ?? startCenter;
   const endSourcePoint = options?.endPoint ?? endCenter;
+
+  console.log(`[buildRouteForRooms] startSourcePoint:`, startSourcePoint);
+  console.log(`[buildRouteForRooms] useExactStartPoint:`, options?.useExactStartPoint);
 
   const allowIgdEntrancePath =
     isIgdRelatedRoom(startRoomId) || isIgdRelatedRoom(endRoomId);
@@ -1378,28 +1319,17 @@ export const buildRouteForRooms = (
     .filter(Boolean)
     .map((node) => ({ x: node.x, y: node.y }));
 
-  const points = [...roadPoints];
-  let totalDistance = shortest.distance;
-
-  if (options?.useExactStartPoint && options.startPoint && points.length) {
-    const extraDistance = distance(options.startPoint, points[0]);
-    if (extraDistance > 0.5) {
-      points.unshift({ x: options.startPoint.x, y: options.startPoint.y });
-      totalDistance += extraDistance;
-    }
-  }
+  const points = roadPoints;
 
   if (points.length < 2) return null;
 
-  const result = {
+  return {
     startRoomId,
     endRoomId,
     checkpointIds,
     points,
-    totalDistance,
+    totalDistance: shortest.distance,
   };
-
-  return result;
 };
 
 /**

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clevio</title>
+    <style>
+      .header {
+        margin: auto;
+        font-size: 60px;
+        color: red;
+        background-color: black;
+      }
+
+      p {
+        background-color: red;
+        color: white;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="header">Bangkit Haqi Aliaffuan</h1>
+    <p id="paragraf">Hai Saya berasal dari sidoarjo smkn 2 buduran</p>
+    <script>
+      const paragraf = document.getElementById("paragraf");
+      window.onload = () => {
+        paragraf.animate([
+            {opacity: 0, transform: 'translateY(20px)'},
+            {opacity: 1, transform: 'translateY(0)'}
+        ],{
+            duration: 2000,
+            easing: 'ease-out',
+            fill: 'forwards',
+        })
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,200 @@
+{
+  "generatedAt": "2026-04-21T02:34:58.538Z",
+  "total": 24,
+  "rooms": [
+    {
+      "type": "room",
+      "id": "Lobby_Lantai_2",
+      "label": "Lobby Lantai 2",
+      "payload": "QR-R-LOBBY_LANTAI_2",
+      "fileName": "room_Lobby_Lantai_2.png",
+      "relativePath": "room_Lobby_Lantai_2.png"
+    },
+    {
+      "type": "room",
+      "id": "R._Direktur___Manajemen",
+      "label": "R. Direktur / Manajemen",
+      "payload": "QR-R-R._DIREKTUR___MANAJEMEN",
+      "fileName": "room_R._Direktur_Manajemen.png",
+      "relativePath": "room_R._Direktur_Manajemen.png"
+    },
+    {
+      "type": "room",
+      "id": "R._HRD___Kepegawaian",
+      "label": "R. HRD / Kepegawaian",
+      "payload": "QR-R-R._HRD___KEPEGAWAIAN",
+      "fileName": "room_R._HRD_Kepegawaian.png",
+      "relativePath": "room_R._HRD_Kepegawaian.png"
+    },
+    {
+      "type": "room",
+      "id": "R._Laundry_2",
+      "label": "R. Laundry 2",
+      "payload": "QR-R-R._LAUNDRY_2",
+      "fileName": "room_R._Laundry_2.png",
+      "relativePath": "room_R._Laundry_2.png"
+    },
+    {
+      "type": "room",
+      "id": "R._Meeting",
+      "label": "R. Meeting",
+      "payload": "QR-R-R._MEETING",
+      "fileName": "room_R._Meeting.png",
+      "relativePath": "room_R._Meeting.png"
+    },
+    {
+      "type": "room",
+      "id": "R._PACS",
+      "label": "R. PACS",
+      "payload": "QR-R-R._PACS",
+      "fileName": "room_R._PACS.png",
+      "relativePath": "room_R._PACS.png"
+    },
+    {
+      "type": "room",
+      "id": "R._Prancis",
+      "label": "R. Prancis",
+      "payload": "QR-R-R._PRANCIS",
+      "fileName": "room_R._Prancis.png",
+      "relativePath": "room_R._Prancis.png"
+    },
+    {
+      "type": "room",
+      "id": "Radioterapi",
+      "label": "Radioterapi",
+      "payload": "QR-R-RADIOTERAPI",
+      "fileName": "room_Radioterapi.png",
+      "relativePath": "room_Radioterapi.png"
+    },
+    {
+      "type": "room",
+      "id": "Terapi_Okupasi_Lanjutan",
+      "label": "Terapi Okupasi Lanjutan",
+      "payload": "QR-R-TERAPI_OKUPASI_LANJUTAN",
+      "fileName": "room_Terapi_Okupasi_Lanjutan.png",
+      "relativePath": "room_Terapi_Okupasi_Lanjutan.png"
+    }
+  ],
+  "anchors": [
+    {
+      "type": "anchor",
+      "id": "QR-F2-N01",
+      "label": "Testing",
+      "payload": "QR-F2-N01",
+      "fileName": "anchor_QR-F2-N01.png",
+      "relativePath": "anchor_QR-F2-N01.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N02",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 1",
+      "payload": "QR-F2-N02",
+      "fileName": "anchor_QR-F2-N02.png",
+      "relativePath": "anchor_QR-F2-N02.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N03",
+      "label": "Persimpangan Jalan Keluar R. IT & Server",
+      "payload": "QR-F2-N03",
+      "fileName": "anchor_QR-F2-N03.png",
+      "relativePath": "anchor_QR-F2-N03.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N04",
+      "label": "Persimpangan Atas Terapi Okupasi Lanjutan",
+      "payload": "QR-F2-N04",
+      "fileName": "anchor_QR-F2-N04.png",
+      "relativePath": "anchor_QR-F2-N04.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N05",
+      "label": "Persimpangan Jalan Bawah R. HRD & Kepegawaian",
+      "payload": "QR-F2-N05",
+      "fileName": "anchor_QR-F2-N05.png",
+      "relativePath": "anchor_QR-F2-N05.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N06",
+      "label": "Belok ke Jalan Atas",
+      "payload": "QR-F2-N06",
+      "fileName": "anchor_QR-F2-N06.png",
+      "relativePath": "anchor_QR-F2-N06.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N07",
+      "label": "Belok ke Jalan Atas",
+      "payload": "QR-F2-N07",
+      "fileName": "anchor_QR-F2-N07.png",
+      "relativePath": "anchor_QR-F2-N07.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N08",
+      "label": "Persimpangan Jalan Atas R. HRD & Kepegawaian",
+      "payload": "QR-F2-N08",
+      "fileName": "anchor_QR-F2-N08.png",
+      "relativePath": "anchor_QR-F2-N08.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N09",
+      "label": "Persimpangan Jalan Depan R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N09",
+      "fileName": "anchor_QR-F2-N09.png",
+      "relativePath": "anchor_QR-F2-N09.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N10",
+      "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N10",
+      "fileName": "anchor_QR-F2-N10.png",
+      "relativePath": "anchor_QR-F2-N10.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N11",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 1 & VIP",
+      "payload": "QR-F2-N11",
+      "fileName": "anchor_QR-F2-N11.png",
+      "relativePath": "anchor_QR-F2-N11.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N12",
+      "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N12",
+      "fileName": "anchor_QR-F2-N12.png",
+      "relativePath": "anchor_QR-F2-N12.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N13",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N13",
+      "fileName": "anchor_QR-F2-N13.png",
+      "relativePath": "anchor_QR-F2-N13.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N14",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N14",
+      "fileName": "anchor_QR-F2-N14.png",
+      "relativePath": "anchor_QR-F2-N14.png"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N15",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N15",
+      "fileName": "anchor_QR-F2-N15.png",
+      "relativePath": "anchor_QR-F2-N15.png"
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 214 80% 32%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 30% 95%;
+    --secondary-foreground: 215 25% 15%;
+
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 15% 50%;
+
+    --accent: 42 95% 55%;
+    --accent-foreground: 215 25% 15%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 25% 90%;
+    --input: 214 25% 90%;
+    --ring: 214 80% 32%;
+
+    --radius: 0.625rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 15%;
+    --sidebar-primary: 214 80% 32%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 80% 96%;
+    --sidebar-accent-foreground: 214 80% 32%;
+    --sidebar-border: 214 25% 92%;
+    --sidebar-ring: 214 80% 32%;
+
+    /* Custom tokens */
+    --hospital-blue: 214 80% 32%;
+    --hospital-blue-light: 214 80% 96%;
+    --hospital-gold: 42 95% 55%;
+    --hospital-gold-light: 42 95% 92%;
+    --hospital-success: 152 60% 42%;
+    --hospital-info: 200 80% 50%;
+    --map-bg: 210 15% 95%;
+  }
+
+  .dark {
+    --background: 215 25% 10%;
+    --foreground: 210 20% 96%;
+    --card: 215 25% 13%;
+    --card-foreground: 210 20% 96%;
+    --popover: 215 25% 13%;
+    --popover-foreground: 210 20% 96%;
+    --primary: 214 80% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 25% 18%;
+    --secondary-foreground: 210 20% 96%;
+    --muted: 215 25% 18%;
+    --muted-foreground: 215 15% 60%;
+    --accent: 42 95% 55%;
+    --accent-foreground: 215 25% 10%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 20% 96%;
+    --border: 215 25% 20%;
+    --input: 215 25% 20%;
+    --ring: 214 80% 55%;
+    --sidebar-background: 215 25% 10%;
+    --sidebar-foreground: 210 20% 96%;
+    --sidebar-primary: 214 80% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 25% 18%;
+    --sidebar-accent-foreground: 210 20% 96%;
+    --sidebar-border: 215 25% 20%;
+    --sidebar-ring: 214 80% 55%;
+    --hospital-blue: 214 80% 55%;
+    --hospital-blue-light: 214 80% 18%;
+    --hospital-gold: 42 95% 55%;
+    --hospital-gold-light: 42 50% 20%;
+    --hospital-success: 152 60% 42%;
+    --hospital-info: 200 80% 50%;
+    --map-bg: 215 20% 14%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
