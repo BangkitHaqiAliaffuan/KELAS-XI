@@ -117,13 +117,6 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     locationHint: "Sisi kiri tengah peta",
     description: "Area pendukung kamar operasi.",
   },
-  Area_Kamar_Operasi_2: {
-    id: "Area_Kamar_Operasi_2",
-    name: "Area Kamar Operasi 2",
-    category: "Surgery",
-    locationHint: "Sisi kiri tengah peta",
-    description: "Area tambahan pendukung kamar operasi.",
-  },
   Musholla: {
     id: "Musholla",
     name: "Musholla",
@@ -566,7 +559,6 @@ const FLOOR_1_LABEL_CONFIG_BY_SVG_ID: Record<string, HospitalRoomLabelConfig> = 
   Rekam_Medis: { width: 80, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif",fontSize: 9 },
   Kamar_Operasi: { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 13 },
   Area_Kamar_Operasi: { width: 120, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 11 },
-  Area_Kamar_Operasi_2: { width: 140, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 11 },
   Musholla: { width: 85, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10 },
   CSSD: { width: 110, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 13 },
   Kantin: { width: 80, x: 0, y: 0, fontFamily: "Helvetica, Arial, sans-serif", fontSize: 10, fill: "#1a53c8" },

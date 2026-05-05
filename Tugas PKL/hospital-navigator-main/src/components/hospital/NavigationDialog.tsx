@@ -18,7 +18,7 @@ import {
 import { Camera, RefreshCcw, MapPin, Loader2, Search } from "lucide-react";
 import { roomInfoBySvgId } from "@/data/hospitalRoomInfo";
 import jsQR from "jsqr";
-import { resolveQrAnchor, resolveRoomIdFromQrCode } from "@/data/hospitalRouteGraph";
+import { resolveQrAnchor, resolveRoomIdFromQrCode, QR_ANCHOR_REGISTRY } from "@/data/hospitalRouteGraph";
 
 interface NavigationDialogProps {
   open: boolean;
@@ -106,8 +106,11 @@ const NavigationDialog = ({
   const [startLocation, setStartLocation] = useState("");
   const [destinationLocation, setDestinationLocation] = useState(defaultDestinationRoomId || "");
   const [destinationQuery, setDestinationQuery] = useState("");
+  const [startQuery, setStartQuery] = useState("");
   const [isDestinationSearchOpen, setIsDestinationSearchOpen] = useState(false);
+  const [isStartSearchOpen, setIsStartSearchOpen] = useState(false);
   const [highlightedDestinationIndex, setHighlightedDestinationIndex] = useState(-1);
+  const [highlightedStartIndex, setHighlightedStartIndex] = useState(-1);
   const [startSource, setStartSource] = useState<"manual" | "qr">("manual");
   const [detectedQrPayload, setDetectedQrPayload] = useState<string | undefined>();
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -117,11 +120,28 @@ const NavigationDialog = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const destinationSearchRef = useRef<HTMLDivElement>(null);
+  const startSearchRef = useRef<HTMLDivElement>(null);
   const scanRafRef = useRef<number | null>(null);
   const lastDetectedPayloadRef = useRef<string | null>(null);
   const isHandlingDetectionRef = useRef(false);
 
   const roomOptions = Object.values(roomInfoBySvgId).sort((a, b) => a.name.localeCompare(b.name));
+  
+  const getFloorLabel = useCallback((roomId: string): string => {
+    const anchor = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === roomId);
+    if (anchor) {
+      if (anchor.floor === 0) return ' (Parkir L1)';
+      if (anchor.floor === -1) return ' (Parkir L2)';
+      if (anchor.floor === 2) return ' (Lantai 2)';
+      if (anchor.floor === 1) return ' (Lantai 1)';
+    }
+    // Fallback: detect from room ID
+    if (roomId.includes('Parking_Lantai_1')) return ' (Parkir L1)';
+    if (roomId.includes('Parking_Lantai_2')) return ' (Parkir L2)';
+    if (roomId.includes('Lantai_2') || roomId.startsWith('R._')) return ' (Lantai 2)';
+    return ' (Lantai 1)';
+  }, []);
+  
   const destinationSearchOptions = roomOptions.filter((room) => {
     if (room.id === startLocation) return false;
     const query = destinationQuery.trim().toLowerCase();
@@ -134,6 +154,28 @@ const NavigationDialog = ({
       room.description.toLowerCase().includes(query)
     );
   });
+
+  const startSearchOptions = roomOptions.filter((room) => {
+    const query = startQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return (
+      room.name.toLowerCase().includes(query) ||
+      room.category.toLowerCase().includes(query) ||
+      room.locationHint.toLowerCase().includes(query) ||
+      room.description.toLowerCase().includes(query)
+    );
+  });
+
+  const selectStart = useCallback((roomId: string) => {
+    const room = roomInfoBySvgId[roomId];
+    setStartLocation(roomId);
+    setStartQuery(room?.name || "");
+    setIsStartSearchOpen(false);
+    setHighlightedStartIndex(-1);
+    setStartSource("manual");
+    setDetectedQrPayload(undefined);
+  }, []);
 
   const selectDestination = useCallback((roomId: string) => {
     const room = roomInfoBySvgId[roomId];
@@ -275,10 +317,13 @@ const NavigationDialog = ({
 
     setStep("start");
     setStartLocation("");
+    setStartQuery("");
     setDestinationLocation(defaultDestinationRoomId || "");
     setDestinationQuery(defaultDestinationRoomId ? roomInfoBySvgId[defaultDestinationRoomId]?.name || "" : "");
     setIsDestinationSearchOpen(false);
+    setIsStartSearchOpen(false);
     setHighlightedDestinationIndex(-1);
+    setHighlightedStartIndex(-1);
     setStartSource("manual");
     setDetectedQrPayload(undefined);
   }, [open, defaultDestinationRoomId, stopCamera]);
@@ -297,11 +342,23 @@ const NavigationDialog = ({
       if (!destinationSearchRef.current?.contains(event.target as Node)) {
         setIsDestinationSearchOpen(false);
       }
+      if (!startSearchRef.current?.contains(event.target as Node)) {
+        setIsStartSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    setHighlightedStartIndex(startSearchOptions.length ? 0 : -1);
+  }, [startQuery]);
+
+  useEffect(() => {
+    if (!startLocation) return;
+    setStartQuery(roomInfoBySvgId[startLocation]?.name || "");
+  }, [startLocation]);
 
   useEffect(() => {
     if (!open) return;
@@ -428,25 +485,75 @@ const NavigationDialog = ({
               <label className="text-sm font-medium leading-none">
                 {copy.startingLocation}
               </label>
-              <Select
-                value={startLocation}
-                onValueChange={(value) => {
-                  setStartLocation(value);
-                  setStartSource("manual");
-                  setDetectedQrPayload(undefined);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={copy.whereNow} />
-                </SelectTrigger>
-                <SelectContent>
-                  {roomOptions.map((loc) => (
-                    <SelectItem key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div ref={startSearchRef} className="relative">
+                <div className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2 focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <input
+                    value={startQuery}
+                    placeholder={copy.whereNow}
+                    onChange={(event) => {
+                      setStartQuery(event.target.value);
+                      setStartLocation("");
+                      setIsStartSearchOpen(true);
+                    }}
+                    onFocus={() => setIsStartSearchOpen(true)}
+                    onKeyDown={(event) => {
+                      if (event.key === "ArrowDown") {
+                        event.preventDefault();
+                        setHighlightedStartIndex((prev) =>
+                          prev < startSearchOptions.length - 1 ? prev + 1 : prev
+                        );
+                      } else if (event.key === "ArrowUp") {
+                        event.preventDefault();
+                        setHighlightedStartIndex((prev) => (prev > 0 ? prev - 1 : -1));
+                      } else if (event.key === "Enter") {
+                        event.preventDefault();
+                        if (highlightedStartIndex >= 0 && startSearchOptions[highlightedStartIndex]) {
+                          selectStart(startSearchOptions[highlightedStartIndex].id);
+                        }
+                      } else if (event.key === "Escape") {
+                        setIsStartSearchOpen(false);
+                      }
+                    }}
+                    className="h-5 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  />
+                </div>
+
+                {isStartSearchOpen && startSearchOptions.length > 0 && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 overflow-y-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg">
+                    <div className="border-b border-border bg-muted/30 px-3 py-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {copy.suggestions}
+                      </p>
+                    </div>
+                    {startSearchOptions.map((loc, index) => (
+                      <button
+                        key={loc.id}
+                        type="button"
+                        onClick={() => selectStart(loc.id)}
+                        onMouseEnter={() => setHighlightedStartIndex(index)}
+                        className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm transition-colors ${
+                          index === highlightedStartIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent"
+                        }`}
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold">{loc.name}{getFloorLabel(loc.id)}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{loc.locationHint}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                          {loc.category}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {isStartSearchOpen && startQuery.trim() && startSearchOptions.length === 0 && (
+                  <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-popover p-4 text-center text-sm text-muted-foreground shadow-lg">
+                    {copy.noResults}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ) : (
@@ -490,7 +597,7 @@ const NavigationDialog = ({
                         }`}
                       >
                         <span className="min-w-0">
-                          <span className="block truncate font-semibold">{loc.name}</span>
+                          <span className="block truncate font-semibold">{loc.name}{getFloorLabel(loc.id)}</span>
                           <span className="block truncate text-xs text-muted-foreground">{loc.locationHint}</span>
                         </span>
                         <span className="shrink-0 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
