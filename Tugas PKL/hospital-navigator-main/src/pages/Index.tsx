@@ -14,13 +14,13 @@ const Index = () => {
   const [language, setLanguage] = useState<"id" | "en">("id");
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
-  const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
+  const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr" | "calibrate">("manual");
   const [navDialogDestinationRoomId, setNavDialogDestinationRoomId] = useState<string | null>(null);
   const [navigationStartRequest, setNavigationStartRequest] = useState<{
     requestId: number;
     roomId: string;
     destinationRoomId: string;
-    source: "manual" | "qr";
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   } | null>(null);
   const [navigationStartCounter, setNavigationStartCounter] = useState(0);
@@ -30,7 +30,7 @@ const Index = () => {
       ? activeTab
       : null;
 
-  const handleStartNavigation = (options?: { mode?: "manual" | "qr"; destinationRoomId?: string }) => {
+  const handleStartNavigation = (options?: { mode?: "manual" | "qr" | "calibrate"; destinationRoomId?: string }) => {
     setNavDialogMode(options?.mode ?? "manual");
     setNavDialogDestinationRoomId(options?.destinationRoomId ?? null);
     setIsNavDialogOpen(true);
@@ -39,7 +39,7 @@ const Index = () => {
   const handleConfirmNavigationStart = useCallback((payload: {
     roomId: string;
     destinationRoomId: string;
-    source: "manual" | "qr";
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   }) => {
     const nextId = navigationStartCounter + 1;

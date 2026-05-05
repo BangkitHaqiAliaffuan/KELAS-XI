@@ -23,13 +23,13 @@ import { resolveQrAnchor, resolveRoomIdFromQrCode, QR_ANCHOR_REGISTRY } from "@/
 interface NavigationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  defaultMode?: "manual" | "qr";
+  defaultMode?: "manual" | "qr" | "calibrate";
   defaultDestinationRoomId?: string | null;
   language: "id" | "en";
   onConfirmNavigation?: (payload: {
     roomId: string;
     destinationRoomId: string;
-    source: "manual" | "qr";
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   }) => void;
 }
@@ -111,7 +111,7 @@ const NavigationDialog = ({
   const [isStartSearchOpen, setIsStartSearchOpen] = useState(false);
   const [highlightedDestinationIndex, setHighlightedDestinationIndex] = useState(-1);
   const [highlightedStartIndex, setHighlightedStartIndex] = useState(-1);
-  const [startSource, setStartSource] = useState<"manual" | "qr">("manual");
+  const [startSource, setStartSource] = useState<"manual" | "qr" | "calibrate">("manual");
   const [detectedQrPayload, setDetectedQrPayload] = useState<string | undefined>();
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -252,14 +252,35 @@ const NavigationDialog = ({
       }
 
       isHandlingDetectionRef.current = true;
+      const roomName = roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId;
       setStartLocation(resolvedRoomId);
-      setStartSource("qr");
+      setStartQuery(roomName);
+      setStartSource(startSource === "calibrate" ? "calibrate" : "qr");
       setDetectedQrPayload(normalizedPayload);
-      setQrScanStatus(copy.qrDetected(normalizedPayload, roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId));
+      setQrScanStatus(copy.qrDetected(normalizedPayload, roomName));
       stopCamera();
-      setStep("destination");
+      
+      // If calibrate mode and destination already set, confirm immediately
+      if (defaultMode === "calibrate" && destinationLocation) {
+        setTimeout(() => {
+          onConfirmNavigation?.({
+            roomId: resolvedRoomId,
+            destinationRoomId: destinationLocation,
+            source: "calibrate",
+            qrPayload: normalizedPayload,
+          });
+          onOpenChange(false);
+          isHandlingDetectionRef.current = false;
+        }, 100);
+      } else {
+        // Normal flow - move to destination step
+        setTimeout(() => {
+          setStep("destination");
+          isHandlingDetectionRef.current = false;
+        }, 100);
+      }
     },
-    [copy, stopCamera],
+    [copy, stopCamera, defaultMode, destinationLocation, onConfirmNavigation, onOpenChange, startSource],
   );
 
   useEffect(() => {
@@ -324,18 +345,19 @@ const NavigationDialog = ({
     setIsStartSearchOpen(false);
     setHighlightedDestinationIndex(-1);
     setHighlightedStartIndex(-1);
-    setStartSource("manual");
+    setStartSource(defaultMode === "calibrate" ? "calibrate" : (defaultMode || "manual"));
     setDetectedQrPayload(undefined);
-  }, [open, defaultDestinationRoomId, stopCamera]);
-
-  useEffect(() => {
-    if (!destinationLocation) return;
-    setDestinationQuery(roomInfoBySvgId[destinationLocation]?.name || "");
-  }, [destinationLocation]);
+    
+    // Mode "calibrate" - skip to QR scan, destination already set
+    if (defaultMode === "calibrate" && !isCameraActive) {
+      setStep("start");
+      startCamera();
+    }
+  }, [open, defaultDestinationRoomId, defaultMode, stopCamera]);
 
   useEffect(() => {
     setHighlightedDestinationIndex(destinationSearchOptions.length ? 0 : -1);
-  }, [destinationQuery, startLocation]);
+  }, [destinationQuery, startLocation, destinationSearchOptions.length]);
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
@@ -353,12 +375,7 @@ const NavigationDialog = ({
 
   useEffect(() => {
     setHighlightedStartIndex(startSearchOptions.length ? 0 : -1);
-  }, [startQuery]);
-
-  useEffect(() => {
-    if (!startLocation) return;
-    setStartQuery(roomInfoBySvgId[startLocation]?.name || "");
-  }, [startLocation]);
+  }, [startQuery, startSearchOptions.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -638,11 +655,22 @@ const NavigationDialog = ({
               disabled={!startLocation}
               onClick={() => {
                 stopCamera();
-                setStep("destination");
+                // If calibrate mode with destination already set, confirm immediately
+                if (defaultMode === "calibrate" && destinationLocation) {
+                  onConfirmNavigation?.({
+                    roomId: startLocation,
+                    destinationRoomId: destinationLocation,
+                    source: startSource,
+                    qrPayload: detectedQrPayload,
+                  });
+                  onOpenChange(false);
+                } else {
+                  setStep("destination");
+                }
               }}
               className="w-full"
             >
-              {copy.next}
+              {defaultMode === "calibrate" ? "Konfirmasi Kalibrasi" : copy.next}
             </Button>
           ) : (
             <Button

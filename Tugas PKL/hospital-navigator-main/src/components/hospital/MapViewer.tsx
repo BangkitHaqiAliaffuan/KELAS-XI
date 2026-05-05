@@ -34,13 +34,13 @@ interface MapViewerProps {
   selectedLocation?: HospitalRoomInfo | null;
   onClearSelection?: () => void;
   highlightCategory?: "departments" | "facilities" | "emergency" | null;
-  onStartNavigation?: (options?: { mode?: "manual" | "qr"; destinationRoomId?: string }) => void;
+  onStartNavigation?: (options?: { mode?: "manual" | "qr" | "calibrate"; destinationRoomId?: string }) => void;
   language?: "id" | "en";
   navigationStartRequest?: {
     requestId: number;
     roomId: string;
     destinationRoomId: string;
-    source: "manual" | "qr";
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   } | null;
   onNavigationStartRequestHandled?: (requestId: number) => void;
@@ -2714,6 +2714,75 @@ const MapViewer = ({
     [calculateMarkerPosition, asSvgGraphicsElement]
   );
 
+  const zoomToPoint = useCallback(
+    (svgX: number, svgY: number) => {
+      const svgDoc = objectRef.current?.contentDocument;
+      const container = containerRef.current;
+      
+      if (!svgDoc || !container) {
+        return;
+      }
+
+      const svgRoot = svgDoc.querySelector("svg");
+      if (!svgRoot) {
+        return;
+      }
+
+      const viewBox = svgRoot.viewBox.baseVal;
+      
+      if (!viewBox.width || !viewBox.height) {
+        return;
+      }
+
+      const objectRect = objectRef.current!.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      const currentScale = scaleRef.current;
+      const currentPos   = positionRef.current;
+
+      const objNaturalWidth = objectRect.width / currentScale;
+      const scaleSvgToObjNatural = objNaturalWidth / viewBox.width;
+
+      // Offset of point within the <object> — in unscaled pixels
+      const objCenterX = (svgX - viewBox.x) * scaleSvgToObjNatural;
+      const objCenterY = (svgY - viewBox.y) * scaleSvgToObjNatural;
+
+      const objOffsetInMapX = (objectRect.left - containerRect.left - currentPos.x) / currentScale;
+      const objOffsetInMapY = (objectRect.top  - containerRect.top  - currentPos.y) / currentScale;
+
+      const pointInMapX = objOffsetInMapX + objCenterX;
+      const pointInMapY = objOffsetInMapY + objCenterY;
+
+      // Desired zoom level
+      const targetScale = 2.0;
+
+      const containerCenterX = containerRect.width / 2;
+      const containerCenterY = containerRect.height / 2;
+
+      const newPos = {
+        x: containerCenterX - pointInMapX * targetScale,
+        y: containerCenterY - pointInMapY * targetScale,
+      };
+
+      // Smooth zoom with CSS transition
+      if (mapRef.current) {
+        mapRef.current.style.transition = 'transform 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      }
+
+      positionRef.current = newPos;
+      setScale(targetScale);
+      setPosition(newPos);
+
+      // Reset transition after animation completes
+      setTimeout(() => {
+        if (mapRef.current) {
+          mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
+        }
+      }, 500);
+    },
+    []
+  );
+
   // ---------------------------------------------------------------------------
   // Sync selectedLocation → activeRoomInfo (from search) + zoom to element
   // ---------------------------------------------------------------------------
@@ -2888,6 +2957,12 @@ const MapViewer = ({
 
       setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label}`);
       setLiveModeStatus(`✅ Posisi dikalibrasi: ${anchor.label}`);
+      
+      // Zoom to calibrated start point
+      setTimeout(() => {
+        zoomToPoint(anchor.svgX, anchor.svgY);
+      }, 100);
+      
       return;
     }
 
@@ -2938,10 +3013,96 @@ const MapViewer = ({
       }
 
       setRouteDebugMessage(`✅ Start point dari QR ruangan: ${roomInfoBySvgId[resolvedRoomId]?.name || resolvedRoomId}`);
+      
+      // Zoom to start point
+      if (roomCenter) {
+        setTimeout(() => {
+          zoomToPoint(roomCenter.x, roomCenter.y);
+        }, 100);
+      }
+      
       return;
     }
     setRouteDebugMessage("QR tidak dikenali pada registry multi-floor.");
-  }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor, resolveFloorForRoom, getFloorSvgDoc, buildDebugRouteForRooms]);
+  }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor, resolveFloorForRoom, getFloorSvgDoc, buildDebugRouteForRooms, zoomToPoint]);
+
+  const handleCalibrateQrOnly = useCallback(() => {
+    // Fungsi khusus untuk kalibrasi QR - hanya update start point, keep end point
+    const svgDoc = objectRef.current?.contentDocument;
+    if (!svgDoc) {
+      setRouteDebugMessage("SVG belum siap. Coba lagi beberapa detik.");
+      return;
+    }
+
+    if (!endRoomIdRef.current) {
+      setRouteDebugMessage("Belum ada tujuan yang dipilih. Buat navigasi terlebih dahulu.");
+      return;
+    }
+
+    const anchor = resolveActiveQrAnchor(qrCodeInput);
+    if (anchor) {
+      gpsBufferRef.current = [];
+      liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
+      setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+      setShowCurrentUserMarker(true);
+      setStartRoomId(anchor.roomId);
+      startRoomIdRef.current = anchor.roomId;
+      preferRoomCenterStartRef.current = false;
+      setLastQrAnchor(anchor);
+      setQrCalibrationHistory((prev) => [...prev, anchor]);
+
+      if ((anchor.floor === 1 || anchor.floor === 2) && anchor.floor !== activeFloor) {
+        setActiveFloor(anchor.floor);
+      }
+      if (anchor.floor === 0) {
+        setShowParkingMap(true);
+        setParkingFloor(1);
+      } else if (anchor.floor === -1) {
+        setShowParkingMap(true);
+        setParkingFloor(2);
+      }
+
+      // Build route with existing destination
+      const routeAfterCalibration = buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
+        startPoint: { x: anchor.svgX, y: anchor.svgY },
+        useExactStartPoint: true,
+        startNodeId: anchor.routeNodeId,
+      });
+
+      if (routeAfterCalibration) {
+        const routeStartFloor = routeAfterCalibration.floorsInvolved?.[0];
+        if (routeStartFloor !== undefined) {
+          if (routeStartFloor === 0) {
+            setShowParkingMap(true);
+            setParkingFloor(1);
+          } else if (routeStartFloor === -1) {
+            setShowParkingMap(true);
+            setParkingFloor(2);
+          } else if (routeStartFloor === 1 || routeStartFloor === 2) {
+            setShowParkingMap(false);
+            setActiveFloor(routeStartFloor);
+          }
+        }
+
+        console.log(`🎯 Kalibrasi: ${anchor.roomId} → ${endRoomIdRef.current}`);
+        console.log(`📍 Nodes (${routeAfterCalibration.checkpointIds.length}):`, routeAfterCalibration.checkpointIds.join(' → '));
+        setActiveRoute(routeAfterCalibration);
+      } else {
+        setActiveRoute(null);
+      }
+
+      setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label} → ${roomInfoBySvgId[endRoomIdRef.current]?.name}`);
+      
+      // Zoom to calibrated start point
+      setTimeout(() => {
+        zoomToPoint(anchor.svgX, anchor.svgY);
+      }, 100);
+      
+      return;
+    }
+
+    setRouteDebugMessage("QR tidak dikenali. Scan QR code yang valid.");
+  }, [qrCodeInput, resolveActiveQrAnchor, activeFloor, buildDebugRouteForRooms, zoomToPoint]);
 
   const stopLiveMode = useCallback((statusMessage?: string) => {
     if (geoWatchIdRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
@@ -3103,6 +3264,21 @@ const MapViewer = ({
     const { requestId, roomId, destinationRoomId, source, qrPayload } = navigationStartRequest;
     const finish = () => onNavigationStartRequestHandled?.(requestId);
 
+    // Mode "calibrate" - hanya update start point, keep end point
+    if (source === "calibrate") {
+      if (!qrPayload) {
+        setRouteDebugMessage("QR payload tidak ditemukan untuk kalibrasi.");
+        finish();
+        return;
+      }
+
+      setQrCodeInput(qrPayload);
+      handleCalibrateQrOnly();
+      finish();
+      return;
+    }
+
+    // Mode "manual" atau "qr" - set start + end point (navigasi baru)
     if (isLiveMode) {
       stopLiveMode("Live mode dimatikan karena start point diubah.");
     }
@@ -3214,6 +3390,7 @@ const MapViewer = ({
     activeFloor,
     buildDebugRouteForRooms,
     getFloorSvgDoc,
+    handleCalibrateQrOnly,
   ]);
 
   const handleFindRoute = useCallback(() => {
@@ -3665,7 +3842,9 @@ const MapViewer = ({
           </div>
         ) : (
           <div className="space-y-1">
-            <label className="text-[11px] text-muted-foreground">Scan QR (simulasi)</label>
+            <label className="text-[11px] text-muted-foreground">
+              {isCalibrationMode ? "Kalibrasi Posisi via QR" : "Scan QR (simulasi)"}
+            </label>
             <div className="flex gap-2">
               <input
                 value={qrCodeInput}
@@ -3674,11 +3853,29 @@ const MapViewer = ({
                 className="flex-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs"
               />
               <button
-                onClick={handleResolveQrLocation}
+                onClick={() => {
+                  if (isCalibrationMode) {
+                    handleCalibrateQrOnly();
+                    setIsCalibrationMode(false);
+                  } else {
+                    handleResolveQrLocation();
+                  }
+                }}
                 className="rounded-md border border-border bg-muted px-2 py-1.5 text-xs font-medium hover:bg-muted/80"
               >
                 Set
               </button>
+              {isCalibrationMode && (
+                <button
+                  onClick={() => {
+                    setIsCalibrationMode(false);
+                    setQrCodeInput("");
+                  }}
+                  className="rounded-md border border-border bg-background px-2 py-1.5 text-xs font-medium hover:bg-muted/80"
+                >
+                  Batal
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between mt-1">
@@ -3900,8 +4097,8 @@ const MapViewer = ({
             <div className="relative px-3 pb-3">
               <button
                 onClick={() => {
-                  // Trigger QR scan for calibration only (keep existing destination)
-                  onStartNavigation?.({ mode: "qr", destinationRoomId: endRoomIdRef.current });
+                  // Open navigation dialog in calibrate mode
+                  onStartNavigation?.({ mode: "calibrate", destinationRoomId: endRoomIdRef.current || undefined });
                 }}
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
                 title="Kalibrasi posisi via QR Code"
