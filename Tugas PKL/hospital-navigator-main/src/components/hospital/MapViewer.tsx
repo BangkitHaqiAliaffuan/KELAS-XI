@@ -1501,7 +1501,7 @@ const MapViewer = ({
         floorsInvolved: [2],
         transitionLabel: "Jembatan Parkir Lantai 2",
       };
-    
+    }
     // ── Both hospital floors (1 ↔ 2) ─────────────────────────────────────────
     const startDoc = getDoc(startFloor as 1 | 2);
     const endDoc   = getDoc(endFloor   as 1 | 2);
