@@ -15,9 +15,11 @@ const Index = () => {
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
   const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
+  const [navDialogDestinationRoomId, setNavDialogDestinationRoomId] = useState<string | null>(null);
   const [navigationStartRequest, setNavigationStartRequest] = useState<{
     requestId: number;
     roomId: string;
+    destinationRoomId: string;
     source: "manual" | "qr";
     qrPayload?: string;
   } | null>(null);
@@ -28,13 +30,15 @@ const Index = () => {
       ? activeTab
       : null;
 
-  const handleStartNavigation = (options?: { mode?: "manual" | "qr" }) => {
+  const handleStartNavigation = (options?: { mode?: "manual" | "qr"; destinationRoomId?: string }) => {
     setNavDialogMode(options?.mode ?? "manual");
+    setNavDialogDestinationRoomId(options?.destinationRoomId ?? null);
     setIsNavDialogOpen(true);
   };
 
   const handleConfirmNavigationStart = useCallback((payload: {
     roomId: string;
+    destinationRoomId: string;
     source: "manual" | "qr";
     qrPayload?: string;
   }) => {
@@ -43,10 +47,12 @@ const Index = () => {
     setNavigationStartRequest({
       requestId: nextId,
       roomId: payload.roomId,
+      destinationRoomId: payload.destinationRoomId,
       source: payload.source,
       qrPayload: payload.qrPayload,
     });
     setIsNavDialogOpen(false);
+    setNavDialogDestinationRoomId(null);
   }, [navigationStartCounter]);
 
   const handleNavigationStartRequestHandled = useCallback((requestId: number) => {
@@ -109,8 +115,9 @@ const Index = () => {
         open={isNavDialogOpen} 
         onOpenChange={setIsNavDialogOpen} 
         defaultMode={navDialogMode}
+        defaultDestinationRoomId={navDialogDestinationRoomId}
         language={language}
-        onConfirmStart={handleConfirmNavigationStart}
+        onConfirmNavigation={handleConfirmNavigationStart}
       />
     </div>
   );

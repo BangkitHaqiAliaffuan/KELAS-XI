@@ -34,11 +34,12 @@ interface MapViewerProps {
   selectedLocation?: HospitalRoomInfo | null;
   onClearSelection?: () => void;
   highlightCategory?: "departments" | "facilities" | "emergency" | null;
-  onStartNavigation?: (options?: { mode?: "manual" | "qr" }) => void;
+  onStartNavigation?: (options?: { mode?: "manual" | "qr"; destinationRoomId?: string }) => void;
   language?: "id" | "en";
   navigationStartRequest?: {
     requestId: number;
     roomId: string;
+    destinationRoomId: string;
     source: "manual" | "qr";
     qrPayload?: string;
   } | null;
@@ -1019,84 +1020,356 @@ const MapViewer = ({
 
     // ── Cross: parking L2 (-1) ↔ hospital L2 ─────────────────────────────────
     if (startFloor === -1 || endFloor === -1) {
-      // Special case: Parking L2 ↔ Hospital L1 (must go through Hospital L2)
-      if ((startFloor === -1 && endFloor === 1) || (startFloor === 1 && endFloor === -1)) {
-        const isParkingStart = startFloor === -1;
-        const parkingRoomId = isParkingStart ? startRoomIdParam : endRoomIdParam;
-        const hospitalL1RoomId = isParkingStart ? endRoomIdParam : startRoomIdParam;
+      // Special case: Parking L2 ↔ Hospital L1 (must go through Hospital L2 first, then down to L1)
+      // OR Hospital L2 ↔ Parking L1 (must go through Parking L2 first, then down to L1)
+      if ((startFloor === -1 && endFloor === 1) || (startFloor === 1 && endFloor === -1) ||
+          (startFloor === 2 && endFloor === 0) || (startFloor === 0 && endFloor === 2)) {
+        
+        // Determine if this is a parking route
+        const isParkingL2Involved = startFloor === -1 || endFloor === -1;
+        const isParkingL1Involved = startFloor === 0 || endFloor === 0;
+        
+        if (isParkingL2Involved) {
+          // Parking L2 ↔ Hospital L1
+          const isParkingStart = startFloor === -1;
+          const parkingRoomId = isParkingStart ? startRoomIdParam : endRoomIdParam;
+          const hospitalL1RoomId = isParkingStart ? endRoomIdParam : startRoomIdParam;
 
-        const parkDoc = getDoc(-1);
-        const hospitalL2Doc = getDoc(2);
-        const hospitalL1Doc = getDoc(1);
-        if (!parkDoc || !hospitalL2Doc || !hospitalL1Doc) return null;
+          const parkDoc = getDoc(-1);
+          const hospitalL2Doc = getDoc(2);
+          const hospitalL1Doc = getDoc(1);
+          if (!parkDoc || !hospitalL2Doc || !hospitalL1Doc) return null;
 
-        const conn = PARKING2_CONN;
+          const conn = PARKING2_CONN;
 
-        // Inject the parking L2 QR anchor as a virtual node
-        const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
-          (a) => a.roomId === parkingRoomId && a.floor === -1
-        );
-        if (parkAnchor) injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
+          // Inject the parking L2 QR anchor as a virtual node
+          const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
+            (a) => a.roomId === parkingRoomId && a.floor === -1
+          );
+          if (parkAnchor) injectVirtualAnchorNode(parkDoc, parkingRoomId, parkAnchor.svgX, parkAnchor.svgY);
 
-        // Inject connector nodes
-        injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
-        injectVirtualAnchorNode(hospitalL2Doc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
+          // Inject connector nodes
+          injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
+          injectVirtualAnchorNode(hospitalL2Doc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
 
-        // Find best connector between L2 and L1
-        let bestL2L1Route: RoomRouteResult | null = null;
-        let bestConnectorLabel: string | null = null;
+          // Find best connector between L2 and L1
+          let bestL2L1Route: RoomRouteResult | null = null;
+          let bestConnectorLabel: string | null = null;
 
-        multiFloorConnectors.forEach((connector) => {
-          const l2ConnectorRoomId = connector.rooms[2];
-          const l1ConnectorRoomId = connector.rooms[1];
+          multiFloorConnectors.forEach((connector) => {
+            const l2ConnectorRoomId = connector.rooms[2];
+            const l1ConnectorRoomId = connector.rooms[1];
 
-          const l2Segment = isParkingStart
-            ? buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc)
-            : buildRouteForRooms(l2ConnectorRoomId, conn.hospitalNodeId, hospitalL2Doc);
+            const l2Segment = isParkingStart
+              ? buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc)
+              : buildRouteForRooms(l2ConnectorRoomId, conn.hospitalNodeId, hospitalL2Doc);
 
-          const l1Segment = isParkingStart
-            ? buildRouteForRooms(
-                l1ConnectorRoomId,
-                hospitalL1RoomId,
-                hospitalL1Doc,
-                { endPoint: options?.endPoint },
-              )
-            : buildRouteForRooms(
-                hospitalL1RoomId,
-                l1ConnectorRoomId,
-                hospitalL1Doc,
+            const l1Segment = isParkingStart
+              ? buildRouteForRooms(
+                  l1ConnectorRoomId,
+                  hospitalL1RoomId,
+                  hospitalL1Doc,
+                  { endPoint: options?.endPoint },
+                )
+              : buildRouteForRooms(
+                  hospitalL1RoomId,
+                  l1ConnectorRoomId,
+                  hospitalL1Doc,
+                  {
+                    startPoint: options?.startPoint,
+                    useExactStartPoint: options?.useExactStartPoint,
+                    startNodeId: options?.startNodeId,
+                  },
+                );
+            if (!l2Segment || !l1Segment) return;
+
+            const candidateDistance = l2Segment.totalDistance + l1Segment.totalDistance;
+            if (bestL2L1Route && bestL2L1Route.totalDistance <= candidateDistance) return;
+
+            bestL2L1Route = {
+              startRoomId: isParkingStart ? conn.hospitalNodeId : hospitalL1RoomId,
+              endRoomId: isParkingStart ? hospitalL1RoomId : conn.hospitalNodeId,
+              checkpointIds: isParkingStart
+                ? [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds]
+                : [...l1Segment.checkpointIds, `transition_${connector.id}`, ...l2Segment.checkpointIds],
+              points: isParkingStart ? l1Segment.points : l2Segment.points,
+              totalDistance: candidateDistance,
+              floorSegments: [
+                { floor: 2, checkpointIds: l2Segment.checkpointIds, points: l2Segment.points, totalDistance: l2Segment.totalDistance },
+                { floor: 1, checkpointIds: l1Segment.checkpointIds, points: l1Segment.points, totalDistance: l1Segment.totalDistance },
+              ],
+              floorsInvolved: [2, 1],
+              transitionLabel: connector.label,
+            };
+            bestConnectorLabel = connector.label;
+          });
+
+          if (!bestL2L1Route || !bestConnectorLabel) return null;
+
+          // Build parking L2 segment
+          let parkingSegment: RoomRouteResult | null = null;
+          if (isParkingStart) {
+            if (parkAnchor) {
+              parkingSegment = buildRouteForRooms(
+                parkingRoomId,
+                conn.parkingNodeId,
+                parkDoc,
                 {
+                  startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
+                  useExactStartPoint: true,
+                  startNodeId: parkAnchor.routeNodeId,
+                },
+              );
+            }
+            if (!parkingSegment) {
+              parkingSegment = buildRouteFromPoint(
+                conn.parkingNodeId, conn.parkingX, conn.parkingY,
+                parkingRoomId, parkDoc,
+                "room_to_point",
+              );
+            }
+          } else {
+            parkingSegment = buildRouteFromPoint(
+              conn.parkingNodeId, conn.parkingX, conn.parkingY,
+              parkingRoomId, parkDoc,
+              "point_to_room",
+            );
+          }
+
+          if (!parkingSegment) return null;
+
+          // Determine which segment to show based on current map view
+          let activeSegment: RoomRouteResult | null = null;
+          if (showParkingMap && parkingFloor === 2) {
+            activeSegment = parkingSegment;
+          } else if (activeFloor === 2) {
+            activeSegment = bestL2L1Route.floorSegments?.[0] ? {
+              ...bestL2L1Route,
+              points: bestL2L1Route.floorSegments[0].points,
+              checkpointIds: bestL2L1Route.floorSegments[0].checkpointIds,
+              totalDistance: bestL2L1Route.floorSegments[0].totalDistance,
+            } : null;
+          } else if (activeFloor === 1) {
+            activeSegment = bestL2L1Route.floorSegments?.[1] ? {
+              ...bestL2L1Route,
+              points: bestL2L1Route.floorSegments[1].points,
+              checkpointIds: bestL2L1Route.floorSegments[1].checkpointIds,
+              totalDistance: bestL2L1Route.floorSegments[1].totalDistance,
+            } : null;
+          }
+
+          if (!activeSegment) return null;
+
+          return {
+            startRoomId: startRoomIdParam,
+            endRoomId: endRoomIdParam,
+            checkpointIds: isParkingStart
+              ? [
+                  ...(parkingSegment.checkpointIds ?? []),
+                  "transition_parking_l2",
+                  ...(bestL2L1Route.checkpointIds ?? []),
+                ]
+              : [
+                  ...(bestL2L1Route.checkpointIds ?? []),
+                  "transition_parking_l2",
+                  ...(parkingSegment.checkpointIds ?? []),
+                ],
+            points: activeSegment.points,
+            totalDistance: parkingSegment.totalDistance + bestL2L1Route.totalDistance,
+            floorSegments: [
+              {
+                floor: -1,
+                checkpointIds: parkingSegment.checkpointIds,
+                points: parkingSegment.points,
+                totalDistance: parkingSegment.totalDistance,
+              },
+              ...(bestL2L1Route.floorSegments ?? []),
+            ],
+            floorsInvolved: [-1, 2, 1],
+            transitionLabel: `Jembatan Parkir L2 → ${bestConnectorLabel}`,
+          };
+        } else if (isParkingL1Involved) {
+          // Hospital L2 ↔ Parking L1 (must route through Parking L2)
+          const isParkingStart = startFloor === 0;
+          const parkingL1RoomId = isParkingStart ? startRoomIdParam : endRoomIdParam;
+          const hospitalL2RoomId = isParkingStart ? endRoomIdParam : startRoomIdParam;
+
+          const parkL1Doc = getDoc(0);
+          const parkL2Doc = getDoc(-1);
+          const hospitalL2Doc = getDoc(2);
+          const hospitalL1Doc = getDoc(1);
+          if (!parkL1Doc || !parkL2Doc || !hospitalL2Doc || !hospitalL1Doc) return null;
+
+          // Step 1: Route within Parking L1 to stair entrance
+          const l1StairEntrance = { nodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir", x: 1181.4375, y: 751, roomId: "Parking_Lantai_1" };
+          injectVirtualAnchorNode(parkL1Doc, l1StairEntrance.nodeId, l1StairEntrance.x, l1StairEntrance.y);
+
+          const parkL1Anchor = Object.values(QR_ANCHOR_REGISTRY).find(
+            (a) => a.roomId === parkingL1RoomId && a.floor === 0
+          );
+          if (parkL1Anchor) injectVirtualAnchorNode(parkL1Doc, parkingL1RoomId, parkL1Anchor.svgX, parkL1Anchor.svgY);
+
+          const parkingL1Segment = isParkingStart
+            ? buildRouteForRooms(parkingL1RoomId, l1StairEntrance.nodeId, parkL1Doc, {
+                startPoint: parkL1Anchor ? { x: parkL1Anchor.svgX, y: parkL1Anchor.svgY } : undefined,
+                useExactStartPoint: parkL1Anchor ? true : false,
+                startNodeId: parkL1Anchor?.routeNodeId,
+              })
+            : buildRouteForRooms(l1StairEntrance.nodeId, parkingL1RoomId, parkL1Doc);
+
+          if (!parkingL1Segment) return null;
+
+          // Step 2: Route within Parking L2 from stair exit to bridge
+          const l2StairExit = { nodeId: "Keluar_dari_Tangga_Pengunjung_Lantai_2_Lahan_Parkir", x: 1181.4375, y: 751, roomId: "Parking_Lantai_2" };
+          const l2BridgeTurn = { nodeId: "Belok_ke_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_", x: 471.46345, y: 751, roomId: "Parking_Lantai_2" };
+          injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
+          injectVirtualAnchorNode(parkL2Doc, l2BridgeTurn.nodeId, l2BridgeTurn.x, l2BridgeTurn.y);
+
+          const conn = PARKING2_CONN;
+          injectVirtualAnchorNode(parkL2Doc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
+
+          const parkingL2ToBridgeTurn = buildRouteFromPoint(
+            l2StairExit.nodeId,
+            l2StairExit.x,
+            l2StairExit.y,
+            l2BridgeTurn.nodeId,
+            parkL2Doc,
+            "point_to_point",
+          );
+          const parkingL2ToBridgeExit = buildRouteFromPoint(
+            l2BridgeTurn.nodeId,
+            l2BridgeTurn.x,
+            l2BridgeTurn.y,
+            conn.parkingNodeId,
+            parkL2Doc,
+            "point_to_point",
+          );
+          if (!parkingL2ToBridgeTurn || !parkingL2ToBridgeExit) return null;
+
+          const parkingL2Segment: RoomRouteResult = {
+            startRoomId: l2StairExit.roomId,
+            endRoomId: conn.parkingNodeId,
+            checkpointIds: [
+              ...parkingL2ToBridgeTurn.checkpointIds,
+              ...parkingL2ToBridgeExit.checkpointIds.slice(1),
+            ],
+            points: [
+              ...parkingL2ToBridgeTurn.points,
+              ...parkingL2ToBridgeExit.points.slice(1),
+            ],
+            totalDistance: parkingL2ToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
+          };
+
+          // Step 3: Route within Hospital L2 from bridge to L2 room or connector
+          injectVirtualAnchorNode(hospitalL2Doc, conn.hospitalNodeId, conn.hospitalX, conn.hospitalY);
+
+          // Find best connector between L2 and L1
+          let bestL2L1Route: RoomRouteResult | null = null;
+          let bestConnectorLabel: string | null = null;
+
+          multiFloorConnectors.forEach((connector) => {
+            const l2ConnectorRoomId = connector.rooms[2];
+            const l1ConnectorRoomId = connector.rooms[1];
+
+            const l2Segment = isParkingStart
+              ? buildRouteForRooms(conn.hospitalNodeId, l2ConnectorRoomId, hospitalL2Doc)
+              : buildRouteForRooms(hospitalL2RoomId, l2ConnectorRoomId, hospitalL2Doc, {
                   startPoint: options?.startPoint,
                   useExactStartPoint: options?.useExactStartPoint,
                   startNodeId: options?.startNodeId,
-                },
-              );
-          if (!l2Segment || !l1Segment) return;
+                });
 
-          const candidateDistance = l2Segment.totalDistance + l1Segment.totalDistance;
-          if (bestL2L1Route && bestL2L1Route.totalDistance <= candidateDistance) return;
+            const l1Segment = buildRouteForRooms(l1ConnectorRoomId, PARKING_CONN.hospitalNodeId, hospitalL1Doc);
+            if (!l2Segment || !l1Segment) return;
 
-          bestL2L1Route = {
-            startRoomId: isParkingStart ? conn.hospitalNodeId : hospitalL1RoomId,
-            endRoomId: isParkingStart ? hospitalL1RoomId : conn.hospitalNodeId,
+            const candidateDistance = l2Segment.totalDistance + l1Segment.totalDistance;
+            if (bestL2L1Route && bestL2L1Route.totalDistance <= candidateDistance) return;
+
+            bestL2L1Route = {
+              startRoomId: isParkingStart ? conn.hospitalNodeId : hospitalL2RoomId,
+              endRoomId: PARKING_CONN.hospitalNodeId,
+              checkpointIds: [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds],
+              points: l2Segment.points,
+              totalDistance: candidateDistance,
+              floorSegments: [
+                { floor: 2, checkpointIds: l2Segment.checkpointIds, points: l2Segment.points, totalDistance: l2Segment.totalDistance },
+                { floor: 1, checkpointIds: l1Segment.checkpointIds, points: l1Segment.points, totalDistance: l1Segment.totalDistance },
+              ],
+              floorsInvolved: [2, 1],
+              transitionLabel: connector.label,
+            };
+            bestConnectorLabel = connector.label;
+          });
+
+          if (!bestL2L1Route || !bestConnectorLabel) return null;
+
+          // Step 4: Route within Parking L1 from hospital entrance to parking room
+          injectVirtualAnchorNode(parkL1Doc, PARKING_CONN.parkingNodeId, PARKING_CONN.parkingX, PARKING_CONN.parkingY);
+
+          const parkingL1ToHospitalSegment = isParkingStart
+            ? buildRouteForRooms(l1StairEntrance.nodeId, PARKING_CONN.parkingNodeId, parkL1Doc)
+            : buildRouteForRooms(PARKING_CONN.parkingNodeId, parkingL1RoomId, parkL1Doc);
+
+          if (!parkingL1ToHospitalSegment) return null;
+
+          // Determine active segment based on current view
+          let activeSegment: RoomRouteResult;
+          if (showParkingMap && parkingFloor === 1) {
+            activeSegment = isParkingStart ? parkingL1Segment : parkingL1ToHospitalSegment;
+          } else if (showParkingMap && parkingFloor === 2) {
+            activeSegment = parkingL2Segment;
+          } else if (activeFloor === 2) {
+            activeSegment = bestL2L1Route.floorSegments?.[0] ? {
+              ...bestL2L1Route,
+              points: bestL2L1Route.floorSegments[0].points,
+              checkpointIds: bestL2L1Route.floorSegments[0].checkpointIds,
+              totalDistance: bestL2L1Route.floorSegments[0].totalDistance,
+            } : bestL2L1Route;
+          } else {
+            activeSegment = bestL2L1Route.floorSegments?.[1] ? {
+              ...bestL2L1Route,
+              points: bestL2L1Route.floorSegments[1].points,
+              checkpointIds: bestL2L1Route.floorSegments[1].checkpointIds,
+              totalDistance: bestL2L1Route.floorSegments[1].totalDistance,
+            } : bestL2L1Route;
+          }
+
+          return {
+            startRoomId: startRoomIdParam,
+            endRoomId: endRoomIdParam,
             checkpointIds: isParkingStart
-              ? [...l2Segment.checkpointIds, `transition_${connector.id}`, ...l1Segment.checkpointIds]
-              : [...l1Segment.checkpointIds, `transition_${connector.id}`, ...l2Segment.checkpointIds],
-            points: isParkingStart ? l1Segment.points : l2Segment.points,
-            totalDistance: candidateDistance,
+              ? [
+                  ...parkingL1Segment.checkpointIds,
+                  "transition_parking_l1_stair",
+                  ...parkingL2Segment.checkpointIds,
+                  "transition_parking_l2_bridge",
+                  ...bestL2L1Route.checkpointIds,
+                  "transition_hospital_l1_parking",
+                  ...parkingL1ToHospitalSegment.checkpointIds,
+                ]
+              : [
+                  ...bestL2L1Route.checkpointIds,
+                  "transition_hospital_l1_parking",
+                  ...parkingL1ToHospitalSegment.checkpointIds,
+                  "transition_parking_l1_stair",
+                  ...parkingL2Segment.checkpointIds,
+                  "transition_parking_l2_bridge",
+                  ...parkingL1Segment.checkpointIds,
+                ],
+            points: activeSegment.points,
+            totalDistance: parkingL1Segment.totalDistance + parkingL2Segment.totalDistance + bestL2L1Route.totalDistance + parkingL1ToHospitalSegment.totalDistance,
             floorSegments: [
-              { floor: 2, checkpointIds: l2Segment.checkpointIds, points: l2Segment.points, totalDistance: l2Segment.totalDistance },
-              { floor: 1, checkpointIds: l1Segment.checkpointIds, points: l1Segment.points, totalDistance: l1Segment.totalDistance },
+              { floor: 0, checkpointIds: isParkingStart ? parkingL1Segment.checkpointIds : parkingL1ToHospitalSegment.checkpointIds, points: isParkingStart ? parkingL1Segment.points : parkingL1ToHospitalSegment.points, totalDistance: isParkingStart ? parkingL1Segment.totalDistance : parkingL1ToHospitalSegment.totalDistance },
+              { floor: -1, checkpointIds: parkingL2Segment.checkpointIds, points: parkingL2Segment.points, totalDistance: parkingL2Segment.totalDistance },
+              ...(bestL2L1Route.floorSegments ?? []),
             ],
-            floorsInvolved: [2, 1],
-            transitionLabel: connector.label,
+            floorsInvolved: [0, -1, 2, 1],
+            transitionLabel: `Tangga Parkir L1→L2 → Jembatan → ${bestConnectorLabel} → Parkir L1`,
           };
-          bestConnectorLabel = connector.label;
-        });
+        }
+      }
 
-        if (!bestL2L1Route || !bestConnectorLabel) return null;
-
-        // Build parking L2 segment
+      // Normal case: Parking L2 ↔ Hospital L2 (same floor routing)
         let parkingSegment: RoomRouteResult | null = null;
         if (isParkingStart) {
           if (parkAnchor) {
@@ -1310,8 +1583,7 @@ const MapViewer = ({
         floorsInvolved: [2],
         transitionLabel: "Jembatan Parkir Lantai 2",
       };
-    }
-
+    
     // ── Both hospital floors (1 ↔ 2) ─────────────────────────────────────────
     const startDoc = getDoc(startFloor as 1 | 2);
     const endDoc   = getDoc(endFloor   as 1 | 2);
@@ -2668,6 +2940,21 @@ const MapViewer = ({
           : null;
 
       if (routeAfterCalibration) {
+        // Auto-switch floor to match route start
+        const routeStartFloor = routeAfterCalibration.floorsInvolved?.[0];
+        if (routeStartFloor !== undefined) {
+          if (routeStartFloor === 0) {
+            setShowParkingMap(true);
+            setParkingFloor(1);
+          } else if (routeStartFloor === -1) {
+            setShowParkingMap(true);
+            setParkingFloor(2);
+          } else if (routeStartFloor === 1 || routeStartFloor === 2) {
+            setShowParkingMap(false);
+            setActiveFloor(routeStartFloor);
+          }
+        }
+
         // Debug: Log route from QR scan
         console.log(`🗺️ Route (QR): ${anchor.roomId} → ${endRoomIdRef.current}`);
         console.log(`📍 Nodes (${routeAfterCalibration.checkpointIds.length}):`, routeAfterCalibration.checkpointIds.join(' → '));
@@ -2895,7 +3182,7 @@ const MapViewer = ({
   useEffect(() => {
     if (!navigationStartRequest) return;
 
-    const { requestId, roomId, source, qrPayload } = navigationStartRequest;
+    const { requestId, roomId, destinationRoomId, source, qrPayload } = navigationStartRequest;
     const finish = () => onNavigationStartRequestHandled?.(requestId);
 
     if (isLiveMode) {
@@ -2910,6 +3197,8 @@ const MapViewer = ({
     setLocationInputMode(source === "qr" ? "qr" : "dropdown");
     setStartRoomId(roomId);
     startRoomIdRef.current = roomId;
+    setEndRoomId(destinationRoomId);
+    endRoomIdRef.current = destinationRoomId;
     setShowCurrentUserMarker(true);
 
     const requestedRoomInfo = roomInfoBySvgId[roomId];
@@ -2940,7 +3229,7 @@ const MapViewer = ({
         setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
         setQrCalibrationHistory((prev) => [...prev, anchor]);
 
-        const targetEndFromAnchor = endRoomIdRef.current;
+        const targetEndFromAnchor = destinationRoomId;
         if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
           const anchorRoute = buildDebugRouteForRooms(anchor.roomId, targetEndFromAnchor, {
             startPoint: { x: anchor.svgX, y: anchor.svgY },
@@ -2968,7 +3257,7 @@ const MapViewer = ({
       }
     }
 
-    const targetEnd = endRoomIdRef.current;
+    const targetEnd = destinationRoomId;
     if (!targetEnd || targetEnd === roomId) {
       setActiveRoute(null);
       setRouteDebugMessage(`Start point diset ke ${roomInfoBySvgId[roomId]?.name || roomId}. Pilih tujuan berbeda.`);
@@ -3587,15 +3876,7 @@ const MapViewer = ({
           </div>
         </div>
         </div>
-      ) : (
-        <button
-          onClick={() => setIsPathfindingDebugVisible(true)}
-          className="absolute top-4 right-4 z-30 rounded-md border border-border bg-background/90 px-2.5 py-1.5 text-[11px] font-semibold text-muted-foreground shadow"
-          title="Buka pathfinding debug mode"
-        >
-          Buka Debug Mode
-        </button>
-      )}
+      ) : null}
 
       <div className="absolute top-4 left-4 z-30 inline-flex items-center rounded-md border border-border bg-background/90 shadow">
         <button
@@ -3697,17 +3978,22 @@ const MapViewer = ({
           </div>
 
           {/* ── QR Calibration button ── */}
-          <div className="relative px-3 pb-3">
-            <button
-              onClick={() => onStartNavigation?.({ mode: "qr" })}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
-              title="Kalibrasi posisi via QR Code"
-              style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
-            >
-              <QrCode className="h-4 w-4 shrink-0" />
-              Kalibrasi Posisi via QR Code
-            </button>
-          </div>
+          {activeRoute && endRoomIdRef.current && (
+            <div className="relative px-3 pb-3">
+              <button
+                onClick={() => {
+                  // Trigger QR scan for calibration only (keep existing destination)
+                  onStartNavigation?.({ mode: "qr", destinationRoomId: endRoomIdRef.current });
+                }}
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
+                title="Kalibrasi posisi via QR Code"
+                style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
+              >
+                <QrCode className="h-4 w-4 shrink-0" />
+                Kalibrasi Posisi via QR Code
+              </button>
+            </div>
+          )}
 
           {/* Keyframe for QR button pulse */}
           <style>{`
@@ -3846,8 +4132,7 @@ const MapViewer = ({
                 setRouteDebugMessage(
                   `Tujuan dipilih: ${activeRoomInfo.name}. Pilih titik awal via QR atau dropdown.`
                 );
-                setIsPathfindingDebugVisible(true);
-                onStartNavigation?.({ mode: "qr" });
+                onStartNavigation?.({ mode: "qr", destinationRoomId });
               }}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
             >

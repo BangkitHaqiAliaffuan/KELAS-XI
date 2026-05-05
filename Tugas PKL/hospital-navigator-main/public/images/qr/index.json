@@ -1,336 +1,9 @@
 {
-  "generatedAt": "2026-04-20T05:03:07.474Z",
-  "total": 58,
-  "rooms": [
-    {
-      "type": "room",
-      "id": "Area_Kamar_Operasi",
-      "label": "Area Kamar Operasi",
-      "payload": "QR-R-AREA_KAMAR_OPERASI",
-      "fileName": "room_Area_Kamar_Operasi.png",
-      "relativePath": "room_Area_Kamar_Operasi.png"
-    },
-    {
-      "type": "room",
-      "id": "Area_Kamar_Operasi_2",
-      "label": "Area Kamar Operasi 2",
-      "payload": "QR-R-AREA_KAMAR_OPERASI_2",
-      "fileName": "room_Area_Kamar_Operasi_2.png",
-      "relativePath": "room_Area_Kamar_Operasi_2.png"
-    },
-    {
-      "type": "room",
-      "id": "Ruang_sebelah_IGD",
-      "label": "Area Pelayanan IGD",
-      "payload": "QR-R-RUANG_SEBELAH_IGD",
-      "fileName": "room_Ruang_sebelah_IGD.png",
-      "relativePath": "room_Ruang_sebelah_IGD.png"
-    },
-    {
-      "type": "room",
-      "id": "CSSD",
-      "label": "CSSD",
-      "payload": "QR-R-CSSD",
-      "fileName": "room_CSSD.png",
-      "relativePath": "room_CSSD.png"
-    },
-    {
-      "type": "room",
-      "id": "Farmasi",
-      "label": "Farmasi",
-      "payload": "QR-R-FARMASI",
-      "fileName": "room_Farmasi.png",
-      "relativePath": "room_Farmasi.png"
-    },
-    {
-      "type": "room",
-      "id": "ICU",
-      "label": "ICU",
-      "payload": "QR-R-ICU",
-      "fileName": "room_ICU.png",
-      "relativePath": "room_ICU.png"
-    },
-    {
-      "type": "room",
-      "id": "IGD",
-      "label": "IGD",
-      "payload": "QR-R-IGD",
-      "fileName": "room_IGD.png",
-      "relativePath": "room_IGD.png"
-    },
-    {
-      "type": "room",
-      "id": "Informasi",
-      "label": "Informasi",
-      "payload": "QR-R-INFORMASI",
-      "fileName": "room_Informasi.png",
-      "relativePath": "room_Informasi.png"
-    },
-    {
-      "type": "room",
-      "id": "K._Mayat",
-      "label": "K. Mayat",
-      "payload": "QR-R-K._MAYAT",
-      "fileName": "room_K._Mayat.png",
-      "relativePath": "room_K._Mayat.png"
-    },
-    {
-      "type": "room",
-      "id": "Kamar_Operasi",
-      "label": "Kamar Operasi",
-      "payload": "QR-R-KAMAR_OPERASI",
-      "fileName": "room_Kamar_Operasi.png",
-      "relativePath": "room_Kamar_Operasi.png"
-    },
-    {
-      "type": "room",
-      "id": "Kantor_Administrasi",
-      "label": "Kantor/Administrasi",
-      "payload": "QR-R-KANTOR_ADMINISTRASI",
-      "fileName": "room_Kantor_Administrasi.png",
-      "relativePath": "room_Kantor_Administrasi.png"
-    },
-    {
-      "type": "room",
-      "id": "KU_1",
-      "label": "KU 1",
-      "payload": "QR-R-KU_1",
-      "fileName": "room_KU_1.png",
-      "relativePath": "room_KU_1.png"
-    },
-    {
-      "type": "room",
-      "id": "Lab",
-      "label": "Laboratorium",
-      "payload": "QR-R-LAB",
-      "fileName": "room_Lab.png",
-      "relativePath": "room_Lab.png"
-    },
-    {
-      "type": "room",
-      "id": "Lift_Lantai_1",
-      "label": "Lift Lantai 1",
-      "payload": "QR-R-LIFT_LANTAI_1",
-      "fileName": "room_Lift_Lantai_1.png",
-      "relativePath": "room_Lift_Lantai_1.png"
-    },
-    {
-      "type": "room",
-      "id": "Musholla",
-      "label": "Musholla",
-      "payload": "QR-R-MUSHOLLA",
-      "fileName": "room_Musholla.png",
-      "relativePath": "room_Musholla.png"
-    },
-    {
-      "type": "room",
-      "id": "Poliklinik",
-      "label": "Poliklinik",
-      "payload": "QR-R-POLIKLINIK",
-      "fileName": "room_Poliklinik.png",
-      "relativePath": "room_Poliklinik.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Anak",
-      "label": "R. Anak",
-      "payload": "QR-R-R._ANAK",
-      "fileName": "room_R._Anak.png",
-      "relativePath": "room_R._Anak.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Bedah",
-      "label": "R. Bedah",
-      "payload": "QR-R-R._BEDAH",
-      "fileName": "room_R._Bedah.png",
-      "relativePath": "room_R._Bedah.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Fisioterapi",
-      "label": "R. Fisioterapi",
-      "payload": "QR-R-R._FISIOTERAPI",
-      "fileName": "room_R._Fisioterapi.png",
-      "relativePath": "room_R._Fisioterapi.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Gawat_Gabung",
-      "label": "R. Gawat Gabung",
-      "payload": "QR-R-R._GAWAT_GABUNG",
-      "fileName": "room_R._Gawat_Gabung.png",
-      "relativePath": "room_R._Gawat_Gabung.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Gizi",
-      "label": "R. Gizi",
-      "payload": "QR-R-R._GIZI",
-      "fileName": "room_R._Gizi.png",
-      "relativePath": "room_R._Gizi.png"
-    },
-    {
-      "type": "room",
-      "id": "R._HD",
-      "label": "R. HD",
-      "payload": "QR-R-R._HD",
-      "fileName": "room_R._HD.png",
-      "relativePath": "room_R._HD.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Internis",
-      "label": "R. Internis",
-      "payload": "QR-R-R._INTERNIS",
-      "fileName": "room_R._Internis.png",
-      "relativePath": "room_R._Internis.png"
-    },
-    {
-      "type": "room",
-      "id": "R._IPSRS",
-      "label": "R. IPSRS",
-      "payload": "QR-R-R._IPSRS",
-      "fileName": "room_R._IPSRS.png",
-      "relativePath": "room_R._IPSRS.png"
-    },
-    {
-      "type": "room",
-      "id": "R._JKN",
-      "label": "R. JKN",
-      "payload": "QR-R-R._JKN",
-      "fileName": "room_R._JKN.png",
-      "relativePath": "room_R._JKN.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Kebidanan",
-      "label": "R. Kebidanan",
-      "payload": "QR-R-R._KEBIDANAN",
-      "fileName": "room_R._Kebidanan.png",
-      "relativePath": "room_R._Kebidanan.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Laundry",
-      "label": "R. Laundry",
-      "payload": "QR-R-R._LAUNDRY",
-      "fileName": "room_R._Laundry.png",
-      "relativePath": "room_R._Laundry.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Pemeriksaan_Internis",
-      "label": "R. Pemeriksaan Internis",
-      "payload": "QR-R-R._PEMERIKSAAN_INTERNIS",
-      "fileName": "room_R._Pemeriksaan_Internis.png",
-      "relativePath": "room_R._Pemeriksaan_Internis.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Pinere",
-      "label": "R. Pinere",
-      "payload": "QR-R-R._PINERE",
-      "fileName": "room_R._Pinere.png",
-      "relativePath": "room_R._Pinere.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Ponek",
-      "label": "R. Ponek",
-      "payload": "QR-R-R._PONEK",
-      "fileName": "room_R._Ponek.png",
-      "relativePath": "room_R._Ponek.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Rawat_Inap",
-      "label": "R. Rawat Inap",
-      "payload": "QR-R-R._RAWAT_INAP",
-      "fileName": "room_R._Rawat_Inap.png",
-      "relativePath": "room_R._Rawat_Inap.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Rawat_Jantung",
-      "label": "R. Rawat Jantung",
-      "payload": "QR-R-R._RAWAT_JANTUNG",
-      "fileName": "room_R._Rawat_Jantung.png",
-      "relativePath": "room_R._Rawat_Jantung.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Tunggu",
-      "label": "R. Tunggu",
-      "payload": "QR-R-R._TUNGGU",
-      "fileName": "room_R._Tunggu.png",
-      "relativePath": "room_R._Tunggu.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Tunggu_Keluarga_Pasien",
-      "label": "R. Tunggu Keluarga Pasien",
-      "payload": "QR-R-R._TUNGGU_KELUARGA_PASIEN",
-      "fileName": "room_R._Tunggu_Keluarga_Pasien.png",
-      "relativePath": "room_R._Tunggu_Keluarga_Pasien.png"
-    },
-    {
-      "type": "room",
-      "id": "Radiologi",
-      "label": "Radiologi",
-      "payload": "QR-R-RADIOLOGI",
-      "fileName": "room_Radiologi.png",
-      "relativePath": "room_Radiologi.png"
-    },
-    {
-      "type": "room",
-      "id": "Rehab_Medik",
-      "label": "Rehab Medik",
-      "payload": "QR-R-REHAB_MEDIK",
-      "fileName": "room_Rehab_Medik.png",
-      "relativePath": "room_Rehab_Medik.png"
-    },
-    {
-      "type": "room",
-      "id": "Rekam_Medis",
-      "label": "Rekam Medis",
-      "payload": "QR-R-REKAM_MEDIS",
-      "fileName": "room_Rekam_Medis.png",
-      "relativePath": "room_Rekam_Medis.png"
-    },
-    {
-      "type": "room",
-      "id": "Tangga_Lantai_1-2",
-      "label": "Tangga Evakuasi Lantai 1",
-      "payload": "QR-R-TANGGA_LANTAI_1-2",
-      "fileName": "room_Tangga_Lantai_1-2.png",
-      "relativePath": "room_Tangga_Lantai_1-2.png"
-    },
-    {
-      "type": "room",
-      "id": "Tangga_Lantai_1",
-      "label": "Tangga Lantai 1",
-      "payload": "QR-R-TANGGA_LANTAI_1",
-      "fileName": "room_Tangga_Lantai_1.png",
-      "relativePath": "room_Tangga_Lantai_1.png"
-    },
-    {
-      "type": "room",
-      "id": "Toilet",
-      "label": "Toilet",
-      "payload": "QR-R-TOILET",
-      "fileName": "room_Toilet.png",
-      "relativePath": "room_Toilet.png"
-    },
-    {
-      "type": "room",
-      "id": "TRP._RJ",
-      "label": "TRP. RJ",
-      "payload": "QR-R-TRP._RJ",
-      "fileName": "room_TRP._RJ.png",
-      "relativePath": "room_TRP._RJ.png"
-    }
-  ],
+  "generatedAt": "2026-05-05T02:08:44.468Z",
+  "total": 34,
+  "anchorSource": "src/data/hospitalRouteGraph.ts:QR_ANCHOR_REGISTRY",
+  "anchorRegistryTotal": 34,
+  "rooms": [],
   "anchors": [
     {
       "type": "anchor",
@@ -338,7 +11,11 @@
       "label": "Persimpangan Area Pelayanan IGD",
       "payload": "QR-F1-N01",
       "fileName": "anchor_QR-F1-N01.png",
-      "relativePath": "anchor_QR-F1-N01.png"
+      "relativePath": "anchor_QR-F1-N01.png",
+      "roomId": "IGD",
+      "floor": 1,
+      "svgX": 632.95538,
+      "svgY": 753.07831
     },
     {
       "type": "anchor",
@@ -346,7 +23,12 @@
       "label": "Persimpangan ke Lab",
       "payload": "QR-F1-N03",
       "fileName": "anchor_QR-F1-N03.png",
-      "relativePath": "anchor_QR-F1-N03.png"
+      "relativePath": "anchor_QR-F1-N03.png",
+      "roomId": "Lab",
+      "floor": 1,
+      "svgX": 865.2005,
+      "svgY": 516.54614,
+      "routeNodeId": "Persimpangan_ke_Lab"
     },
     {
       "type": "anchor",
@@ -354,7 +36,11 @@
       "label": "Persimpangan jalan ke Farmasi",
       "payload": "QR-F1-N04",
       "fileName": "anchor_QR-F1-N04.png",
-      "relativePath": "anchor_QR-F1-N04.png"
+      "relativePath": "anchor_QR-F1-N04.png",
+      "roomId": "Farmasi",
+      "floor": 1,
+      "svgX": 989.14642,
+      "svgY": 515.6015
     },
     {
       "type": "anchor",
@@ -362,7 +48,11 @@
       "label": "Persimpangan dari Poliklinik",
       "payload": "QR-F1-N05",
       "fileName": "anchor_QR-F1-N05.png",
-      "relativePath": "anchor_QR-F1-N05.png"
+      "relativePath": "anchor_QR-F1-N05.png",
+      "roomId": "Poliklinik",
+      "floor": 1,
+      "svgX": 1297.0038,
+      "svgY": 681.64331
     },
     {
       "type": "anchor",
@@ -370,7 +60,11 @@
       "label": "Persimpangan ke Rekam Medis",
       "payload": "QR-F1-N06",
       "fileName": "anchor_QR-F1-N06.png",
-      "relativePath": "anchor_QR-F1-N06.png"
+      "relativePath": "anchor_QR-F1-N06.png",
+      "roomId": "Rekam_Medis",
+      "floor": 1,
+      "svgX": 988.59271,
+      "svgY": 681.49438
     },
     {
       "type": "anchor",
@@ -378,7 +72,11 @@
       "label": "Persimpangan ke ICU",
       "payload": "QR-F1-N07",
       "fileName": "anchor_QR-F1-N07.png",
-      "relativePath": "anchor_QR-F1-N07.png"
+      "relativePath": "anchor_QR-F1-N07.png",
+      "roomId": "ICU",
+      "floor": 1,
+      "svgX": 465.359,
+      "svgY": 255.37
     },
     {
       "type": "anchor",
@@ -386,7 +84,11 @@
       "label": "Persimpangan ke Rehab Medik",
       "payload": "QR-F1-N08",
       "fileName": "anchor_QR-F1-N08.png",
-      "relativePath": "anchor_QR-F1-N08.png"
+      "relativePath": "anchor_QR-F1-N08.png",
+      "roomId": "Rehab_Medik",
+      "floor": 1,
+      "svgX": 781.63397,
+      "svgY": 680.77075
     },
     {
       "type": "anchor",
@@ -394,7 +96,11 @@
       "label": "Persimpangan masuk ke lab dan Rehab Medik",
       "payload": "QR-F1-N09",
       "fileName": "anchor_QR-F1-N09.png",
-      "relativePath": "anchor_QR-F1-N09.png"
+      "relativePath": "anchor_QR-F1-N09.png",
+      "roomId": "Lab",
+      "floor": 1,
+      "svgX": 782.692,
+      "svgY": 517.453
     },
     {
       "type": "anchor",
@@ -402,7 +108,11 @@
       "label": "Persimpangan arah jalan atas",
       "payload": "QR-F1-N10",
       "fileName": "anchor_QR-F1-N10.png",
-      "relativePath": "anchor_QR-F1-N10.png"
+      "relativePath": "anchor_QR-F1-N10.png",
+      "roomId": "ICU",
+      "floor": 1,
+      "svgX": 463.823,
+      "svgY": 514.038
     },
     {
       "type": "anchor",
@@ -410,7 +120,11 @@
       "label": "Persimpangan depan ruang kebidanan atas",
       "payload": "QR-F1-N11",
       "fileName": "anchor_QR-F1-N11.png",
-      "relativePath": "anchor_QR-F1-N11.png"
+      "relativePath": "anchor_QR-F1-N11.png",
+      "roomId": "ICU",
+      "floor": 1,
+      "svgX": 651.808,
+      "svgY": 254.74
     },
     {
       "type": "anchor",
@@ -418,7 +132,11 @@
       "label": "Persimpangan depan ruang kebidanan atas",
       "payload": "QR-F1-N12",
       "fileName": "anchor_QR-F1-N12.png",
-      "relativePath": "anchor_QR-F1-N12.png"
+      "relativePath": "anchor_QR-F1-N12.png",
+      "roomId": "R._Kebidanan",
+      "floor": 1,
+      "svgX": 652.549,
+      "svgY": 513.945
     },
     {
       "type": "anchor",
@@ -426,7 +144,11 @@
       "label": "Persimpangan ke Ruang Rawat Jantung",
       "payload": "QR-F1-N13",
       "fileName": "anchor_QR-F1-N13.png",
-      "relativePath": "anchor_QR-F1-N13.png"
+      "relativePath": "anchor_QR-F1-N13.png",
+      "roomId": "R._Tunggu_Keluarga_Pasien",
+      "floor": 1,
+      "svgX": 780.409,
+      "svgY": 255.386
     },
     {
       "type": "anchor",
@@ -434,7 +156,11 @@
       "label": "Persimpangan masuk ke ruang anak",
       "payload": "QR-F1-N14",
       "fileName": "anchor_QR-F1-N14.png",
-      "relativePath": "anchor_QR-F1-N14.png"
+      "relativePath": "anchor_QR-F1-N14.png",
+      "roomId": "R._Tunggu_Keluarga_Pasien",
+      "floor": 1,
+      "svgX": 864.351,
+      "svgY": 256.027
     },
     {
       "type": "anchor",
@@ -442,7 +168,11 @@
       "label": "Persimpangan ke Ruang Rawat Jantung",
       "payload": "QR-F1-N15",
       "fileName": "anchor_QR-F1-N15.png",
-      "relativePath": "anchor_QR-F1-N15.png"
+      "relativePath": "anchor_QR-F1-N15.png",
+      "roomId": "R._Tunggu_Keluarga_Pasien",
+      "floor": 1,
+      "svgX": 1000.108,
+      "svgY": 256.118
     },
     {
       "type": "anchor",
@@ -450,7 +180,11 @@
       "label": "Belok ke Ruang Artenis atau Gizi (Atas)",
       "payload": "QR-F1-N16",
       "fileName": "anchor_QR-F1-N16.png",
-      "relativePath": "anchor_QR-F1-N16.png"
+      "relativePath": "anchor_QR-F1-N16.png",
+      "roomId": "R._Laundry",
+      "floor": 1,
+      "svgX": 1203.5,
+      "svgY": 255.426
     },
     {
       "type": "anchor",
@@ -458,7 +192,11 @@
       "label": "Persimpangan masuk ke ruang anak",
       "payload": "QR-F1-N17",
       "fileName": "anchor_QR-F1-N17.png",
-      "relativePath": "anchor_QR-F1-N17.png"
+      "relativePath": "anchor_QR-F1-N17.png",
+      "roomId": "R._Internis",
+      "floor": 1,
+      "svgX": 1203.5,
+      "svgY": 513.333
     },
     {
       "type": "anchor",
@@ -466,7 +204,218 @@
       "label": "Persimpangan masuk ke ruang anak",
       "payload": "QR-F1-N18",
       "fileName": "anchor_QR-F1-N18.png",
-      "relativePath": "anchor_QR-F1-N18.png"
+      "relativePath": "anchor_QR-F1-N18.png",
+      "roomId": "R._JKN",
+      "floor": 1,
+      "svgX": 1294.753,
+      "svgY": 513.333
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N01",
+      "label": "Testing",
+      "payload": "QR-F2-N01",
+      "fileName": "anchor_QR-F2-N01.png",
+      "relativePath": "anchor_QR-F2-N01.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 1296.753,
+      "svgY": 515.5
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N02",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 1",
+      "payload": "QR-F2-N02",
+      "fileName": "anchor_QR-F2-N02.png",
+      "relativePath": "anchor_QR-F2-N02.png",
+      "roomId": "R._Prancis",
+      "floor": 2,
+      "svgX": 999.847,
+      "svgY": 515.5
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N03",
+      "label": "Persimpangan Jalan Keluar R. IT & Server",
+      "payload": "QR-F2-N03",
+      "fileName": "anchor_QR-F2-N03.png",
+      "relativePath": "anchor_QR-F2-N03.png",
+      "roomId": "Terapi_Okupasi_Lanjutan",
+      "floor": 2,
+      "svgX": 863.9,
+      "svgY": 515.5
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N04",
+      "label": "Persimpangan Atas Terapi Okupasi Lanjutan",
+      "payload": "QR-F2-N04",
+      "fileName": "anchor_QR-F2-N04.png",
+      "relativePath": "anchor_QR-F2-N04.png",
+      "roomId": "Terapi_Okupasi_Lanjutan",
+      "floor": 2,
+      "svgX": 780.732,
+      "svgY": 515.5
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N05",
+      "label": "Persimpangan Jalan Bawah R. HRD & Kepegawaian",
+      "payload": "QR-F2-N05",
+      "fileName": "anchor_QR-F2-N05.png",
+      "relativePath": "anchor_QR-F2-N05.png",
+      "roomId": "R._PACS",
+      "floor": 2,
+      "svgX": 652.894,
+      "svgY": 515.5,
+      "routeNodeId": "Persimpangan_Jalan_Bawah_R._HRD___Kepegawaian"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N06",
+      "label": "Belok ke Jalan Atas",
+      "payload": "QR-F2-N06",
+      "fileName": "anchor_QR-F2-N06.png",
+      "relativePath": "anchor_QR-F2-N06.png",
+      "roomId": "Radioterapi",
+      "floor": 2,
+      "svgX": 463.875,
+      "svgY": 514.5
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N07",
+      "label": "Belok ke Jalan Atas",
+      "payload": "QR-F2-N07",
+      "fileName": "anchor_QR-F2-N07.png",
+      "relativePath": "anchor_QR-F2-N07.png",
+      "roomId": "R._Direktur___Manajemen",
+      "floor": 2,
+      "svgX": 463.875,
+      "svgY": 256.942
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N08",
+      "label": "Persimpangan Jalan Atas R. HRD & Kepegawaian",
+      "payload": "QR-F2-N08",
+      "fileName": "anchor_QR-F2-N08.png",
+      "relativePath": "anchor_QR-F2-N08.png",
+      "roomId": "R._HRD___Kepegawaian",
+      "floor": 2,
+      "svgX": 653.031,
+      "svgY": 255.344,
+      "routeNodeId": "Persimpangan_Jalan_Atas_R._HRD___Kepegawaian"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N09",
+      "label": "Persimpangan Jalan Depan R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N09",
+      "fileName": "anchor_QR-F2-N09.png",
+      "relativePath": "anchor_QR-F2-N09.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 780.188,
+      "svgY": 255.344
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N10",
+      "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N10",
+      "fileName": "anchor_QR-F2-N10.png",
+      "relativePath": "anchor_QR-F2-N10.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 863.756,
+      "svgY": 255.344
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N11",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 1 & VIP",
+      "payload": "QR-F2-N11",
+      "fileName": "anchor_QR-F2-N11.png",
+      "relativePath": "anchor_QR-F2-N11.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 999.697,
+      "svgY": 255.344
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N12",
+      "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
+      "payload": "QR-F2-N12",
+      "fileName": "anchor_QR-F2-N12.png",
+      "relativePath": "anchor_QR-F2-N12.png",
+      "roomId": "R._Laundry_2",
+      "floor": 2,
+      "svgX": 1202.698,
+      "svgY": 255.344
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N13",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N13",
+      "fileName": "anchor_QR-F2-N13.png",
+      "relativePath": "anchor_QR-F2-N13.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 1297.43,
+      "svgY": 681.151
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N14",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N14",
+      "fileName": "anchor_QR-F2-N14.png",
+      "relativePath": "anchor_QR-F2-N14.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 988.5,
+      "svgY": 681.151
+    },
+    {
+      "type": "anchor",
+      "id": "QR-F2-N15",
+      "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
+      "payload": "QR-F2-N15",
+      "fileName": "anchor_QR-F2-N15.png",
+      "relativePath": "anchor_QR-F2-N15.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 781.5,
+      "svgY": 681.151
+    },
+    {
+      "type": "anchor",
+      "id": "QR-PK-N01",
+      "label": "Belok ke Area Parkir Khusus Tenaga Medis",
+      "payload": "QR-PK-N01",
+      "fileName": "anchor_QR-PK-N01.png",
+      "relativePath": "anchor_QR-PK-N01.png",
+      "roomId": "Parking_Lantai_1",
+      "floor": 0,
+      "svgX": 929.478,
+      "svgY": 417.228,
+      "routeNodeId": "Belok_ke_Area_Parkir_Sepeda_Motor_Khusus_Tenaga_Medis"
+    },
+    {
+      "type": "anchor",
+      "id": "QR-PK2-N01",
+      "label": "Akses Jembatan ke Gedung Rumah Sakit Lantai 2",
+      "payload": "QR-PK2-N01",
+      "fileName": "anchor_QR-PK2-N01.png",
+      "relativePath": "anchor_QR-PK2-N01.png",
+      "roomId": "Parking_Lantai_2",
+      "floor": -1,
+      "svgX": 471.46345,
+      "svgY": 708
     }
   ]
 }

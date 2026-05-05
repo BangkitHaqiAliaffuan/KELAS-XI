@@ -11,10 +11,12 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "qr:generate": "tsx scripts/generate-qrcodes.ts",
+    "qr:generate": "tsx scripts/generate-qrcodes.ts --include anchors",
     "qr:generate:rooms": "tsx scripts/generate-qrcodes.ts --include rooms",
     "qr:generate:anchors": "tsx scripts/generate-qrcodes.ts --include anchors",
-    "qr:generate:floor2": "tsx scripts/generate-qrcodes.ts --floor 2 --outDir public/images/qr/floor2 --clean"
+    "qr:generate:parking": "tsx scripts/generate-qrcodes.ts --include anchors --floor parking --outDir public/images/qr/parking --clean",
+    "qr:generate:parking2": "tsx scripts/generate-qrcodes.ts --include anchors --floor parking2 --outDir public/images/qr/parking2 --clean",
+    "qr:generate:floor2": "tsx scripts/generate-qrcodes.ts --include anchors --floor 2 --outDir public/images/qr/floor2 --clean"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

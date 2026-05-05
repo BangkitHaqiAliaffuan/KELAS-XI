@@ -55,9 +55,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#505050"
      showguides="false"
-     inkscape:zoom="2.2456164"
-     inkscape:cx="555.52676"
-     inkscape:cy="229.11304"
+     inkscape:zoom="4.4912328"
+     inkscape:cx="1232.2897"
+     inkscape:cy="520.01312"
      inkscape:window-width="1920"
      inkscape:window-height="1094"
      inkscape:window-x="-11"
@@ -846,12 +846,12 @@
          ry="2.2822242"
          inkscape:label="Persimpangan ke Ruang Internis" /><ellipse
          style="fill:#28220b;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linejoin:round;stroke-dasharray:none"
-         id="Check_point_R._JKN"
+         id="Check_point_Musholla"
          cx="1310.6617"
          cy="515.77863"
          rx="3.2669127"
          ry="1.8105781"
-         inkscape:label="Check point R. JKN" /><ellipse
+         inkscape:label="Check point Musholla" /><ellipse
          style="fill:#28220b;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linejoin:round;stroke-dasharray:none"
          id="Persimpangan_ke_Ruang_Pinere"
          cx="1296.8463"
@@ -865,7 +865,7 @@
          cy="515.38501"
          rx="3.384994"
          ry="1.0233703"
-         inkscape:label="Check Point Musholla" /><ellipse
+         inkscape:label="Check Point R. JKN" /><ellipse
          style="fill:#28220b;fill-opacity:1;stroke:none;stroke-width:0.5;stroke-linejoin:round;stroke-dasharray:none"
          id="Check_Point_ruang_Pinere"
          cx="1298.8143"
