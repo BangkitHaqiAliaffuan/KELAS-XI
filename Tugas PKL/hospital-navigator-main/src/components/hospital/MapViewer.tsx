@@ -1018,8 +1018,8 @@ const MapViewer = ({
       };
     }
 
-    // ── Cross: parking L2 (-1) ↔ hospital L2 ─────────────────────────────────
-    if (startFloor === -1 || endFloor === -1) {
+    // ── Cross: parking L2 (-1) ↔ hospital (must involve parking L2 explicitly) ──
+    if ((startFloor === -1 && endFloor !== 2) || (endFloor === -1 && startFloor !== 2)) {
       // Special case: Parking L2 ↔ Hospital L1 (must go through Hospital L2 first, then down to L1)
       // OR Hospital L2 ↔ Parking L1 (must go through Parking L2 first, then down to L1)
       if ((startFloor === -1 && endFloor === 1) || (startFloor === 1 && endFloor === -1) ||
@@ -1368,92 +1368,10 @@ const MapViewer = ({
           };
         }
       }
+    }
 
-      // Normal case: Parking L2 ↔ Hospital L2 (same floor routing)
-        let parkingSegment: RoomRouteResult | null = null;
-        if (isParkingStart) {
-          if (parkAnchor) {
-            parkingSegment = buildRouteForRooms(
-              parkingRoomId,
-              conn.parkingNodeId,
-              parkDoc,
-              {
-                startPoint: { x: parkAnchor.svgX, y: parkAnchor.svgY },
-                useExactStartPoint: true,
-                startNodeId: parkAnchor.routeNodeId,
-              },
-            );
-          }
-          if (!parkingSegment) {
-            parkingSegment = buildRouteFromPoint(
-              conn.parkingNodeId, conn.parkingX, conn.parkingY,
-              parkingRoomId, parkDoc,
-              "room_to_point",
-            );
-          }
-        } else {
-          parkingSegment = buildRouteFromPoint(
-            conn.parkingNodeId, conn.parkingX, conn.parkingY,
-            parkingRoomId, parkDoc,
-            "point_to_room",
-          );
-        }
-
-        if (!parkingSegment) return null;
-
-        // Determine which segment to show based on current map view
-        let activeSegment: RoomRouteResult | null = null;
-        if (showParkingMap && parkingFloor === 2) {
-          activeSegment = parkingSegment;
-        } else if (activeFloor === 2) {
-          activeSegment = bestL2L1Route.floorSegments?.[0] ? {
-            ...bestL2L1Route,
-            points: bestL2L1Route.floorSegments[0].points,
-            checkpointIds: bestL2L1Route.floorSegments[0].checkpointIds,
-            totalDistance: bestL2L1Route.floorSegments[0].totalDistance,
-          } : null;
-        } else if (activeFloor === 1) {
-          activeSegment = bestL2L1Route.floorSegments?.[1] ? {
-            ...bestL2L1Route,
-            points: bestL2L1Route.floorSegments[1].points,
-            checkpointIds: bestL2L1Route.floorSegments[1].checkpointIds,
-            totalDistance: bestL2L1Route.floorSegments[1].totalDistance,
-          } : null;
-        }
-
-        if (!activeSegment) return null;
-
-        return {
-          startRoomId: startRoomIdParam,
-          endRoomId: endRoomIdParam,
-          checkpointIds: isParkingStart
-            ? [
-                ...(parkingSegment.checkpointIds ?? []),
-                "transition_parking_l2",
-                ...(bestL2L1Route.checkpointIds ?? []),
-              ]
-            : [
-                ...(bestL2L1Route.checkpointIds ?? []),
-                "transition_parking_l2",
-                ...(parkingSegment.checkpointIds ?? []),
-              ],
-          points: activeSegment.points,
-          totalDistance: parkingSegment.totalDistance + bestL2L1Route.totalDistance,
-          floorSegments: [
-            {
-              floor: -1,
-              checkpointIds: parkingSegment.checkpointIds,
-              points: parkingSegment.points,
-              totalDistance: parkingSegment.totalDistance,
-            },
-            ...(bestL2L1Route.floorSegments ?? []),
-          ],
-          floorsInvolved: [-1, 2, 1],
-          transitionLabel: `Jembatan Parkir L2 → ${bestConnectorLabel}`,
-        };
-      }
-
-      // Normal case: Parking L2 ↔ Hospital L2 (same floor routing)
+    // ── Direct: Parking L2 (-1) ↔ Hospital L2 (same floor, direct bridge) ────
+    if ((startFloor === -1 && endFloor === 2) || (startFloor === 2 && endFloor === -1)) {
       const hospitalFloor = 2;
       const hospitalRoomId = startFloor === -1 ? endRoomIdParam   : startRoomIdParam;
       const parkingRoomId  = startFloor === -1 ? startRoomIdParam : endRoomIdParam;
