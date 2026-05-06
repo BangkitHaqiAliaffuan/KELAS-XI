@@ -29,7 +29,7 @@ export interface QrAnchor {
 export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   "QR-F1-N01": {
     qrId: "QR-F1-N01",
-    roomId: "IGD",
+    roomId: "Area_Pelayanan_IGD",
     svgX: 632.95538,
     svgY: 753.07831,
     label: "Persimpangan Area Pelayanan IGD",
@@ -296,6 +296,15 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     floor: 0,
     routeNodeId: "Belok_ke_Area_Parkir_Sepeda_Motor_Khusus_Tenaga_Medis",
   },
+  "QR-PK-STAIR-L1": {
+    qrId: "QR-PK-STAIR-L1",
+    roomId: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_1",
+    svgX: 1181.4375,
+    svgY: 751,
+    label: "Tangga Pengunjung Parkir Lantai 1",
+    floor: 0,
+    routeNodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir",
+  },
   // Lahan Parkir Lantai 2 — floor: -1 (peta parkir lantai 2 terpisah)
   "QR-PK2-N01": {
     qrId: "QR-PK2-N01",
@@ -304,11 +313,21 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 708,
     label: "Akses Jembatan ke Gedung Rumah Sakit Lantai 2",
     floor: -1,
+    routeNodeId: "Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2",
+  },
+  "QR-PK-STAIR-L2": {
+    qrId: "QR-PK-STAIR-L2",
+    roomId: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_2",
+    svgX: 1181.4375,
+    svgY: 751,
+    label: "Tangga Pengunjung Parkir Lantai 2",
+    floor: -1,
+    routeNodeId: "Masuk_ke_Tangga_Pengunjung",
   },
 };
 
 const qrCodeToRoomId: Record<string, string> = {
-  "QR-IGD": "IGD",
+  "QR-IGD": "Area_Pelayanan_IGD",
   "QR-INFORMASI": "Informasi",
   "QR-ICU": "ICU",
   "QR-LAB": "Lab",
@@ -393,19 +412,28 @@ const EXPLICIT_ROUTE_PATH_IDS = new Set([
   "path100",
   "masuk_ke_terapi_okupasi_lanjutan_menuju_ke_edukasi_keluarga",
   "menuju_ke_edukasi_keluarga_dan_pasien",
+  // IGD paths
+  "jalan_keluar_dari_area_pelayanan_ugd",
+  // Parking L1 paths
+  "jalan_utama_area_lahan_parkir",
+  "jalan_keluar_menuju_gedung_rumah_sakit",
+  "persimpangan_keluar_dari_area_parkir_dan_tangga_pengunjung",
+  "masuk_ke_tangga_pengunjung_ke_lantai_2_lahan_parkir",
+  // Parking L2 paths
+  "masuk_ke_tangga_pengunjung",
+  "jalan_bawah_untuk_masuk_ramp_parkir",
+  "akses_jembatan_menuju_gedung_rumah_sakit_lantai_2",
   // Parking SVG — paths that connect areas but don't have "jalan" in their id.
   "masuk_ke_area_parkir_sepeda_motor_pengunjung_atas",
   "masuk_ke_area_parkir_sepeda_motor_pengunjung_bawah",
   "keluar_dari_area_parkir_sepeda_motor_atas",
   "masuk_ke_area_parkir_sepeda_motor_khusus_tenaga_medis",
-  "masuk_ke_tangga_pengunjung_ke_lantai_2_lahan_parkir",
   "naik_ke_parkir_lantai_2_khusus_mobil",
   "pertigaan_untuk_masuk_ke_area_parkir_sepeda_motor_bawah_atas",
   "belokan_keluar_dari_area_parkir_sepeda_motor_atas__opsional_",
   "keluar_dari_area_parkir_sepeda_motor_atas__opsional_",
   "belokan_keluar_area_parkir",
   "belok_ke_ramp_parkir",
-  "persimpangan_keluar_dari_area_parkir_dan_tangga_pengunjung",
   // Parking L1 — hospital L1 paths connecting to parking
   "jalan_masuk_ke_lahan_parkir__pengunjung_",
   "jalan_ke_lahan_parkir_2__pengunjung_",
@@ -442,12 +470,17 @@ const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
   // When routing TO parking (as destination), use the last checkpoint (hospital side)
   // When routing FROM parking (as start), use the first checkpoint (parking side) - handled in resolvePreferredStartNodeId
   Parking_Lantai_1: [
+    "Check_Point_Tangga_Pengunjung",
     "Check_Point_Keluar_dari_Lahan_Parkir",
     "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
     "Belokan_Keluar_Area_Parkir",
   ],
   // Parking L2: route via bridge checkpoint (near QR-PK2-N01)
   Parking_Lantai_2: ["Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_"],
+  // Parking stair L1: route via stair entrance checkpoint
+  Tangga_Pengunjung_di_Lahan_Parkir_lantai_1: ["Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir"],
+  // Parking stair L2: route via stair exit checkpoint
+  Tangga_Pengunjung_di_Lahan_Parkir_lantai_2: ["Check_Point_Tangga_Pengunjung_Parkir_Lantai_2"],
   // Virtual connector room used when routing hospital → parking; snaps to the parking exit checkpoint.
   Check_Point_Lahan_Parkir_Connector: ["Check_Point_Lahan_Parkir", "Belok_masuk_ke_Lahan_Parkir", "Belok_ke_Lahan_Parkir"],
 };
@@ -632,6 +665,10 @@ const buildRoadGraphFromSvg = (
   const isParkingFloor2Svg = Boolean(
     svgDoc.getElementById("Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2"),
   );
+  // Parking L1 SVG has a node layer labeled "Node" (same as L2)
+  const isParkingSvg = isParkingFloor2Svg || Boolean(
+    svgDoc.getElementById("Check_Point_Tangga_Pengunjung"),
+  );
 
   const nodeLayer = Array.from(svgDoc.querySelectorAll("g")).find((group) => {
     const layerLabel = (
@@ -640,17 +677,16 @@ const buildRoadGraphFromSvg = (
     return (
       layerLabel.includes("node jalan") ||
       layerLabel.includes("pathfinding node") ||
-      (isParkingFloor2Svg && layerLabel === "node")
+      (isParkingSvg && layerLabel === "node")  // covers both Parking L1 and L2
     );
   });
 
-  const generatedNodeElements = isParkingFloor2Svg
-    ? Array.from(
-        svgDoc.querySelectorAll(
-          `#${GENERATED_ROOM_NODE_LAYER_ID} circle, #${GENERATED_ROOM_NODE_LAYER_ID} ellipse`,
-        ),
-      )
-    : [];
+  // Search the generated-anchor layer for all SVGs (not just Parking L2)
+  const generatedNodeElements = Array.from(
+    svgDoc.querySelectorAll(
+      `#${GENERATED_ROOM_NODE_LAYER_ID} circle, #${GENERATED_ROOM_NODE_LAYER_ID} ellipse`,
+    ),
+  );
 
   const explicitNodeElements = nodeLayer
     ? Array.from(nodeLayer.querySelectorAll("circle, ellipse"))
@@ -795,11 +831,22 @@ const ensureGeneratedRoomAnchorNode = (
   center: { x: number; y: number },
 ): void => {
   try {
-    // If roomId already starts with "virtual_" or other special prefixes, use it as-is
-    // Otherwise, add "node_room_" prefix for room-based nodes
-    const nodeId = roomId.startsWith("virtual_") || roomId.startsWith("Check_Point_") 
-      ? roomId 
-      : `node_room_${roomId}`;
+    // Keep the raw roomId for SVG element IDs (those that look like actual SVG node IDs:
+    // start with uppercase, contain underscores, or are explicit virtual/checkpoint names).
+    // Only wrap plain room names that don't resemble an SVG element ID.
+    const looksLikeSvgNodeId =
+      roomId.startsWith("virtual_") ||
+      roomId.startsWith("Check_Point_") ||
+      roomId.startsWith("Masuk_ke_") ||
+      roomId.startsWith("Persimpangan_") ||
+      roomId.startsWith("Belok_") ||
+      roomId.startsWith("Belokan_") ||
+      roomId.startsWith("Keluar_") ||
+      roomId.startsWith("Akses_") ||
+      roomId.startsWith("Jalan_") ||
+      roomId.startsWith("Tangga_") ||
+      /^[A-Z]/.test(roomId);  // fallback: any ID starting uppercase is likely an SVG id
+    const nodeId = looksLikeSvgNodeId ? roomId : `node_room_${roomId}`;
     const existing = svgDoc.getElementById(nodeId);
     if (existing) return;
 
@@ -1113,6 +1160,7 @@ const resolvePreferredStartNodeId = (
   // Special handling for parking start points: use FIRST valid checkpoint (entry point from parking)
   if (startRoomId === "Parking_Lantai_1") {
     const parkingStartCheckpoints = [
+      "Check_Point_Tangga_Pengunjung",
       "Check_Point_Keluar_dari_Lahan_Parkir",
       "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
       "Belokan_Keluar_Area_Parkir",
@@ -1170,7 +1218,7 @@ const resolvePreferredStartNodeId = (
     );
   }
 
-  if (startRoomId === "IGD") {
+  if (startRoomId === "Area_Pelayanan_IGD") {
     const igdExitNodeId = "Persimpangan_Keluar_IGD";
     const igdExitNode = nodes[igdExitNodeId];
     if (igdExitNode && (graph[igdExitNodeId]?.length || 0) > 0) {
@@ -1208,6 +1256,19 @@ const resolvePreferredEndNodeId = (
     }
   }
 
+  // Special handling for IGD as destination
+  if (endRoomId === "Area_Pelayanan_IGD") {
+    const igdEntranceNodeId = "Persimpangan_di_Area_Pelayanan_IGD_untuk_ke_IGD";
+    const igdEntranceNode = nodes[igdEntranceNodeId];
+    console.log(`🏥 IGD endpoint check - node exists: ${!!igdEntranceNode}, connected: ${(graph[igdEntranceNodeId]?.length || 0) > 0}`);
+    if (igdEntranceNode && (graph[igdEntranceNodeId]?.length || 0) > 0) {
+      return {
+        anchorNodeId: igdEntranceNodeId,
+        graphNodeId: igdEntranceNodeId,
+      };
+    }
+  }
+
   const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
     endRoomId,
     nodes,
@@ -1240,6 +1301,13 @@ const resolvePreferredEndNodeId = (
 };
 
 const shouldExcludeFromRouting = (roomId: string): boolean => {
+  // Exclude specific room IDs
+  if (roomId === "R._Tunggu" || 
+      roomId === "R._Tunggu_Keluarga_Pasien" || 
+      roomId === "Nurse_Station") {
+    return true;
+  }
+  
   const normalized = roomId.toLowerCase().replace(/_/g, " ");
   return (
     normalized.includes("jalan") ||
@@ -1329,15 +1397,21 @@ export const buildRouteForRooms = (
     startNodeId?: string;
   },
 ): RoomRouteResult | null => {
+  console.log(`🔍 buildRouteForRooms: ${startRoomId} → ${endRoomId}`);
+  
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
-  if (!startCenter || !endCenter) return null;
+  if (!startCenter || !endCenter) {
+    console.log(`❌ Room center not found - start: ${!!startCenter}, end: ${!!endCenter}`);
+    return null;
+  }
 
   const startSourcePoint = options?.startPoint ?? startCenter;
   const endSourcePoint = options?.endPoint ?? endCenter;
 
   const allowIgdEntrancePath =
     isIgdRelatedRoom(startRoomId) || isIgdRelatedRoom(endRoomId);
+  console.log(`🚪 IGD entrance allowed: ${allowIgdEntrancePath}`);
 
   const { graph, nodes } = buildRoadGraphFromSvg(svgDoc, {
     allowIgdEntrancePath,
@@ -1356,14 +1430,26 @@ export const buildRouteForRooms = (
     graph,
     endSourcePoint,
   );
-  if (!startResolution || !endResolution) return null;
+  
+  console.log(`📍 Start node: ${startResolution?.anchorNodeId || 'null'}`);
+  console.log(`📍 End node: ${endResolution?.anchorNodeId || 'null'}`);
+  
+  if (!startResolution || !endResolution) {
+    console.log(`❌ Node resolution failed`);
+    return null;
+  }
 
   const shortest = dijkstra(
     graph,
     startResolution.graphNodeId,
     endResolution.graphNodeId,
   );
-  if (!shortest) return null;
+  if (!shortest) {
+    console.log(`❌ No path found between nodes`);
+    return null;
+  }
+
+  console.log(`✅ Route found: ${shortest.path.length} nodes, distance: ${shortest.distance.toFixed(2)}`);
 
   const checkpointIds = [...shortest.path];
   if (checkpointIds[0] !== startResolution.anchorNodeId) {

@@ -28,21 +28,49 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const roomList = Object.values(roomInfoBySvgId);
+  const roomList = Object.values(roomInfoBySvgId).filter((room) => {
+    // Exclude rooms that cannot be used for routing
+    return room.id !== "R._Tunggu" && 
+           room.id !== "R._Tunggu_Keluarga_Pasien" && 
+           room.id !== "Nurse_Station";
+  });
+
+  // Helper function for flexible search matching
+  const matchesQuery = (room: typeof roomList[0], lowerQuery: string): boolean => {
+    // Direct match
+    if (room.name.toLowerCase().includes(lowerQuery) ||
+        room.category.toLowerCase().includes(lowerQuery) ||
+        room.locationHint.toLowerCase().includes(lowerQuery) ||
+        room.description.toLowerCase().includes(lowerQuery)) {
+      return true;
+    }
+    
+    // If room name starts with "R. ", also match without "R. " prefix
+    // e.g., "R. HD" matches query "hd" or "hemodialisis"
+    if (room.name.startsWith("R. ")) {
+      const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+      if (nameWithoutPrefix.includes(lowerQuery)) {
+        return true;
+      }
+    }
+    
+    // Match "ruangan" + name without "R. " prefix
+    // e.g., "R. HD" matches query "ruangan hd"
+    if (lowerQuery.startsWith("ruangan ")) {
+      const queryWithoutRuangan = lowerQuery.substring(8); // "ruangan ".length = 8
+      if (room.name.startsWith("R. ")) {
+        const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+        if (nameWithoutPrefix.includes(queryWithoutRuangan)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  };
 
   const filtered = query.length > 0
-    ? roomList.filter(
-        (l) => {
-          const lowerQuery = query.toLowerCase();
-          
-          return (
-            l.name.toLowerCase().includes(lowerQuery) ||
-            l.category.toLowerCase().includes(lowerQuery) ||
-            l.locationHint.toLowerCase().includes(lowerQuery) ||
-            l.description.toLowerCase().includes(lowerQuery)
-          );
-        }
-      )
+    ? roomList.filter((l) => matchesQuery(l, query.toLowerCase()))
     : [];
 
   // Reset highlighted index when filtered results change

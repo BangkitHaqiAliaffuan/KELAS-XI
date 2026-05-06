@@ -125,7 +125,14 @@ const NavigationDialog = ({
   const lastDetectedPayloadRef = useRef<string | null>(null);
   const isHandlingDetectionRef = useRef(false);
 
-  const roomOptions = Object.values(roomInfoBySvgId).sort((a, b) => a.name.localeCompare(b.name));
+  const roomOptions = Object.values(roomInfoBySvgId)
+    .filter((room) => {
+      // Exclude rooms that cannot be used for routing
+      return room.id !== "R._Tunggu" && 
+             room.id !== "R._Tunggu_Keluarga_Pasien" && 
+             room.id !== "Nurse_Station";
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
   
   const getFloorLabel = useCallback((roomId: string): string => {
     const anchor = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === roomId);
@@ -142,29 +149,51 @@ const NavigationDialog = ({
     return ' (Lantai 1)';
   }, []);
   
+  // Helper function for flexible search matching
+  const matchesSearchQuery = useCallback((room: typeof roomOptions[0], lowerQuery: string): boolean => {
+    // Direct match
+    if (room.name.toLowerCase().includes(lowerQuery) ||
+        room.category.toLowerCase().includes(lowerQuery) ||
+        room.locationHint.toLowerCase().includes(lowerQuery) ||
+        room.description.toLowerCase().includes(lowerQuery)) {
+      return true;
+    }
+    
+    // If room name starts with "R. ", also match without "R. " prefix
+    if (room.name.startsWith("R. ")) {
+      const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+      if (nameWithoutPrefix.includes(lowerQuery)) {
+        return true;
+      }
+    }
+    
+    // Match "ruangan" + name without "R. " prefix
+    if (lowerQuery.startsWith("ruangan ")) {
+      const queryWithoutRuangan = lowerQuery.substring(8);
+      if (room.name.startsWith("R. ")) {
+        const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+        if (nameWithoutPrefix.includes(queryWithoutRuangan)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }, []);
+  
   const destinationSearchOptions = roomOptions.filter((room) => {
     if (room.id === startLocation) return false;
     const query = destinationQuery.trim().toLowerCase();
     if (!query) return true;
 
-    return (
-      room.name.toLowerCase().includes(query) ||
-      room.category.toLowerCase().includes(query) ||
-      room.locationHint.toLowerCase().includes(query) ||
-      room.description.toLowerCase().includes(query)
-    );
+    return matchesSearchQuery(room, query);
   });
 
   const startSearchOptions = roomOptions.filter((room) => {
     const query = startQuery.trim().toLowerCase();
     if (!query) return true;
 
-    return (
-      room.name.toLowerCase().includes(query) ||
-      room.category.toLowerCase().includes(query) ||
-      room.locationHint.toLowerCase().includes(query) ||
-      room.description.toLowerCase().includes(query)
-    );
+    return matchesSearchQuery(room, query);
   });
 
   const selectStart = useCallback((roomId: string) => {

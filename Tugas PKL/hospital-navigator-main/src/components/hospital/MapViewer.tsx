@@ -150,7 +150,13 @@ const MapViewer = ({
   const LIVE_REROUTE_INTERVAL_MS = 1200;
   const LIVE_NEAREST_ROOM_MAX_DISTANCE = 240;
   const GPS_BUFFER_SIZE = 5;
-  const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set(["Lift_Lantai_1", "Tangga_Lantai_1", "Tangga_Evakuasi_Lantai_1"]);
+  const HIDDEN_DYNAMIC_LABEL_ROOM_IDS = new Set([
+    "Lift_Lantai_1", 
+    "Tangga_Lantai_1", 
+    "Tangga_Evakuasi_Lantai_1",
+    "Area_Pelayanan_IGD",
+    "Jembatan_ke_Lahan_Parkir__Pengunjung_"
+  ]);
   const HIDDEN_DYNAMIC_LABEL_KEYWORDS_FLOOR_2 = [
     "area gudang alat medis steril",
     "lift",
@@ -197,6 +203,14 @@ const MapViewer = ({
       rooms: {
         1: "Tangga_Evakuasi_Lantai_1",
         2: "Tangga_Evakuasi_Lantai_2",
+      } as const,
+    },
+    {
+      id: "parking_stairs",
+      label: "Tangga Pengunjung Parkir",
+      rooms: {
+        0: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_1",
+        "-1": "Tangga_Pengunjung_di_Lahan_Parkir_lantai_2",
       } as const,
     },
   ] as const;
@@ -542,15 +556,30 @@ const MapViewer = ({
       );
       if (!l1Anchor || !l2Anchor) return null;
 
+      // L1 stair checkpoint: Start point for routing from Parking L1
       const l1StairCheckpoint = {
         nodeId: "Check_Point_Tangga_Pengunjung",
         x: 1293.9375,
         y: 644.75,
       };
-      const l2StairExit = {
+      // L1 stair entrance: path runs at y≈644.625; node for entering the stair path
+      const l1StairEntrance = {
+        nodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir",
+        x: 1181.125,
+        y: 644.625,
+      };
+      // L2 stair checkpoint: Must stop here when transitioning between floors
+      const l2StairCheckpoint = {
         nodeId: "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2",
         x: 1293.6519,
         y: 651.59888,
+      };
+      // L2 stair entrance: ELLIPSE node Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung
+      // cx=1246.0989, cy=651.422 — sits at start of path Masuk_ke_Tangga_Pengunjung in Parking L2 SVG
+      const l2StairExit = {
+        nodeId: "Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung",
+        x: 1246.0989,
+        y: 651.42212,
       };
 
       const l1AnchorNodeId = l1Anchor.routeNodeId || parkingL1RoomId;
@@ -558,15 +587,20 @@ const MapViewer = ({
 
       injectVirtualAnchorNode(parkL1Doc, l1AnchorNodeId, l1Anchor.svgX, l1Anchor.svgY);
       injectVirtualAnchorNode(parkL1Doc, l1StairCheckpoint.nodeId, l1StairCheckpoint.x, l1StairCheckpoint.y);
+      injectVirtualAnchorNode(parkL1Doc, l1StairEntrance.nodeId, l1StairEntrance.x, l1StairEntrance.y);
+      injectVirtualAnchorNode(parkL2Doc, l2StairCheckpoint.nodeId, l2StairCheckpoint.x, l2StairCheckpoint.y);
       injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
       injectVirtualAnchorNode(parkL2Doc, l2AnchorNodeId, l2Anchor.svgX, l2Anchor.svgY);
 
-      const parkingL1Segment = isL1Start
+      // Route in L1: direct anchor ↔ stair point (no intermediate checkpoint detour).
+      // Forward (L1→L2): anchor → stairEntrance (shortest path to stair path)
+      // Reverse (L2→L1): checkpoint → anchor (user exits stair at Check_Point_Tangga_Pengunjung)
+      const parkingL1DirectRoute = isL1Start
         ? buildRouteFromPoint(
             l1AnchorNodeId,
             l1Anchor.svgX,
             l1Anchor.svgY,
-            l1StairCheckpoint.nodeId,
+            l1StairEntrance.nodeId,
             parkL1Doc,
             "point_to_point",
           )
@@ -579,11 +613,24 @@ const MapViewer = ({
             "point_to_point",
           );
 
-      const parkingL2Segment = isL1Start
+      if (!parkingL1DirectRoute) return null;
+
+      const parkingL1Segment: RoomRouteResult = {
+        startRoomId: isL1Start ? l1AnchorNodeId : l1StairCheckpoint.nodeId,
+        endRoomId:   isL1Start ? l1StairEntrance.nodeId : l1AnchorNodeId,
+        checkpointIds: parkingL1DirectRoute.checkpointIds,
+        points:        parkingL1DirectRoute.points,
+        totalDistance: parkingL1DirectRoute.totalDistance,
+      };
+
+      // Route in L2:
+      // Forward (L1→L2): start from checkpoint directly → destination (mirror of L1 reverse fix)
+      // Reverse (L2→L1): destination → checkpoint → stair exit
+      const parkingL2ForwardRoute = isL1Start
         ? buildRouteFromPoint(
-            l2StairExit.nodeId,
-            l2StairExit.x,
-            l2StairExit.y,
+            l2StairCheckpoint.nodeId,
+            l2StairCheckpoint.x,
+            l2StairCheckpoint.y,
             l2AnchorNodeId,
             parkL2Doc,
             "point_to_point",
@@ -592,12 +639,47 @@ const MapViewer = ({
             l2AnchorNodeId,
             l2Anchor.svgX,
             l2Anchor.svgY,
-            l2StairExit.nodeId,
+            l2StairCheckpoint.nodeId,
             parkL2Doc,
             "point_to_point",
           );
 
-      if (!parkingL1Segment || !parkingL2Segment) return null;
+      const parkingL2StairToCheckpoint = !isL1Start
+        ? buildRouteFromPoint(
+            l2StairExit.nodeId,
+            l2StairExit.x,
+            l2StairExit.y,
+            l2StairCheckpoint.nodeId,
+            parkL2Doc,
+            "point_to_point",
+          )
+        : null;
+
+      if (!parkingL2ForwardRoute) return null;
+      if (!isL1Start && !parkingL2StairToCheckpoint) return null;
+
+      // Combine L2 segments
+      const parkingL2Segment: RoomRouteResult = isL1Start
+        ? {
+            startRoomId: l2StairCheckpoint.nodeId,
+            endRoomId: l2AnchorNodeId,
+            checkpointIds: parkingL2ForwardRoute.checkpointIds,
+            points:        parkingL2ForwardRoute.points,
+            totalDistance: parkingL2ForwardRoute.totalDistance,
+          }
+        : {
+            startRoomId: l2AnchorNodeId,
+            endRoomId: l2StairExit.nodeId,
+            checkpointIds: [
+              ...parkingL2ForwardRoute.checkpointIds,
+              ...parkingL2StairToCheckpoint!.checkpointIds.slice(1),
+            ],
+            points: [
+              ...parkingL2ForwardRoute.points,
+              ...parkingL2StairToCheckpoint!.points.slice(1),
+            ],
+            totalDistance: parkingL2ForwardRoute.totalDistance + parkingL2StairToCheckpoint!.totalDistance,
+          };
 
       const activeSegment = showParkingMap && parkingFloor === 2 ? parkingL2Segment : parkingL1Segment;
 
@@ -649,16 +731,31 @@ const MapViewer = ({
       );
       if (!parkAnchor) return null;
 
+      // L1 stair checkpoint: Start point for routing from Parking L1
       const l1StairCheckpoint = {
         nodeId: "Check_Point_Tangga_Pengunjung",
         x: 1293.9375,
         y: 644.75,
       };
-      const l2StairExit = {
+      // L1 stair entrance: path runs at y≈644.625; node for entering the stair path
+      const l1StairEntrance = {
+        nodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir",
+        x: 1181.125,
+        y: 644.625,
+      };
+      // L2 stair checkpoint: Must stop here when transitioning between floors
+      const l2StairCheckpoint = {
         nodeId: "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2",
-        roomId: "Tangga_Pengunjung_Lahan_Parkir_ke_Lantai_2-2",
         x: 1293.6519,
         y: 651.59888,
+      };
+      // L2 stair entrance: ELLIPSE node Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung
+      // cx=1246.0989, cy=651.422 — sits at start of path Masuk_ke_Tangga_Pengunjung in Parking L2 SVG
+      const l2StairExit = {
+        nodeId: "Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung",
+        roomId: "Tangga_Pengunjung_Lahan_Parkir_ke_Lantai_2-2",
+        x: 1246.0989,
+        y: 651.42212,
       };
       const l2BridgeTurn = {
         nodeId: "Persimpangan_Khusus_Pengunjung_RS",
@@ -674,6 +771,13 @@ const MapViewer = ({
         l1StairCheckpoint.x,
         l1StairCheckpoint.y,
       );
+      injectVirtualAnchorNode(
+        parkL1Doc,
+        l1StairEntrance.nodeId,
+        l1StairEntrance.x,
+        l1StairEntrance.y,
+      );
+      injectVirtualAnchorNode(parkL2Doc, l2StairCheckpoint.nodeId, l2StairCheckpoint.x, l2StairCheckpoint.y);
       injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
       injectVirtualAnchorNode(parkL2Doc, l2BridgeTurn.nodeId, l2BridgeTurn.x, l2BridgeTurn.y);
       injectVirtualAnchorNode(
@@ -689,20 +793,31 @@ const MapViewer = ({
         PARKING2_CONN.hospitalY,
       );
 
-      const parkingL1Segment = buildRouteFromPoint(
+      // Route in L1: directly to stair entrance (no intermediate checkpoint detour).
+      const parkingL1DirectRoute = buildRouteFromPoint(
         startNodeId,
         parkAnchor.svgX,
         parkAnchor.svgY,
-        l1StairCheckpoint.nodeId,
+        l1StairEntrance.nodeId,
         parkL1Doc,
         "point_to_point",
       );
-      if (!parkingL1Segment) return null;
+      if (!parkingL1DirectRoute) return null;
 
-      const parkingL2ToBridgeTurn = buildRouteFromPoint(
-        l2StairExit.nodeId,
-        l2StairExit.x,
-        l2StairExit.y,
+      const parkingL1Segment: RoomRouteResult = {
+        startRoomId: startNodeId,
+        endRoomId: l1StairEntrance.nodeId,
+        checkpointIds: parkingL1DirectRoute.checkpointIds,
+        points:        parkingL1DirectRoute.points,
+        totalDistance: parkingL1DirectRoute.totalDistance,
+      };
+
+      // Route in L2 (L1→Hospital L2): start from checkpoint directly (no stairExit→checkpoint detour)
+      // l2StairExit (x≈1246) sits before checkpoint (x≈1293); start from checkpoint for consistency.
+      const parkingL2CheckpointToBridgeTurn = buildRouteFromPoint(
+        l2StairCheckpoint.nodeId,
+        l2StairCheckpoint.x,
+        l2StairCheckpoint.y,
         l2BridgeTurn.nodeId,
         parkL2Doc,
         "point_to_point",
@@ -715,20 +830,20 @@ const MapViewer = ({
         parkL2Doc,
         "point_to_point",
       );
-      if (!parkingL2ToBridgeTurn || !parkingL2ToBridgeExit) return null;
+      if (!parkingL2CheckpointToBridgeTurn || !parkingL2ToBridgeExit) return null;
 
       const parkingL2Segment: RoomRouteResult = {
-        startRoomId: l2StairExit.roomId,
+        startRoomId: l2StairCheckpoint.nodeId,
         endRoomId: PARKING2_CONN.parkingNodeId,
         checkpointIds: [
-          ...parkingL2ToBridgeTurn.checkpointIds,
+          ...parkingL2CheckpointToBridgeTurn.checkpointIds,
           ...parkingL2ToBridgeExit.checkpointIds.slice(1),
         ],
         points: [
-          ...parkingL2ToBridgeTurn.points,
+          ...parkingL2CheckpointToBridgeTurn.points,
           ...parkingL2ToBridgeExit.points.slice(1),
         ],
-        totalDistance: parkingL2ToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
+        totalDistance: parkingL2CheckpointToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
       };
 
       const hospitalSegment = buildRouteFromPoint(
@@ -1201,7 +1316,11 @@ const MapViewer = ({
           if (!parkL1Doc || !parkL2Doc || !hospitalL2Doc || !hospitalL1Doc) return null;
 
           // Step 1: Route within Parking L1 to stair entrance
-          const l1StairEntrance = { nodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir", x: 1181.4375, y: 751, roomId: "Parking_Lantai_1" };
+          // L1 stair checkpoint: Start/end point for routing in Parking L1
+          const l1StairCheckpoint = { nodeId: "Check_Point_Tangga_Pengunjung", x: 1293.9375, y: 644.75, roomId: "Parking_Lantai_1" };
+          // L1 stair entrance: path Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir runs at y≈644.625
+          const l1StairEntrance = { nodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir", x: 1181.125, y: 644.625, roomId: "Parking_Lantai_1" };
+          injectVirtualAnchorNode(parkL1Doc, l1StairCheckpoint.nodeId, l1StairCheckpoint.x, l1StairCheckpoint.y);
           injectVirtualAnchorNode(parkL1Doc, l1StairEntrance.nodeId, l1StairEntrance.x, l1StairEntrance.y);
 
           const parkL1Anchor = Object.values(QR_ANCHOR_REGISTRY).find(
@@ -1209,29 +1328,60 @@ const MapViewer = ({
           );
           if (parkL1Anchor) injectVirtualAnchorNode(parkL1Doc, parkingL1RoomId, parkL1Anchor.svgX, parkL1Anchor.svgY);
 
-          const parkingL1Segment = isParkingStart
+          // Route in L1: directly anchor ↔ stair point.
+          // Forward (isParkingStart): anchor → stairEntrance
+          // Reverse: checkpoint → parkingL1 (user exits stair at Check_Point_Tangga_Pengunjung)
+          const L1_STAIR_CHECKPOINT_NODE = "Check_Point_Tangga_Pengunjung";
+          const L1_STAIR_CHECKPOINT_X = 1293.9375;
+          const L1_STAIR_CHECKPOINT_Y = 644.75;
+          injectVirtualAnchorNode(parkL1Doc, L1_STAIR_CHECKPOINT_NODE, L1_STAIR_CHECKPOINT_X, L1_STAIR_CHECKPOINT_Y);
+
+          const parkingL1DirectRoute = isParkingStart
             ? buildRouteForRooms(parkingL1RoomId, l1StairEntrance.nodeId, parkL1Doc, {
                 startPoint: parkL1Anchor ? { x: parkL1Anchor.svgX, y: parkL1Anchor.svgY } : undefined,
                 useExactStartPoint: parkL1Anchor ? true : false,
                 startNodeId: parkL1Anchor?.routeNodeId,
               })
-            : buildRouteForRooms(l1StairEntrance.nodeId, parkingL1RoomId, parkL1Doc);
+            : buildRouteForRooms(L1_STAIR_CHECKPOINT_NODE, parkingL1RoomId, parkL1Doc);
 
-          if (!parkingL1Segment) return null;
+          if (!parkingL1DirectRoute) return null;
+
+          const parkingL1Segment: RoomRouteResult = {
+            startRoomId: isParkingStart ? parkingL1RoomId : L1_STAIR_CHECKPOINT_NODE,
+            endRoomId:   isParkingStart ? l1StairEntrance.nodeId : parkingL1RoomId,
+            checkpointIds: parkingL1DirectRoute.checkpointIds,
+            points:        parkingL1DirectRoute.points,
+            totalDistance: parkingL1DirectRoute.totalDistance,
+          };
 
           // Step 2: Route within Parking L2 from stair exit to bridge
-          const l2StairExit = { nodeId: "Keluar_dari_Tangga_Pengunjung_Lantai_2_Lahan_Parkir", x: 1181.4375, y: 751, roomId: "Parking_Lantai_2" };
-          const l2BridgeTurn = { nodeId: "Belok_ke_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_", x: 471.46345, y: 751, roomId: "Parking_Lantai_2" };
+          // L2 stair entrance: ELLIPSE node Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung
+          // cx=1246.0989, cy=651.422 — sits at start of path Masuk_ke_Tangga_Pengunjung in Parking L2 SVG
+          // L2 bridge check: Persimpangan_Khusus_Pengunjung_RS at cx=471.99, cy=652.48
+          // IMPORTANT: Must stop at Check_Point_Tangga_Pengunjung_Parkir_Lantai_2 first
+          const l2StairCheckpoint = { nodeId: "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2", x: 1293.6519, y: 651.59888, roomId: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_2" };
+          const l2StairExit = { nodeId: "Persimpangan_Khusus_Pengunjung_RS_Untuk_ke_Tangga_Pengunjung", x: 1246.0989, y: 651.42212, roomId: "Parking_Lantai_2" };
+          const l2BridgeTurn = { nodeId: "Persimpangan_Khusus_Pengunjung_RS", x: 471.99377, y: 652.48279, roomId: "Parking_Lantai_2" };
+          injectVirtualAnchorNode(parkL2Doc, l2StairCheckpoint.nodeId, l2StairCheckpoint.x, l2StairCheckpoint.y);
           injectVirtualAnchorNode(parkL2Doc, l2StairExit.nodeId, l2StairExit.x, l2StairExit.y);
           injectVirtualAnchorNode(parkL2Doc, l2BridgeTurn.nodeId, l2BridgeTurn.x, l2BridgeTurn.y);
 
           const conn = PARKING2_CONN;
           injectVirtualAnchorNode(parkL2Doc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
 
-          const parkingL2ToBridgeTurn = buildRouteFromPoint(
+          // Route from stair exit to checkpoint, then to bridge turn, then to bridge exit
+          const parkingL2ToCheckpoint = buildRouteFromPoint(
             l2StairExit.nodeId,
             l2StairExit.x,
             l2StairExit.y,
+            l2StairCheckpoint.nodeId,
+            parkL2Doc,
+            "point_to_point",
+          );
+          const parkingL2CheckpointToBridgeTurn = buildRouteFromPoint(
+            l2StairCheckpoint.nodeId,
+            l2StairCheckpoint.x,
+            l2StairCheckpoint.y,
             l2BridgeTurn.nodeId,
             parkL2Doc,
             "point_to_point",
@@ -1244,20 +1394,22 @@ const MapViewer = ({
             parkL2Doc,
             "point_to_point",
           );
-          if (!parkingL2ToBridgeTurn || !parkingL2ToBridgeExit) return null;
+          if (!parkingL2ToCheckpoint || !parkingL2CheckpointToBridgeTurn || !parkingL2ToBridgeExit) return null;
 
           const parkingL2Segment: RoomRouteResult = {
             startRoomId: l2StairExit.roomId,
             endRoomId: conn.parkingNodeId,
             checkpointIds: [
-              ...parkingL2ToBridgeTurn.checkpointIds,
+              ...parkingL2ToCheckpoint.checkpointIds,
+              ...parkingL2CheckpointToBridgeTurn.checkpointIds.slice(1),
               ...parkingL2ToBridgeExit.checkpointIds.slice(1),
             ],
             points: [
-              ...parkingL2ToBridgeTurn.points,
+              ...parkingL2ToCheckpoint.points,
+              ...parkingL2CheckpointToBridgeTurn.points.slice(1),
               ...parkingL2ToBridgeExit.points.slice(1),
             ],
-            totalDistance: parkingL2ToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
+            totalDistance: parkingL2ToCheckpoint.totalDistance + parkingL2CheckpointToBridgeTurn.totalDistance + parkingL2ToBridgeExit.totalDistance,
           };
 
           // Step 3: Route within Hospital L2 from bridge to L2 room or connector
@@ -2469,6 +2621,11 @@ const MapViewer = ({
       const room = roomFromPath(path);
       if (!room) return;
 
+      // Skip click handler for R._Tunggu
+      if (room.id === "R._Tunggu" || room.id === "Nurse_Station") {
+        return;
+      }
+
       path.classList.add("room-interactive");
 
       const clickHandler = (event: Event) => {
@@ -2896,8 +3053,16 @@ const MapViewer = ({
     const anchor = resolveActiveQrAnchor(qrCodeInput);
     if (anchor) {
       gpsBufferRef.current = [];
-      liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
-      setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+      
+      // For Parking L1, override the liveSvgPoint to use the checkpoint instead of QR anchor
+      let effectiveSvgPoint = { x: anchor.svgX, y: anchor.svgY };
+      if (anchor.floor === 0 && anchor.roomId === "Parking_Lantai_1") {
+        // Use Check_Point_Tangga_Pengunjung as the start point for Parking L1
+        effectiveSvgPoint = { x: 1293.9375, y: 644.75 };
+      }
+      
+      liveSvgPointRef.current = effectiveSvgPoint;
+      setLiveSvgPoint(effectiveSvgPoint);
       setShowCurrentUserMarker(true);
       setStartRoomId(anchor.roomId);
       startRoomIdRef.current = anchor.roomId;
@@ -2920,7 +3085,7 @@ const MapViewer = ({
       const routeAfterCalibration =
         endRoomIdRef.current && endRoomIdRef.current !== anchor.roomId
           ? buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
-              startPoint: { x: anchor.svgX, y: anchor.svgY },
+              startPoint: effectiveSvgPoint,
               useExactStartPoint: true,
               startNodeId: anchor.routeNodeId,
             })
@@ -3026,8 +3191,9 @@ const MapViewer = ({
     setRouteDebugMessage("QR tidak dikenali pada registry multi-floor.");
   }, [qrCodeInput, getRoomCenterById, resolveActiveQrAnchor, routingRoomOptions, activeFloor, resolveFloorForRoom, getFloorSvgDoc, buildDebugRouteForRooms, zoomToPoint]);
 
-  const handleCalibrateQrOnly = useCallback(() => {
+  const handleCalibrateQrOnly = useCallback((overrideQrCode?: string) => {
     // Fungsi khusus untuk kalibrasi QR - hanya update start point, keep end point
+    // overrideQrCode: pass the QR string directly to avoid reading stale qrCodeInput state
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) {
       setRouteDebugMessage("SVG belum siap. Coba lagi beberapa detik.");
@@ -3039,11 +3205,19 @@ const MapViewer = ({
       return;
     }
 
-    const anchor = resolveActiveQrAnchor(qrCodeInput);
+    const anchor = resolveActiveQrAnchor(overrideQrCode ?? qrCodeInput);
     if (anchor) {
       gpsBufferRef.current = [];
-      liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
-      setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+      
+      // For Parking L1, override the liveSvgPoint to use the checkpoint instead of QR anchor
+      let effectiveSvgPoint = { x: anchor.svgX, y: anchor.svgY };
+      if (anchor.floor === 0 && anchor.roomId === "Parking_Lantai_1") {
+        // Use Check_Point_Tangga_Pengunjung as the start point for Parking L1
+        effectiveSvgPoint = { x: 1293.9375, y: 644.75 };
+      }
+      
+      liveSvgPointRef.current = effectiveSvgPoint;
+      setLiveSvgPoint(effectiveSvgPoint);
       setShowCurrentUserMarker(true);
       setStartRoomId(anchor.roomId);
       startRoomIdRef.current = anchor.roomId;
@@ -3063,8 +3237,10 @@ const MapViewer = ({
       }
 
       // Build route with existing destination
+      // Use effectiveSvgPoint (already overridden to checkpoint for Parking L1) so
+      // the route start matches exactly where the user arrow is displayed.
       const routeAfterCalibration = buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
-        startPoint: { x: anchor.svgX, y: anchor.svgY },
+        startPoint: effectiveSvgPoint,
         useExactStartPoint: true,
         startNodeId: anchor.routeNodeId,
       });
@@ -3093,9 +3269,10 @@ const MapViewer = ({
 
       setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label} → ${roomInfoBySvgId[endRoomIdRef.current]?.name}`);
       
-      // Zoom to calibrated start point
+      // Zoom to calibrated start point (use effectiveSvgPoint so we zoom to the
+      // same location where the user arrow appears, not the raw QR anchor).
       setTimeout(() => {
-        zoomToPoint(anchor.svgX, anchor.svgY);
+        zoomToPoint(effectiveSvgPoint.x, effectiveSvgPoint.y);
       }, 100);
       
       return;
@@ -3273,7 +3450,9 @@ const MapViewer = ({
       }
 
       setQrCodeInput(qrPayload);
-      handleCalibrateQrOnly();
+      // Pass qrPayload directly to avoid reading stale qrCodeInput state
+      // (setQrCodeInput is async and won't update before handleCalibrateQrOnly reads it)
+      handleCalibrateQrOnly(qrPayload);
       finish();
       return;
     }
@@ -3319,14 +3498,22 @@ const MapViewer = ({
         startRoomIdRef.current = anchor.roomId;
         preferRoomCenterStartRef.current = false;
         setLastQrAnchor(anchor);
-        liveSvgPointRef.current = { x: anchor.svgX, y: anchor.svgY };
-        setLiveSvgPoint({ x: anchor.svgX, y: anchor.svgY });
+        
+        // For Parking L1, override the liveSvgPoint to use the checkpoint instead of QR anchor
+        let effectiveSvgPoint = { x: anchor.svgX, y: anchor.svgY };
+        if (anchor.floor === 0 && anchor.roomId === "Parking_Lantai_1") {
+          // Use Check_Point_Tangga_Pengunjung as the start point for Parking L1
+          effectiveSvgPoint = { x: 1293.9375, y: 644.75 };
+        }
+        
+        liveSvgPointRef.current = effectiveSvgPoint;
+        setLiveSvgPoint(effectiveSvgPoint);
         setQrCalibrationHistory((prev) => [...prev, anchor]);
 
         const targetEndFromAnchor = destinationRoomId;
         if (targetEndFromAnchor && targetEndFromAnchor !== anchor.roomId) {
           const anchorRoute = buildDebugRouteForRooms(anchor.roomId, targetEndFromAnchor, {
-            startPoint: { x: anchor.svgX, y: anchor.svgY },
+            startPoint: effectiveSvgPoint,
             useExactStartPoint: true,
             startNodeId: anchor.routeNodeId,
           });
@@ -3520,25 +3707,22 @@ const MapViewer = ({
 
     setActiveRoute(result);
     
-    // Switch to appropriate floor/map view based on destination (end point)
-    if (isParkingInvolved) {
-      // If parking is the destination, show parking map
-      if (endFloorExtended === 0) {
-        setShowParkingMap(true);
-        setParkingFloor(1);
-      } else if (endFloorExtended === -1) {
-        setShowParkingMap(true);
-        setParkingFloor(2);
-      } else {
-        // If parking is start and hospital is destination, show hospital floor
-        setShowParkingMap(false);
-        if (endFloor !== activeFloor) {
-          setActiveFloor(endFloor);
-        }
-      }
-    } else if (startFloor !== activeFloor) {
-      setActiveFloor(startFloor);
+    // Auto-switch map view to the START point floor so the user sees their
+    // position (user arrow) immediately after starting navigation.
+    if (startFloorExtended === 0) {
+      // Start is Parking L1
+      setShowParkingMap(true);
+      setParkingFloor(1);
+    } else if (startFloorExtended === -1) {
+      // Start is Parking L2
+      setShowParkingMap(true);
+      setParkingFloor(2);
+    } else if (startFloorExtended === 1 || startFloorExtended === 2) {
+      // Start is hospital floor 1 or 2
       setShowParkingMap(false);
+      if (startFloorExtended !== activeFloor) {
+        setActiveFloor(startFloorExtended);
+      }
     }
     
     setRouteDebugMessage(
