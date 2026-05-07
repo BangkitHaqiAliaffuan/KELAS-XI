@@ -5,6 +5,7 @@
 
 import { BackendStatus } from '@/components/BackendStatus';
 import { DataMonitor } from '@/components/admin/DataMonitor';
+import { CategoriesDemo } from '@/components/admin/CategoriesDemo';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function Admin() {
@@ -22,11 +23,16 @@ export default function Admin() {
       <Tabs defaultValue="monitor" className="w-full">
         <TabsList>
           <TabsTrigger value="monitor">Data Monitor</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="backend">Backend Status</TabsTrigger>
         </TabsList>
 
         <TabsContent value="monitor" className="space-y-4">
           <DataMonitor />
+        </TabsContent>
+
+        <TabsContent value="categories" className="space-y-4">
+          <CategoriesDemo />
         </TabsContent>
 
         <TabsContent value="backend" className="space-y-4">

@@ -31,8 +31,16 @@ export const searchRooms = async (query: string): Promise<HospitalRoomInfo[]> =>
 };
 
 export const getCategories = async (): Promise<string[]> => {
-  const rooms = await getAllRooms();
-  return Array.from(new Set(rooms.map((room) => room.category))).sort();
+  // Use categories API instead of extracting from rooms
+  try {
+    const { categoriesApi } = await import("@/services/api");
+    const response = await categoriesApi.getNames();
+    return response.data.data;
+  } catch (error) {
+    console.warn("Categories API failed, falling back to room extraction:", error);
+    const rooms = await getAllRooms();
+    return Array.from(new Set(rooms.map((room) => room.category))).sort();
+  }
 };
 
 export const roomService = {

@@ -34,4 +34,12 @@ export const qrAnchorsApi = {
   resolve: (qrCode: string) => api.get(`/qr-anchors/resolve?qr=${encodeURIComponent(qrCode)}`),
 };
 
+export const categoriesApi = {
+  getAll: () => api.get("/categories"),
+  getNames: () => api.get("/categories/names"),
+  getStats: () => api.get("/categories/stats"),
+  getByName: (name: string) => api.get(`/categories/${encodeURIComponent(name)}`),
+  validate: (name: string) => api.post("/categories/validate", { name }),
+};
+
 export default api;

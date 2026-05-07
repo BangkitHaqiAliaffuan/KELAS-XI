@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { useRooms } from "@/hooks/useHospitalData";
+import { CategoryBadge } from "@/components/hospital/CategoryBadge";
 import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 interface SearchBarProps {
@@ -257,13 +258,15 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
                 }`}>📍 {loc.locationHint}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                  index === highlightedIndex
-                    ? 'bg-primary/20 text-primary border-primary/30'
-                    : 'bg-primary/10 text-primary border-primary/20'
-                }`}>
-                  {loc.category}
-                </span>
+                <CategoryBadge 
+                  categoryName={loc.category}
+                  className={`text-[10px] px-2 py-0.5 ${
+                    index === highlightedIndex
+                      ? 'bg-primary/20 text-primary border-primary/30'
+                      : 'bg-primary/10 text-primary border-primary/20'
+                  }`}
+                  showTooltip={false}
+                />
                 <span className={`transition-transform ${
                   index === highlightedIndex
                     ? 'text-accent-foreground translate-x-1'

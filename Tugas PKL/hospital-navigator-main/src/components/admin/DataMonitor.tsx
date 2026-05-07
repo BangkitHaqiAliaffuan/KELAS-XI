@@ -9,16 +9,20 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RefreshCw, Database, MapPin, QrCode, TrendingUp } from 'lucide-react';
+import { RefreshCw, Database, MapPin, QrCode, TrendingUp, Tag } from 'lucide-react';
 import { roomService } from '@/services/roomService';
 import { qrAnchorService } from '@/services/qrAnchorService';
+import { categoryService } from '@/services/categoryService';
 import type { HospitalRoomInfo } from '@/data/hospitalRoomInfo';
 import type { QrAnchor } from '@/data/hospitalRouteGraph';
+import type { Category } from '@/types/category';
+import { CategoryBadge } from '@/components/hospital/CategoryBadge';
 
 export function DataMonitor() {
   const [isLoading, setIsLoading] = useState(false);
   const [rooms, setRooms] = useState<HospitalRoomInfo[]>([]);
   const [qrAnchors, setQrAnchors] = useState<QrAnchor[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [stats, setStats] = useState<{
     total: number;
     byFloor: Record<string, number>;
@@ -29,15 +33,17 @@ export function DataMonitor() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [roomsData, anchorsData, statsData] = await Promise.all([
+      const [roomsData, anchorsData, statsData, categoriesData] = await Promise.all([
         roomService.getAllRooms(),
         qrAnchorService.getAllQrAnchors(),
         qrAnchorService.getQrAnchorStats(),
+        categoryService.getAllCategories(),
       ]);
 
       setRooms(roomsData);
       setQrAnchors(anchorsData);
       setStats(statsData);
+      setCategories(categoriesData);
       setLastUpdated(new Date());
     } catch (error) {
       console.error('Error loading data:', error);
@@ -92,7 +98,7 @@ export function DataMonitor() {
       )}
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Rooms</CardTitle>
@@ -102,6 +108,19 @@ export function DataMonitor() {
             <div className="text-2xl font-bold">{rooms.length}</div>
             <p className="text-xs text-muted-foreground">
               {Object.keys(roomsByCategory).length} categories
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Categories</CardTitle>
+            <Tag className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{categories.length}</div>
+            <p className="text-xs text-muted-foreground">
+              From backend API
             </p>
           </CardContent>
         </Card>
@@ -137,8 +156,9 @@ export function DataMonitor() {
 
       {/* Data Tables */}
       <Tabs defaultValue="rooms" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="rooms">Rooms ({rooms.length})</TabsTrigger>
+          <TabsTrigger value="categories">Categories ({categories.length})</TabsTrigger>
           <TabsTrigger value="qr-anchors">QR Anchors ({qrAnchors.length})</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
         </TabsList>
@@ -157,7 +177,7 @@ export function DataMonitor() {
                 {Object.entries(roomsByCategory).map(([category, categoryRooms]) => (
                   <div key={category} className="mb-6">
                     <div className="flex items-center gap-2 mb-3">
-                      <Badge variant="outline">{category}</Badge>
+                      <CategoryBadge categoryName={category} />
                       <span className="text-sm text-muted-foreground">
                         ({categoryRooms.length} rooms)
                       </span>
@@ -184,6 +204,45 @@ export function DataMonitor() {
                     </div>
                   </div>
                 ))}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Categories Tab */}
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Categories</CardTitle>
+              <CardDescription>
+                All available categories from backend API
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px] pr-4">
+                <div className="space-y-3">
+                  {categories.map((category) => {
+                    const roomCount = rooms.filter(r => r.category === category.name).length;
+                    return (
+                      <div
+                        key={category.name}
+                        className="p-4 border rounded-lg hover:bg-accent transition-colors"
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="default">{category.name}</Badge>
+                            <span className="text-sm text-muted-foreground">
+                              {roomCount} {roomCount === 1 ? 'room' : 'rooms'}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {category.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
               </ScrollArea>
             </CardContent>
           </Card>
