@@ -17,10 +17,13 @@ const loadStaticData = async () => {
         import("@/data/hospitalRoomInfo"),
         import("@/data/hospitalRouteGraph"),
       ]);
-      staticRoomInfo = Object.values(roomModule.hospitalRoomInfo);
-      staticQrAnchors = Object.values(qrModule.QR_ANCHOR_REGISTRY);
+      // Fix: roomInfoBySvgId is the correct export, not hospitalRoomInfo
+      staticRoomInfo = roomModule.roomInfoBySvgId ? Object.values(roomModule.roomInfoBySvgId) : [];
+      staticQrAnchors = qrModule.QR_ANCHOR_REGISTRY ? Object.values(qrModule.QR_ANCHOR_REGISTRY) : [];
     } catch (error) {
       console.error("Failed to load static data:", error);
+      staticRoomInfo = [];
+      staticQrAnchors = [];
     }
   }
 };
