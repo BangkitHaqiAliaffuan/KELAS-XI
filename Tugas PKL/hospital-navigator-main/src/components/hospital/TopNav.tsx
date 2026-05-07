@@ -65,9 +65,12 @@ const TopNav = ({
   onToggleLanguage,
 }: TopNavProps) => {
   const title = language === "id" ? "Navigator Rumah Sakit" : "Hospital Navigator";
-  const nextLanguage = language === "id" ? "en" : "id";
-  const switchLabel = language === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia";
-  const languageLabel = nextLanguage === "id" ? "Indonesia" : "English";
+
+  const handleLanguageChange = (lang: Language) => {
+    if (language !== lang) {
+      onToggleLanguage();
+    }
+  };
 
   return (
     <header className="flex items-center justify-between px-6 py-3 bg-card border-b border-border">
@@ -112,18 +115,44 @@ const TopNav = ({
         })}
       </nav>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
+        <Globe className="h-4 w-4 text-muted-foreground mr-1 hidden sm:block" />
+        
+        {/* Indonesian Button */}
         <Button
           variant="ghost"
-          className="text-muted-foreground hover:text-foreground gap-2 px-3 py-2 h-auto"
-          onClick={onToggleLanguage}
-          title={switchLabel}
-          aria-label={switchLabel}
+          size="sm"
+          className={`gap-2 px-2 sm:px-3 py-2 h-auto transition-all ${
+            language === "id"
+              ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+          }`}
+          onClick={() => handleLanguageChange("id")}
+          title="Bahasa Indonesia"
+          aria-label="Switch to Indonesian"
         >
-          <Globe className="h-4 w-4 flex-shrink-0" />
-          {nextLanguage === "id" ? <IndonesiaFlag /> : <UKFlag />}
-          <span className="text-xs font-semibold tracking-wide text-foreground hidden sm:inline">
-            {languageLabel}
+          <IndonesiaFlag />
+          <span className="text-xs font-semibold tracking-wide hidden sm:inline">
+            ID
+          </span>
+        </Button>
+
+        {/* English Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`gap-2 px-2 sm:px-3 py-2 h-auto transition-all ${
+            language === "en"
+              ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+              : "text-muted-foreground hover:text-foreground hover:bg-accent"
+          }`}
+          onClick={() => handleLanguageChange("en")}
+          title="English"
+          aria-label="Switch to English"
+        >
+          <UKFlag />
+          <span className="text-xs font-semibold tracking-wide hidden sm:inline">
+            EN
           </span>
         </Button>
       </div>
