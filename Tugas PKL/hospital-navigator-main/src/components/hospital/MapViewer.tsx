@@ -132,6 +132,7 @@ const MapViewer = ({
   const [activeStepIndex, setActiveStepIndex] = useState(0);
   const hasAppliedAutoStartRef = useRef(false);
   const geoWatchIdRef = useRef<number | null>(null);
+  const [isCalibrationMode, setIsCalibrationMode] = useState(false);
   const liveOriginRef = useRef<{ lat: number; lng: number; svgX: number; svgY: number } | null>(null);
   const liveSvgPointRef = useRef<{ x: number; y: number } | null>(null);
   const gpsBufferRef = useRef<Array<{ x: number; y: number }>>([]);
@@ -904,7 +905,9 @@ const MapViewer = ({
     }
 
     // ── Cross: parking L1 (0) ↔ hospital L1 ──────────────────────────────────
-    if (startFloor === 0 || endFloor === 0) {
+    // NOTE: Exclude Hospital L2 (2) → Parking L1 (0) — that case must go through Parking L2
+    // as an intermediary (bridge + staircase), handled by isParkingL1Involved branch below.
+    if ((startFloor === 0 || endFloor === 0) && !(startFloor === 2 && endFloor === 0)) {
       const hospitalFloor: 1 | 2 = startFloor === 0 ? (endFloor as 1 | 2) : (startFloor as 1 | 2);
       const hospitalRoomId = startFloor === 0 ? endRoomIdParam   : startRoomIdParam;
       const parkingRoomId  = startFloor === 0 ? startRoomIdParam : endRoomIdParam;
@@ -930,30 +933,21 @@ const MapViewer = ({
 
       if (isParkingStart) {
         // Parking → Hospital: Start from QR anchor, route to Check_Point_Keluar_dari_Lahan_Parkir
-        console.log(`🅿️ Parking → Hospital: Start from parking QR anchor`);
-        
-        // Find QR anchor for parking
         const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
           (a) => a.roomId === parkingRoomId && a.floor === 0
         );
-        
+
         if (!parkAnchor) {
-          console.log(`🅿️ ⚠️ No QR anchor found for ${parkingRoomId}`);
           return null;
         }
-        
-        console.log(`🅿️ QR anchor: ${parkAnchor.qrId} at (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
-        console.log(`🅿️ Route node ID: ${parkAnchor.routeNodeId || 'none'}`);
-        
+
         // Use the routeNodeId if available, otherwise use parkingRoomId
         const startNodeId = parkAnchor.routeNodeId || parkingRoomId;
-        
+
         // Inject both start and end nodes
         injectVirtualAnchorNode(parkDoc, startNodeId, parkAnchor.svgX, parkAnchor.svgY);
         injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
-        
-        console.log(`🅿️ Routing point-to-point: ${startNodeId} (${parkAnchor.svgX}, ${parkAnchor.svgY}) → ${conn.parkingNodeId} (${conn.parkingX}, ${conn.parkingY})`);
-        
+
         // Use buildRouteFromPoint with point_to_point mode
         parkingSegment = buildRouteFromPoint(
           startNodeId,
@@ -963,29 +957,12 @@ const MapViewer = ({
           parkDoc,
           "point_to_point",
         );
-        
+
         if (parkingSegment) {
           // ✅ FORCE OVERRIDE: Ensure first & last checkpoints are correct
           const ids = parkingSegment.checkpointIds;
-          
-          // Force start checkpoint to be the start node
-          if (ids[0] !== startNodeId) {
-            ids.unshift(startNodeId);
-            console.log(`🅿️ ✓ Forced start checkpoint: ${startNodeId}`);
-          }
-          
-          // Force end checkpoint to be the parking connector
-          if (ids[ids.length - 1] !== conn.parkingNodeId) {
-            ids.push(conn.parkingNodeId);
-            console.log(`🅿️ ✓ Forced end checkpoint: ${conn.parkingNodeId}`);
-          }
-          
-          console.log(`🅿️ ✓ Parking segment: ${startNodeId} → ${conn.parkingNodeId}`);
-          console.log(`🅿️   Checkpoints: ${parkingSegment.checkpointIds.length} nodes`);
-          console.log(`🅿️   First: ${parkingSegment.checkpointIds[0]}`);
-          console.log(`🅿️   Last: ${parkingSegment.checkpointIds[parkingSegment.checkpointIds.length - 1]}`);
-        } else {
-          console.log(`🅿️ ⚠️ Failed to create parking segment`);
+          if (ids[0] !== startNodeId) ids.unshift(startNodeId);
+          if (ids[ids.length - 1] !== conn.parkingNodeId) ids.push(conn.parkingNodeId);
         }
         
         hospitalSegment = buildRouteFromPoint(
@@ -1040,28 +1017,20 @@ const MapViewer = ({
         
         // For Hospital → Parking L1, ALWAYS route from Check_Point_Keluar_dari_Lahan_Parkir
         // to the specific QR anchor location using point-to-point routing
-        console.log(`🅿️ Hospital → Parking L1: Using fixed start point: ${conn.parkingNodeId}`);
-        
         const parkAnchor = Object.values(QR_ANCHOR_REGISTRY).find(
           (a) => a.roomId === parkingRoomId && a.floor === 0
         );
 
         if (!parkAnchor) {
-          console.log(`🅿️ ⚠️ No QR anchor found for ${parkingRoomId}`);
           return null;
         }
 
-        console.log(`🅿️ QR anchor: ${parkAnchor.qrId} at (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
-        console.log(`🅿️ Route node ID: ${parkAnchor.routeNodeId || 'none'}`);
-
         // Use the routeNodeId if available, otherwise use parkingRoomId
         const endpointNodeId = parkAnchor.routeNodeId || parkingRoomId;
-        
+
         // Inject both start and end nodes to ensure they exist
         injectVirtualAnchorNode(parkDoc, conn.parkingNodeId, conn.parkingX, conn.parkingY);
         injectVirtualAnchorNode(parkDoc, endpointNodeId, parkAnchor.svgX, parkAnchor.svgY);
-        
-        console.log(`🅿️ Routing point-to-point: ${conn.parkingNodeId} (${conn.parkingX}, ${conn.parkingY}) → ${endpointNodeId} (${parkAnchor.svgX}, ${parkAnchor.svgY})`);
 
         // Use buildRouteFromPoint with point_to_point mode to ensure exact coordinates are used
         parkingSegment = buildRouteFromPoint(
@@ -1072,31 +1041,12 @@ const MapViewer = ({
           parkDoc,
           "point_to_point",
         );
-        
+
         if (parkingSegment) {
           // ✅ FORCE OVERRIDE: Ensure first & last checkpoints are correct
-          // This fixes the issue where virtual nodes don't have edges in graph
           const ids = parkingSegment.checkpointIds;
-          
-          // Force start checkpoint to be the parking connector
-          if (ids[0] !== conn.parkingNodeId) {
-            ids.unshift(conn.parkingNodeId);
-            console.log(`🅿️ ✓ Forced start checkpoint: ${conn.parkingNodeId}`);
-          }
-          
-          // Force end checkpoint to be the endpoint node
-          if (ids[ids.length - 1] !== endpointNodeId) {
-            ids.push(endpointNodeId);
-            console.log(`🅿️ ✓ Forced end checkpoint: ${endpointNodeId}`);
-          }
-          
-          console.log(`🅿️ ✓ Parking segment created successfully`);
-          console.log(`🅿️   Checkpoints: ${parkingSegment.checkpointIds.length} nodes`);
-          console.log(`🅿️   First: ${parkingSegment.checkpointIds[0]}`);
-          console.log(`🅿️   Last: ${parkingSegment.checkpointIds[parkingSegment.checkpointIds.length - 1]}`);
-          console.log(`🅿️   Distance: ${parkingSegment.totalDistance.toFixed(2)} units`);
-        } else {
-          console.log(`🅿️ ⚠️ Failed to create parking segment`);
+          if (ids[0] !== conn.parkingNodeId) ids.unshift(conn.parkingNodeId);
+          if (ids[ids.length - 1] !== endpointNodeId) ids.push(endpointNodeId);
         }
       }
 
@@ -1134,7 +1084,9 @@ const MapViewer = ({
     }
 
     // ── Cross: parking L2 (-1) ↔ hospital (must involve parking L2 explicitly) ──
-    if ((startFloor === -1 && endFloor !== 2) || (endFloor === -1 && startFloor !== 2)) {
+    // Also handles Hospital L2 (2) ↔ Parking L1 (0), which must route THROUGH Parking L2 as intermediary
+    if ((startFloor === -1 && endFloor !== 2) || (endFloor === -1 && startFloor !== 2) ||
+        (startFloor === 2 && endFloor === 0) || (startFloor === 0 && endFloor === 2)) {
       // Special case: Parking L2 ↔ Hospital L1 (must go through Hospital L2 first, then down to L1)
       // OR Hospital L2 ↔ Parking L1 (must go through Parking L2 first, then down to L1)
       if ((startFloor === -1 && endFloor === 1) || (startFloor === 1 && endFloor === -1) ||
@@ -3106,15 +3058,6 @@ const MapViewer = ({
             setActiveFloor(routeStartFloor);
           }
         }
-
-        // Debug: Log route from QR scan
-        console.log(`🗺️ Route (QR): ${anchor.roomId} → ${endRoomIdRef.current}`);
-        console.log(`📍 Nodes (${routeAfterCalibration.checkpointIds.length}):`, routeAfterCalibration.checkpointIds.join(' → '));
-        console.log(`📏 Total distance: ${routeAfterCalibration.totalDistance.toFixed(2)} units`);
-        if (routeAfterCalibration.floorsInvolved && routeAfterCalibration.floorsInvolved.length > 1) {
-          console.log(`🏢 Floors involved: ${routeAfterCalibration.floorsInvolved.join(', ')}`);
-          console.log(`🔄 Transition: ${routeAfterCalibration.transitionLabel || 'N/A'}`);
-        }
         setActiveRoute(routeAfterCalibration);
       } else {
         setActiveRoute(null);
@@ -3164,14 +3107,6 @@ const MapViewer = ({
           : null;
 
       if (routeAfterRoomScan) {
-        // Debug: Log route from QR room scan
-        console.log(`🗺️ Route (QR Room): ${resolvedRoomId} → ${endRoomIdRef.current}`);
-        console.log(`📍 Nodes (${routeAfterRoomScan.checkpointIds.length}):`, routeAfterRoomScan.checkpointIds.join(' → '));
-        console.log(`📏 Total distance: ${routeAfterRoomScan.totalDistance.toFixed(2)} units`);
-        if (routeAfterRoomScan.floorsInvolved && routeAfterRoomScan.floorsInvolved.length > 1) {
-          console.log(`🏢 Floors involved: ${routeAfterRoomScan.floorsInvolved.join(', ')}`);
-          console.log(`🔄 Transition: ${routeAfterRoomScan.transitionLabel || 'N/A'}`);
-        }
         setActiveRoute(routeAfterRoomScan);
       } else {
         setActiveRoute(null);
@@ -3259,9 +3194,6 @@ const MapViewer = ({
             setActiveFloor(routeStartFloor);
           }
         }
-
-        console.log(`🎯 Kalibrasi: ${anchor.roomId} → ${endRoomIdRef.current}`);
-        console.log(`📍 Nodes (${routeAfterCalibration.checkpointIds.length}):`, routeAfterCalibration.checkpointIds.join(' → '));
         setActiveRoute(routeAfterCalibration);
       } else {
         setActiveRoute(null);
@@ -3397,20 +3329,12 @@ const MapViewer = ({
         });
         if (dynamicRoute) {
           // Debug: Log route in live mode (already throttled by LIVE_REROUTE_INTERVAL_MS, so always log)
-          console.log(`🧭 Live Navigation Route: ${nearest.roomId} → ${currentEnd}`);
-          console.log(`📍 Nodes (${dynamicRoute.checkpointIds.length}):`, dynamicRoute.checkpointIds.join(' → '));
-          console.log(`📏 Distance: ${dynamicRoute.totalDistance.toFixed(2)} units`);
-          if (dynamicRoute.floorsInvolved && dynamicRoute.floorsInvolved.length > 1) {
-            console.log(`🏢 Floors: ${dynamicRoute.floorsInvolved.join(', ')} | Transition: ${dynamicRoute.transitionLabel || 'N/A'}`);
-          }
-          
           setActiveRoute(dynamicRoute);
           setRouteDebugMessage(
             `Rute live: ${roomInfoBySvgId[nearest.roomId]?.name || nearest.roomId} → ${roomInfoBySvgId[currentEnd]?.name || currentEnd}`
           );
           setLiveModeStatus("Navigasi live aktif dan rute diperbarui otomatis.");
         } else {
-          console.warn(`⚠️ Live route not found: ${nearest.roomId} → ${currentEnd}`);
           setRouteDebugMessage("Rute live belum ditemukan dari posisi terbaru.");
         }
       },
@@ -3687,19 +3611,6 @@ const MapViewer = ({
       setActiveRoute(null);
       lastLoggedRouteRef.current = null;
       return;
-    }
-
-    // Debug: Log route only if it's different from the last logged route
-    const routeKey = `${effectiveStartRoomId}→${effectiveEndRoomId}:${result.checkpointIds.join(',')}`;
-    if (lastLoggedRouteRef.current !== routeKey) {
-      console.log(`🗺️ Route: ${effectiveStartRoomId} → ${effectiveEndRoomId}`);
-      console.log(`📍 Nodes (${result.checkpointIds.length}):`, result.checkpointIds.join(' → '));
-      console.log(`📏 Total distance: ${result.totalDistance.toFixed(2)} units`);
-      if (result.floorsInvolved && result.floorsInvolved.length > 1) {
-        console.log(`🏢 Floors involved: ${result.floorsInvolved.join(', ')}`);
-        console.log(`🔄 Transition: ${result.transitionLabel || 'N/A'}`);
-      }
-      lastLoggedRouteRef.current = routeKey;
     }
 
     const endRoomInfo = roomInfoBySvgId[effectiveEndRoomId];

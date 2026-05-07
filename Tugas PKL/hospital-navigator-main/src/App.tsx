@@ -12,14 +12,7 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   // Initialize backend status check on app mount
-  const { isAvailable, isChecking } = useBackendStatus();
-
-  // Log backend status for debugging
-  console.log('[App] Backend status:', {
-    isAvailable,
-    isChecking,
-    apiUrl: import.meta.env.VITE_API_URL || 'Not configured',
-  });
+  const { isAvailable: _isAvailable, isChecking: _isChecking } = useBackendStatus();
 
   return (
     <BrowserRouter>

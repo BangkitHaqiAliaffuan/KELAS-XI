@@ -23,10 +23,9 @@ export const getAllRooms = async (): Promise<HospitalRoomInfo[]> => {
   if (useApi) {
     try {
       const response = await apiClient.get<ApiResponse<HospitalRoomInfo[]>>('/rooms');
-      console.log('[RoomService] Fetched rooms from API:', response.data.count);
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -44,8 +43,8 @@ export const getRoomById = async (roomId: string): Promise<HospitalRoomInfo | nu
     try {
       const response = await apiClient.get<ApiResponse<HospitalRoomInfo>>(`/rooms/${roomId}`);
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -65,8 +64,8 @@ export const getRoomsByCategory = async (category: string): Promise<HospitalRoom
         params: { category },
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -88,8 +87,8 @@ export const getRoomsByFloor = async (floor: number): Promise<HospitalRoomInfo[]
         params: { floor },
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -110,8 +109,8 @@ export const searchRooms = async (query: string): Promise<HospitalRoomInfo[]> =>
         params: { search: query },
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -135,8 +134,8 @@ export const getCategories = async (): Promise<string[]> => {
     try {
       const response = await apiClient.get<ApiResponse<string[]>>('/rooms/categories');
       return response.data.data;
-    } catch (error) {
-      console.warn('[RoomService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   

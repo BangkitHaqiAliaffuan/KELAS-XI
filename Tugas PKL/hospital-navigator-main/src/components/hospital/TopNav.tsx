@@ -1,7 +1,43 @@
 import { Globe, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logo from '../../../public/logo.png'
+
 type Language = "id" | "en";
+
+// Flag components with proper styling
+const IndonesiaFlag = () => (
+  <svg
+    viewBox="0 0 24 16"
+    className="h-4 w-6 rounded-sm border border-border shadow-sm"
+    aria-label="Indonesia Flag"
+  >
+    <rect width="24" height="8" fill="#FF0000" />
+    <rect y="8" width="24" height="8" fill="#FFFFFF" />
+  </svg>
+);
+
+const UKFlag = () => (
+  <svg
+    viewBox="0 0 60 30"
+    className="h-4 w-6 rounded-sm border border-border shadow-sm"
+    aria-label="UK Flag"
+  >
+    {/* Blue background */}
+    <rect width="60" height="30" fill="#012169" />
+    
+    {/* White diagonals */}
+    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#FFF" strokeWidth="6" />
+    
+    {/* Red diagonals */}
+    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" strokeWidth="4" />
+    
+    {/* White cross */}
+    <path d="M30,0 L30,30 M0,15 L60,15" stroke="#FFF" strokeWidth="10" />
+    
+    {/* Red cross */}
+    <path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" strokeWidth="6" />
+  </svg>
+);
 
 const tabs = [
   { id: "map", label: { id: "Peta", en: "Map" } },
@@ -79,25 +115,14 @@ const TopNav = ({
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
-          className="text-muted-foreground hover:text-foreground gap-2 px-2"
+          className="text-muted-foreground hover:text-foreground gap-2 px-3 py-2 h-auto"
           onClick={onToggleLanguage}
           title={switchLabel}
           aria-label={switchLabel}
         >
-          <Globe className="h-5 w-5" />
-          {nextLanguage === "id" ? (
-            <span className="inline-flex h-3 w-4 overflow-hidden rounded-sm border border-border">
-              <span className="h-1/2 w-full bg-red-500" />
-              <span className="h-1/2 w-full bg-white" />
-            </span>
-          ) : (
-            <span className="inline-flex h-3 w-4 overflow-hidden rounded-sm border border-border">
-              <span className="h-1/3 w-full bg-blue-600" />
-              <span className="h-1/3 w-full bg-white" />
-              <span className="h-1/3 w-full bg-red-500" />
-            </span>
-          )}
-          <span className="text-[11px] font-semibold tracking-wide text-foreground">
+          <Globe className="h-4 w-4 flex-shrink-0" />
+          {nextLanguage === "id" ? <IndonesiaFlag /> : <UKFlag />}
+          <span className="text-xs font-semibold tracking-wide text-foreground hidden sm:inline">
             {languageLabel}
           </span>
         </Button>

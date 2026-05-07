@@ -17,27 +17,15 @@ export const useBackendStatus = () => {
     setError(null);
     
     try {
-      console.log('[useBackendStatus] Checking backend health...');
       resetBackendCheck(); // Force recheck
       const available = await checkBackendHealth();
-      
       setIsAvailable(available);
       setLastChecked(new Date());
-      
-      console.log(`[useBackendStatus] Backend is ${available ? 'AVAILABLE ✅' : 'NOT AVAILABLE ❌'}`);
-      console.log(`[useBackendStatus] Data source: ${available ? 'API (Real-time)' : 'Static (Fallback)'}`);
-      
-      if (available) {
-        console.log('[useBackendStatus] 🎉 Using backend API for data');
-      } else {
-        console.log('[useBackendStatus] ⚠️ Using static data (backend not running)');
-      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
       setError(errorMessage);
       setIsAvailable(false);
       setLastChecked(new Date());
-      console.error('[useBackendStatus] Error checking backend:', errorMessage);
     } finally {
       setIsChecking(false);
     }
@@ -45,7 +33,6 @@ export const useBackendStatus = () => {
 
   // Check on mount
   useEffect(() => {
-    console.log('[useBackendStatus] Hook initialized, checking backend status...');
     checkStatus();
   }, [checkStatus]);
 

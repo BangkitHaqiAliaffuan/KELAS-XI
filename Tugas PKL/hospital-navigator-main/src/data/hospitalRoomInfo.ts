@@ -1,9 +1,10 @@
-export interface HospitalRoomInfo {
+﻿export interface HospitalRoomInfo {
   id: string;
   name: string;
   category: string;
   locationHint: string;
   description: string;
+  floor: number; // 0 = Parking L1, 1 = Lantai 1, 2 = Lantai 2
 }
 
 export interface HospitalRoomLabelConfig {
@@ -25,6 +26,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Emergency",
     locationHint: "Sayap kiri bawah peta",
     description: "Instalasi Gawat Darurat untuk penanganan kondisi medis darurat 24 jam.",
+    floor: 1,
   },
   Area_Pelayanan_IGD: {
     id: "Area_Pelayanan_IGD",
@@ -32,6 +34,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Emergency",
     locationHint: "Sayap kiri bawah peta",
     description: "Area pelayanan IGD untuk penanganan kondisi medis darurat 24 jam.",
+    floor: 1,
   },
   Poliklinik: {
     id: "Poliklinik",
@@ -39,6 +42,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Outpatient",
     locationHint: "Area kanan bawah peta",
     description: "Layanan konsultasi rawat jalan berbagai poli spesialis.",
+    floor: 1,
   },
   ICU: {
     id: "ICU",
@@ -46,6 +50,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Critical Care",
     locationHint: "Tengah kiri peta",
     description: "Unit perawatan intensif untuk pasien dengan kondisi kritis.",
+    floor: 1,
   },
   Lab: {
     id: "Lab",
@@ -53,6 +58,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Diagnostic",
     locationHint: "Bagian tengah peta",
     description: "Pemeriksaan laboratorium penunjang diagnosis pasien.",
+    floor: 1,
   },
   Farmasi: {
     id: "Farmasi",
@@ -60,6 +66,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Tengah bawah peta",
     description: "Pelayanan obat resep, informasi obat, dan konseling farmasi.",
+    floor: 1,
   },
   Radiologi: {
     id: "Radiologi",
@@ -67,6 +74,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Diagnostic",
     locationHint: "Tengah bawah-kiri peta",
     description: "Layanan pemeriksaan radiologi seperti X-Ray dan USG.",
+    floor: 1,
   },
   Toilet: {
     id: "Toilet",
@@ -74,6 +82,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Tengah kanan bawah peta",
     description: "Fasilitas toilet umum untuk pengunjung dan pasien.",
+    floor: 1,
   },
   Lift_Lantai_1: {
     id: "Lift_Lantai_1",
@@ -81,6 +90,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Koridor tengah-kanan peta",
     description: "Akses lift untuk perpindahan antar lantai rumah sakit.",
+    floor: 1,
   },
   Tangga_Lantai_1: {
     id: "Tangga_Lantai_1",
@@ -88,6 +98,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Koridor tengah-kanan peta",
     description: "Akses tangga untuk perpindahan antar lantai rumah sakit.",
+    floor: 1,
   },
   Informasi: {
     id: "Informasi",
@@ -95,13 +106,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Dekat area IGD",
     description: "Meja informasi untuk bantuan arah ruangan dan layanan rumah sakit.",
-  },
-  Ruang_sebelah_IGD: {
-    id: "Ruang_sebelah_IGD",
-    name: "Area Pelayanan IGD",
-    category: "Service",
-    locationHint: "Menyatu dengan area IGD",
-    description: "Area pelayanan pendukung di sebelah IGD untuk kebutuhan pasien dan pengunjung.",
+    floor: 1,
   },
   Rekam_Medis: {
     id: "Rekam_Medis",
@@ -109,6 +114,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Administration",
     locationHint: "Tengah bawah-kanan peta",
     description: "Pengelolaan data rekam medis pasien dan administrasi dokumen.",
+    floor: 1,
   },
   Kamar_Operasi: {
     id: "Kamar_Operasi",
@@ -116,6 +122,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Surgery",
     locationHint: "Sayap kiri tengah peta",
     description: "Area tindakan operasi dengan kontrol sterilitas tinggi.",
+    floor: 1,
   },
   Area_Kamar_Operasi: {
     id: "Area_Kamar_Operasi",
@@ -123,6 +130,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Surgery",
     locationHint: "Sisi kiri tengah peta",
     description: "Area pendukung kamar operasi.",
+    floor: 1,
   },
   Musholla: {
     id: "Musholla",
@@ -130,6 +138,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kanan peta",
     description: "Fasilitas ibadah untuk pasien, keluarga, dan tenaga medis.",
+    floor: 1,
   },
   CSSD: {
     id: "CSSD",
@@ -137,6 +146,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sayap kiri tengah peta",
     description: "Unit sterilisasi alat medis untuk kebutuhan tindakan klinis.",
+    floor: 1,
   },
   "K._Mayat": {
     id: "K._Mayat",
@@ -144,6 +154,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kiri atas peta",
     description: "Area kamar jenazah untuk penanganan sesuai prosedur rumah sakit.",
+    floor: 1,
   },
   "R._HD": {
     id: "R._HD",
@@ -151,6 +162,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Treatment",
     locationHint: "Sisi kiri atas peta",
     description: "Ruang hemodialisa untuk layanan cuci darah pasien.",
+    floor: 1,
   },
   "R._Laundry": {
     id: "R._Laundry",
@@ -158,6 +170,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kiri atas peta",
     description: "Area laundry untuk pengelolaan linen dan kebutuhan kebersihan.",
+    floor: 1,
   },
   "R._Internis": {
     id: "R._Internis",
@@ -165,6 +178,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Outpatient",
     locationHint: "Sisi kanan atas peta",
     description: "Ruang layanan dokter penyakit dalam.",
+    floor: 1,
   },
   "R._Pemeriksaan_Internis": {
     id: "R._Pemeriksaan_Internis",
@@ -172,6 +186,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Outpatient",
     locationHint: "Sisi kanan atas peta",
     description: "area khusus di rumah sakit untuk menangani masalah kesehatan organ dalam",
+    floor: 1,
   },
   "R._JKN": {
     id: "R._JKN",
@@ -179,6 +194,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Administration",
     locationHint: "Sisi kanan atas peta",
     description: "Layanan administrasi dan informasi kepesertaan JKN.",
+    floor: 1,
   },
   "R._Gizi": {
     id: "R._Gizi",
@@ -186,6 +202,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Sisi atas tengah peta",
     description: "Unit gizi untuk konsultasi dan pengelolaan diet pasien.",
+    floor: 1,
   },
   "R._Pinere": {
     id: "R._Pinere",
@@ -193,13 +210,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Ward",
     locationHint: "Sisi kiri atas-tengah peta",
     description: "Ruang perawatan isolasi sesuai protokol infeksius.",
-  },
-  "R._Gawat_Gabung": {
-    id: "R._Gawat_Gabung",
-    name: "Gawat Gabung",
-    category: "Ward",
-    locationHint: "Sisi kiri tengah peta",
-    description: "Ruang perawatan gabung untuk kebutuhan observasi pasien.",
+    floor: 1,
   },
   "TRP._RJ": {
     id: "TRP._RJ",
@@ -207,27 +218,31 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Dekat area IGD",
     description: "Area transit/triase layanan rawat jalan.",
+    floor: 1,
   },
   "R._Ponek": {
     id: "R._Ponek",
-    name: "Ponek",
+    name: "R. Ponek",
     category: "Emergency",
     locationHint: "Dekat area IGD",
     description: "Ruang layanan PONEK untuk kegawatdaruratan maternal-neonatal.",
+    floor: 1,
   },
   "R._IPSRS": {
     id: "R._IPSRS",
-    name: "IPSRS",
+    name: "R. IPSRS",
     category: "Facility",
     locationHint: "Sisi kiri atas-tengah peta",
     description: "Instalasi pemeliharaan sarana rumah sakit.",
+    floor: 1,
   },
   "R._Kebidanan": {
     id: "R._Kebidanan",
-    name: "Kebidanan",
+    name: "R. Kebidanan",
     category: "Ward",
     locationHint: "Sisi atas tengah-kanan peta",
     description: "Ruang layanan kebidanan dan perawatan ibu.",
+    floor: 1,
   },
   "R._Anak": {
     id: "R._Anak",
@@ -235,20 +250,23 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Ward",
     locationHint: "Sisi atas kanan peta",
     description: "Ruang layanan dan perawatan pasien anak.",
+    floor: 1,
   },
   "R._Rawat_Jantung": {
     id: "R._Rawat_Jantung",
-    name: "Rawat Jantung",
+    name: "R. Rawat Jantung",
     category: "Ward",
     locationHint: "Sisi kanan tengah peta",
     description: "Ruang rawat pasien dengan layanan kardiovaskular.",
+    floor: 1,
   },
   "R._Bedah": {
     id: "R._Bedah",
-    name: "Bedah",
+    name: "R. Bedah",
     category: "Ward",
     locationHint: "Sisi kanan tengah peta",
     description: "Ruang perawatan pasien bedah.",
+    floor: 1,
   },
   Rehab_Medik: {
     id: "Rehab_Medik",
@@ -256,13 +274,15 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Sisi kanan bawah peta",
     description: "Layanan rehabilitasi medik untuk pemulihan fungsi pasien.",
+    floor: 1,
   },
   "R._Fisioterapi": {
     id: "R._Fisioterapi",
-    name: "Fisioterapi",
+    name: "R. Fisioterapi",
     category: "Service",
     locationHint: "Sisi kanan bawah peta",
     description: "Ruang fisioterapi untuk terapi gerak dan pemulihan.",
+    floor: 1,
   },
   Kantor_Administrasi: {
     id: "Kantor_Administrasi",
@@ -270,20 +290,23 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Administration",
     locationHint: "Sisi kanan bawah peta",
     description: "Area kantor dan layanan administrasi rumah sakit.",
+    floor: 1,
   },
   "R._Tunggu": {
     id: "R._Tunggu",
-    name: "Tunggu",
+    name: "R. Tunggu",
     category: "Facility",
     locationHint: "Lihat detail peta",
     description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
+    floor: 1,
   },
   "R._Tunggu_Keluarga_Pasien": {
     id: "R._Tunggu_Keluarga_Pasien",
-    name: "Tunggu Keluarga Pasien",
+    name: "R. Tunggu Keluarga Pasien",
     category: "Facility",
     locationHint: "Sisi kanan bawah peta",
     description: "Ruang tunggu untuk keluarga pasien dan pengunjung.",
+    floor: 1,
   },
   "Tangga_Evakuasi_Lantai_1": {
     id: "Tangga_Evakuasi_Lantai_1",
@@ -291,6 +314,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kiri atas peta",
     description: "Tangga Darurat",
+    floor: 1,
   },
   "Tangga_Evakuasi_Lantai_2": {
     id: "Tangga_Evakuasi_Lantai_2",
@@ -298,6 +322,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Sisi kiri atas peta",
     description: "Tangga Darurat",
+    floor: 2,
   },
   Lift_Lantai_2: {
     id: "Lift_Lantai_2",
@@ -305,6 +330,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Koridor tengah-kanan peta lantai 2",
     description: "Akses lift untuk perpindahan antar lantai rumah sakit.",
+    floor: 2,
   },
   Tangga_Lantai_2: {
     id: "Tangga_Lantai_2",
@@ -312,62 +338,71 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Koridor tengah-kanan peta lantai 2",
     description: "Akses tangga untuk perpindahan antar lantai rumah sakit.",
+    floor: 2,
   },
   "R._Korea": {
     id: "R._Korea",
-    name: "Korea",
+    name: "R. Korea",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   "R._Jepang": {
     id: "R._Jepang",
-    name: "Jepang",
+    name: "R. Jepang",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   "R._Prancis": {
     id: "R._Prancis",
-    name: "Prancis",
+    name: "R. Prancis",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   "R._Italia": {
     id: "R._Italia",
-    name: "Italia",
+    name: "R. Italia",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   "R._Inggris": {
     id: "R._Inggris",
-    name: "Inggris",
+    name: "R. Inggris",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   "R._Swiss": {
     id: "R._Swiss",
-    name: "Swiss",
+    name: "R. Swiss",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   Ruang_Indonesia: {
     id: "Ruang_Indonesia",
-    name: "Ruang Indonesia",
+    name: "R. Indonesia",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   Ruang_Nusantara: {
     id: "Ruang_Nusantara",
-    name: "Ruang Nusantara",
+    name: "R. Nusantara",
     category: "Ward",
     locationHint: "Lantai 2",
     description: "Ruang perawatan lantai 2.",
+    floor: 2,
   },
   Nurse_Station: {
     id: "Nurse_Station",
@@ -375,41 +410,47 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Koridor utama lantai 2",
     description: "Pos perawat untuk koordinasi pelayanan pasien di lantai 2.",
+    floor: 2,
   },
   "R._Dokter_Spesialis": {
     id: "R._Dokter_Spesialis",
-    name: "Dokter Spesialis",
+    name: "R. Dokter Spesialis",
     category: "Outpatient",
     locationHint: "Lantai 2",
     description: "Ruang konsultasi dokter spesialis.",
+    floor: 2,
   },
   "R._Laundry_2": {
     id: "R._Laundry_2",
-    name: "Laundry 2",
+    name: "R. Laundry 2",
     category: "Facility",
     locationHint: "Lantai 2",
     description: "Area laundry pendukung operasional lantai 2.",
+    floor: 2,
   },
   "R._HRD___Kepegawaian": {
     id: "R._HRD___Kepegawaian",
-    name: "HRD / Kepegawaian",
+    name: "R. HRD / Kepegawaian",
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Area administrasi sumber daya manusia dan kepegawaian.",
+    floor: 2,
   },
   "R._IT___Server": {
     id: "R._IT___Server",
-    name: "IT / Server",
+    name: "R. IT / Server",
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Ruang infrastruktur IT dan server rumah sakit.",
+    floor: 2,
   },
   "R._Tumbuh_Kembang_Anak": {
     id: "R._Tumbuh_Kembang_Anak",
-    name: "Tumbuh Kembang Anak",
+    name: "R. Tumbuh Kembang Anak",
     category: "Treatment",
     locationHint: "Lantai 2",
     description: "Layanan pemantauan dan terapi tumbuh kembang anak.",
+    floor: 2,
   },
   Terapi_Okupasi_Lanjutan: {
     id: "Terapi_Okupasi_Lanjutan",
@@ -417,6 +458,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Treatment",
     locationHint: "Lantai 2",
     description: "Ruang terapi okupasi lanjutan.",
+    floor: 2,
   },
   Edukasi_Pasien_dan_Keluarga: {
     id: "Edukasi_Pasien_dan_Keluarga",
@@ -424,6 +466,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Lantai 2",
     description: "Area edukasi kesehatan untuk pasien dan keluarga.",
+    floor: 2,
   },
   Manajemen: {
     id: "Manajemen",
@@ -431,6 +474,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Area manajemen rumah sakit.",
+    floor: 2,
   },
   Radioterapi: {
     id: "Radioterapi",
@@ -438,20 +482,23 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Treatment",
     locationHint: "Lantai 2",
     description: "Ruang layanan radioterapi.",
+    floor: 2,
   },
   "R._PACS": {
     id: "R._PACS",
-    name: "PACS",
+    name: "R. PACS",
     category: "Diagnostic",
     locationHint: "Lantai 2",
     description: "Ruang sistem penyimpanan dan komunikasi citra medis.",
+    floor: 2,
   },
   "R._MRI": {
     id: "R._MRI",
-    name: "MRI",
+    name: "R. MRI",
     category: "Diagnostic",
     locationHint: "Lantai 2",
     description: "Ruang pemeriksaan Magnetic Resonance Imaging.",
+    floor: 2,
   },
   Gudang_Alat_Medis_Steril: {
     id: "Gudang_Alat_Medis_Steril",
@@ -459,20 +506,23 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Lantai 2",
     description: "Gudang alat medis steril.",
+    floor: 2,
   },
   "R._Istirahat_Perawat": {
     id: "R._Istirahat_Perawat",
-    name: "Istirahat Perawat",
+    name: "R. Istirahat Perawat",
     category: "Facility",
     locationHint: "Lantai 2",
     description: "Ruang istirahat perawat.",
+    floor: 2,
   },
   "R._Training_Medis": {
     id: "R._Training_Medis",
-    name: "Training Medis",
+    name: "R. Training Medis",
     category: "Service",
     locationHint: "Lantai 2",
     description: "Ruang pelatihan dan pengembangan tenaga medis.",
+    floor: 2,
   },
   Lobby_Lantai_2: {
     id: "Lobby_Lantai_2",
@@ -480,6 +530,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Area depan lantai 2",
     description: "Area lobi lantai 2.",
+    floor: 2,
   },
   Meja_Resepsionis_Lantai_2: {
     id: "Meja_Resepsionis_Lantai_2",
@@ -487,6 +538,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Service",
     locationHint: "Dekat lobby lantai 2",
     description: "Meja resepsionis untuk informasi layanan lantai 2.",
+    floor: 2,
   },
   Toilet_Lantai_2: {
     id: "Toilet_Lantai_2",
@@ -494,34 +546,39 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Lantai 2",
     description: "Fasilitas toilet umum lantai 2.",
+    floor: 2,
   },
   "R._Meeting": {
     id: "R._Meeting",
-    name: "Meeting",
+    name: "R. Meeting",
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Ruang rapat staf dan manajemen.",
+    floor: 2,
   },
   "R._Direktur___Manajemen": {
     id: "R._Direktur___Manajemen",
-    name: "Direktur / Manajemen",
+    name: "R. Direktur / Manajemen",
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Ruang direktur dan manajemen rumah sakit.",
+    floor: 2,
   },
   "R._Arsip_Utama": {
     id: "R._Arsip_Utama",
-    name: "Arsip Utama",
+    name: "R. Arsip Utama",
     category: "Administration",
     locationHint: "Lantai 2",
     description: "Ruang penyimpanan arsip utama rumah sakit.",
+    floor: 2,
   },
   "R._Konsultasi_Dokter": {
     id: "R._Konsultasi_Dokter",
-    name: "Konsultasi Dokter",
+    name: "R. Konsultasi Dokter",
     category: "Outpatient",
     locationHint: "Lantai 2",
     description: "Ruang konsultasi dokter untuk pasien rawat jalan.",
+    floor: 2,
   },
   Parking_Lantai_1: {
     id: "Parking_Lantai_1",
@@ -529,6 +586,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Area parkir kendaraan rumah sakit",
     description: "Area parkir kendaraan pengunjung dan tenaga medis. Tersedia parkir sepeda motor dan mobil.",
+    floor: 0,
   },
   Tangga_Pengunjung_di_Lahan_Parkir_lantai_1: {
     id: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_1",
@@ -536,6 +594,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Tangga penghubung parkir lantai 1 dan 2",
     description: "Tangga untuk akses antara parkir lantai 1 dan lantai 2.",
+    floor: 0,
   },
   Parking_Lantai_2: {
     id: "Parking_Lantai_2",
@@ -543,6 +602,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Area parkir lantai 2 rumah sakit",
     description: "Area parkir lantai 2 dengan akses langsung ke gedung rumah sakit lantai 2 melalui jembatan penghubung.",
+    floor: 0,
   },
   Tangga_Pengunjung_di_Lahan_Parkir_lantai_2: {
     id: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_2",
@@ -550,6 +610,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     category: "Facility",
     locationHint: "Tangga penghubung parkir lantai 1 dan 2",
     description: "Tangga untuk akses antara parkir lantai 1 dan lantai 2.",
+    floor: 0,
   },
 };
 
@@ -640,3 +701,4 @@ export const roomLabelConfigBySvgId: Record<string, HospitalRoomLabelConfig> = {
   ...FLOOR_1_LABEL_CONFIG_BY_SVG_ID,
   ...FLOOR_2_LABEL_CONFIG_BY_SVG_ID,
 };
+

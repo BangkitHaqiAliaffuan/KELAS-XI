@@ -22,10 +22,9 @@ export const getAllQrAnchors = async (): Promise<QrAnchor[]> => {
   if (useApi) {
     try {
       const response = await apiClient.get<ApiResponse<QrAnchor[]>>('/qr-anchors');
-      console.log('[QrAnchorService] Fetched QR anchors from API:', response.data.count);
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -43,8 +42,8 @@ export const getQrAnchorById = async (qrId: string): Promise<QrAnchor | null> =>
     try {
       const response = await apiClient.get<ApiResponse<QrAnchor>>(`/qr-anchors/${qrId}`);
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -64,8 +63,8 @@ export const getQrAnchorsByRoomId = async (roomId: string): Promise<QrAnchor[]> 
         params: { roomId },
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -85,8 +84,8 @@ export const getQrAnchorsByFloor = async (floor: number): Promise<QrAnchor[]> =>
         params: { floor },
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -106,8 +105,8 @@ export const resolveQrCode = async (qrCode: string): Promise<QrAnchor | null> =>
         qrCode,
       });
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
@@ -129,8 +128,8 @@ export const getQrAnchorStats = async (): Promise<{
     try {
       const response = await apiClient.get('/qr-anchors/stats');
       return response.data.data;
-    } catch (error) {
-      console.warn('[QrAnchorService] API failed, falling back to static data');
+    } catch {
+      // fall through to static data
     }
   }
   
