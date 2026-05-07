@@ -16,9 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Camera, RefreshCcw, MapPin, Loader2, Search } from "lucide-react";
-import { roomInfoBySvgId } from "@/data/hospitalRoomInfo";
+import { useRooms, useQrAnchors } from "@/hooks/useHospitalData";
+import {
+  roomsArrayToObject,
+  qrAnchorsArrayToObject,
+  resolveQrAnchorFromRegistry,
+} from "@/utils/apiHelpers";
 import jsQR from "jsqr";
-import { resolveQrAnchor, resolveRoomIdFromQrCode, QR_ANCHOR_REGISTRY } from "@/data/hospitalRouteGraph";
+import { resolveRoomIdFromQrCode } from "@/data/hospitalRouteGraph";
 
 interface NavigationDialogProps {
   open: boolean;
@@ -42,6 +47,10 @@ const NavigationDialog = ({
   language,
   onConfirmNavigation,
 }: NavigationDialogProps) => {
+  const { data: rooms, isLoading: roomsLoading, error: roomsError } = useRooms();
+  const { data: qrAnchors, isLoading: qrLoading, error: qrError } = useQrAnchors();
+  const roomInfoBySvgId = useMemo(() => roomsArrayToObject(rooms || []), [rooms]);
+  const QR_ANCHOR_REGISTRY = useMemo(() => qrAnchorsArrayToObject(qrAnchors || []), [qrAnchors]);
   const copy = useMemo(
     () =>
       language === "id"
@@ -71,6 +80,8 @@ const NavigationDialog = ({
             qrDetected: (payload: string, roomName: string) => `QR terdeteksi: ${payload} -> ${roomName}`,
             cameraError: "Tidak dapat mengakses kamera. Pastikan izin kamera sudah diberikan di pengaturan browser.",
             sameLocation: "Tujuan harus berbeda dari titik awal.",
+            loadingData: "Memuat data navigasi...",
+            dataError: "Gagal memuat data navigasi. Coba muat ulang halaman.",
           }
         : {
             startTitle: "Set Your Starting Point",
@@ -98,6 +109,8 @@ const NavigationDialog = ({
             qrDetected: (payload: string, roomName: string) => `QR detected: ${payload} -> ${roomName}`,
             cameraError: "Could not access camera. Please ensure you have given permission in your browser settings.",
             sameLocation: "Destination must be different from the starting point.",
+            loadingData: "Loading navigation data...",
+            dataError: "Failed to load navigation data. Please refresh the page.",
           },
     [language],
   );
@@ -125,14 +138,16 @@ const NavigationDialog = ({
   const lastDetectedPayloadRef = useRef<string | null>(null);
   const isHandlingDetectionRef = useRef(false);
 
-  const roomOptions = Object.values(roomInfoBySvgId)
-    .filter((room) => {
+  const roomOptions = useMemo(() => {
+    return (rooms || [])
+      .filter((room) => {
       // Exclude rooms that cannot be used for routing
-      return room.id !== "R._Tunggu" && 
-             room.id !== "R._Tunggu_Keluarga_Pasien" && 
-             room.id !== "Nurse_Station";
-    })
-    .sort((a, b) => a.name.localeCompare(b.name));
+        return room.id !== "R._Tunggu" &&
+               room.id !== "R._Tunggu_Keluarga_Pasien" &&
+               room.id !== "Nurse_Station";
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [rooms]);
   
   // Helper function for flexible search matching
   const getRoomSearchAliases = useCallback((room: typeof roomOptions[0]): string[] => {
@@ -243,7 +258,7 @@ const NavigationDialog = ({
     setHighlightedStartIndex(-1);
     setStartSource("manual");
     setDetectedQrPayload(undefined);
-  }, []);
+  }, [roomInfoBySvgId]);
 
   const selectDestination = useCallback((roomId: string) => {
     const room = roomInfoBySvgId[roomId];
@@ -251,7 +266,7 @@ const NavigationDialog = ({
     setDestinationQuery(room?.name || "");
     setIsDestinationSearchOpen(false);
     setHighlightedDestinationIndex(-1);
-  }, []);
+  }, [roomInfoBySvgId]);
 
   const stopCamera = useCallback(() => {
     if (scanRafRef.current !== null) {
@@ -311,7 +326,7 @@ const NavigationDialog = ({
 
       const resolvedRoomId =
         resolveRoomIdFromQrCode(normalizedPayload) ||
-        resolveQrAnchor(normalizedPayload)?.roomId ||
+        resolveQrAnchorFromRegistry(normalizedPayload, QR_ANCHOR_REGISTRY)?.roomId ||
         null;
 
       if (!resolvedRoomId) {
@@ -348,7 +363,7 @@ const NavigationDialog = ({
         }, 100);
       }
     },
-    [copy, stopCamera, defaultMode, destinationLocation, onConfirmNavigation, onOpenChange, startSource],
+    [copy, stopCamera, defaultMode, destinationLocation, onConfirmNavigation, onOpenChange, startSource, QR_ANCHOR_REGISTRY],
   );
 
   useEffect(() => {
@@ -492,6 +507,33 @@ const NavigationDialog = ({
       }
     }
   };
+
+  const isDataLoading = roomsLoading || qrLoading;
+  const dataError = roomsError || qrError;
+
+  if (isDataLoading || dataError) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-primary" />
+              {copy.startTitle}
+            </DialogTitle>
+            <DialogDescription>
+              {dataError ? copy.dataError : copy.loadingData}
+            </DialogDescription>
+          </DialogHeader>
+          {isDataLoading && (
+            <div className="flex items-center justify-center py-8 text-muted-foreground">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <span className="text-sm">{copy.loadingData}</span>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

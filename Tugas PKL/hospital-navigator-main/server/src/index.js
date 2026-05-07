@@ -14,20 +14,31 @@ app.use(helmet());
 
 // CORS configuration - support multiple origins
 const allowedOrigins = config.corsOrigin.split(',').map(origin => origin.trim());
+console.log('[CORS] Allowed origins:', allowedOrigins);
+
 app.use(
   cors({
     origin: function (origin, callback) {
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        console.log('[CORS] Allowing request with no origin');
+        return callback(null, true);
+      }
+      
+      console.log('[CORS] Request from origin:', origin);
       
       if (allowedOrigins.indexOf(origin) !== -1) {
+        console.log('[CORS] Origin allowed:', origin);
         callback(null, true);
       } else {
         console.warn(`[CORS] Blocked request from origin: ${origin}`);
+        console.warn('[CORS] Allowed origins are:', allowedOrigins);
         callback(new Error('Not allowed by CORS'));
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 

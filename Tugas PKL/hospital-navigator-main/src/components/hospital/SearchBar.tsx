@@ -1,6 +1,7 @@
 import { Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { roomInfoBySvgId, type HospitalRoomInfo } from "@/data/hospitalRoomInfo";
+import { useRooms } from "@/hooks/useHospitalData";
+import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 interface SearchBarProps {
   onSelectLocation: (location: HospitalRoomInfo) => void;
@@ -14,13 +15,18 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
         suggestions: "Saran",
         noResultsTitle: (value: string) => `Tidak ada hasil untuk "${value}"`,
         noResultsHint: "Coba cari berdasarkan nama ruangan atau kategori.",
+        loading: "Memuat data ruangan...",
+        error: "Gagal memuat data ruangan. Coba muat ulang halaman.",
       }
     : {
         placeholder: "Search hospital rooms (e.g., ER, Lab, Pharmacy)...",
         suggestions: "Suggestions",
         noResultsTitle: (value: string) => `No results found for "${value}"`,
         noResultsHint: "Try searching by room name or category.",
+        loading: "Loading room data...",
+        error: "Failed to load room data. Please refresh the page.",
       };
+  const { data: rooms, isLoading, error } = useRooms();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -28,7 +34,7 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const roomList = Object.values(roomInfoBySvgId).filter((room) => {
+  const roomList = (rooms || []).filter((room) => {
     // Exclude rooms that cannot be used for routing
     return room.id !== "R._Tunggu" && 
            room.id !== "R._Tunggu_Keluarga_Pasien" && 
@@ -125,13 +131,6 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const selectLocation = (loc: HospitalRoomInfo) => {
-    onSelectLocation(loc);
-    setQuery(loc.name);
-    setOpen(false);
-    inputRef.current?.blur();
-  };
-
   // Scroll highlighted item into view
   useEffect(() => {
     if (highlightedIndex < 0 || !listRef.current) return;
@@ -140,6 +139,29 @@ const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
       items[highlightedIndex].scrollIntoView({ block: 'nearest' });
     }
   }, [highlightedIndex]);
+
+  const selectLocation = (loc: HospitalRoomInfo) => {
+    onSelectLocation(loc);
+    setQuery(loc.name);
+    setOpen(false);
+    inputRef.current?.blur();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-xl mx-auto rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
+        {copy.loading}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-xl mx-auto rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm">
+        {copy.error}
+      </div>
+    );
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open || filtered.length === 0) {

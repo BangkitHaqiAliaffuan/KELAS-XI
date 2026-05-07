@@ -65,6 +65,70 @@ router.get('/categories', (req, res) => {
 });
 
 /**
+ * GET /api/v1/rooms/search?q=query
+ * Search rooms by name, description, or ID
+ */
+router.get('/search', (req, res) => {
+  try {
+    const query = String(req.query.q || req.query.search || '');
+    const rooms = query ? searchRooms(query) : [];
+
+    res.json({
+      success: true,
+      data: rooms,
+      count: rooms.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/rooms/category/:category
+ * Get rooms by category
+ */
+router.get('/category/:category', (req, res) => {
+  try {
+    const rooms = getRoomsByCategory(req.params.category);
+
+    res.json({
+      success: true,
+      data: rooms,
+      count: rooms.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/rooms/floor/:floor
+ * Get rooms by floor
+ */
+router.get('/floor/:floor', (req, res) => {
+  try {
+    const rooms = getRoomsByFloor(Number(req.params.floor));
+
+    res.json({
+      success: true,
+      data: rooms,
+      count: rooms.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * GET /api/v1/rooms/:id
  * Get room by ID
  */

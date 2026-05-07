@@ -66,6 +66,84 @@ router.get('/stats', (req, res) => {
 });
 
 /**
+ * GET /api/v1/qr-anchors/resolve?qr=code
+ * Resolve a QR code to anchor data
+ */
+router.get('/resolve', (req, res) => {
+  try {
+    const qrCode = req.query.qr || req.query.qrCode || req.query.code;
+
+    if (!qrCode) {
+      return res.status(400).json({
+        success: false,
+        error: 'QR code is required',
+      });
+    }
+
+    const anchor = resolveQrCode(String(qrCode));
+
+    if (!anchor) {
+      return res.status(404).json({
+        success: false,
+        error: 'QR code not found',
+      });
+    }
+
+    res.json({
+      success: true,
+      data: anchor,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/qr-anchors/room/:roomId
+ * Get QR anchors by room ID
+ */
+router.get('/room/:roomId', (req, res) => {
+  try {
+    const anchors = getQrAnchorsByRoomId(req.params.roomId);
+
+    res.json({
+      success: true,
+      data: anchors,
+      count: anchors.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/v1/qr-anchors/floor/:floor
+ * Get QR anchors by floor
+ */
+router.get('/floor/:floor', (req, res) => {
+  try {
+    const anchors = getQrAnchorsByFloor(Number(req.params.floor));
+
+    res.json({
+      success: true,
+      data: anchors,
+      count: anchors.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * POST /api/v1/qr-anchors/resolve
  * Resolve a QR code to anchor data
  */

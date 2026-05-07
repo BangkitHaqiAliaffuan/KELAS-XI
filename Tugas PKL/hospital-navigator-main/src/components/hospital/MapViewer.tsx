@@ -8,7 +8,6 @@ import {
   QrCode,
 } from "lucide-react";
 import {
-  roomInfoBySvgId,
   roomLabelConfigBySvgId,
   type HospitalRoomInfo,
 } from "@/data/hospitalRoomInfo";
@@ -16,13 +15,17 @@ import {
   buildRouteForRooms,
   buildRouteFromPoint,
   injectVirtualAnchorNode,
-  QR_ANCHOR_REGISTRY,
   getRoutingRoomIds,
-  resolveQrAnchor,
   resolveRoomIdFromQrCode,
   type QrAnchor,
   type RoomRouteResult,
 } from "@/data/hospitalRouteGraph";
+import { useRooms, useQrAnchors } from "@/hooks/useHospitalData";
+import {
+  roomsArrayToObject,
+  qrAnchorsArrayToObject,
+  resolveQrAnchorFromRegistry,
+} from "@/utils/apiHelpers";
 import {
   buildNavigationSteps,
   getActiveStepIndex,
@@ -75,6 +78,10 @@ const MapViewer = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const objectRef = useRef<HTMLObjectElement>(null);
+  const { data: rooms, isLoading: roomsLoading, error: roomsError } = useRooms();
+  const { data: qrAnchors, isLoading: qrLoading, error: qrError } = useQrAnchors();
+  const roomInfoBySvgId = useMemo(() => roomsArrayToObject(rooms || []), [rooms]);
+  const QR_ANCHOR_REGISTRY = useMemo(() => qrAnchorsArrayToObject(qrAnchors || []), [qrAnchors]);
 
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -163,7 +170,10 @@ const MapViewer = ({
     "lift",
     "tangga",
   ];
-  const allRegisteredQrAnchors = Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId));
+  const allRegisteredQrAnchors = useMemo(
+    () => Object.values(QR_ANCHOR_REGISTRY).sort((a, b) => a.qrId.localeCompare(b.qrId)),
+    [QR_ANCHOR_REGISTRY],
+  );
   const activeQrAnchors = showParkingMap
     ? allRegisteredQrAnchors.filter((anchor) => anchor.floor === (parkingFloor === 1 ? 0 : -1))
     : allRegisteredQrAnchors.filter((anchor) => anchor.floor === activeFloor);
@@ -1969,28 +1979,20 @@ const MapViewer = ({
         description: `Informasi detail untuk ruangan ${readable}.`,
       };
     },
-    []
+    [roomInfoBySvgId]  // ✅ ADD DEPENDENCY
   );
 
   const resolveActiveQrAnchor = useCallback(
     (rawQr: string): QrAnchor | null => {
-      const normalized = rawQr.trim().toUpperCase().replace(/\s+/g, "");
-      if (!normalized) return null;
+      const directOrFuzzyMatch = resolveQrAnchorFromRegistry(rawQr, QR_ANCHOR_REGISTRY);
+      if (directOrFuzzyMatch) return directOrFuzzyMatch;
 
-      const directMatch = allRegisteredQrAnchors.find(
-        (anchor) => anchor.qrId.toUpperCase().replace(/\s+/g, "") === normalized
-      );
-      if (directMatch) return directMatch;
+      const legacyRoomId = resolveRoomIdFromQrCode(rawQr);
+      if (!legacyRoomId) return null;
 
-      const fuzzyMatch = allRegisteredQrAnchors.find((anchor) => {
-        const key = anchor.qrId.toUpperCase().replace(/\s+/g, "");
-        return normalized.startsWith(key) || key.startsWith(normalized);
-      });
-      if (fuzzyMatch) return fuzzyMatch;
-
-      return resolveQrAnchor(rawQr);
+      return allRegisteredQrAnchors.find((anchor) => anchor.roomId === legacyRoomId) || null;
     },
-    [allRegisteredQrAnchors]
+    [QR_ANCHOR_REGISTRY, allRegisteredQrAnchors]
   );
 
   const buildLabelLines = useCallback(
@@ -2687,6 +2689,15 @@ const MapViewer = ({
       cleanup?.();
     };
   }, [setupSvgRoomInteraction]);
+
+  // Re-setup SVG interaction when rooms data is loaded
+  useEffect(() => {
+    if (!rooms || rooms.length === 0) return;
+    if (!objectRef.current?.contentDocument) return;
+    
+    // Trigger re-setup by incrementing svgReadyVersion
+    setSvgReadyVersion((prev) => prev + 1);
+  }, [rooms]);
 
   useEffect(() => {
     if (!showCurrentUserMarker) {
@@ -3827,6 +3838,26 @@ const MapViewer = ({
   // ---------------------------------------------------------------------------
   // Render
   // ---------------------------------------------------------------------------
+
+  if (roomsLoading || qrLoading) {
+    return (
+      <div className="relative flex-1 overflow-hidden rounded-xl border border-border bg-muted/20 shadow-inner">
+        <div className="flex h-full min-h-[420px] items-center justify-center text-sm text-muted-foreground">
+          Loading map data...
+        </div>
+      </div>
+    );
+  }
+
+  if (roomsError || qrError) {
+    return (
+      <div className="relative flex-1 overflow-hidden rounded-xl border border-destructive/30 bg-destructive/10 shadow-inner">
+        <div className="flex h-full min-h-[420px] items-center justify-center px-4 text-center text-sm text-destructive">
+          Failed to load map data. Please refresh the page.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative flex-1 overflow-hidden bg-muted/20 rounded-xl border border-border shadow-inner">

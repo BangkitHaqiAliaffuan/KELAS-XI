@@ -1,10 +1,5 @@
-/**
- * Room Service - Hybrid data source (API + Static fallback)
- * Automatically uses backend API if available, otherwise falls back to static data
- */
-
-import apiClient, { isBackendAvailable } from '@/lib/api';
-import { roomInfoBySvgId, type HospitalRoomInfo } from '@/data/hospitalRoomInfo';
+import { roomsApi } from "@/services/api";
+import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -13,138 +8,31 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-/**
- * Get all rooms
- * Uses API if available, otherwise returns static data
- */
+const readData = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
+
 export const getAllRooms = async (): Promise<HospitalRoomInfo[]> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<HospitalRoomInfo[]>>('/rooms');
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data
-  return Object.values(roomInfoBySvgId);
+  return readData<HospitalRoomInfo[]>(await roomsApi.getAll());
 };
 
-/**
- * Get room by ID
- */
 export const getRoomById = async (roomId: string): Promise<HospitalRoomInfo | null> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<HospitalRoomInfo>>(`/rooms/${roomId}`);
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data
-  return roomInfoBySvgId[roomId] || null;
+  return readData<HospitalRoomInfo>(await roomsApi.getById(roomId));
 };
 
-/**
- * Get rooms by category
- */
 export const getRoomsByCategory = async (category: string): Promise<HospitalRoomInfo[]> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<HospitalRoomInfo[]>>('/rooms', {
-        params: { category },
-      });
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data
-  return Object.values(roomInfoBySvgId).filter(
-    (room) => room.category.toLowerCase() === category.toLowerCase()
-  );
+  return readData<HospitalRoomInfo[]>(await roomsApi.getByCategory(category));
 };
 
-/**
- * Get rooms by floor
- */
 export const getRoomsByFloor = async (floor: number): Promise<HospitalRoomInfo[]> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<HospitalRoomInfo[]>>('/rooms', {
-        params: { floor },
-      });
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data - filter by floor if floor info exists
-  // Note: Static data doesn't have floor info, so this returns all rooms
-  return Object.values(roomInfoBySvgId);
+  return readData<HospitalRoomInfo[]>(await roomsApi.getByFloor(floor));
 };
 
-/**
- * Search rooms by query
- */
 export const searchRooms = async (query: string): Promise<HospitalRoomInfo[]> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<HospitalRoomInfo[]>>('/rooms', {
-        params: { search: query },
-      });
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data
-  const lowerQuery = query.toLowerCase();
-  return Object.values(roomInfoBySvgId).filter(
-    (room) =>
-      room.name.toLowerCase().includes(lowerQuery) ||
-      room.description.toLowerCase().includes(lowerQuery) ||
-      room.id.toLowerCase().includes(lowerQuery)
-  );
+  return readData<HospitalRoomInfo[]>(await roomsApi.search(query));
 };
 
-/**
- * Get all categories
- */
 export const getCategories = async (): Promise<string[]> => {
-  const useApi = await isBackendAvailable();
-  
-  if (useApi) {
-    try {
-      const response = await apiClient.get<ApiResponse<string[]>>('/rooms/categories');
-      return response.data.data;
-    } catch {
-      // fall through to static data
-    }
-  }
-  
-  // Fallback to static data
-  const categories = new Set<string>();
-  Object.values(roomInfoBySvgId).forEach((room) => {
-    categories.add(room.category);
-  });
-  return Array.from(categories).sort();
+  const rooms = await getAllRooms();
+  return Array.from(new Set(rooms.map((room) => room.category))).sort();
 };
 
 export const roomService = {
