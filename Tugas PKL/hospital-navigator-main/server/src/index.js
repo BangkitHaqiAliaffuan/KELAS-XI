@@ -79,10 +79,11 @@ app.use(notFoundHandler);
 // Error handler
 app.use(errorHandler);
 
-// Start server
-const PORT = config.port;
-app.listen(PORT, () => {
-  console.log(`
+// Start server (only in non-serverless environment)
+if (process.env.VERCEL !== '1') {
+  const PORT = config.port;
+  app.listen(PORT, () => {
+    console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
 ║   🏥 Hospital Navigator API Server                       ║
@@ -99,7 +100,8 @@ app.listen(PORT, () => {
 ║   Server running at: http://localhost:${PORT}              ║
 ║                                                           ║
 ╚═══════════════════════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+}
 
 export default app;

@@ -5,14 +5,48 @@ import type { QrAnchor } from "@/data/hospitalRouteGraph";
 
 const FIVE_MINUTES = 5 * 60 * 1000;
 
+// Fallback: Import static data
+let staticRoomInfo: HospitalRoomInfo[] | null = null;
+let staticQrAnchors: QrAnchor[] | null = null;
+let isUsingFallback = false;
+
+const loadStaticData = async () => {
+  if (!staticRoomInfo || !staticQrAnchors) {
+    try {
+      const [roomModule, qrModule] = await Promise.all([
+        import("@/data/hospitalRoomInfo"),
+        import("@/data/hospitalRouteGraph"),
+      ]);
+      staticRoomInfo = Object.values(roomModule.hospitalRoomInfo);
+      staticQrAnchors = Object.values(qrModule.QR_ANCHOR_REGISTRY);
+    } catch (error) {
+      console.error("Failed to load static data:", error);
+    }
+  }
+};
+
+export const isUsingStaticData = () => isUsingFallback;
+
 export const useRooms = () => {
   return useQuery<HospitalRoomInfo[]>({
     queryKey: ["rooms"],
     queryFn: async () => {
-      const response = await roomsApi.getAll();
-      return response.data.data;
+      try {
+        const response = await roomsApi.getAll();
+        isUsingFallback = false;
+        return response.data.data;
+      } catch (error) {
+        console.warn("API failed, falling back to static data:", error);
+        isUsingFallback = true;
+        await loadStaticData();
+        if (staticRoomInfo) {
+          return staticRoomInfo;
+        }
+        throw error;
+      }
     },
     staleTime: FIVE_MINUTES,
+    retry: 1, // Only retry once before falling back
   });
 };
 
@@ -67,10 +101,22 @@ export const useQrAnchors = () => {
   return useQuery<QrAnchor[]>({
     queryKey: ["qrAnchors"],
     queryFn: async () => {
-      const response = await qrAnchorsApi.getAll();
-      return response.data.data;
+      try {
+        const response = await qrAnchorsApi.getAll();
+        isUsingFallback = false;
+        return response.data.data;
+      } catch (error) {
+        console.warn("API failed, falling back to static data:", error);
+        isUsingFallback = true;
+        await loadStaticData();
+        if (staticQrAnchors) {
+          return staticQrAnchors;
+        }
+        throw error;
+      }
     },
     staleTime: FIVE_MINUTES,
+    retry: 1, // Only retry once before falling back
   });
 };
 
