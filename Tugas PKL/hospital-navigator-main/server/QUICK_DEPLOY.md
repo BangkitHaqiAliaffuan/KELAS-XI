@@ -1,5 +1,13 @@
 # ⚡ Quick Deploy ke Vercel (5 Menit)
 
+## ⚠️ Penting: Path Repository
+
+Jika path repository Anda mengandung **spasi** (contoh: `Tugas PKL/...`), Vercel akan error. 
+
+**Solusi sudah diterapkan:** File `vercel.json` menggunakan `api/index.js` sebagai entry point yang lebih pendek.
+
+---
+
 ## Langkah Singkat
 
 ### 1️⃣ Buka Vercel
@@ -39,17 +47,10 @@ Harus muncul data JSON ✅
 
 ---
 
-## Selesai! 🎉
+## 🔧 Troubleshooting
 
-Website Anda sekarang:
-- ✅ Frontend di Vercel
-- ✅ Backend di Vercel
-- ✅ Tidak ada CORS error
-- ✅ Gratis selamanya (Vercel Free Tier)
-
----
-
-## Troubleshooting Cepat
+**Error: "Serverless Function has an invalid name"?**
+→ Sudah fixed! File `api/index.js` sudah dibuat sebagai entry point.
 
 **CORS Error?**
 → Cek `ALLOWED_ORIGINS` include URL frontend Anda
@@ -61,5 +62,17 @@ Website Anda sekarang:
 → Cek `VITE_API_URL` di frontend sudah benar
 
 ---
+
+## Selesai! 🎉
+
+Website Anda sekarang:
+- ✅ Frontend di Vercel
+- ✅ Backend di Vercel
+- ✅ Tidak ada CORS error
+- ✅ Gratis selamanya (Vercel Free Tier)
+
+---
+
+Untuk troubleshooting lengkap, baca: [VERCEL_TROUBLESHOOTING.md](./VERCEL_TROUBLESHOOTING.md)
 
 Untuk panduan lengkap, baca: [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md)
