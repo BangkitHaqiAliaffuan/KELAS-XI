@@ -174,7 +174,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   },
   "QR-F2-N02": {
     qrId: "QR-F2-N02",
-    roomId: "R._Prancis"      ,
+    roomId: "R._Prancis",
     svgX: 999.847,
     svgY: 515.5,
     label: "Persimpangan Jalan R. Rawat Inap Kelas 1",
@@ -296,15 +296,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     floor: 0,
     routeNodeId: "Belok_ke_Area_Parkir_Sepeda_Motor_Khusus_Tenaga_Medis",
   },
-  "QR-PK-STAIR-L1": {
-    qrId: "QR-PK-STAIR-L1",
-    roomId: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_1",
-    svgX: 1181.4375,
-    svgY: 751,
-    label: "Tangga Pengunjung Parkir Lantai 1",
-    floor: 0,
-    routeNodeId: "Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir",
-  },
+
   // Lahan Parkir Lantai 2 — floor: -1 (peta parkir lantai 2 terpisah)
   "QR-PK2-N01": {
     qrId: "QR-PK2-N01",
@@ -314,15 +306,6 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     label: "Akses Jembatan ke Gedung Rumah Sakit Lantai 2",
     floor: -1,
     routeNodeId: "Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2",
-  },
-  "QR-PK-STAIR-L2": {
-    qrId: "QR-PK-STAIR-L2",
-    roomId: "Tangga_Pengunjung_di_Lahan_Parkir_lantai_2",
-    svgX: 1181.4375,
-    svgY: 751,
-    label: "Tangga Pengunjung Parkir Lantai 2",
-    floor: -1,
-    routeNodeId: "Masuk_ke_Tangga_Pengunjung",
   },
 };
 
@@ -691,8 +674,8 @@ const buildRoadGraphFromSvg = (
   const explicitNodeElements = nodeLayer
     ? Array.from(nodeLayer.querySelectorAll("circle, ellipse"))
     : Array.from(
-        svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"),
-      );
+      svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"),
+    );
 
   [...explicitNodeElements, ...generatedNodeElements].forEach((element) => {
     if (!isElementNodeLike(element)) return;
@@ -728,8 +711,8 @@ const buildRoadGraphFromSvg = (
   );
   const centerlineRoadPaths = centerlineLayer
     ? Array.from(centerlineLayer.querySelectorAll("path")).filter((path) =>
-        isCenterlineRoadPath(path, options),
-      )
+      isCenterlineRoadPath(path, options),
+    )
     : [];
   // If a dedicated centerline layer exists, use it as the single routing source.
   // Mixing thick road-area paths with centerlines lets Dijkstra drift to road edges.
@@ -885,12 +868,12 @@ const getRoomCenter = (
 ): { x: number; y: number } | null => {
   // Try to find the node with the exact ID first (for virtual nodes)
   let roomAnchor = svgDoc.getElementById(roomId);
-  
+
   // If not found, try with node_room_ prefix (for regular room nodes)
   if (!roomAnchor) {
     roomAnchor = svgDoc.getElementById(`node_room_${roomId}`);
   }
-  
+
   if (roomAnchor && roomAnchor.tagName.toLowerCase() === "circle") {
     const x = Number(roomAnchor.getAttribute("cx") || "NaN");
     const y = Number(roomAnchor.getAttribute("cy") || "NaN");
@@ -1012,9 +995,9 @@ const getBestMatchingCheckpointNodeId = (
       const exactScore = roomTokens.some((token) => normalizedNodeId === token)
         ? 2
         : roomTokens.some(
-              (token) =>
-                normalizedNodeId.includes(token) || token.includes(normalizedNodeId),
-            )
+          (token) =>
+            normalizedNodeId.includes(token) || token.includes(normalizedNodeId),
+        )
           ? 1
           : 0;
 
@@ -1302,12 +1285,12 @@ const resolvePreferredEndNodeId = (
 
 const shouldExcludeFromRouting = (roomId: string): boolean => {
   // Exclude specific room IDs
-  if (roomId === "R._Tunggu" || 
-      roomId === "R._Tunggu_Keluarga_Pasien" || 
-      roomId === "Nurse_Station") {
+  if (roomId === "R._Tunggu" ||
+    roomId === "R._Tunggu_Keluarga_Pasien" ||
+    roomId === "Nurse_Station") {
     return true;
   }
-  
+
   const normalized = roomId.toLowerCase().replace(/_/g, " ");
   return (
     normalized.includes("jalan") ||
@@ -1321,7 +1304,7 @@ export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
   const ids = Object.keys(roomInfoBySvgId).filter(
     (roomId) => !shouldExcludeFromRouting(roomId),
   );
-  
+
   // Always include parking in routing options (they have QR anchors even though they're not in the hospital SVG)
   if (!ids.includes("Parking_Lantai_1")) {
     ids.push("Parking_Lantai_1");
@@ -1329,13 +1312,13 @@ export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
   if (!ids.includes("Parking_Lantai_2")) {
     ids.push("Parking_Lantai_2");
   }
-  
+
   if (!svgDoc) return ids;
 
   return ids.filter((roomId) => {
     // Parking is special — it's in a separate SVG, so skip the element check
     if (roomId === "Parking_Lantai_1" || roomId === "Parking_Lantai_2") return true;
-    
+
     const element = svgDoc.getElementById(roomId);
     return Boolean(element && element.tagName.toLowerCase() === "path");
   });
@@ -1398,7 +1381,7 @@ export const buildRouteForRooms = (
   },
 ): RoomRouteResult | null => {
   console.log(`🔍 buildRouteForRooms: ${startRoomId} → ${endRoomId}`);
-  
+
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
   if (!startCenter || !endCenter) {
@@ -1430,10 +1413,10 @@ export const buildRouteForRooms = (
     graph,
     endSourcePoint,
   );
-  
+
   console.log(`📍 Start node: ${startResolution?.anchorNodeId || 'null'}`);
   console.log(`📍 End node: ${endResolution?.anchorNodeId || 'null'}`);
-  
+
   if (!startResolution || !endResolution) {
     console.log(`❌ Node resolution failed`);
     return null;
@@ -1526,7 +1509,7 @@ export const buildRouteFromPoint = (
       console.warn(`[buildRouteFromPoint] point_to_point: otherRoomId "${otherRoomId}" not found in SVG`);
       return null;
     }
-    
+
     // Get coordinates of the other node
     let otherX: number, otherY: number;
     if (otherNode.tagName.toLowerCase() === "circle" || otherNode.tagName.toLowerCase() === "ellipse") {
@@ -1542,15 +1525,15 @@ export const buildRouteFromPoint = (
       otherX = otherCenter.x;
       otherY = otherCenter.y;
     }
-    
+
     if (!Number.isFinite(otherX) || !Number.isFinite(otherY)) {
       console.warn(`[buildRouteFromPoint] point_to_point: Invalid coordinates for "${otherRoomId}"`);
       return null;
     }
-    
+
     // Inject virtual node for the other point as well
     injectVirtualAnchorNode(svgDoc, otherRoomId, otherX, otherY);
-    
+
     // Route from first point to second point, using exact coordinates for both
     return buildRouteForRooms(pointRoomId, otherRoomId, svgDoc, {
       startPoint: { x: pointX, y: pointY },

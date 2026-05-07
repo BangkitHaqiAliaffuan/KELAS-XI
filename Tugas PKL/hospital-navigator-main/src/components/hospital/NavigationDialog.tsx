@@ -134,6 +134,39 @@ const NavigationDialog = ({
     })
     .sort((a, b) => a.name.localeCompare(b.name));
   
+  // Helper function for flexible search matching
+  const getRoomSearchAliases = useCallback((room: typeof roomOptions[0]): string[] => {
+    const aliases: string[] = [];
+
+    if (room.name.startsWith("R. ")) {
+      const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+      aliases.push(`ruang ${nameWithoutPrefix}`);
+    }
+
+    switch (room.id) {
+      case "R._Swiss":
+      case "R._Inggris":
+        aliases.push("ruang rawat inap kelas vip", "rawat inap kelas vip");
+        break;
+      case "R._Italia":
+      case "R._Prancis":
+        aliases.push("ruang rawat inap kelas 1", "rawat inap kelas 1");
+        break;
+      case "R._Jepang":
+      case "R._Korea":
+        aliases.push("ruang rawat inap kelas 2", "rawat inap kelas 2");
+        break;
+      case "Ruang_Indonesia":
+      case "Ruang_Nusantara":
+        aliases.push("ruang rawat inap kelas 3", "rawat inap kelas 3");
+        break;
+      default:
+        break;
+    }
+
+    return aliases;
+  }, []);
+
   const getFloorLabel = useCallback((roomId: string): string => {
     const anchor = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === roomId);
     if (anchor) {
@@ -148,8 +181,7 @@ const NavigationDialog = ({
     if (roomId.includes('Lantai_2') || roomId.startsWith('R._')) return ' (Lantai 2)';
     return ' (Lantai 1)';
   }, []);
-  
-  // Helper function for flexible search matching
+
   const matchesSearchQuery = useCallback((room: typeof roomOptions[0], lowerQuery: string): boolean => {
     // Direct match
     if (room.name.toLowerCase().includes(lowerQuery) ||
@@ -167,15 +199,22 @@ const NavigationDialog = ({
       }
     }
     
-    // Match "ruangan" + name without "R. " prefix
-    if (lowerQuery.startsWith("ruangan ")) {
-      const queryWithoutRuangan = lowerQuery.substring(8);
+    // Match "ruangan"/"ruang" + name without "R. " prefix
+    if (lowerQuery.startsWith("ruangan ") || lowerQuery.startsWith("ruang ")) {
+      const queryWithoutPrefix = lowerQuery.startsWith("ruangan ")
+        ? lowerQuery.substring(8)
+        : lowerQuery.substring(6);
       if (room.name.startsWith("R. ")) {
         const nameWithoutPrefix = room.name.substring(3).toLowerCase();
-        if (nameWithoutPrefix.includes(queryWithoutRuangan)) {
+        if (nameWithoutPrefix.includes(queryWithoutPrefix)) {
           return true;
         }
       }
+    }
+
+    const aliases = getRoomSearchAliases(room);
+    if (aliases.some((alias) => alias.includes(lowerQuery) || lowerQuery.includes(alias))) {
+      return true;
     }
     
     return false;

@@ -345,7 +345,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Korea",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 2.",
     floor: 2,
   },
   "R._Jepang": {
@@ -353,7 +353,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Jepang",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 2.",
     floor: 2,
   },
   "R._Prancis": {
@@ -361,7 +361,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Prancis",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 1.",
     floor: 2,
   },
   "R._Italia": {
@@ -369,7 +369,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Italia",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 1.",
     floor: 2,
   },
   "R._Inggris": {
@@ -377,7 +377,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Inggris",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas VIP.",
     floor: 2,
   },
   "R._Swiss": {
@@ -385,7 +385,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Swiss",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas VIP.",
     floor: 2,
   },
   Ruang_Indonesia: {
@@ -393,7 +393,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Indonesia",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 3.",
     floor: 2,
   },
   Ruang_Nusantara: {
@@ -401,7 +401,7 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     name: "R. Nusantara",
     category: "Ward",
     locationHint: "Lantai 2",
-    description: "Ruang perawatan lantai 2.",
+    description: "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 3.",
     floor: 2,
   },
   Nurse_Station: {
