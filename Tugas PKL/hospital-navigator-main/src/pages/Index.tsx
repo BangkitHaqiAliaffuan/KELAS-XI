@@ -90,7 +90,7 @@ const Index = () => {
 
         <main className="flex-1 flex flex-col overflow-hidden relative">
           {/* Search */}
-          <div className="px-4 pt-4 pb-2 z-10">
+          <div className="px-4 pt-4 pb-2 z-20 relative">
             <SearchBar onSelectLocation={setSelectedLocation} language={language} />
           </div>
 

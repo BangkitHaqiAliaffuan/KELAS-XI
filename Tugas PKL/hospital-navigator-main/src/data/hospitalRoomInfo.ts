@@ -148,6 +148,14 @@ export const roomInfoBySvgId: Record<string, HospitalRoomInfo> = {
     description: "Unit sterilisasi alat medis untuk kebutuhan tindakan klinis.",
     floor: 1,
   },
+  Kantin: {
+    id: "Kantin",
+    name: "Kantin",
+    category: "Facility",
+    locationHint: "Sisi kanan peta, dekat Musholla",
+    description: "Area kantin untuk makan dan minum bagi pengunjung, pasien, dan tenaga medis.",
+    floor: 1,
+  },
   "K._Mayat": {
     id: "K._Mayat",
     name: "K. Mayat",

@@ -430,6 +430,7 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
   "Check_Point_Kamar_Mayat",
   "Belok_Masuk_ke_Kamar_Mayat",
   "Belok_ke_Kamar_Mayat",
+  "Belok_ke_Kamar_Mayat_dan_Jalan_ke_Lahan_Parkir",
 ] as const;
 
 const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
@@ -441,6 +442,9 @@ const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
   // Keep evacuation stairs isolated from the main-stair checkpoint so floor transitions stay consistent.
   Tangga_Evakuasi_Lantai_1: ["Check_Point_Tangga_Evakuasi_Lantai_1", "Check_Point_Tangga_Evakuasi"],
   Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi_Lantai_2", "Check_Point_Tangga_Evakuasi"],
+  // Musholla: use the correct checkpoint (Check_point_Musholla at cx=1310.66, cy=515.78)
+  // NOT Check_Point_Musholla which is mislabeled as "Check Point R. JKN" in the SVG
+  Musholla: ["Check_point_Musholla"],
   // Edukasi Pasien dan Keluarga: route via specific checkpoint sequence
   Edukasi_Pasien_dan_Keluarga: [
     "Check_Point_Edukasi_Keluarga_Dan_Pasien",
@@ -679,7 +683,8 @@ const buildRoadGraphFromSvg = (
 
   [...explicitNodeElements, ...generatedNodeElements].forEach((element) => {
     if (!isElementNodeLike(element)) return;
-    const id = element.id;
+    const rawId = element.id || "";
+    const id = rawId.replace(/\s+/g, "");
     if (!id) return;
     const label =
       element.getAttribute("inkscape:label") ||
@@ -862,17 +867,252 @@ const ensureGeneratedRoomAnchorNode = (
   }
 };
 
+/**
+ * Parse an SVG `d` attribute and compute the geometric bounding box
+ * WITHOUT relying on browser layout (i.e. works on detached / display:none
+ * SVG documents). Supports the subset of commands Inkscape emits for
+ * room polygons: M/m (moveto), L/l (lineto), H/h, V/v, Z/z, and
+ * curves (C/c, S/s, Q/q, T/t, A/a) — for curves we only track endpoint
+ * positions, which is sufficient for the closed room polygons used here.
+ */
+const computeBBoxFromPathD = (
+  d: string,
+): { x: number; y: number; width: number; height: number } | null => {
+  if (!d) return null;
+
+  // Tokenize: split into commands + numeric arguments
+  const tokens = d.match(/[MmLlHhVvCcSsQqTtAaZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi);
+  if (!tokens || !tokens.length) return null;
+
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+
+  let cx = 0;
+  let cy = 0;
+  let startX = 0;
+  let startY = 0;
+  let cmd = "";
+  let i = 0;
+
+  const track = (x: number, y: number) => {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  };
+
+  const nextNum = (): number => {
+    const t = tokens[i++];
+    return parseFloat(t);
+  };
+
+  const isCmd = (t: string): boolean => /^[MmLlHhVvCcSsQqTtAaZz]$/.test(t);
+
+  while (i < tokens.length) {
+    const tok = tokens[i];
+    if (isCmd(tok)) {
+      cmd = tok;
+      i += 1;
+    }
+
+    switch (cmd) {
+      case "M": {
+        cx = nextNum(); cy = nextNum();
+        startX = cx; startY = cy;
+        track(cx, cy);
+        cmd = "L";
+        break;
+      }
+      case "m": {
+        cx += nextNum(); cy += nextNum();
+        startX = cx; startY = cy;
+        track(cx, cy);
+        cmd = "l";
+        break;
+      }
+      case "L": {
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "l": {
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "H": {
+        cx = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "h": {
+        cx += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "V": {
+        cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "v": {
+        cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "C": {
+        nextNum(); nextNum(); nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "c": {
+        nextNum(); nextNum(); nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "S":
+      case "Q": {
+        nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "s":
+      case "q": {
+        nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "T": {
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "t": {
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "A": {
+        nextNum(); nextNum(); nextNum(); nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "a": {
+        nextNum(); nextNum(); nextNum(); nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "Z":
+      case "z": {
+        cx = startX; cy = startY;
+        break;
+      }
+      default:
+        // Unknown command — consume one number to avoid an infinite loop.
+        i += 1;
+        break;
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+};
+
+/**
+ * Compute the geometric center of an element WITHOUT requiring browser layout.
+ * Works on detached / display:none SVG documents. Falls back to getBBox()
+ * for non-path elements.
+ */
+export const computeElementCenterWithoutLayout = (
+  element: Element,
+): { x: number; y: number } | null => {
+  const tag = element.tagName.toLowerCase();
+
+  if (tag === "path") {
+    const d = element.getAttribute("d");
+    if (d) {
+      const bbox = computeBBoxFromPathD(d);
+      if (bbox && (bbox.width > 0 || bbox.height > 0)) {
+        return {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        };
+      }
+    }
+  }
+
+  if (tag === "circle" || tag === "ellipse") {
+    const cx = Number(element.getAttribute("cx") || "NaN");
+    const cy = Number(element.getAttribute("cy") || "NaN");
+    if (Number.isFinite(cx) && Number.isFinite(cy)) {
+      return { x: cx, y: cy };
+    }
+  }
+
+  if (tag === "rect") {
+    const x = Number(element.getAttribute("x") || "0");
+    const y = Number(element.getAttribute("y") || "0");
+    const w = Number(element.getAttribute("width") || "0");
+    const h = Number(element.getAttribute("height") || "0");
+    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(w) && Number.isFinite(h)) {
+      return { x: x + w / 2, y: y + h / 2 };
+    }
+  }
+
+  // Last resort: browser-computed bbox (returns {0,0,0,0} for display:none elements)
+  const maybeGraphics = element as unknown as { getBBox?: () => DOMRect };
+  if (typeof maybeGraphics.getBBox === "function") {
+    try {
+      const bbox = maybeGraphics.getBBox();
+      if (bbox.width > 0 || bbox.height > 0) {
+        return {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        };
+      }
+    } catch {
+      // Ignore — some non-graphics elements throw on getBBox.
+    }
+  }
+
+  return null;
+};
+
 const getRoomCenter = (
   svgDoc: Document,
   roomId: string,
 ): { x: number; y: number } | null => {
   // Try to find the node with the exact ID first (for virtual nodes)
-  let roomAnchor = svgDoc.getElementById(roomId);
+  let roomAnchor = svgDoc.getElementById(roomId) as HTMLElement | null;
 
   // If not found, try with node_room_ prefix (for regular room nodes)
   if (!roomAnchor) {
-    roomAnchor = svgDoc.getElementById(`node_room_${roomId}`);
+    roomAnchor = svgDoc.getElementById(`node_room_${roomId}`) as HTMLElement | null;
   }
+
+  // If still not found, inkscape might have embedded newlines inside id="" string
+  if (!roomAnchor) {
+    const fallbackElements = Array.from(svgDoc.querySelectorAll("circle[id], ellipse[id]"));
+    roomAnchor = fallbackElements.find(el => {
+      const cleanId = (el.id || "").replace(/\s+/g, "");
+      return cleanId === roomId || cleanId === `node_room_${roomId}`;
+    }) as HTMLElement | null;
+  }
+
 
   if (roomAnchor && roomAnchor.tagName.toLowerCase() === "circle") {
     const x = Number(roomAnchor.getAttribute("cx") || "NaN");
@@ -882,28 +1122,34 @@ const getRoomCenter = (
     }
   }
 
-  const target = svgDoc.getElementById(roomId);
+  let target = svgDoc.getElementById(roomId) as HTMLElement | null;
+  if (!target) {
+    const all = Array.from(svgDoc.querySelectorAll("[id]"));
+    target = all.find(el => (el.id || "").replace(/\s+/g, "") === roomId) as HTMLElement | null;
+  }
   if (!target) return null;
-  const maybeGraphics = target as unknown as { getBBox?: () => DOMRect };
-  if (typeof maybeGraphics.getBBox !== "function") return null;
 
-  const bbox = maybeGraphics.getBBox();
-  const center = {
-    x: bbox.x + bbox.width / 2,
-    y: bbox.y + bbox.height / 2,
-  };
+  // Use layout-independent center computation first. This is CRUCIAL for
+  // cross-floor routing where the target SVG lives in a pre-parsed document
+  // that is never attached to the render tree (getBBox() would return 0,0).
+  const layoutFreeCenter = computeElementCenterWithoutLayout(target);
+  if (layoutFreeCenter) {
+    ensureGeneratedRoomAnchorNode(svgDoc, roomId, layoutFreeCenter);
+    return layoutFreeCenter;
+  }
 
-  ensureGeneratedRoomAnchorNode(svgDoc, roomId, center);
-  return center;
+  return null;
 };
 
 const getNearestNodeId = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   point: { x: number; y: number },
+  excludeNodeIds?: Set<string>,
 ): string | null => {
   const nodeValues = Object.values(nodes).filter((node) => {
     if (node.id.toLowerCase().startsWith("node_room_")) return false;
+    if (excludeNodeIds?.has(node.id)) return false;
     return (graph[node.id]?.length || 0) > 0;
   });
   if (!nodeValues.length) return null;
@@ -1056,6 +1302,7 @@ const resolveRouteEndpoint = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   fallbackPoint: { x: number; y: number },
+  excludeNodeIds?: Set<string>,
 ): RouteEndpointResolution | null => {
   if (
     preferredAnchorNodeId &&
@@ -1073,6 +1320,7 @@ const resolveRouteEndpoint = (
       nodes,
       graph,
       nodes[preferredAnchorNodeId],
+      excludeNodeIds,
     );
     if (nearestGraphNodeId) {
       return {
@@ -1082,7 +1330,7 @@ const resolveRouteEndpoint = (
     }
   }
 
-  const nearestFallbackNodeId = getNearestNodeId(nodes, graph, fallbackPoint);
+  const nearestFallbackNodeId = getNearestNodeId(nodes, graph, fallbackPoint, excludeNodeIds);
   if (!nearestFallbackNodeId) return null;
 
   return {
@@ -1221,6 +1469,12 @@ const resolvePreferredEndNodeId = (
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
 ): RouteEndpointResolution | null => {
+  // Build exclusion set: when destination is NOT Kamar Mayat, exclude Kamar Mayat nodes
+  // to prevent accidental routing to the morgue area
+  const excludeNodeIds = !isKamarMayatRoom(endRoomId)
+    ? new Set<string>(KAMAR_MAYAT_PREFERRED_NODE_IDS as unknown as string[])
+    : undefined;
+
   // Special handling for parking destinations: use the LAST valid node in the special route list
   // This ensures routing TO parking follows the correct path sequence
   const specialNodeIds = ROOM_SPECIAL_ROUTE_NODE_IDS[endRoomId];
@@ -1234,6 +1488,7 @@ const resolvePreferredEndNodeId = (
           nodes,
           graph,
           fallbackEndPoint,
+          excludeNodeIds,
         );
       }
     }
@@ -1263,6 +1518,7 @@ const resolvePreferredEndNodeId = (
       nodes,
       graph,
       fallbackEndPoint,
+      excludeNodeIds,
     );
   }
 
@@ -1280,7 +1536,7 @@ const resolvePreferredEndNodeId = (
     );
   }
 
-  return resolveRouteEndpoint(null, nodes, graph, fallbackEndPoint);
+  return resolveRouteEndpoint(null, nodes, graph, fallbackEndPoint, excludeNodeIds);
 };
 
 const shouldExcludeFromRouting = (roomId: string): boolean => {

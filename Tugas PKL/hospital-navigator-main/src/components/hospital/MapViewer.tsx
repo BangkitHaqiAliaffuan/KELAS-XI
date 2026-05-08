@@ -17,6 +17,7 @@ import {
   injectVirtualAnchorNode,
   getRoutingRoomIds,
   resolveRoomIdFromQrCode,
+  computeElementCenterWithoutLayout,
   type QrAnchor,
   type RoomRouteResult,
 } from "@/data/hospitalRouteGraph";
@@ -1904,12 +1905,15 @@ const MapViewer = ({
         if (Number.isFinite(x) && Number.isFinite(y)) return { x, y };
       }
 
-      const target = asSvgGraphicsElement(svgDoc.getElementById(roomId));
+      const target = svgDoc.getElementById(roomId);
       if (!target) return null;
-      const bbox = target.getBBox();
-      return { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+
+      // Use layout-independent center computation so this works on
+      // pre-fetched / display:none SVG documents (critical for cross-floor
+      // routing — see hospitalRouteGraph.ts::computeElementCenterWithoutLayout).
+      return computeElementCenterWithoutLayout(target);
     },
-    [asSvgGraphicsElement]
+    []
   );
 
   const getNearestRoutingRoom = useCallback(
@@ -4344,9 +4348,9 @@ const MapViewer = ({
       </div>
 
       {/* Map pin marker */}
-      {activeMarkerPosition && (
+      {activeMarkerPosition && activeMarkerPosition.x >= -16 && activeMarkerPosition.y >= -32 && (
         <div
-          className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-full"
+          className="absolute z-10 pointer-events-none -translate-x-1/2 -translate-y-full"
           style={{
             left: activeMarkerPosition.x,
             top: activeMarkerPosition.y,
@@ -4362,9 +4366,9 @@ const MapViewer = ({
       )}
 
       {/* Current user marker (QR start point) */}
-      {showCurrentUserMarker && currentUserMarkerPosition && (
+      {showCurrentUserMarker && currentUserMarkerPosition && currentUserMarkerPosition.x >= -16 && currentUserMarkerPosition.y >= -16 && (
         <div
-          className="absolute z-20 pointer-events-none -translate-x-1/2 -translate-y-1/2"
+          className="absolute z-10 pointer-events-none -translate-x-1/2 -translate-y-1/2"
           style={{
             left: currentUserMarkerPosition.x,
             top: currentUserMarkerPosition.y,
