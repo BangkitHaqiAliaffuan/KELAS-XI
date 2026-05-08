@@ -183,6 +183,7 @@ const NavigationDialog = ({
   }, []);
 
   const getFloorLabel = useCallback((roomId: string): string => {
+    // First, try to get floor from QR anchor
     const anchor = Object.values(QR_ANCHOR_REGISTRY).find((a) => a.roomId === roomId);
     if (anchor) {
       if (anchor.floor === 0) return ' (Parkir L1)';
@@ -190,12 +191,24 @@ const NavigationDialog = ({
       if (anchor.floor === 2) return ' (Lantai 2)';
       if (anchor.floor === 1) return ' (Lantai 1)';
     }
-    // Fallback: detect from room ID
+    
+    // Second, try to get floor from room info
+    const room = roomInfoBySvgId[roomId];
+    if (room) {
+      if (room.floor === 0) return ' (Parkir L1)';
+      if (room.floor === -1) return ' (Parkir L2)';
+      if (room.floor === 2) return ' (Lantai 2)';
+      if (room.floor === 1) return ' (Lantai 1)';
+    }
+    
+    // Last resort: detect from room ID
     if (roomId.includes('Parking_Lantai_1')) return ' (Parkir L1)';
     if (roomId.includes('Parking_Lantai_2')) return ' (Parkir L2)';
-    if (roomId.includes('Lantai_2') || roomId.startsWith('R._')) return ' (Lantai 2)';
+    if (roomId.includes('Lantai_2')) return ' (Lantai 2)';
+    
+    // Default to Lantai 1
     return ' (Lantai 1)';
-  }, []);
+  }, [QR_ANCHOR_REGISTRY, roomInfoBySvgId]);
 
   const matchesSearchQuery = useCallback((room: typeof roomOptions[0], lowerQuery: string): boolean => {
     // Direct match
