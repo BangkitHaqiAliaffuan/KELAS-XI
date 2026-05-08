@@ -112,6 +112,7 @@ const MapViewer = ({
   } | null>(null);
   const [showCurrentUserMarker, setShowCurrentUserMarker] = useState(false);
   const [svgReadyVersion, setSvgReadyVersion] = useState(0);
+  const [svgLoadTick, setSvgLoadTick] = useState(0);
   const [activeFloor, setActiveFloor] = useState<1 | 2>(1);
 
   const [routingRoomIds, setRoutingRoomIds] = useState<string[]>(() => getRoutingRoomIds());
@@ -1980,7 +1981,7 @@ const MapViewer = ({
         floor: activeFloor, // ✅ FIX: Add floor property to match HospitalRoomInfo type
       };
     },
-    [roomInfoBySvgId]  // ✅ ADD DEPENDENCY
+    [roomInfoBySvgId, activeFloor]
   );
 
   const resolveActiveQrAnchor = useCallback(
@@ -2568,14 +2569,13 @@ const MapViewer = ({
   const setupSvgRoomInteraction = useCallback(() => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
-
-    // ✅ FIX: Don't setup interaction if room data hasn't loaded yet
-    if (!rooms || rooms.length === 0) {
-      return;
-    }
+    const svgRoot = svgDoc.querySelector("svg");
+    if (!svgRoot) return;
 
     ensureDynamicHighlightStyle(svgDoc);
-    renderDynamicRoomLabels(svgDoc);
+    if (rooms && rooms.length > 0) {
+      renderDynamicRoomLabels(svgDoc);
+    }
 
     const cleanupHandlers: Array<() => void> = [];
     const roomPaths = Array.from(
@@ -2684,25 +2684,37 @@ const MapViewer = ({
     if (!objectElement) return;
 
     let cleanup: (() => void) | undefined;
+    let retryTimer: number | undefined;
 
     const onLoad = () => {
-      cleanup?.();
-      // ✅ FIX: Only setup interaction if rooms data is available
-      if (rooms && rooms.length > 0) {
-        cleanup = setupSvgRoomInteraction();
-        setRoutingRoomIds(getRoutingRoomIds());
-        setSvgReadyVersion((prev) => prev + 1);
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer);
+        retryTimer = undefined;
       }
+      cleanup?.();
+      cleanup = setupSvgRoomInteraction();
+      if (!cleanup) {
+        retryTimer = window.setTimeout(() => {
+          setSvgLoadTick((prev) => prev + 1);
+        }, 50);
+        return;
+      }
+
+      setRoutingRoomIds(getRoutingRoomIds());
+      setSvgReadyVersion((prev) => prev + 1);
     };
 
     if (objectElement.contentDocument) onLoad();
 
     objectElement.addEventListener("load", onLoad);
     return () => {
+      if (retryTimer !== undefined) {
+        window.clearTimeout(retryTimer);
+      }
       objectElement.removeEventListener("load", onLoad);
       cleanup?.();
     };
-  }, [setupSvgRoomInteraction, rooms]);
+  }, [activeMapSvgPath, setupSvgRoomInteraction, rooms, svgLoadTick]);
 
   // Re-setup SVG interaction when rooms data is loaded
   useEffect(() => {
@@ -3904,10 +3916,12 @@ const MapViewer = ({
         >
           <div className="w-full h-full flex items-center justify-center">
             <object
+              key={activeMapSvgPath}
               ref={objectRef}
               data={activeMapSvgPath}
               type="image/svg+xml"
               className="max-w-[90%] max-h-[90%]"
+              onLoad={() => setSvgLoadTick((prev) => prev + 1)}
               aria-label={showParkingMap ? "Peta lahan parkir" : "Hospital interactive map"}
             />
           </div>

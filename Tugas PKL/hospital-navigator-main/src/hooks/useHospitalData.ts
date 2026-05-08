@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { roomsApi, qrAnchorsApi } from "@/services/api";
+import { roomInfoBySvgId as staticRoomInfoBySvgId } from "@/data/hospitalRoomInfo";
+import { QR_ANCHOR_REGISTRY as staticQrAnchorRegistry } from "@/data/hospitalRouteGraph";
 import type { Room } from "@/types/room";
 import type { QrAnchor } from "@/types/qrAnchor";
 
@@ -10,24 +12,13 @@ let staticRooms: Room[] | null = null;
 let staticQrAnchors: QrAnchor[] | null = null;
 let isUsingFallback = false;
 
+const getStaticRooms = (): Room[] => Object.values(staticRoomInfoBySvgId) as Room[];
+const getStaticQrAnchors = (): QrAnchor[] => Object.values(staticQrAnchorRegistry) as QrAnchor[];
+
 const loadStaticData = async () => {
   if (!staticRooms || !staticQrAnchors) {
-    try {
-      const [roomModule, qrModule] = await Promise.all([
-        import("@/data/hospitalRoomInfo"),
-        import("@/data/hospitalRouteGraph"),
-      ]);
-      staticRooms = roomModule.roomInfoBySvgId
-        ? (Object.values(roomModule.roomInfoBySvgId) as Room[])
-        : [];
-      staticQrAnchors = qrModule.QR_ANCHOR_REGISTRY
-        ? (Object.values(qrModule.QR_ANCHOR_REGISTRY) as QrAnchor[])
-        : [];
-    } catch (error) {
-      console.error("Failed to load static fallback data:", error);
-      staticRooms = [];
-      staticQrAnchors = [];
-    }
+    staticRooms = getStaticRooms();
+    staticQrAnchors = getStaticQrAnchors();
   }
 };
 
@@ -50,6 +41,7 @@ export const useRooms = () => {
         throw error;
       }
     },
+    placeholderData: getStaticRooms,
     staleTime: FIVE_MINUTES,
     retry: 1,
   });
@@ -119,6 +111,7 @@ export const useQrAnchors = () => {
         throw error;
       }
     },
+    placeholderData: getStaticQrAnchors,
     staleTime: FIVE_MINUTES,
     retry: 1,
   });
