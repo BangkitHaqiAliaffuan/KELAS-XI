@@ -1630,7 +1630,6 @@ const MapViewer = ({
 
       let startSegment: RoomRouteResult | null = null;
 
-      // If using exact start point (QR scan), route from QR coordinates to connector
       if (options?.useExactStartPoint && options?.startPoint) {
         startSegment = buildRouteForRooms(startRoomIdParam, startConnectorRoomId, startDoc, options);
       } else {
@@ -1640,8 +1639,15 @@ const MapViewer = ({
         });
       }
 
-      const endSegment   = buildRouteForRooms(endConnectorRoomId, endRoomIdParam,     endDoc,   { endPoint:   options?.endPoint   });
+      const endSegment = buildRouteForRooms(endConnectorRoomId, endRoomIdParam, endDoc, { endPoint: options?.endPoint });
+      
       if (!startSegment || !endSegment) return;
+      
+      // ✅ FIX: Validate endSegment actually routes to the correct destination
+      if (endSegment.endRoomId !== endRoomIdParam) {
+        console.warn(`⚠️ Connector ${connector.label}: endSegment routes to ${endSegment.endRoomId} instead of ${endRoomIdParam}, skipping`);
+        return;
+      }
 
       const candidateDistance = startSegment.totalDistance + endSegment.totalDistance;
       if (bestRoute && bestRoute.totalDistance <= candidateDistance) return;
@@ -3218,7 +3224,11 @@ const MapViewer = ({
       // Build route with existing destination
       // Use effectiveSvgPoint (already overridden to checkpoint for Parking L1) so
       // the route start matches exactly where the user arrow is displayed.
-      const routeAfterCalibration = buildDebugRouteForRooms(anchor.roomId, endRoomIdRef.current, {
+      // ✅ FIX: Store the destination BEFORE building route to ensure it doesn't change
+      const destinationRoomId = endRoomIdRef.current;
+      const destinationRoomName = roomInfoBySvgId[destinationRoomId]?.name || destinationRoomId;
+      
+      const routeAfterCalibration = buildDebugRouteForRooms(anchor.roomId, destinationRoomId, {
         startPoint: effectiveSvgPoint,
         useExactStartPoint: true,
         startNodeId: anchor.routeNodeId,
@@ -3239,11 +3249,11 @@ const MapViewer = ({
           }
         }
         setActiveRoute(routeAfterCalibration);
+        setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label} → ${destinationRoomName}`);
       } else {
         setActiveRoute(null);
+        setRouteDebugMessage(`❌ Tidak dapat membuat route dari ${anchor.label} ke ${destinationRoomName}`);
       }
-
-      setRouteDebugMessage(`✅ Posisi dikalibrasi: ${anchor.label} → ${roomInfoBySvgId[endRoomIdRef.current]?.name}`);
       
       // Zoom to calibrated start point (use effectiveSvgPoint so we zoom to the
       // same location where the user arrow appears, not the raw QR anchor).
