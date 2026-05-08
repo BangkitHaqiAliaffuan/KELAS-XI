@@ -1977,6 +1977,7 @@ const MapViewer = ({
         category: "Room",
         locationHint: "Lihat posisi pada peta",
         description: `Informasi detail untuk ruangan ${readable}.`,
+        floor: activeFloor, // ✅ FIX: Add floor property to match HospitalRoomInfo type
       };
     },
     [roomInfoBySvgId]  // ✅ ADD DEPENDENCY
@@ -2433,6 +2434,11 @@ const MapViewer = ({
         return;
       }
 
+      // ✅ FIX: Don't render labels if room data hasn't loaded yet
+      if (!rooms || rooms.length === 0) {
+        return;
+      }
+
       const namespace = "http://www.w3.org/2000/svg";
       const oldLayer = svgDoc.getElementById("dynamic-room-label-layer");
       oldLayer?.remove();
@@ -2556,12 +2562,17 @@ const MapViewer = ({
 
       svgRoot.appendChild(labelLayer);
     },
-    [showParkingMap, activeFloor, buildLabelLines, asSvgGraphicsElement, roomFromPath]
+    [showParkingMap, activeFloor, buildLabelLines, asSvgGraphicsElement, roomFromPath, rooms, roomInfoBySvgId]
   );
 
   const setupSvgRoomInteraction = useCallback(() => {
     const svgDoc = objectRef.current?.contentDocument;
     if (!svgDoc) return;
+
+    // ✅ FIX: Don't setup interaction if room data hasn't loaded yet
+    if (!rooms || rooms.length === 0) {
+      return;
+    }
 
     ensureDynamicHighlightStyle(svgDoc);
     renderDynamicRoomLabels(svgDoc);
@@ -2666,7 +2677,7 @@ const MapViewer = ({
     );
 
     return () => cleanupHandlers.forEach((fn) => fn());
-  }, [roomFromPath, startDrag, handleWheel, renderDynamicRoomLabels, ensureDynamicHighlightStyle]);
+  }, [roomFromPath, startDrag, handleWheel, renderDynamicRoomLabels, ensureDynamicHighlightStyle, rooms]);
 
   useEffect(() => {
     const objectElement = objectRef.current;
@@ -2676,9 +2687,12 @@ const MapViewer = ({
 
     const onLoad = () => {
       cleanup?.();
-      cleanup = setupSvgRoomInteraction();
-      setRoutingRoomIds(getRoutingRoomIds());
-      setSvgReadyVersion((prev) => prev + 1);
+      // ✅ FIX: Only setup interaction if rooms data is available
+      if (rooms && rooms.length > 0) {
+        cleanup = setupSvgRoomInteraction();
+        setRoutingRoomIds(getRoutingRoomIds());
+        setSvgReadyVersion((prev) => prev + 1);
+      }
     };
 
     if (objectElement.contentDocument) onLoad();
@@ -2688,15 +2702,20 @@ const MapViewer = ({
       objectElement.removeEventListener("load", onLoad);
       cleanup?.();
     };
-  }, [setupSvgRoomInteraction]);
+  }, [setupSvgRoomInteraction, rooms]);
 
   // Re-setup SVG interaction when rooms data is loaded
   useEffect(() => {
+    // ✅ FIX: Wait for both rooms data and SVG document to be ready
     if (!rooms || rooms.length === 0) return;
     if (!objectRef.current?.contentDocument) return;
     
     // Re-run setupSvgRoomInteraction to render labels with loaded room data
     const cleanup = setupSvgRoomInteraction();
+    
+    // ✅ FIX: Update routing room IDs and trigger SVG ready version update
+    setRoutingRoomIds(getRoutingRoomIds());
+    setSvgReadyVersion((prev) => prev + 1);
     
     return cleanup;
   }, [rooms, setupSvgRoomInteraction]);
