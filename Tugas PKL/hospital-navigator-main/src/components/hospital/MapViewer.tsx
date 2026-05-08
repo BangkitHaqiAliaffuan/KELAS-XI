@@ -2695,9 +2695,11 @@ const MapViewer = ({
     if (!rooms || rooms.length === 0) return;
     if (!objectRef.current?.contentDocument) return;
     
-    // Trigger re-setup by incrementing svgReadyVersion
-    setSvgReadyVersion((prev) => prev + 1);
-  }, [rooms]);
+    // Re-run setupSvgRoomInteraction to render labels with loaded room data
+    const cleanup = setupSvgRoomInteraction();
+    
+    return cleanup;
+  }, [rooms, setupSvgRoomInteraction]);
 
   useEffect(() => {
     if (!showCurrentUserMarker) {

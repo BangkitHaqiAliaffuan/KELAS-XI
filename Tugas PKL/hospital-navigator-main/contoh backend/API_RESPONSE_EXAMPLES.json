@@ -1,0 +1,560 @@
+{
+  "health_check": {
+    "endpoint": "GET /api/v1/health",
+    "response": {
+      "success": true,
+      "message": "Hospital Navigator API is running",
+      "timestamp": "2024-01-01T00:00:00.000Z"
+    }
+  },
+  "root_endpoint": {
+    "endpoint": "GET /",
+    "response": {
+      "success": true,
+      "message": "Hospital Navigator API",
+      "version": "1.0.0",
+      "endpoints": {
+        "health": "/api/v1/health",
+        "rooms": "/api/v1/rooms",
+        "qrAnchors": "/api/v1/qr-anchors",
+        "categories": "/api/v1/categories"
+      }
+    }
+  },
+  "rooms": {
+    "get_all_rooms": {
+      "endpoint": "GET /api/v1/rooms",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "id": "IGD",
+            "name": "IGD",
+            "category": "Emergency",
+            "locationHint": "Sayap kiri bawah peta",
+            "description": "Instalasi Gawat Darurat untuk penanganan kondisi medis darurat 24 jam.",
+            "floor": 1
+          },
+          {
+            "id": "Poliklinik",
+            "name": "Poliklinik",
+            "category": "Outpatient",
+            "locationHint": "Area kanan bawah peta",
+            "description": "Layanan konsultasi rawat jalan berbagai poli spesialis.",
+            "floor": 1
+          },
+          {
+            "id": "ICU",
+            "name": "ICU",
+            "category": "Critical Care",
+            "locationHint": "Tengah kiri peta",
+            "description": "Unit perawatan intensif untuk pasien dengan kondisi kritis.",
+            "floor": 1
+          }
+        ],
+        "count": 3
+      }
+    },
+    "get_room_by_id": {
+      "endpoint": "GET /api/v1/rooms/IGD",
+      "response": {
+        "success": true,
+        "data": {
+          "id": "IGD",
+          "name": "IGD",
+          "category": "Emergency",
+          "locationHint": "Sayap kiri bawah peta",
+          "description": "Instalasi Gawat Darurat untuk penanganan kondisi medis darurat 24 jam.",
+          "floor": 1
+        }
+      }
+    },
+    "get_rooms_by_category": {
+      "endpoint": "GET /api/v1/rooms?category=Emergency",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "id": "IGD",
+            "name": "IGD",
+            "category": "Emergency",
+            "locationHint": "Sayap kiri bawah peta",
+            "description": "Instalasi Gawat Darurat untuk penanganan kondisi medis darurat 24 jam.",
+            "floor": 1
+          },
+          {
+            "id": "Area_Pelayanan_IGD",
+            "name": "Area Pelayanan IGD",
+            "category": "Emergency",
+            "locationHint": "Sayap kiri bawah peta",
+            "description": "Area pelayanan IGD untuk penanganan kondisi medis darurat 24 jam.",
+            "floor": 1
+          }
+        ],
+        "count": 2
+      }
+    },
+    "get_rooms_by_floor": {
+      "endpoint": "GET /api/v1/rooms?floor=2",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "id": "R._Korea",
+            "name": "R. Korea",
+            "category": "Ward",
+            "locationHint": "Lantai 2",
+            "description": "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 2.",
+            "floor": 2
+          },
+          {
+            "id": "R._Jepang",
+            "name": "R. Jepang",
+            "category": "Ward",
+            "locationHint": "Lantai 2",
+            "description": "Ruang perawatan lantai 2. Ruang Rawat Inap Kelas 2.",
+            "floor": 2
+          }
+        ],
+        "count": 2
+      }
+    },
+    "search_rooms": {
+      "endpoint": "GET /api/v1/rooms?search=igd",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "id": "IGD",
+            "name": "IGD",
+            "category": "Emergency",
+            "locationHint": "Sayap kiri bawah peta",
+            "description": "Instalasi Gawat Darurat untuk penanganan kondisi medis darurat 24 jam.",
+            "floor": 1
+          },
+          {
+            "id": "Area_Pelayanan_IGD",
+            "name": "Area Pelayanan IGD",
+            "category": "Emergency",
+            "locationHint": "Sayap kiri bawah peta",
+            "description": "Area pelayanan IGD untuk penanganan kondisi medis darurat 24 jam.",
+            "floor": 1
+          }
+        ],
+        "count": 2
+      }
+    },
+    "get_room_stats": {
+      "endpoint": "GET /api/v1/rooms/stats",
+      "response": {
+        "success": true,
+        "data": {
+          "total": 75,
+          "byFloor": {
+            "-1": 2,
+            "0": 2,
+            "1": 50,
+            "2": 21
+          },
+          "byCategory": {
+            "Emergency": 5,
+            "Outpatient": 8,
+            "Critical Care": 2,
+            "Diagnostic": 6,
+            "Facility": 20,
+            "Service": 10,
+            "Administration": 8,
+            "Surgery": 3,
+            "Treatment": 5,
+            "Ward": 8
+          },
+          "categories": [
+            "Administration",
+            "Critical Care",
+            "Diagnostic",
+            "Emergency",
+            "Facility",
+            "Outpatient",
+            "Service",
+            "Surgery",
+            "Treatment",
+            "Ward"
+          ]
+        }
+      }
+    },
+    "create_room": {
+      "endpoint": "POST /api/v1/rooms",
+      "request": {
+        "id": "R._New",
+        "name": "Ruang Baru",
+        "category": "Facility",
+        "locationHint": "Lantai 1",
+        "description": "Deskripsi ruangan baru",
+        "floor": 1
+      },
+      "response": {
+        "success": true,
+        "message": "Room created successfully",
+        "data": {
+          "id": "R._New",
+          "name": "Ruang Baru",
+          "category": "Facility",
+          "locationHint": "Lantai 1",
+          "description": "Deskripsi ruangan baru",
+          "floor": 1
+        }
+      }
+    },
+    "update_room": {
+      "endpoint": "PUT /api/v1/rooms/R._New",
+      "request": {
+        "name": "Ruang Baru (Updated)",
+        "category": "Administration",
+        "locationHint": "Lantai 1 (updated)",
+        "description": "Deskripsi updated",
+        "floor": 1
+      },
+      "response": {
+        "success": true,
+        "message": "Room updated successfully",
+        "data": {
+          "id": "R._New",
+          "name": "Ruang Baru (Updated)",
+          "category": "Administration",
+          "locationHint": "Lantai 1 (updated)",
+          "description": "Deskripsi updated",
+          "floor": 1
+        }
+      }
+    },
+    "delete_room": {
+      "endpoint": "DELETE /api/v1/rooms/R._New",
+      "response": {
+        "success": true,
+        "message": "Room deleted successfully"
+      }
+    },
+    "room_not_found": {
+      "endpoint": "GET /api/v1/rooms/NONEXISTENT",
+      "response": {
+        "success": false,
+        "error": "Room not found"
+      }
+    }
+  },
+  "qr_anchors": {
+    "get_all_qr_anchors": {
+      "endpoint": "GET /api/v1/qr-anchors",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "qrId": "QR-F1-N01",
+            "roomId": "Area_Pelayanan_IGD",
+            "svgX": 632.95538,
+            "svgY": 753.07831,
+            "label": "Persimpangan Area Pelayanan IGD",
+            "floor": 1
+          },
+          {
+            "qrId": "QR-F1-N03",
+            "roomId": "Lab",
+            "svgX": 865.2005,
+            "svgY": 516.54614,
+            "label": "Persimpangan ke Lab",
+            "floor": 1,
+            "routeNodeId": "Persimpangan_ke_Lab"
+          }
+        ],
+        "count": 2
+      }
+    },
+    "get_qr_anchor_by_id": {
+      "endpoint": "GET /api/v1/qr-anchors/QR-F1-N01",
+      "response": {
+        "success": true,
+        "data": {
+          "qrId": "QR-F1-N01",
+          "roomId": "Area_Pelayanan_IGD",
+          "svgX": 632.95538,
+          "svgY": 753.07831,
+          "label": "Persimpangan Area Pelayanan IGD",
+          "floor": 1
+        }
+      }
+    },
+    "get_qr_anchors_by_room": {
+      "endpoint": "GET /api/v1/qr-anchors?roomId=IGD",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "qrId": "QR-F1-N01",
+            "roomId": "Area_Pelayanan_IGD",
+            "svgX": 632.95538,
+            "svgY": 753.07831,
+            "label": "Persimpangan Area Pelayanan IGD",
+            "floor": 1
+          }
+        ],
+        "count": 1
+      }
+    },
+    "get_qr_anchors_by_floor": {
+      "endpoint": "GET /api/v1/qr-anchors?floor=1",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "qrId": "QR-F1-N01",
+            "roomId": "Area_Pelayanan_IGD",
+            "svgX": 632.95538,
+            "svgY": 753.07831,
+            "label": "Persimpangan Area Pelayanan IGD",
+            "floor": 1
+          },
+          {
+            "qrId": "QR-F1-N03",
+            "roomId": "Lab",
+            "svgX": 865.2005,
+            "svgY": 516.54614,
+            "label": "Persimpangan ke Lab",
+            "floor": 1,
+            "routeNodeId": "Persimpangan_ke_Lab"
+          }
+        ],
+        "count": 2
+      }
+    },
+    "resolve_qr_code": {
+      "endpoint": "POST /api/v1/qr-anchors/resolve",
+      "request": {
+        "qrCode": "QR-F1-N01"
+      },
+      "response": {
+        "success": true,
+        "data": {
+          "qrId": "QR-F1-N01",
+          "roomId": "Area_Pelayanan_IGD",
+          "svgX": 632.95538,
+          "svgY": 753.07831,
+          "label": "Persimpangan Area Pelayanan IGD",
+          "floor": 1
+        }
+      }
+    },
+    "resolve_qr_code_not_found": {
+      "endpoint": "POST /api/v1/qr-anchors/resolve",
+      "request": {
+        "qrCode": "INVALID-QR"
+      },
+      "response": {
+        "success": false,
+        "error": "QR code not found"
+      }
+    },
+    "get_qr_anchor_stats": {
+      "endpoint": "GET /api/v1/qr-anchors/stats",
+      "response": {
+        "success": true,
+        "data": {
+          "total": 30,
+          "byFloor": {
+            "-1": 1,
+            "0": 1,
+            "1": 18,
+            "2": 10
+          },
+          "rooms": 25
+        }
+      }
+    },
+    "create_qr_anchor": {
+      "endpoint": "POST /api/v1/qr-anchors",
+      "request": {
+        "qrId": "QR-F1-N99",
+        "roomId": "IGD",
+        "svgX": 650.5,
+        "svgY": 750.5,
+        "label": "New QR Anchor",
+        "floor": 1,
+        "routeNodeId": "optional_node_id"
+      },
+      "response": {
+        "success": true,
+        "message": "QR anchor created successfully",
+        "data": {
+          "qrId": "QR-F1-N99",
+          "roomId": "IGD",
+          "svgX": 650.5,
+          "svgY": 750.5,
+          "label": "New QR Anchor",
+          "floor": 1,
+          "routeNodeId": "optional_node_id"
+        }
+      }
+    },
+    "update_qr_anchor": {
+      "endpoint": "PUT /api/v1/qr-anchors/QR-F1-N99",
+      "request": {
+        "roomId": "IGD",
+        "svgX": 655.0,
+        "svgY": 755.0,
+        "label": "Updated QR Anchor",
+        "floor": 1
+      },
+      "response": {
+        "success": true,
+        "message": "QR anchor updated successfully",
+        "data": {
+          "qrId": "QR-F1-N99",
+          "roomId": "IGD",
+          "svgX": 655.0,
+          "svgY": 755.0,
+          "label": "Updated QR Anchor",
+          "floor": 1
+        }
+      }
+    },
+    "delete_qr_anchor": {
+      "endpoint": "DELETE /api/v1/qr-anchors/QR-F1-N99",
+      "response": {
+        "success": true,
+        "message": "QR anchor deleted successfully"
+      }
+    }
+  },
+  "categories": {
+    "get_all_categories": {
+      "endpoint": "GET /api/v1/categories",
+      "response": {
+        "success": true,
+        "data": [
+          {
+            "name": "Emergency",
+            "description": "Layanan gawat darurat dan penanganan kondisi medis kritis yang memerlukan tindakan segera 24 jam"
+          },
+          {
+            "name": "Outpatient",
+            "description": "Layanan konsultasi dan pemeriksaan rawat jalan untuk berbagai spesialisasi medis"
+          },
+          {
+            "name": "Critical Care",
+            "description": "Unit perawatan intensif untuk pasien dengan kondisi kritis yang memerlukan monitoring ketat"
+          },
+          {
+            "name": "Diagnostic",
+            "description": "Layanan pemeriksaan penunjang diagnosis seperti laboratorium, radiologi, dan pencitraan medis"
+          },
+          {
+            "name": "Facility",
+            "description": "Fasilitas umum dan pendukung operasional rumah sakit seperti toilet, lift, tangga, dan parkir"
+          },
+          {
+            "name": "Service",
+            "description": "Layanan pendukung medis dan non-medis seperti informasi, edukasi, dan konsultasi"
+          },
+          {
+            "name": "Administration",
+            "description": "Area administrasi, manajemen, dan tata kelola rumah sakit"
+          },
+          {
+            "name": "Surgery",
+            "description": "Area tindakan operasi dan prosedur bedah dengan kontrol sterilitas tinggi"
+          },
+          {
+            "name": "Treatment",
+            "description": "Ruang terapi dan tindakan medis khusus seperti hemodialisa, fisioterapi, dan rehabilitasi"
+          },
+          {
+            "name": "Ward",
+            "description": "Ruang rawat inap untuk perawatan pasien dengan berbagai kelas dan spesialisasi"
+          }
+        ],
+        "count": 10
+      }
+    },
+    "get_category_names": {
+      "endpoint": "GET /api/v1/categories/names",
+      "response": {
+        "success": true,
+        "data": [
+          "Administration",
+          "Critical Care",
+          "Diagnostic",
+          "Emergency",
+          "Facility",
+          "Outpatient",
+          "Service",
+          "Surgery",
+          "Treatment",
+          "Ward"
+        ],
+        "count": 10
+      }
+    },
+    "get_category_by_name": {
+      "endpoint": "GET /api/v1/categories/Emergency",
+      "response": {
+        "success": true,
+        "data": {
+          "name": "Emergency",
+          "description": "Layanan gawat darurat dan penanganan kondisi medis kritis yang memerlukan tindakan segera 24 jam"
+        }
+      }
+    },
+    "get_category_stats": {
+      "endpoint": "GET /api/v1/categories/stats",
+      "response": {
+        "success": true,
+        "data": {
+          "total": 10,
+          "categories": [
+            "Administration",
+            "Critical Care",
+            "Diagnostic",
+            "Emergency",
+            "Facility",
+            "Outpatient",
+            "Service",
+            "Surgery",
+            "Treatment",
+            "Ward"
+          ]
+        }
+      }
+    },
+    "validate_category_valid": {
+      "endpoint": "POST /api/v1/categories/validate",
+      "request": {
+        "name": "Emergency"
+      },
+      "response": {
+        "success": true,
+        "message": "Category is valid",
+        "data": {
+          "name": "Emergency",
+          "description": "Layanan gawat darurat dan penanganan kondisi medis kritis yang memerlukan tindakan segera 24 jam"
+        }
+      }
+    },
+    "validate_category_invalid": {
+      "endpoint": "POST /api/v1/categories/validate",
+      "request": {
+        "name": "InvalidCategory"
+      },
+      "response": {
+        "success": false,
+        "message": "Category 'InvalidCategory' does not exist. Available categories: Administration, Critical Care, Diagnostic, Emergency, Facility, Outpatient, Service, Surgery, Treatment, Ward"
+      }
+    },
+    "category_not_found": {
+      "endpoint": "GET /api/v1/categories/NonExistent",
+      "response": {
+        "success": false,
+        "message": "Category 'NonExistent' not found"
+      }
+    }
+  }
+}
