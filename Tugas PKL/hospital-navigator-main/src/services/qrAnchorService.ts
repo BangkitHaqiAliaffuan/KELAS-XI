@@ -1,5 +1,5 @@
 import { qrAnchorsApi } from "@/services/api";
-import type { QrAnchor } from "@/data/hospitalRouteGraph";
+import type { QrAnchor, QrAnchorStats } from "@/types/qrAnchor";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -26,28 +26,18 @@ export const getQrAnchorsByFloor = async (floor: number): Promise<QrAnchor[]> =>
   return readData<QrAnchor[]>(await qrAnchorsApi.getByFloor(floor));
 };
 
+/**
+ * Resolve a QR code to its anchor via POST /qr-anchors/resolve
+ */
 export const resolveQrCode = async (qrCode: string): Promise<QrAnchor | null> => {
   return readData<QrAnchor>(await qrAnchorsApi.resolve(qrCode));
 };
 
-export const getQrAnchorStats = async (): Promise<{
-  total: number;
-  byFloor: Record<string, number>;
-  rooms: number;
-}> => {
-  const anchors = await getAllQrAnchors();
-  const byFloor: Record<string, number> = {};
-
-  anchors.forEach((anchor) => {
-    const floor = String(anchor.floor);
-    byFloor[floor] = (byFloor[floor] || 0) + 1;
-  });
-
-  return {
-    total: anchors.length,
-    byFloor,
-    rooms: new Set(anchors.map((anchor) => anchor.roomId)).size,
-  };
+/**
+ * Get QR anchor statistics from the backend stats endpoint
+ */
+export const getQrAnchorStats = async (): Promise<QrAnchorStats> => {
+  return readData<QrAnchorStats>(await qrAnchorsApi.getStats());
 };
 
 export const qrAnchorService = {

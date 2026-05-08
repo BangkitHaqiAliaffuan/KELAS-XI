@@ -1,5 +1,5 @@
 import { roomsApi } from "@/services/api";
-import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
+import type { Room, RoomStats } from "@/types/room";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -10,28 +10,31 @@ interface ApiResponse<T> {
 
 const readData = <T>(response: { data: ApiResponse<T> }): T => response.data.data;
 
-export const getAllRooms = async (): Promise<HospitalRoomInfo[]> => {
-  return readData<HospitalRoomInfo[]>(await roomsApi.getAll());
+export const getAllRooms = async (): Promise<Room[]> => {
+  return readData<Room[]>(await roomsApi.getAll());
 };
 
-export const getRoomById = async (roomId: string): Promise<HospitalRoomInfo | null> => {
-  return readData<HospitalRoomInfo>(await roomsApi.getById(roomId));
+export const getRoomById = async (roomId: string): Promise<Room | null> => {
+  return readData<Room>(await roomsApi.getById(roomId));
 };
 
-export const getRoomsByCategory = async (category: string): Promise<HospitalRoomInfo[]> => {
-  return readData<HospitalRoomInfo[]>(await roomsApi.getByCategory(category));
+export const getRoomsByCategory = async (category: string): Promise<Room[]> => {
+  return readData<Room[]>(await roomsApi.getByCategory(category));
 };
 
-export const getRoomsByFloor = async (floor: number): Promise<HospitalRoomInfo[]> => {
-  return readData<HospitalRoomInfo[]>(await roomsApi.getByFloor(floor));
+export const getRoomsByFloor = async (floor: number): Promise<Room[]> => {
+  return readData<Room[]>(await roomsApi.getByFloor(floor));
 };
 
-export const searchRooms = async (query: string): Promise<HospitalRoomInfo[]> => {
-  return readData<HospitalRoomInfo[]>(await roomsApi.search(query));
+export const searchRooms = async (query: string): Promise<Room[]> => {
+  return readData<Room[]>(await roomsApi.search(query));
+};
+
+export const getRoomStats = async (): Promise<RoomStats> => {
+  return readData<RoomStats>(await roomsApi.getStats());
 };
 
 export const getCategories = async (): Promise<string[]> => {
-  // Use categories API instead of extracting from rooms
   try {
     const { categoriesApi } = await import("@/services/api");
     const response = await categoriesApi.getNames();
@@ -49,6 +52,7 @@ export const roomService = {
   getRoomsByCategory,
   getRoomsByFloor,
   searchRooms,
+  getRoomStats,
   getCategories,
 };
 

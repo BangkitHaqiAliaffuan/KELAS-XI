@@ -1,13 +1,13 @@
-import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
-import type { QrAnchor } from "@/data/hospitalRouteGraph";
+import type { Room } from "@/types/room";
+import type { QrAnchor } from "@/types/qrAnchor";
 
 export const roomsArrayToObject = (
-  rooms: HospitalRoomInfo[],
-): Record<string, HospitalRoomInfo> => {
+  rooms: Room[],
+): Record<string, Room> => {
   return rooms.reduce((acc, room) => {
     acc[room.id] = room;
     return acc;
-  }, {} as Record<string, HospitalRoomInfo>);
+  }, {} as Record<string, Room>);
 };
 
 export const qrAnchorsArrayToObject = (
