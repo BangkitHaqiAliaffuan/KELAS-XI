@@ -88,25 +88,23 @@ const Index = () => {
           language={language}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {/* Search */}
-          <div className="px-4 pt-4 pb-2 z-20 relative">
+          <div className="px-4 pt-4 pb-2 z-20 relative shrink-0">
             <SearchBar onSelectLocation={setSelectedLocation} language={language} />
           </div>
 
-          {/* Map area */}
-          <div className="flex-1 relative px-4 pb-4">
-            <div className="h-full flex gap-3">
-              <MapViewer 
-                selectedLocation={selectedLocation} 
-                onClearSelection={handleClearSelection}
-                highlightCategory={highlightCategory}
-                onStartNavigation={handleStartNavigation}
-                language={language}
-                navigationStartRequest={navigationStartRequest}
-                onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
-              />
-            </div>
+          {/* Map area — fills remaining height exactly */}
+          <div className="flex-1 min-h-0 px-4 pb-4 md:pb-4 flex gap-3">
+            <MapViewer 
+              selectedLocation={selectedLocation} 
+              onClearSelection={handleClearSelection}
+              highlightCategory={highlightCategory}
+              onStartNavigation={handleStartNavigation}
+              language={language}
+              navigationStartRequest={navigationStartRequest}
+              onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
+            />
           </div>
         </main>
       </div>

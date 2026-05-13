@@ -79,7 +79,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   "QR-F1-N08": {
     qrId: "QR-F1-N08",
     roomId: "Rehab_Medik",
-    svgX: 781.63397,
+    svgX: 782.48465,
     svgY: 680.77075,
     label: "Persimpangan ke Rehab Medik",
     floor: 1,
@@ -395,6 +395,12 @@ const EXPLICIT_ROUTE_PATH_IDS = new Set([
   "path100",
   "masuk_ke_terapi_okupasi_lanjutan_menuju_ke_edukasi_keluarga",
   "menuju_ke_edukasi_keluarga_dan_pasien",
+  "masuk_ke_rehab_medik_menuju_ke_ruang_fisioterapi",
+  "Masuk_ke_rehab_medik_menuju_ke_ruang_fisioterapi",
+  "menuju_ke_ruang_fisioterapi",
+  "Menuju_ke_Ruang_Fisioterapi",
+  "masuk_ke_r_fisioterapi",
+  "Masuk_ke_r_fisioterapi",
   // IGD paths
   "jalan_keluar_dari_area_pelayanan_ugd",
   // Parking L1 paths
@@ -450,6 +456,12 @@ const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
     "Check_Point_Edukasi_Keluarga_Dan_Pasien",
     "Belok_Masuk_ke_Edukasi_Keluarga___Pasien",
     "Menuju_ke_Edukasi_Keluarga_dan_Pasien",
+  ],
+  // R. Fisioterapi: route via specific checkpoint sequence (same pattern as Edukasi)
+  "R._Fisioterapi": [
+    "Check_Point_R._Fisioterapi",
+    "Belok_ke_R._Fisioterapi",
+    "Check_Point_Rehab_Medik",
   ],
   // Gudang Alat Medis Steril: route via specific checkpoint node
   Gudang_Alat_Medis_Steril: ["R._Dokter_Spesialis_dan_Gudang_Alat_Medis_Steril"],

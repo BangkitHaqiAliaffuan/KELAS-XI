@@ -6,6 +6,8 @@ import {
   X,
   Navigation,
   QrCode,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   roomLabelConfigBySvgId,
@@ -151,6 +153,7 @@ const MapViewer = ({
   const preferRoomCenterStartRef = useRef(false);
   const pendingSearchZoomRoomIdRef = useRef<string | null>(null);
   const lastLoggedRouteRef = useRef<string | null>(null); // Track last logged route to avoid duplicate logs
+  const lastNavStepsKeyRef = useRef<string | null>(null);
 
   const MIN_SCALE = 0.4;
   const MAX_SCALE = 5;
@@ -184,12 +187,16 @@ const MapViewer = ({
     : activeFloor === 1
     ? "/images/hospital-map.svg"
     : "/images/hospital-map-lantai-2.svg";
-  const roomFloorById = allRegisteredQrAnchors.reduce<Record<string, 1 | 2>>((acc, anchor) => {
-    if (anchor.floor === 1 || anchor.floor === 2) {
-      acc[anchor.roomId] = anchor.floor;
-    }
-    return acc;
-  }, {});
+  const roomFloorById = useMemo(
+    () =>
+      allRegisteredQrAnchors.reduce<Record<string, 1 | 2>>((acc, anchor) => {
+        if (anchor.floor === 1 || anchor.floor === 2) {
+          acc[anchor.roomId] = anchor.floor;
+        }
+        return acc;
+      }, {}),
+    [allRegisteredQrAnchors],
+  );
   const [multiFloorSvgDocs, setMultiFloorSvgDocs] = useState<Partial<Record<1 | 2, Document>>>({});
   const [parkingSvgDoc, setParkingSvgDoc] = useState<Document | null>(null);
   const [parking2SvgDoc, setParking2SvgDoc] = useState<Document | null>(null);
@@ -3710,6 +3717,587 @@ const MapViewer = ({
     setActiveStepIndex(0);
   }, []);
 
+  const buildParkingL1HospitalEntrySteps = useCallback((points: Array<{ x: number; y: number }>): NavigationStep[] => {
+    const pointDistance = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+    ) => Math.hypot(from.x - to.x, from.y - to.y);
+    const isMainEntryCorridorStep = (step: NavigationStep) =>
+      Math.abs(step.pivotPoint.x - 465.359) <= 80 &&
+      Math.abs(step.toPoint.x - 465.359) <= 80 &&
+      step.distanceToNext >= 120;
+    const relabelCorridorSteps = (steps: NavigationStep[]) =>
+      steps.map((step, index) =>
+        index > 0 && step.type === "straight" && isMainEntryCorridorStep(step)
+          ? { ...step, label: "Lanjut mengikuti koridor utama" }
+          : step
+      );
+    const fallbackSteps = buildNavigationSteps(points);
+    if (points.length < 3) return relabelCorridorSteps(fallbackSteps);
+
+    const hospitalEntryPoint = { x: 465.359, y: 255.37 }; // QR-F1-N07: masuk koridor gedung lantai 1
+    let entryPointIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    points.forEach((point, index) => {
+      const d = pointDistance(point, hospitalEntryPoint);
+      if (d < nearestDistance) {
+        nearestDistance = d;
+        entryPointIndex = index;
+      }
+    });
+
+    if (nearestDistance > 90 || entryPointIndex <= 0 || entryPointIndex >= points.length - 1) {
+      return relabelCorridorSteps(fallbackSteps);
+    }
+
+    const distanceToEntry = points
+      .slice(0, entryPointIndex)
+      .reduce((total, point, index) => total + pointDistance(point, points[index + 1]), 0);
+    const firstPoint = points[0];
+    const entryPoint = points[entryPointIndex];
+    const remainingSteps = buildNavigationSteps(points.slice(entryPointIndex)).map((step) => ({
+      ...step,
+      label: step.type === "straight" && isMainEntryCorridorStep(step)
+        ? "Lanjut mengikuti koridor utama"
+        : step.label,
+    }));
+
+    const firstStep: NavigationStep = {
+      index: 0,
+      type: "straight",
+      fromPoint: firstPoint,
+      pivotPoint: firstPoint,
+      toPoint: entryPoint,
+      distanceToNext: distanceToEntry,
+      cumulativeDistance: distanceToEntry,
+      angleChange: 0,
+      label: "Ikuti jalur utama menuju gedung rumah sakit",
+      nextQrHint: "Cari QR di titik masuk gedung untuk kalibrasi posisi.",
+    };
+
+    return [firstStep, ...remainingSteps].map((step, index) => ({
+      ...step,
+      index,
+    }));
+  }, []);
+
+  const buildHospitalParkingL1ExitSteps = useCallback((points: Array<{ x: number; y: number }>): NavigationStep[] => {
+    const pointDistance = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+    ) => Math.hypot(from.x - to.x, from.y - to.y);
+    const fallbackSteps = buildNavigationSteps(points);
+    const isMainEntryCorridorStep = (step: NavigationStep) =>
+      Math.abs(step.pivotPoint.x - 465.359) <= 80 &&
+      Math.abs(step.toPoint.x - 465.359) <= 80 &&
+      step.distanceToNext >= 120;
+    if (points.length < 3) return fallbackSteps;
+
+    const hospitalExitPoint = { x: 465.359, y: 255.37 }; // QR-F1-N07: koridor sebelum akses keluar gedung
+    let exitPointIndex = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    points.forEach((point, index) => {
+      const d = pointDistance(point, hospitalExitPoint);
+      if (d < nearestDistance) {
+        nearestDistance = d;
+        exitPointIndex = index;
+      }
+    });
+
+    if (nearestDistance > 90 || exitPointIndex <= 0 || exitPointIndex >= points.length - 1) {
+      return fallbackSteps.map((step) =>
+        step.type === "straight" && step.label === "Jalan lurus" && isMainEntryCorridorStep(step)
+          ? { ...step, label: "Lanjut mengikuti koridor utama" }
+          : step
+      );
+    }
+
+    const beforeExitSteps = buildNavigationSteps(points.slice(0, exitPointIndex + 1)).map((step) => ({
+      ...step,
+      label: step.type === "straight" && isMainEntryCorridorStep(step)
+        ? "Lanjut mengikuti koridor utama"
+        : step.label,
+    }));
+    const distanceToParkingAccess = points
+      .slice(exitPointIndex, -1)
+      .reduce((total, point, index) => total + pointDistance(point, points[exitPointIndex + index + 1]), 0);
+    const exitPoint = points[exitPointIndex];
+    const finalPoint = points[points.length - 1];
+    const accessStep: NavigationStep = {
+      index: beforeExitSteps.length,
+      type: "straight",
+      fromPoint: exitPoint,
+      pivotPoint: exitPoint,
+      toPoint: finalPoint,
+      distanceToNext: distanceToParkingAccess,
+      cumulativeDistance:
+        (beforeExitSteps[beforeExitSteps.length - 1]?.cumulativeDistance ?? 0) + distanceToParkingAccess,
+      angleChange: 0,
+      label: "Keluar mengikuti jalur utama menuju lahan parkir",
+      nextQrHint: "Cari QR di area parkir untuk kalibrasi posisi.",
+    };
+    const arriveStep: NavigationStep = {
+      index: beforeExitSteps.length + 1,
+      type: "arrive",
+      fromPoint: exitPoint,
+      pivotPoint: finalPoint,
+      toPoint: finalPoint,
+      distanceToNext: 0,
+      cumulativeDistance: accessStep.cumulativeDistance,
+      angleChange: 0,
+      label: "Anda telah tiba di tujuan",
+    };
+
+    return [...beforeExitSteps, accessStep, arriveStep].map((step, index) => ({
+      ...step,
+      index,
+    }));
+  }, []);
+
+  const improvePostConnectorSteps = useCallback((steps: NavigationStep[], transitionLabel?: string): NavigationStep[] => {
+    if (steps.length < 2) return steps;
+    // Fix A: cek jarak spasial — belokan hanya diberi konteks jika pivotPoint-nya
+    // berada dalam radius 120px dari titik awal route (tepat di area exit lift/tangga).
+    // Belokan yang lebih jauh dianggap belokan normal, bukan belokan keluar lift/tangga.
+    const routeOrigin = steps[0].fromPoint;
+    const firstTurnIndex = steps.findIndex(
+      (step) =>
+        step.type !== "straight" &&
+        step.type !== "arrive" &&
+        Math.hypot(step.pivotPoint.x - routeOrigin.x, step.pivotPoint.y - routeOrigin.y) <= 120,
+    );
+    if (firstTurnIndex < 0) return steps;
+
+    const normalizedTransition = transitionLabel?.toLowerCase() || "";
+    const exitContext = normalizedTransition.includes("lift")
+      ? " (setelah keluar dari lift)"
+      : normalizedTransition.includes("tangga")
+        ? " (setelah keluar dari tangga)"
+        : "";
+
+    return steps.map((step, index) => {
+      const isFirstExitTurn =
+        index === firstTurnIndex &&
+        exitContext &&
+        (step.type === "turn_left" || step.type === "turn_right");
+
+      return {
+        ...step,
+        label: isFirstExitTurn ? `${step.label}${exitContext}` : step.label,
+        index,
+      };
+    });
+  }, []);
+
+  const enhanceInstructionContext = useCallback((
+    steps: NavigationStep[],
+    _checkpointIds: string[],
+    visibleFloor: -1 | 0 | 1 | 2,
+    transitionLabel?: string,
+    visibleFloorIndex = -1,
+    previousVisibleFloor: -1 | 0 | 1 | 2 | null = null,
+  ): NavigationStep[] => {
+    if (!steps.length) return steps;
+
+    const distanceBetween = (
+      from: { x: number; y: number },
+      to: { x: number; y: number },
+    ) => Math.hypot(from.x - to.x, from.y - to.y);
+
+    const distancePointToSegment = (
+      point: { x: number; y: number },
+      start: { x: number; y: number },
+      end: { x: number; y: number },
+    ) => {
+      const lengthSquared = (end.x - start.x) ** 2 + (end.y - start.y) ** 2;
+      if (lengthSquared === 0) return distanceBetween(point, start);
+
+      const rawT =
+        ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) /
+        lengthSquared;
+      const t = Math.max(0, Math.min(1, rawT));
+      const projection = {
+        x: start.x + t * (end.x - start.x),
+        y: start.y + t * (end.y - start.y),
+      };
+
+      return {
+        distance: distanceBetween(point, projection),
+        t,
+      };
+    };
+
+    const routeQrAnchors = Object.values(QR_ANCHOR_REGISTRY)
+      .filter((anchor) => anchor.floor === visibleFloor)
+      .sort((a, b) => a.qrId.localeCompare(b.qrId));
+
+    const getQrAnchorsAlongStep = (step: NavigationStep) =>
+      routeQrAnchors
+        .map((anchor) => {
+          const result = distancePointToSegment(
+            { x: anchor.svgX, y: anchor.svgY },
+            step.fromPoint,
+            step.toPoint,
+          );
+          return { anchor, ...result };
+        })
+        .filter(({ distance, t }) => distance <= 45 && t > 0.08 && t <= 1)
+        .sort((a, b) => a.t - b.t);
+
+    const isNear = (
+      point: { x: number; y: number },
+      target: { x: number; y: number },
+      tolerance = 70,
+    ) => distanceBetween(point, target) <= tolerance;
+
+    const getStraightLandmarkLabel = (step: NavigationStep): string | null => {
+      if (step.type !== "straight" || step.distanceToNext < 110) return null;
+
+      const floorLandmarks =
+        visibleFloor === 2
+          ? [
+              { label: "area lift", point: { x: 1015, y: 517 } },
+              { label: "area tangga", point: { x: 1060, y: 517 } },
+              { label: "area tangga", point: { x: 805, y: 255 } },
+            ]
+          : visibleFloor === 1
+            ? [
+                { label: "area lift", point: { x: 1015, y: 523 } },
+                { label: "area tangga", point: { x: 1060, y: 523 } },
+                { label: "area tangga", point: { x: 652, y: 255 } },
+              ]
+            : [];
+
+      const landmark = floorLandmarks.find(({ point }) => isNear(step.toPoint, point, 85));
+      if (landmark) return `Lurus sampai ${landmark.label}`;
+
+      // Bug 2 Fix: deteksi persimpangan untuk koridor vertikal menggunakan metode berbeda.
+      // getQrAnchorsAlongStep memakai threshold 45px yang terlalu kecil untuk koridor vertikal
+      // di mana anchor persimpangan horizontal bisa berada 100–200px secara horizontal.
+      const isVerticalStep =
+        Math.abs(step.toPoint.y - step.fromPoint.y) > Math.abs(step.toPoint.x - step.fromPoint.x) * 2;
+
+      if (isVerticalStep) {
+        const minY = Math.min(step.fromPoint.y, step.toPoint.y);
+        const maxY = Math.max(step.fromPoint.y, step.toPoint.y);
+        const stepX = (step.fromPoint.x + step.toPoint.x) / 2;
+
+        const verticalCrossings = routeQrAnchors
+          .filter((anchor) => {
+            const inYRange = anchor.svgY >= minY - 40 && anchor.svgY <= maxY + 40;
+            const notTooFarX = Math.abs(anchor.svgX - stepX) <= 300;
+            const notAtEndpoints =
+              Math.abs(anchor.svgY - step.fromPoint.y) > 40 &&
+              Math.abs(anchor.svgY - step.toPoint.y) > 40;
+            return inYRange && notTooFarX && notAtEndpoints;
+          })
+          .sort((a, b) => a.svgY - b.svgY);
+
+        if (verticalCrossings.length >= 2) {
+          return `Lurus melewati ${verticalCrossings.length} persimpangan`;
+        }
+        if (verticalCrossings.length === 1) {
+          return `Lurus hingga ${verticalCrossings[0].qrId}`;
+        }
+      } else {
+        const qrAnchors = getQrAnchorsAlongStep(step);
+        if (qrAnchors.length >= 3) {
+          return `Lurus melewati ${qrAnchors.length} persimpangan`;
+        }
+        if (qrAnchors.length >= 1) {
+          return `Lurus hingga ${qrAnchors[qrAnchors.length - 1].anchor.qrId}`;
+        }
+      }
+
+      return null;
+    };
+
+    const normalizedTransition = transitionLabel?.toLowerCase() || "";
+    const isVerticalFloorTransition =
+      previousVisibleFloor !== null &&
+      previousVisibleFloor > 0 &&
+      visibleFloor > 0 &&
+      previousVisibleFloor !== visibleFloor;
+    const exitContext = normalizedTransition.includes("lift")
+      ? "lift"
+      : normalizedTransition.includes("evakuasi")
+        ? "tangga evakuasi"
+        : normalizedTransition.includes("tangga")
+          ? "tangga"
+          : "";
+    const firstTurnIndex = steps.findIndex((step) => step.type === "turn_left" || step.type === "turn_right");
+    const routeStartPoint = steps[0].fromPoint;
+
+    // Fix C: guard jalur QR-F1-N11→N12 — koridor vertikal lurus di x≈652 yang bukan
+    // belokan keluar lift/tangga. Dipakai di isNearRouteStart dan needsExitOrientationStep.
+    const isQrF1N11ToN12Corridor = (step: NavigationStep) => {
+      const isNearX652 = Math.abs(step.fromPoint.x - 652) <= 70;
+      const isVerticalDown = step.toPoint.y > step.fromPoint.y;
+      const isLongEnough = Math.abs(step.toPoint.y - step.fromPoint.y) >= 120;
+      const isNarrowX = Math.abs(step.toPoint.x - step.fromPoint.x) <= 45;
+      return isNearX652 && isVerticalDown && isLongEnough && isNarrowX;
+    };
+
+    const isNearRouteStart = (step: NavigationStep) =>
+      distanceBetween(routeStartPoint, step.pivotPoint) <= 90 &&
+      !isQrF1N11ToN12Corridor(step);
+
+    const labeledSteps = steps.map((step, index) => {
+      const shouldAddExitContext =
+        visibleFloorIndex > 0 &&
+        isVerticalFloorTransition &&
+        index === firstTurnIndex &&
+        isNearRouteStart(step) &&
+        exitContext &&
+        (step.type === "turn_left" || step.type === "turn_right") &&
+        !step.label.includes("setelah keluar");
+
+      const straightLandmarkLabel =
+        step.label === "Jalan lurus" || step.label === "Lurus"
+          ? getStraightLandmarkLabel(step)
+          : null;
+
+      return {
+        ...step,
+        label: shouldAddExitContext
+          ? `${step.label} (setelah keluar dari ${exitContext})`
+          : straightLandmarkLabel || step.label,
+        index,
+      };
+    });
+
+    const firstStep = labeledSteps[0];
+    // Fix B: tambah batas atas distanceToNext (step lurus pertama harus pendek — tepat di area exit)
+    // dan guard isQrF1N11ToN12Corridor agar jalur N11→N12 tidak dipaksa diberi step orientasi.
+    const needsExitOrientationStep =
+      visibleFloorIndex > 0 &&
+      isVerticalFloorTransition &&
+      exitContext &&
+      firstStep?.type === "straight" &&
+      firstStep.distanceToNext >= 100 &&
+      firstStep.distanceToNext <= 200 &&
+      !firstStep.label.includes("setelah keluar") &&
+      !isQrF1N11ToN12Corridor(firstStep);
+
+    if (!needsExitOrientationStep) {
+      return labeledSteps;
+    }
+
+    const dx = firstStep.toPoint.x - firstStep.fromPoint.x;
+    const dy = firstStep.toPoint.y - firstStep.fromPoint.y;
+    // Arah mata angin: Atas SVG = Utara (dy<0), Bawah = Selatan (dy>0),
+    // Kanan = Timur (dx>0), Kiri = Barat (dx<0)
+    const getCardinalDirection = (vx: number, vy: number): string => {
+      const absDx = Math.abs(vx);
+      const absDy = Math.abs(vy);
+      if (absDx >= absDy) return vx >= 0 ? "Timur" : "Barat";
+      return vy >= 0 ? "Selatan" : "Utara";
+    };
+    const cardinalDir = getCardinalDirection(dx, dy);
+    const exitTurnType: "turn_left" | "turn_right" =
+      Math.abs(dx) >= Math.abs(dy)
+        ? dx >= 0 ? "turn_right" : "turn_left"
+        : dy >= 0 ? "turn_left" : "turn_right";
+    const exitOrientationStep: NavigationStep = {
+      ...firstStep,
+      type: exitTurnType,
+      angleChange: exitTurnType === "turn_right" ? 90 : -90,
+      distanceToNext: 0,
+      cumulativeDistance: 0,
+      toPoint: firstStep.fromPoint,
+      label: `Menuju ke arah ${cardinalDir} (setelah keluar dari ${exitContext})`,
+      nextQrHint: undefined,
+      index: 0,
+    };
+
+    return [exitOrientationStep, ...labeledSteps].map((step, index) => ({
+      ...step,
+      index,
+    }));
+  }, [QR_ANCHOR_REGISTRY]);
+
+  const buildParkingL2BridgeEntrySteps = useCallback((steps: NavigationStep[]): NavigationStep[] => {
+    if (!steps.length) return steps;
+
+    const bridgeLabel = "Gunakan jembatan penghubung menuju gedung rumah sakit lantai 2";
+    if (steps[0].type === "straight") {
+      return steps.map((step, index) => ({
+        ...step,
+        label: index === 0 ? bridgeLabel : step.label,
+        index,
+      }));
+    }
+
+    const firstStep = steps[0];
+    const bridgeStep: NavigationStep = {
+      ...firstStep,
+      index: 0,
+      type: "straight",
+      fromPoint: firstStep.fromPoint,
+      pivotPoint: firstStep.fromPoint,
+      toPoint: firstStep.pivotPoint,
+      distanceToNext: pointDistance(firstStep.fromPoint, firstStep.pivotPoint),
+      angleChange: 0,
+      label: bridgeLabel,
+      nextQrHint: undefined,
+    };
+
+    return [bridgeStep, ...steps].map((step, index) => ({
+      ...step,
+      index,
+    }));
+  }, []);
+
+  const mergeConsecutiveStraightSteps = useCallback((steps: NavigationStep[]): NavigationStep[] => {
+    if (!steps.length) return steps;
+
+    const merged: NavigationStep[] = [];
+
+    steps.forEach((step) => {
+      const previous = merged[merged.length - 1];
+
+      if (previous && previous.type === "straight" && step.type === "straight") {
+        previous.toPoint = step.toPoint;
+        previous.distanceToNext += step.distanceToNext;
+        previous.cumulativeDistance = step.cumulativeDistance;
+        if (previous.label === "Jalan lurus" && step.label !== "Jalan lurus") {
+          previous.label = step.label;
+        }
+        return;
+      }
+
+      merged.push({ ...step });
+    });
+
+    return merged.map((step, index) => ({
+      ...step,
+      index,
+    }));
+  }, []);
+
+  const normalizeFloor2ConnectorExitSteps = useCallback((steps: NavigationStep[]): NavigationStep[] => {
+    if (!steps.length) return steps;
+
+    const isApproachingFloor2StairArea = (step: NavigationStep) =>
+      step.type === "straight" &&
+      Math.abs(step.fromPoint.y - step.toPoint.y) <= 40 &&
+      step.toPoint.y >= 230 &&
+      step.toPoint.y <= 285 &&
+      step.toPoint.x >= 760 &&
+      step.toPoint.x <= 1090 &&
+      step.fromPoint.x <= step.toPoint.x;
+
+    return mergeConsecutiveStraightSteps(steps.map((step, index) => {
+      if (isApproachingFloor2StairArea(step)) {
+        return {
+          ...step,
+          index,
+          label: "Lurus sampai bertemu area tangga",
+        };
+      }
+
+      return {
+        ...step,
+        index,
+      };
+    }));
+  }, [mergeConsecutiveStraightSteps]);
+
+  const normalizeFloor1StairExitSteps = useCallback((
+    steps: NavigationStep[],
+    transitionLabel?: string
+  ): NavigationStep[] => {
+    if (!steps.length) return steps;
+
+    const isNearQrF1N11 = (point: SvgPoint) =>
+      Math.abs(point.x - 652) <= 70 && point.y >= 245 && point.y <= 395;
+
+    const isJalanKebidananAxis = (point: SvgPoint) =>
+      Math.abs(point.x - 654) <= 20 && point.y >= 260 && point.y <= 520;
+
+    const isAllowedMainCorridorAxis = (point: SvgPoint) =>
+      isNearQrF1N11(point) || isJalanKebidananAxis(point);
+
+    const isQrF1N11ToN12Corridor = (step: NavigationStep) =>
+      step.type === "straight" &&
+      isAllowedMainCorridorAxis(step.fromPoint) &&
+      Math.abs(step.toPoint.x - step.fromPoint.x) <= 45 &&
+      step.toPoint.y > step.fromPoint.y &&
+      Math.abs(step.toPoint.y - step.fromPoint.y) >= 120;
+
+    const normalized = isQrF1N11ToN12Corridor(steps[0])
+      ? steps.map((step, index) => ({
+          ...step,
+          index,
+        }))
+      : improvePostConnectorSteps(steps, transitionLabel);
+
+    const isVerticalMainCorridorStep = (step: NavigationStep) =>
+      isAllowedMainCorridorAxis(step.pivotPoint) &&
+      Math.abs(step.toPoint.x - step.pivotPoint.x) <= 50 &&
+      step.toPoint.y > step.pivotPoint.y &&
+      Math.abs(step.toPoint.y - step.pivotPoint.y) >= 90;
+
+    const isTopCorridorDrop = (step: NavigationStep) =>
+      Math.abs(step.fromPoint.y - step.pivotPoint.y) <= 50 &&
+      step.pivotPoint.y <= 340 &&
+      Math.abs(step.toPoint.x - step.pivotPoint.x) <= 45 &&
+      step.toPoint.y > step.pivotPoint.y &&
+      Math.abs(step.toPoint.y - step.pivotPoint.y) >= 90;
+
+    const relabelTurn = (
+      step: NavigationStep,
+      type: "turn_left" | "turn_right"
+    ): NavigationStep => ({
+      ...step,
+      type,
+      angleChange: type === "turn_left" ? -90 : 90,
+      label: type === "turn_left" ? "Belok kiri" : "Belok kanan",
+    });
+
+    return mergeConsecutiveStraightSteps(normalized.map((step, index) => {
+      if (
+        index === 0 &&
+        (step.type === "turn_left" || step.type === "turn_right") &&
+        isVerticalMainCorridorStep(step)
+      ) {
+        return {
+          ...step,
+          index,
+          type: "straight",
+          angleChange: 0,
+          label: "Jalan lurus",
+        };
+      }
+
+      if (
+        (step.type === "turn_left" || step.type === "turn_right") &&
+        isTopCorridorDrop(step)
+      ) {
+        if (step.fromPoint.x > step.pivotPoint.x + 40) {
+          return {
+            ...relabelTurn(step, "turn_left"),
+            index,
+          };
+        }
+
+        if (step.fromPoint.x < step.pivotPoint.x - 40) {
+          return {
+            ...relabelTurn(step, "turn_right"),
+            index,
+          };
+        }
+      }
+
+      return {
+        ...step,
+        index,
+      };
+    }));
+  }, [improvePostConnectorSteps, mergeConsecutiveStraightSteps]);
+
   // Rebuild route when user switches between parking map and hospital floors
   // (only if there's an active route involving parking)
   useEffect(() => {
@@ -3771,13 +4359,77 @@ const MapViewer = ({
     if (!activeFloorSegment || activeFloorSegment.points.length < 2) {
       setNavSteps([]);
       setActiveStepIndex(0);
+      lastNavStepsKeyRef.current = null;
       return;
     }
 
-    const steps = buildNavigationSteps(activeFloorSegment.points);
+    let steps = buildNavigationSteps(activeFloorSegment.points);
+    const visibleFloor: -1 | 0 | 1 | 2 = showParkingMap ? (parkingFloor === 1 ? 0 : -1) : activeFloor;
+    const visibleFloorIndex = activeRoute?.floorsInvolved?.indexOf(visibleFloor) ?? -1;
+    const previousVisibleFloor =
+      activeRoute?.floorsInvolved && visibleFloorIndex > 0
+        ? activeRoute.floorsInvolved[visibleFloorIndex - 1]
+        : null;
+    const isParkingL2BridgeEntry =
+      activeRoute?.floorsInvolved?.[0] === -1 &&
+      visibleFloor === 2 &&
+      !showParkingMap;
+
+    if (
+      activeRoute?.startRoomId === "Parking_Lantai_1" &&
+      activeRoute.endRoomId &&
+      resolveFloorForRoomExtended(activeRoute.endRoomId) === 1 &&
+      !showParkingMap &&
+      activeFloor === 1
+    ) {
+      steps = buildParkingL1HospitalEntrySteps(activeFloorSegment.points);
+    } else if (
+      activeRoute?.endRoomId === "Parking_Lantai_1" &&
+      resolveFloorForRoomExtended(activeRoute.startRoomId) === 1 &&
+      !showParkingMap &&
+      activeFloor === 1
+    ) {
+      steps = buildHospitalParkingL1ExitSteps(activeFloorSegment.points);
+    }
+
+    if (isParkingL2BridgeEntry) {
+      steps = buildParkingL2BridgeEntrySteps(steps);
+    }
+
+    steps = enhanceInstructionContext(
+      steps,
+      activeFloorSegment.checkpointIds,
+      visibleFloor,
+      activeRoute?.transitionLabel,
+      visibleFloorIndex,
+      previousVisibleFloor,
+    );
+
+    const nextNavStepsKey = [
+      activeRoute?.startRoomId || "",
+      activeRoute?.endRoomId || "",
+      showParkingMap ? `parking-${parkingFloor}` : `floor-${activeFloor}`,
+      activeFloorSegment.points.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join("|"),
+    ].join("::");
+    const shouldResetStepIndex = lastNavStepsKeyRef.current !== nextNavStepsKey;
+    lastNavStepsKeyRef.current = nextNavStepsKey;
+
     setNavSteps(steps);
-    setActiveStepIndex(0);
-  }, [activeRoute, activeFloor, getRouteSegmentForFloor]);
+    setActiveStepIndex((index) =>
+      shouldResetStepIndex ? 0 : Math.min(index, Math.max(steps.length - 1, 0))
+    );
+  }, [
+    activeRoute,
+    activeFloor,
+    getRouteSegmentForFloor,
+    resolveFloorForRoomExtended,
+    showParkingMap,
+    parkingFloor,
+    buildParkingL1HospitalEntrySteps,
+    buildHospitalParkingL1ExitSteps,
+    buildParkingL2BridgeEntrySteps,
+    enhanceInstructionContext,
+  ]);
 
   // Auto-close room info popup when navigation route becomes active
   useEffect(() => {
@@ -3788,10 +4440,10 @@ const MapViewer = ({
   }, [activeRoute]);
 
   useEffect(() => {
-    if (!liveSvgPoint || !navSteps.length) return;
+    if (!isLiveMode || !liveSvgPoint || !navSteps.length) return;
     const idx = getActiveStepIndex(liveSvgPoint, navSteps);
     setActiveStepIndex(idx);
-  }, [liveSvgPoint, navSteps]);
+  }, [isLiveMode, liveSvgPoint, navSteps]);
 
   useEffect(() => {
     return () => {
@@ -3862,16 +4514,80 @@ const MapViewer = ({
   const currentNavStep = navSteps.length
     ? navSteps[Math.min(activeStepIndex, navSteps.length - 1)]
     : null;
+  const currentVisibleFloor: -1 | 0 | 1 | 2 = showParkingMap ? (parkingFloor === 1 ? 0 : -1) : activeFloor;
+
+  const isParkingL1ToHospitalFloor1Route =
+    activeRoute?.startRoomId === "Parking_Lantai_1" &&
+    activeRoute?.endRoomId &&
+    resolveFloorForRoomExtended(activeRoute.endRoomId) === 1;
+  const nextTransitionFloor = (() => {
+    if (!activeRoute?.floorsInvolved || activeRoute.floorsInvolved.length <= 1) return null;
+    if (!currentNavStep || currentNavStep.type !== "arrive") return null;
+
+    const currentFloorIndex = activeRoute.floorsInvolved.indexOf(currentVisibleFloor);
+    if (currentFloorIndex < 0 || currentFloorIndex >= activeRoute.floorsInvolved.length - 1) return null;
+
+    return activeRoute.floorsInvolved[currentFloorIndex + 1];
+  })();
+  const nextTransitionFloorLabel = (() => {
+    switch (nextTransitionFloor) {
+      case -1:
+        return "parkir lantai 2";
+      case 0:
+        return "parkir lantai 1";
+      case 1:
+        return "lantai 1";
+      case 2:
+        return "lantai 2";
+      default:
+        return "";
+    }
+  })();
+  const connectorInstruction = (() => {
+    if (!nextTransitionFloorLabel || !activeRoute?.transitionLabel) return "";
+    if (activeRoute.endRoomId === "Parking_Lantai_1" && showParkingMap && parkingFloor === 1) return "";
+
+    const normalizedTransition = activeRoute.transitionLabel.toLowerCase();
+    const isBridgeTransitionToHospitalFloor2 = currentVisibleFloor === -1 && nextTransitionFloor === 2;
+    if (isBridgeTransitionToHospitalFloor2) {
+      return "Gunakan jembatan penghubung menuju gedung rumah sakit lantai 2";
+    }
+    if (normalizedTransition.includes("lift")) {
+      return `Masuk ke lift untuk menuju ${nextTransitionFloorLabel}`;
+    }
+    if (normalizedTransition.includes("tangga")) {
+      return `Gunakan tangga untuk menuju ${nextTransitionFloorLabel}`;
+    }
+
+    return "";
+  })();
 
   const currentNavInstruction = (() => {
     if (!currentNavStep) return "";
 
+    if (isParkingL1ToHospitalFloor1Route && activeStepIndex === 0) {
+      return "Ikuti jalur utama menuju gedung rumah sakit";
+    }
+
+    if (connectorInstruction) {
+      return connectorInstruction;
+    }
+
     switch (currentNavStep.type) {
       case "turn_left":
+        if (currentNavStep.label && currentNavStep.label !== "Belok kiri") {
+          return currentNavStep.label;
+        }
         return "Belok kiri";
       case "turn_right":
+        if (currentNavStep.label && currentNavStep.label !== "Belok kanan") {
+          return currentNavStep.label;
+        }
         return "Belok kanan";
       case "straight":
+        if (currentNavStep.label && currentNavStep.label !== "Jalan lurus") {
+          return currentNavStep.label;
+        }
         return "Lurus";
       case "u_turn":
         return "Ke belakang (putar balik)";
@@ -3881,6 +4597,18 @@ const MapViewer = ({
         return currentNavStep.label;
     }
   })();
+
+  const activeStepNumber = navSteps.length
+    ? Math.min(activeStepIndex, navSteps.length - 1) + 1
+    : 0;
+  const canGoToPreviousStep = activeStepIndex > 0;
+  const canGoToNextStep = activeStepIndex < navSteps.length - 1;
+  const handlePreviousNavStep = useCallback(() => {
+    setActiveStepIndex((index) => Math.max(index - 1, 0));
+  }, []);
+  const handleNextNavStep = useCallback(() => {
+    setActiveStepIndex((index) => Math.min(index + 1, Math.max(navSteps.length - 1, 0)));
+  }, [navSteps.length]);
 
   // ---------------------------------------------------------------------------
   // Render
@@ -3907,7 +4635,20 @@ const MapViewer = ({
   }
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-muted/20 rounded-xl border border-border shadow-inner">
+    <div className="flex flex-1 min-h-0 gap-3">
+      {/* ── Map container ── */}
+      <div className="relative flex-1 min-h-0 overflow-hidden bg-muted/20 rounded-xl border border-border shadow-inner pb-[0px] md:pb-0">
+
+      {/* Compass overlay — di luar mapRef agar tidak ikut zoom/pan (R-06) */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-none">
+        <img
+          src="/images/arah%20mata%20angin.png"
+          alt="Kompas arah mata angin"
+          className="w-16 h-16 opacity-85 drop-shadow-md select-none"
+          draggable={false}
+        />
+      </div>
+
       <div
         ref={containerRef}
         className={`w-full h-full ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
@@ -4214,85 +4955,7 @@ const MapViewer = ({
       </div>
 
       {(activeRoute || isLiveMode) && navSteps.length > 0 && currentNavStep && (
-        <div className="absolute bottom-24 left-4 z-30 w-[min(92vw,340px)] overflow-hidden rounded-2xl border border-white/55 bg-white/36 shadow-2xl shadow-slate-900/20 ring-1 ring-white/45 backdrop-blur-2xl">
-          <div className="pointer-events-none absolute inset-0 bg-white/45" aria-hidden="true" />
-          {/* ── Header ── */}
-          <div className="relative flex items-center justify-between border-b border-white/55 bg-white/40 px-3 py-2.5">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-white/60 shadow-sm shadow-slate-900/10">
-                <Navigation className="h-3.5 w-3.5 text-slate-700" />
-              </div>
-              <div className="min-w-0">
-                <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-widest leading-none text-slate-500">Navigasi Aktif</p>
-                <p className="truncate text-[12px] font-bold leading-tight text-slate-900">
-                  {roomInfoBySvgId[endRoomId]?.name || endRoomId || "Tujuan"}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleClearRoute}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-900"
-              title="Hentikan navigasi"
-              aria-label="Hentikan navigasi"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* ── Current step ── */}
-          <div className="relative px-3 pt-3 pb-2">
-            <div className="flex items-start gap-3">
-              {/* Step type icon */}
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl shadow-md shadow-slate-900/10 ${
-                currentNavStep.type === "arrive"
-                  ? "bg-white/80 text-emerald-600"
-                  : currentNavStep.type === "turn_left"
-                  ? "bg-white/80 text-slate-700"
-                  : currentNavStep.type === "turn_right"
-                  ? "bg-white/80 text-slate-700"
-                  : currentNavStep.type === "u_turn"
-                  ? "bg-white/80 text-slate-700"
-                  : "bg-white/80 text-slate-700"
-              }`}>
-                {currentNavStep.type === "arrive" ? "🏁"
-                  : currentNavStep.type === "turn_left" ? "↰"
-                  : currentNavStep.type === "turn_right" ? "↱"
-                  : currentNavStep.type === "u_turn" ? "↩"
-                  : "↑"}
-              </div>
-              <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-[15px] font-extrabold leading-snug text-slate-900">{currentNavInstruction}</p>
-                <p className="mt-1 text-xs text-slate-600">Selanjutnya saja</p>
-              </div>
-            </div>
-          </div>
-
-          {/* ── QR Calibration button ── */}
-          {activeRoute && endRoomIdRef.current && (
-            <div className="relative px-3 pb-3">
-              <button
-                onClick={() => {
-                  // Open navigation dialog in calibrate mode
-                  onStartNavigation?.({ mode: "calibrate", destinationRoomId: endRoomIdRef.current || undefined });
-                }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
-                title="Kalibrasi posisi via QR Code"
-                style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
-              >
-                <QrCode className="h-4 w-4 shrink-0" />
-                Kalibrasi Posisi via QR Code
-              </button>
-            </div>
-          )}
-
-          {/* Keyframe for QR button pulse */}
-          <style>{`
-            @keyframes navQrPulse {
-              0%, 100% { box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
-              50% { box-shadow: 0 4px 24px rgba(16,185,129,0.55); }
-            }
-          `}</style>
-        </div>
+        <div className="hidden" aria-hidden="true" />
       )}
 
       {/* Zoom controls */}
@@ -4431,6 +5094,186 @@ const MapViewer = ({
             </button>
           </div>
         </div>
+      )}
+      </div>{/* end map container */}
+
+      {/* ── Nav panel: desktop = right column, mobile = fixed bottom sheet ── */}
+      {(activeRoute || isLiveMode) && navSteps.length > 0 && currentNavStep && (
+        <>
+          {/* Desktop: right column (hidden on mobile) */}
+          <div className="hidden md:flex flex-col w-[260px] shrink-0 overflow-hidden rounded-2xl border border-border bg-card shadow-xl self-start sticky top-0">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border bg-card px-3 py-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Navigation className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="mb-0.5 text-[9px] font-semibold uppercase tracking-widest leading-none text-muted-foreground">Navigasi Aktif</p>
+                  <p className="truncate text-[12px] font-bold leading-tight text-foreground">
+                    {roomInfoBySvgId[endRoomId]?.name || endRoomId || "Tujuan"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClearRoute}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                title="Hentikan navigasi"
+                aria-label="Hentikan navigasi"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            {/* Step */}
+            <div className="px-3 pt-3 pb-2">
+              <div className="flex items-start gap-3">
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl shadow-sm ${
+                  currentNavStep.type === "arrive" ? "bg-emerald-50 text-emerald-600" : "bg-muted text-foreground"
+                }`}>
+                  {currentNavStep.type === "arrive" ? "🏁"
+                    : currentNavStep.type === "turn_left" ? "↰"
+                    : currentNavStep.type === "turn_right" ? "↱"
+                    : currentNavStep.type === "u_turn" ? "↩"
+                    : "↑"}
+                </div>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-[14px] font-extrabold leading-snug text-foreground">{currentNavInstruction}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Ikuti arah panah</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-3 pb-3">
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <button
+                  onClick={handlePreviousNavStep}
+                  disabled={!canGoToPreviousStep}
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border px-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Lihat navigasi sebelumnya"
+                  aria-label="Lihat navigasi sebelumnya"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Sebelum
+                </button>
+                <span className="min-w-[42px] text-center text-[11px] font-semibold text-muted-foreground">
+                  {activeStepNumber}/{navSteps.length}
+                </span>
+                <button
+                  onClick={handleNextNavStep}
+                  disabled={!canGoToNextStep}
+                  className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border px-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Lihat navigasi selanjutnya"
+                  aria-label="Lihat navigasi selanjutnya"
+                >
+                  Setelah
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+            {/* QR Calibration */}
+            {activeRoute && endRoomIdRef.current && (
+              <div className="px-3 pb-3">
+                <button
+                  onClick={() => onStartNavigation?.({ mode: "calibrate", destinationRoomId: endRoomIdRef.current || undefined })}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2.5 text-white font-bold text-xs shadow-lg shadow-emerald-500/25 transition-all"
+                  title="Kalibrasi posisi via QR Code"
+                  style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
+                >
+                  <QrCode className="h-4 w-4 shrink-0" />
+                  Kalibrasi via QR
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile: fixed bottom sheet (hidden on desktop) */}
+          <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 rounded-t-2xl border-t border-border bg-card shadow-2xl">
+            {/* Drag handle */}
+            <div className="flex justify-center pt-2 pb-1">
+              <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+            </div>
+            {/* Header row */}
+            <div className="flex items-center justify-between px-4 pb-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                  <Navigation className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">Navigasi Aktif</p>
+                  <p className="truncate text-[12px] font-bold text-foreground">
+                    {roomInfoBySvgId[endRoomId]?.name || endRoomId || "Tujuan"}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleClearRoute}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title="Hentikan navigasi"
+                aria-label="Hentikan navigasi"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            {/* Step + QR row */}
+            <div className="flex items-center gap-3 px-4 pb-4">
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl shadow-sm ${
+                currentNavStep.type === "arrive" ? "bg-emerald-50 text-emerald-600" : "bg-muted text-foreground"
+              }`}>
+                {currentNavStep.type === "arrive" ? "🏁"
+                  : currentNavStep.type === "turn_left" ? "↰"
+                  : currentNavStep.type === "turn_right" ? "↱"
+                  : currentNavStep.type === "u_turn" ? "↩"
+                  : "↑"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-extrabold leading-snug text-foreground">{currentNavInstruction}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Ikuti arah panah</p>
+              </div>
+              {activeRoute && endRoomIdRef.current && (
+                <button
+                  onClick={() => onStartNavigation?.({ mode: "calibrate", destinationRoomId: endRoomIdRef.current || undefined })}
+                  className="shrink-0 flex flex-col items-center justify-center gap-1 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:scale-95 px-3 py-2 text-white shadow-lg shadow-emerald-500/25 transition-all"
+                  title="Kalibrasi posisi via QR Code"
+                  style={{ animation: 'navQrPulse 2.4s ease-in-out infinite' }}
+                >
+                  <QrCode className="h-5 w-5" />
+                  <span className="text-[10px] font-bold leading-none">QR</span>
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pb-4">
+              <button
+                onClick={handlePreviousNavStep}
+                disabled={!canGoToPreviousStep}
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-border px-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                title="Lihat navigasi sebelumnya"
+                aria-label="Lihat navigasi sebelumnya"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Sebelum
+              </button>
+              <span className="min-w-[42px] text-center text-[11px] font-semibold text-muted-foreground">
+                {activeStepNumber}/{navSteps.length}
+              </span>
+              <button
+                onClick={handleNextNavStep}
+                disabled={!canGoToNextStep}
+                className="inline-flex h-9 items-center justify-center gap-1 rounded-lg border border-border px-2 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+                title="Lihat navigasi selanjutnya"
+                aria-label="Lihat navigasi selanjutnya"
+              >
+                Next
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <style>{`
+            @keyframes navQrPulse {
+              0%, 100% { box-shadow: 0 4px 14px rgba(16,185,129,0.25); }
+              50% { box-shadow: 0 4px 24px rgba(16,185,129,0.55); }
+            }
+          `}</style>
+        </>
       )}
     </div>
   );

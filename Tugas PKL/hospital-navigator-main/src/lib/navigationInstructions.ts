@@ -16,6 +16,7 @@ export interface NavigationStep {
 export const ANGLE_THRESHOLD = 25;
 
 const SIMPLIFY_EPSILON = 3;
+const MIN_EXPLICIT_STRAIGHT_DISTANCE = 60;
 
 const distance = (a: { x: number; y: number }, b: { x: number; y: number }): number => {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -131,6 +132,34 @@ const mergeConsecutiveStraights = (steps: NavigationStep[]): NavigationStep[] =>
   return merged.map((step, idx) => ({ ...step, index: idx }));
 };
 
+const addExplicitStraightsAfterTurns = (steps: NavigationStep[]): NavigationStep[] => {
+  const expanded: NavigationStep[] = [];
+
+  steps.forEach((step) => {
+    expanded.push({ ...step });
+
+    if (
+      step.type !== "straight" &&
+      step.type !== "arrive" &&
+      step.distanceToNext >= MIN_EXPLICIT_STRAIGHT_DISTANCE
+    ) {
+      expanded.push({
+        ...step,
+        index: expanded.length,
+        type: "straight",
+        fromPoint: step.pivotPoint,
+        pivotPoint: step.pivotPoint,
+        toPoint: step.toPoint,
+        angleChange: 0,
+        label: "Jalan lurus",
+        nextQrHint: undefined,
+      });
+    }
+  });
+
+  return expanded.map((step, idx) => ({ ...step, index: idx }));
+};
+
 export const buildNavigationSteps = (
   routePoints: { x: number; y: number }[]
 ): NavigationStep[] => {
@@ -172,6 +201,22 @@ export const buildNavigationSteps = (
     return steps;
   }
 
+  const initialDistance = distance(simplified[0], simplified[1]);
+  cumulativeDistance = initialDistance;
+
+  steps.push({
+    index: 0,
+    type: "straight",
+    fromPoint: simplified[0],
+    pivotPoint: simplified[0],
+    toPoint: simplified[1],
+    distanceToNext: initialDistance,
+    cumulativeDistance,
+    angleChange: 0,
+    label: "Jalan lurus",
+    nextQrHint: "Cari QR di persimpangan terdekat untuk kalibrasi posisi.",
+  });
+
   for (let i = 1; i < simplified.length - 1; i += 1) {
     const fromPoint = simplified[i - 1];
     const pivotPoint = simplified[i];
@@ -197,7 +242,7 @@ export const buildNavigationSteps = (
     });
   }
 
-  const merged = mergeConsecutiveStraights(steps);
+  const merged = addExplicitStraightsAfterTurns(mergeConsecutiveStraights(steps));
   const finalPivot = simplified[simplified.length - 1];
   const beforeFinal = simplified[simplified.length - 2];
   const finalDistance = distance(beforeFinal, finalPivot);
