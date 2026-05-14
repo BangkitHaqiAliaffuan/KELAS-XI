@@ -3893,11 +3893,12 @@ const MapViewer = ({
 
   const enhanceInstructionContext = useCallback((
     steps: NavigationStep[],
-    _checkpointIds: string[],
+    checkpointIds: string[],
     visibleFloor: -1 | 0 | 1 | 2,
     transitionLabel?: string,
     visibleFloorIndex = -1,
     previousVisibleFloor: -1 | 0 | 1 | 2 | null = null,
+    routePoints?: Array<{ x: number; y: number }>,
   ): NavigationStep[] => {
     if (!steps.length) return steps;
 
@@ -3946,36 +3947,77 @@ const MapViewer = ({
         .filter(({ distance, t }) => distance <= 45 && t > 0.08 && t <= 1)
         .sort((a, b) => a.t - b.t);
 
-    const isNear = (
+    /**
+     * Format a raw SVG node ID into a human-readable label.
+     * e.g. "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2" → "Tangga Pengunjung Parkir Lantai 2"
+     *      "Persimpangan_ke_Lab" → "Persimpangan ke Lab"
+     */
+    const formatNodeLabel = (nodeId: string): string => {
+      return nodeId
+        .replace(/^Check_Point_/i, "")
+        .replace(/^Check_point_/i, "")
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    };
+
+    /**
+     * Determine whether a node ID is meaningful enough to show as a landmark.
+     * Skip generic grid nodes (n_123_456) and virtual/generated nodes.
+     */
+    const isUsefulCheckpointId = (nodeId: string): boolean => {
+      if (!nodeId) return false;
+      if (/^n_\d+_\d+$/.test(nodeId)) return false;          // grid node
+      if (nodeId.startsWith("node_room_")) return false;      // room anchor
+      if (nodeId.startsWith("virtual_")) return false;        // virtual node
+      return true;
+    };
+
+    // Build a lookup: for each route point index, map its coordinates to its checkpoint node ID.
+    // checkpointIds[i] corresponds to routePoints[i] (1:1, with possible offset when exact start
+    // point was prepended — in that case routePoints has one extra entry at index 0).
+    const checkpointByCoord: Array<{ x: number; y: number; nodeId: string }> = [];
+    if (routePoints && checkpointIds.length) {
+      const offset = routePoints.length > checkpointIds.length ? routePoints.length - checkpointIds.length : 0;
+      checkpointIds.forEach((nodeId, i) => {
+        const pt = routePoints[i + offset];
+        if (pt && isUsefulCheckpointId(nodeId)) {
+          checkpointByCoord.push({ x: pt.x, y: pt.y, nodeId });
+        }
+      });
+    }
+
+    /**
+     * Find the checkpoint node closest to `point` within `tolerance` px.
+     */
+    const findNearestCheckpoint = (
       point: { x: number; y: number },
-      target: { x: number; y: number },
-      tolerance = 70,
-    ) => distanceBetween(point, target) <= tolerance;
+      tolerance = 30,
+    ): string | null => {
+      let best: string | null = null;
+      let bestDist = tolerance;
+      for (const cp of checkpointByCoord) {
+        const d = distanceBetween(point, cp);
+        if (d < bestDist) {
+          bestDist = d;
+          best = cp.nodeId;
+        }
+      }
+      return best;
+    };
 
     const getStraightLandmarkLabel = (step: NavigationStep): string | null => {
-      if (step.type !== "straight" || step.distanceToNext < 110) return null;
+      if (step.type !== "straight" || step.distanceToNext < 60) return null;
 
-      const floorLandmarks =
-        visibleFloor === 2
-          ? [
-              { label: "area lift", point: { x: 1015, y: 517 } },
-              { label: "area tangga", point: { x: 1060, y: 517 } },
-              { label: "area tangga", point: { x: 805, y: 255 } },
-            ]
-          : visibleFloor === 1
-            ? [
-                { label: "area lift", point: { x: 1015, y: 523 } },
-                { label: "area tangga", point: { x: 1060, y: 523 } },
-                { label: "area tangga", point: { x: 652, y: 255 } },
-              ]
-            : [];
+      // Primary: use the checkpoint node at the end of this step as the landmark.
+      const endCheckpointId = findNearestCheckpoint(step.toPoint, 40);
+      if (endCheckpointId) {
+        const label = formatNodeLabel(endCheckpointId);
+        if (label) return `Lurus sampai ${label}`;
+      }
 
-      const landmark = floorLandmarks.find(({ point }) => isNear(step.toPoint, point, 85));
-      if (landmark) return `Lurus sampai ${landmark.label}`;
-
+      // Fallback: QR anchor detection for intersections along the step.
       // Bug 2 Fix: deteksi persimpangan untuk koridor vertikal menggunakan metode berbeda.
-      // getQrAnchorsAlongStep memakai threshold 45px yang terlalu kecil untuk koridor vertikal
-      // di mana anchor persimpangan horizontal bisa berada 100–200px secara horizontal.
       const isVerticalStep =
         Math.abs(step.toPoint.y - step.fromPoint.y) > Math.abs(step.toPoint.x - step.fromPoint.x) * 2;
 
@@ -4044,6 +4086,60 @@ const MapViewer = ({
       distanceBetween(routeStartPoint, step.pivotPoint) <= 90 &&
       !isQrF1N11ToN12Corridor(step);
 
+    // ---------------------------------------------------------------------------
+    // Lift exit orientation — single-floor navigation starting from a lift.
+    //
+    // Lift pintu menghadap ke selatan (bawah SVG). Saat keluar lift, pengguna
+    // berdiri di koridor horizontal (cy≈515-517). Jika step pertama adalah
+    // "lurus" ke kiri atau kanan koridor, itu salah — harus belok dulu.
+    //
+    // Koordinat lift:
+    //   Lantai 1: Check_Point_Lift        cx=1015.6, cy=515.5
+    //   Lantai 2: Check_Point_Lift_Turun  cx=1015.1, cy=517.3
+    //
+    // PENGECUALIAN — biarkan tetap lurus jika tujuan ada di jalur vertikal
+    // tepat di depan lift (ke utara / atas SVG):
+    //   Lantai 1: Jalan_ke_Rawat_Jantung___Bedah  x≈1001, berjalan ke utara
+    //   Lantai 2: Jalan_ke_Rawat_Inap_Kelas_1_dan_VIP  x≈1001, berjalan ke utara
+    // ---------------------------------------------------------------------------
+
+    // Koordinat checkpoint lift per lantai
+    const LIFT_CHECKPOINTS: Record<number, { x: number; y: number }> = {
+      1: { x: 1015.6, y: 515.5 },
+      2: { x: 1015.1, y: 517.3 },
+    };
+
+    // Toleransi jarak untuk mendeteksi apakah route start berada di dekat lift
+    const LIFT_PROXIMITY_THRESHOLD = 25;
+
+    // Jalur vertikal "lurus ke depan" dari lift per lantai.
+    // Rute melewati jalur ini jika ada checkpoint di rute yang berada di
+    // jalur vertikal x≈1001 dan y < liftY (ke utara/atas SVG dari lift).
+    // Lantai 1: Jalan_ke_Rawat_Jantung___Bedah  x=1000.99, dari y≈256 ke y≈517
+    // Lantai 2: Jalan_ke_Rawat_Inap_Kelas_1_dan_VIP  x=1000.95, dari y≈257 ke y≈519
+    //
+    // Catatan: ujung bawah jalur ini (y≈517-519) hampir sama dengan liftY,
+    // sehingga kita cek apakah ada checkpoint di rute yang berada di x≈1001
+    // dengan y LEBIH KECIL dari liftY - 5 (benar-benar ke utara, bukan hanya
+    // di persimpangan koridor horizontal).
+    const routePassesThroughLiftStraightAheadPath = (
+      liftPoint: { x: number; y: number },
+    ): boolean => {
+      return checkpointByCoord.some(
+        (cp) =>
+          Math.abs(cp.x - 1001) <= 30 &&
+          cp.y < liftPoint.y - 5,
+      );
+    };
+
+    const liftCheckpoint = (visibleFloor === 1 || visibleFloor === 2)
+      ? LIFT_CHECKPOINTS[visibleFloor]
+      : null;
+
+    const isStartNearLift =
+      liftCheckpoint !== null &&
+      distanceBetween(routeStartPoint, liftCheckpoint) <= LIFT_PROXIMITY_THRESHOLD;
+
     const labeledSteps = steps.map((step, index) => {
       const shouldAddExitContext =
         visibleFloorIndex > 0 &&
@@ -4069,6 +4165,7 @@ const MapViewer = ({
     });
 
     const firstStep = labeledSteps[0];
+
     // Fix B: tambah batas atas distanceToNext (step lurus pertama harus pendek — tepat di area exit)
     // dan guard isQrF1N11ToN12Corridor agar jalur N11→N12 tidak dipaksa diberi step orientasi.
     const needsExitOrientationStep =
@@ -4081,41 +4178,65 @@ const MapViewer = ({
       !firstStep.label.includes("setelah keluar") &&
       !isQrF1N11ToN12Corridor(firstStep);
 
-    if (!needsExitOrientationStep) {
-      return labeledSteps;
-    }
-
-    const dx = firstStep.toPoint.x - firstStep.fromPoint.x;
-    const dy = firstStep.toPoint.y - firstStep.fromPoint.y;
-    // Arah mata angin: Atas SVG = Utara (dy<0), Bawah = Selatan (dy>0),
-    // Kanan = Timur (dx>0), Kiri = Barat (dx<0)
+    // Helper: buat step orientasi belok keluar lift/tangga
     const getCardinalDirection = (vx: number, vy: number): string => {
       const absDx = Math.abs(vx);
       const absDy = Math.abs(vy);
       if (absDx >= absDy) return vx >= 0 ? "Timur" : "Barat";
       return vy >= 0 ? "Selatan" : "Utara";
     };
-    const cardinalDir = getCardinalDirection(dx, dy);
-    const exitTurnType: "turn_left" | "turn_right" =
-      Math.abs(dx) >= Math.abs(dy)
-        ? dx >= 0 ? "turn_right" : "turn_left"
-        : dy >= 0 ? "turn_left" : "turn_right";
-    const exitOrientationStep: NavigationStep = {
-      ...firstStep,
-      type: exitTurnType,
-      angleChange: exitTurnType === "turn_right" ? 90 : -90,
-      distanceToNext: 0,
-      cumulativeDistance: 0,
-      toPoint: firstStep.fromPoint,
-      label: `Menuju ke arah ${cardinalDir} (setelah keluar dari ${exitContext})`,
-      nextQrHint: undefined,
-      index: 0,
+
+    const buildExitOrientationStep = (
+      baseStep: NavigationStep,
+      context: string,
+    ): NavigationStep => {
+      const dx = baseStep.toPoint.x - baseStep.fromPoint.x;
+      const dy = baseStep.toPoint.y - baseStep.fromPoint.y;
+      const cardinalDir = getCardinalDirection(dx, dy);
+      const turnType: "turn_left" | "turn_right" =
+        Math.abs(dx) >= Math.abs(dy)
+          ? dx >= 0 ? "turn_right" : "turn_left"
+          : dy >= 0 ? "turn_left" : "turn_right";
+      return {
+        ...baseStep,
+        type: turnType,
+        angleChange: turnType === "turn_right" ? 90 : -90,
+        distanceToNext: 0,
+        cumulativeDistance: 0,
+        toPoint: baseStep.fromPoint,
+        label: `Keluar dari ${context}, menuju ke arah ${cardinalDir}`,
+        nextQrHint: undefined,
+        index: 0,
+      };
     };
 
-    return [exitOrientationStep, ...labeledSteps].map((step, index) => ({
-      ...step,
-      index,
-    }));
+    // --- Case 1: cross-floor exit (tangga / lift antar lantai) ---
+    if (needsExitOrientationStep) {
+      const exitOrientationStep = buildExitOrientationStep(firstStep, exitContext);
+      return [exitOrientationStep, ...labeledSteps].map((step, index) => ({
+        ...step,
+        index,
+      }));
+    }
+
+    // --- Case 2: lift exit dalam satu lantai ---
+    // Aktif jika route start berada di dekat checkpoint lift DAN step pertama
+    // adalah "lurus" ke koridor horizontal (bukan ke jalur vertikal di depan lift).
+    const needsLiftExitStep =
+      isStartNearLift &&
+      liftCheckpoint !== null &&
+      firstStep?.type === "straight" &&
+      !routePassesThroughLiftStraightAheadPath(liftCheckpoint);
+
+    if (needsLiftExitStep) {
+      const liftExitStep = buildExitOrientationStep(firstStep, "lift");
+      return [liftExitStep, ...labeledSteps].map((step, index) => ({
+        ...step,
+        index,
+      }));
+    }
+
+    return labeledSteps;
   }, [QR_ANCHOR_REGISTRY]);
 
   const buildParkingL2BridgeEntrySteps = useCallback((steps: NavigationStep[]): NavigationStep[] => {
@@ -4403,6 +4524,7 @@ const MapViewer = ({
       activeRoute?.transitionLabel,
       visibleFloorIndex,
       previousVisibleFloor,
+      activeFloorSegment.points,
     );
 
     const nextNavStepsKey = [
