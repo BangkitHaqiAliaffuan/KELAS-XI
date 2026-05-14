@@ -4090,46 +4090,32 @@ const MapViewer = ({
     // Lift exit orientation — single-floor navigation starting from a lift.
     //
     // Lift pintu menghadap ke selatan (bawah SVG). Saat keluar lift, pengguna
-    // berdiri di koridor horizontal (cy≈515-517). Jika step pertama adalah
-    // "lurus" ke kiri atau kanan koridor, itu salah — harus belok dulu.
+    // berdiri di koridor horizontal. Jika step pertama adalah "lurus" ke kiri
+    // atau kanan koridor, itu salah — harus belok dulu.
     //
     // Koordinat lift:
-    //   Lantai 1: Check_Point_Lift        cx=1015.6, cy=515.5
-    //   Lantai 2: Check_Point_Lift_Turun  cx=1015.1, cy=517.3
+    //   Lantai 1: Check_Point_Lift        cx=1098.926, cy=516.826
+    //   Lantai 2: Check_Point_Lift_Turun  cx=1096.004, cy=515.688
     //
-    // PENGECUALIAN — biarkan tetap lurus jika tujuan ada di jalur vertikal
-    // tepat di depan lift (ke utara / atas SVG):
-    //   Lantai 1: Jalan_ke_Rawat_Jantung___Bedah  x≈1001, berjalan ke utara
-    //   Lantai 2: Jalan_ke_Rawat_Inap_Kelas_1_dan_VIP  x≈1001, berjalan ke utara
+    // Tidak ada jalur vertikal tepat di depan lift di posisi baru ini,
+    // sehingga pengecualian "lurus ke depan" tidak diperlukan.
     // ---------------------------------------------------------------------------
 
     // Koordinat checkpoint lift per lantai
     const LIFT_CHECKPOINTS: Record<number, { x: number; y: number }> = {
-      1: { x: 1015.6, y: 515.5 },
-      2: { x: 1015.1, y: 517.3 },
+      1: { x: 1098.926, y: 516.826 },
+      2: { x: 1096.004, y: 515.688 },
     };
 
     // Toleransi jarak untuk mendeteksi apakah route start berada di dekat lift
     const LIFT_PROXIMITY_THRESHOLD = 25;
 
-    // Jalur vertikal "lurus ke depan" dari lift per lantai.
-    // Rute melewati jalur ini jika ada checkpoint di rute yang berada di
-    // jalur vertikal x≈1001 dan y < liftY (ke utara/atas SVG dari lift).
-    // Lantai 1: Jalan_ke_Rawat_Jantung___Bedah  x=1000.99, dari y≈256 ke y≈517
-    // Lantai 2: Jalan_ke_Rawat_Inap_Kelas_1_dan_VIP  x=1000.95, dari y≈257 ke y≈519
-    //
-    // Catatan: ujung bawah jalur ini (y≈517-519) hampir sama dengan liftY,
-    // sehingga kita cek apakah ada checkpoint di rute yang berada di x≈1001
-    // dengan y LEBIH KECIL dari liftY - 5 (benar-benar ke utara, bukan hanya
-    // di persimpangan koridor horizontal).
+    // Tidak ada jalur vertikal tepat di depan lift di posisi baru,
+    // sehingga fungsi ini selalu return false (tidak ada pengecualian lurus).
     const routePassesThroughLiftStraightAheadPath = (
-      liftPoint: { x: number; y: number },
+      _liftPoint: { x: number; y: number },
     ): boolean => {
-      return checkpointByCoord.some(
-        (cp) =>
-          Math.abs(cp.x - 1001) <= 30 &&
-          cp.y < liftPoint.y - 5,
-      );
+      return false;
     };
 
     const liftCheckpoint = (visibleFloor === 1 || visibleFloor === 2)
@@ -4140,6 +4126,15 @@ const MapViewer = ({
       liftCheckpoint !== null &&
       distanceBetween(routeStartPoint, liftCheckpoint) <= LIFT_PROXIMITY_THRESHOLD;
 
+    // Tangga evakuasi (cx≈642, cy≈256) menempatkan pengguna langsung di koridor atas (cy≈256).
+    // Jika tujuan (HRD/Kepegawaian, Kebidanan, dll) juga di koridor atas, step pertama
+    // memang lurus — tidak perlu dipaksa belok, dan step belok berikutnya juga tidak perlu
+    // diberi label "setelah keluar dari tangga evakuasi".
+    // Deteksi: exitContext adalah "tangga evakuasi" DAN routeStartPoint.y < 290.
+    const isEvacStairTopCorridorExit =
+      exitContext === "tangga evakuasi" &&
+      routeStartPoint.y < 290;
+
     const labeledSteps = steps.map((step, index) => {
       const shouldAddExitContext =
         visibleFloorIndex > 0 &&
@@ -4148,12 +4143,35 @@ const MapViewer = ({
         isNearRouteStart(step) &&
         exitContext &&
         (step.type === "turn_left" || step.type === "turn_right") &&
-        !step.label.includes("setelah keluar");
+        !step.label.includes("setelah keluar") &&
+        // Jangan tambahkan konteks belok jika ini adalah tangga evakuasi ke koridor atas —
+        // step pertama sudah lurus, step belok berikutnya tidak perlu label "setelah keluar".
+        !isEvacStairTopCorridorExit;
+
+      // Jika tangga evakuasi → koridor atas: step belok yang berada dekat titik awal
+      // (dalam radius 150px, masih di area koridor atas) diubah menjadi lurus.
+      // Ini karena koridor atas adalah jalan lurus — belokan kecil dari geometri SVG
+      // tidak mencerminkan kebutuhan belok fisik yang nyata.
+      const isSpuriousTurnNearEvacStairExit =
+        isEvacStairTopCorridorExit &&
+        (step.type === "turn_left" || step.type === "turn_right") &&
+        distanceBetween(routeStartPoint, step.pivotPoint) <= 150 &&
+        step.pivotPoint.y < 290;
 
       const straightLandmarkLabel =
         step.label === "Jalan lurus" || step.label === "Lurus"
           ? getStraightLandmarkLabel(step)
           : null;
+
+      if (isSpuriousTurnNearEvacStairExit) {
+        return {
+          ...step,
+          type: "straight" as const,
+          angleChange: 0,
+          label: getStraightLandmarkLabel({ ...step, type: "straight" as const }) || "Jalan lurus",
+          index,
+        };
+      }
 
       return {
         ...step,
@@ -4168,6 +4186,8 @@ const MapViewer = ({
 
     // Fix B: tambah batas atas distanceToNext (step lurus pertama harus pendek — tepat di area exit)
     // dan guard isQrF1N11ToN12Corridor agar jalur N11→N12 tidak dipaksa diberi step orientasi.
+    //
+    // PENGECUALIAN tangga evakuasi → koridor atas: lihat isEvacStairTopCorridorExit di atas.
     const needsExitOrientationStep =
       visibleFloorIndex > 0 &&
       isVerticalFloorTransition &&
@@ -4176,7 +4196,8 @@ const MapViewer = ({
       firstStep.distanceToNext >= 100 &&
       firstStep.distanceToNext <= 200 &&
       !firstStep.label.includes("setelah keluar") &&
-      !isQrF1N11ToN12Corridor(firstStep);
+      !isQrF1N11ToN12Corridor(firstStep) &&
+      !isEvacStairTopCorridorExit;
 
     // Helper: buat step orientasi belok keluar lift/tangga
     const getCardinalDirection = (vx: number, vy: number): string => {
@@ -4231,6 +4252,43 @@ const MapViewer = ({
     if (needsLiftExitStep) {
       const liftExitStep = buildExitOrientationStep(firstStep, "lift");
       return [liftExitStep, ...labeledSteps].map((step, index) => ({
+        ...step,
+        index,
+      }));
+    }
+
+    // --- Case 3: tangga biasa exit dalam satu lantai ---
+    // Tangga biasa (bukan evakuasi) berada di koridor horizontal cy≈515-517.
+    // Saat keluar tangga, pengguna berdiri di koridor — step pertama harus belok,
+    // bukan lurus.
+    //
+    // Koordinat checkpoint tangga biasa:
+    //   Lantai 1: Check_Point_Tangga       cx=1056.06, cy=515.50
+    //   Lantai 2: Check_Point_Tangga_Turun cx=1060.13, cy=517.51
+    //
+    // Tangga evakuasi (cx≈642, cy≈256) DIKECUALIKAN — berada di koridor atas,
+    // bukan koridor horizontal, sehingga tidak terpengaruh logika ini.
+    const STAIR_CHECKPOINTS: Record<number, { x: number; y: number }> = {
+      1: { x: 1056.06, y: 515.50 },
+      2: { x: 1060.13, y: 517.51 },
+    };
+    const STAIR_PROXIMITY_THRESHOLD = 25;
+
+    const stairCheckpoint = (visibleFloor === 1 || visibleFloor === 2)
+      ? STAIR_CHECKPOINTS[visibleFloor]
+      : null;
+
+    const isStartNearStair =
+      stairCheckpoint !== null &&
+      distanceBetween(routeStartPoint, stairCheckpoint) <= STAIR_PROXIMITY_THRESHOLD;
+
+    const needsStairExitStep =
+      isStartNearStair &&
+      firstStep?.type === "straight";
+
+    if (needsStairExitStep) {
+      const stairExitStep = buildExitOrientationStep(firstStep, "tangga");
+      return [stairExitStep, ...labeledSteps].map((step, index) => ({
         ...step,
         index,
       }));
