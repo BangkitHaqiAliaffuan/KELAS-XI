@@ -5512,15 +5512,32 @@ const MapViewer = ({
       {/* ── Map container ── */}
       <div className="relative flex-1 min-h-0 overflow-hidden bg-muted/20 rounded-xl border border-border shadow-inner pb-[0px] md:pb-0">
 
-      {/* Compass overlay — di luar mapRef agar tidak ikut zoom/pan (R-06) */}
-      {/* Di mobile: selalu hidden — compass hanya muncul di navigation panel */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-none hidden md:block">
-        <img
-          src="/images/arah%20mata%20angin.svg"
-          alt="Kompas arah mata angin"
-          className="w-32 h-32 opacity-85 drop-shadow-md select-none"
-          draggable={false}
-        />
+      {/* Compass overlay — di luar mapRef agar tidak ikut zoom/pan */}
+      {/* Desktop only: selalu pojok kanan atas, tersembunyi di mobile */}
+      <div
+        className="absolute z-20 pointer-events-none hidden md:block md:top-4 md:right-4"
+      >
+        {/* Glassmorphism wrapper: circle bg + drop shadow */}
+        <div
+          className="rounded-full flex items-center justify-center w-24 h-24 md:w-28 md:h-28"
+          style={{
+            background: 'rgba(255,255,255,0.22)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1.5px solid rgba(255,255,255,0.45)',
+            boxShadow: '0 4px 18px rgba(0,0,0,0.28), 0 1px 4px rgba(0,0,0,0.16)',
+          }}
+        >
+          <img
+            src="/images/arah%20mata%20angin.svg"
+            alt="Kompas arah mata angin"
+            className="w-[88%] h-[88%] select-none"
+            draggable={false}
+            style={{
+              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.35))',
+            }}
+          />
+        </div>
       </div>
 
       <div
@@ -5830,7 +5847,7 @@ const MapViewer = ({
       )}
 
       {/* Zoom controls */}
-      <div className="absolute bottom-6 right-16 flex items-center gap-2 bg-background/80 backdrop-blur-md p-1.5 border border-border rounded-xl shadow-lg">
+      <div className="absolute bottom-6 right-20 flex items-center gap-2 bg-background/80 backdrop-blur-md p-1.5 border border-border rounded-xl shadow-lg">
         <button
           onClick={handleZoomOut}
           disabled={scale <= MIN_SCALE}
@@ -5862,12 +5879,7 @@ const MapViewer = ({
         <Locate className="h-5 w-5" />
       </button>
 
-      {qrCalibrationHistory.length > 0 && (
-        <div className="absolute bottom-20 left-6 z-20 max-w-[280px] rounded-lg border border-primary/20 bg-background/90 px-3 py-2 text-[11px] text-muted-foreground shadow-md backdrop-blur-sm">
-          <p className="font-semibold text-foreground">🎯 {qrCalibrationHistory.length}x dikalibrasi via QR</p>
-          {lastQrAnchor && <p className="mt-0.5">Terakhir: {lastQrAnchor.label}</p>}
-        </div>
-      )}
+
 
 
       {/* Map pin marker */}
@@ -6099,15 +6111,6 @@ const MapViewer = ({
                   <span className="text-[10px] font-bold leading-none">QR</span>
                 </button>
               )}
-            </div>
-            {/* Compass — ditampilkan di bawah step, di luar container map */}
-            <div className="flex justify-center pb-2">
-              <img
-                src="/images/arah%20mata%20angin.svg"
-                alt="Kompas arah mata angin"
-                className="w-20 h-20 opacity-85 drop-shadow-md select-none pointer-events-none"
-                draggable={false}
-              />
             </div>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pb-4">
               <button
