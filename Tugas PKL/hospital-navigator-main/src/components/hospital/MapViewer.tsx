@@ -88,20 +88,47 @@ const MapViewer = ({
 
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  // ── Fix 3: committed transform — hanya di-update saat drag/pinch SELESAI.
+  // Effect overlay markers depend pada ini, bukan position/scale, sehingga
+  // tidak ada reflow selama drag/pinch berlangsung.
+  const [committedTransform, setCommittedTransform] = useState({ scale: 1, x: 0, y: 0 });
+  // isDragging dikelola via ref + DOM class langsung — tidak perlu React state
+  // agar tidak memicu re-render saat touch start/end
+  const isDraggingRef = useRef(false);
 
   // Single source of truth for drag state — stored in refs to avoid stale closures
-  const isDraggingRef = useRef(false);
   const dragOriginRef = useRef({ x: 0, y: 0 });
   const positionRef = useRef({ x: 0, y: 0 });     // always mirrors position state
   const positionAtDragStart = useRef({ x: 0, y: 0 });
   const hasDraggedRef = useRef(false);              // true once mouse moved > DRAG_THRESHOLD
   const scaleRef = useRef(scale);
 
+  // ── Fix 2: helper untuk apply transform langsung ke DOM (single source of truth)
+  // Dipakai oleh drag, pinch, tombol zoom, dan animation. Tidak ada lagi React
+  // inline style yang akan menimpa DOM write.
+  const applyTransformToDom = useCallback((x: number, y: number, s: number) => {
+    if (mapRef.current) {
+      mapRef.current.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+    }
+  }, []);
+
   // Shared handlers stored in refs so setupSvgRoomInteraction can attach the
   // EXACT same function instances to svgDoc (no duplicate logic, no stale closures)
   const applyDragMoveRef = useRef<(hostX: number, hostY: number, buttons: number) => void>(() => {});
   const applyDragEndRef = useRef<() => void>(() => {});
+
+  // ── Shared pinch refs — dipakai oleh KEDUA handler (host container & SVG iframe)
+  // agar pinch yang dimulai di atas SVG tetap bisa di-handle dengan benar.
+  const pinchActiveRef = useRef(false);
+  const pinchStartDistRef = useRef(0);
+  const pinchStartScaleRef = useRef(1);
+  const pinchDistBufferRef = useRef<number[]>([]);
+  const pinchRafIdRef = useRef<number | null>(null);
+  const pinchPendingRef = useRef({ x: 0, y: 0, s: 1, dirty: false });
+
+  const schedulePinchTransformRef = useRef<(x: number, y: number, s: number) => void>(() => {});
+  const cancelPinchRafRef = useRef<() => void>(() => {});
+  const commitPinchEndRef = useRef<() => void>(() => {});
 
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [activeRoomInfo, setActiveRoomInfo] = useState<HospitalRoomInfo | null>(null);
@@ -238,6 +265,12 @@ const MapViewer = ({
   // Keep refs in sync with state
   useEffect(() => { scaleRef.current = scale; }, [scale]);
   useEffect(() => { positionRef.current = position; }, [position]);
+  // ── Fix 2: Sync DOM transform setiap kali React state position/scale berubah
+  // (dari tombol zoom, animation, reset, dll). Saat drag/pinch aktif, DOM sudah
+  // up-to-date dan ini sekedar memastikan tidak ada drift antara state & DOM.
+  useEffect(() => {
+    applyTransformToDom(position.x, position.y, scale);
+  }, [position, scale, applyTransformToDom]);
   useEffect(() => { liveSvgPointRef.current = liveSvgPoint; }, [liveSvgPoint]);
   useEffect(() => { startRoomIdRef.current = startRoomId; }, [startRoomId]);
   useEffect(() => { endRoomIdRef.current = endRoomId; }, [endRoomId]);
@@ -1690,21 +1723,63 @@ const MapViewer = ({
     positionAtDragStart.current = { ...positionRef.current };
     // Kill CSS transition IMMEDIATELY — synchronous DOM write, no React cycle delay.
     if (mapRef.current) mapRef.current.style.transition = 'none';
-    setIsDragging(true);
+    // Update cursor class directly on DOM — no React re-render needed
+    if (containerRef.current) {
+      containerRef.current.classList.remove('cursor-grab');
+      containerRef.current.classList.add('cursor-grabbing');
+    }
   }, []);
 
   // applyDragMove / applyDragEnd accept HOST-PAGE coordinates explicitly.
   // This is critical because SVG <object> iframe mouse events fire with clientX/Y
   // relative to the IFRAME viewport, not the host page — callers must convert first.
   useEffect(() => {
+    // ── Fix 4: rAF handle — satu write per frame, tidak peduli seberapa cepat
+    // touchmove datang (60–120 fps di Android).
+    let rafId: number | null = null;
+    let pendingX = 0;
+    let pendingY = 0;
+    let pendingScale = 1;
+    let rafPending = false;
+
+    const flushRaf = () => {
+      rafId = null;
+      rafPending = false;
+      if (mapRef.current) {
+        mapRef.current.style.transform = `translate(${pendingX}px, ${pendingY}px) scale(${pendingScale})`;
+      }
+    };
+
+    const scheduleTransform = (x: number, y: number, s: number) => {
+      pendingX = x;
+      pendingY = y;
+      pendingScale = s;
+      if (!rafPending) {
+        rafPending = true;
+        rafId = requestAnimationFrame(flushRaf);
+      }
+    };
+
+    const cancelRaf = () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+        rafPending = false;
+      }
+    };
+
     const applyDragMove = (hostX: number, hostY: number, buttons: number) => {
       if (!isDraggingRef.current) return;
 
       if ((buttons & 1) === 0) {
         isDraggingRef.current = false;
         hasDraggedRef.current = false;
+        cancelRaf();
         if (mapRef.current) mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
-        setIsDragging(false);
+        if (containerRef.current) {
+          containerRef.current.classList.remove('cursor-grabbing');
+          containerRef.current.classList.add('cursor-grab');
+        }
         return;
       }
 
@@ -1720,15 +1795,28 @@ const MapViewer = ({
         y: positionAtDragStart.current.y + dy,
       };
       positionRef.current = newPos;
-      setPosition(newPos);
+      // ── Fix 4: gunakan rAF agar max 1 DOM write per frame
+      scheduleTransform(newPos.x, newPos.y, scaleRef.current);
     };
 
     const applyDragEnd = () => {
       if (!isDraggingRef.current) return;
-      const wasDrag = hasDraggedRef.current;
       isDraggingRef.current = false;
-      if (mapRef.current) mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
-      setIsDragging(false);
+      cancelRaf();
+      // Tulis posisi final langsung (tidak perlu rAF — drag sudah selesai)
+      if (mapRef.current) {
+        mapRef.current.style.transform = `translate(${positionRef.current.x}px, ${positionRef.current.y}px) scale(${scaleRef.current})`;
+        mapRef.current.style.transition = 'transform 0.15s cubic-bezier(0.2, 0, 0, 1)';
+      }
+      if (containerRef.current) {
+        containerRef.current.classList.remove('cursor-grabbing');
+        containerRef.current.classList.add('cursor-grab');
+      }
+      // ── Fix 3: sync React state + committedTransform sekali saat drag selesai
+      const finalPos = { ...positionRef.current };
+      const finalScale = scaleRef.current;
+      setPosition(finalPos);
+      setCommittedTransform({ x: finalPos.x, y: finalPos.y, scale: finalScale });
     };
 
     applyDragMoveRef.current = applyDragMove;
@@ -1741,6 +1829,7 @@ const MapViewer = ({
     window.addEventListener("mousemove", onMouseMove);
     window.addEventListener("mouseup", onMouseUp);
     return () => {
+      cancelRaf();
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
     };
@@ -1756,28 +1845,6 @@ const MapViewer = ({
     [startDrag]
   );
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const touch = e.touches[0];
-      startDrag(touch.clientX, touch.clientY, "host");
-    },
-    [startDrag]
-  );
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    const touch = e.touches[0];
-    e.preventDefault();
-    applyDragMoveRef.current(touch.clientX, touch.clientY, 1);
-  }, []);
-
-  const handleTouchEnd = useCallback(() => {
-    applyDragEndRef.current();
-  }, []);
-
-  // ---------------------------------------------------------------------------
-  // Wheel / zoom — single handler on the container only
   // ---------------------------------------------------------------------------
 
   const handleWheel = useCallback((e: WheelEvent) => {
@@ -1794,7 +1861,7 @@ const MapViewer = ({
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      const prevPos = positionRef.current; // use ref, not stale closure
+      const prevPos = positionRef.current;
       const mapX = (mouseX - prevPos.x) / prevScale;
       const mapY = (mouseY - prevPos.y) / prevScale;
       const newPos = {
@@ -1802,7 +1869,10 @@ const MapViewer = ({
         y: mouseY - mapY * newScale,
       };
       positionRef.current = newPos;
+      scaleRef.current = newScale;
       setPosition(newPos);
+      // ── Fix 3: update committedTransform saat wheel zoom selesai
+      setCommittedTransform({ x: newPos.x, y: newPos.y, scale: newScale });
 
       return newScale;
     });
@@ -1814,6 +1884,149 @@ const MapViewer = ({
     container.addEventListener("wheel", handleWheel, { passive: false });
     return () => container.removeEventListener("wheel", handleWheel);
   }, [handleWheel]);
+
+  // ── Touch listeners dipasang via useEffect dengan { passive: false }
+  // Pinch state di-share via component-level refs agar SVG iframe handler
+  // bisa mengakses state yang sama (SVG <object> adalah iframe terpisah).
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const PINCH_SMOOTH = 3;
+
+    const smoothDist = (d: number): number => {
+      pinchDistBufferRef.current.push(d);
+      if (pinchDistBufferRef.current.length > PINCH_SMOOTH) pinchDistBufferRef.current.shift();
+      const buf = pinchDistBufferRef.current;
+      return buf.reduce((a, b) => a + b, 0) / buf.length;
+    };
+
+    // rAF flush — shared via ref agar SVG iframe bisa pakai
+    const flushPinchRaf = () => {
+      pinchRafIdRef.current = null;
+      const p = pinchPendingRef.current;
+      if (!p.dirty) return;
+      p.dirty = false;
+      if (mapRef.current) {
+        mapRef.current.style.transform = `translate(${p.x}px, ${p.y}px) scale(${p.s})`;
+      }
+    };
+
+    schedulePinchTransformRef.current = (x: number, y: number, s: number) => {
+      pinchPendingRef.current = { x, y, s, dirty: true };
+      if (pinchRafIdRef.current === null) {
+        pinchRafIdRef.current = requestAnimationFrame(flushPinchRaf);
+      }
+    };
+
+    cancelPinchRafRef.current = () => {
+      if (pinchRafIdRef.current !== null) {
+        cancelAnimationFrame(pinchRafIdRef.current);
+        pinchRafIdRef.current = null;
+      }
+      pinchPendingRef.current.dirty = false;
+    };
+
+    commitPinchEndRef.current = () => {
+      cancelPinchRafRef.current();
+      pinchDistBufferRef.current = [];
+      if (mapRef.current) {
+        mapRef.current.style.transform = `translate(${positionRef.current.x}px, ${positionRef.current.y}px) scale(${scaleRef.current})`;
+      }
+      const finalPos = { ...positionRef.current };
+      const finalScale = scaleRef.current;
+      setScale(finalScale);
+      setPosition(finalPos);
+      setCommittedTransform({ x: finalPos.x, y: finalPos.y, scale: finalScale });
+    };
+
+    const getTouchDist = (t1: Touch, t2: Touch) =>
+      Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
+    const getTouchMid = (t1: Touch, t2: Touch) => ({
+      x: (t1.clientX + t2.clientX) / 2,
+      y: (t1.clientY + t2.clientY) / 2,
+    });
+
+    // Shared pinch move logic — dipakai oleh host dan SVG iframe handler
+    const handlePinchMove = (t1: Touch, t2: Touch) => {
+      const rawDist = getTouchDist(t1, t2);
+      const smoothed = smoothDist(rawDist);
+      const ratio = smoothed / pinchStartDistRef.current;
+      const newScale = Math.min(Math.max(pinchStartScaleRef.current * ratio, MIN_SCALE), MAX_SCALE);
+
+      const rect = container.getBoundingClientRect();
+      const mid = getTouchMid(t1, t2);
+      const focalX = mid.x - rect.left;
+      const focalY = mid.y - rect.top;
+
+      const prevPos = positionRef.current;
+      const prevScale = scaleRef.current;
+      const mapX = (focalX - prevPos.x) / prevScale;
+      const mapY = (focalY - prevPos.y) / prevScale;
+      const newPos = {
+        x: focalX - mapX * newScale,
+        y: focalY - mapY * newScale,
+      };
+
+      positionRef.current = newPos;
+      scaleRef.current = newScale;
+      schedulePinchTransformRef.current(newPos.x, newPos.y, newScale);
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        pinchActiveRef.current = false;
+        pinchDistBufferRef.current = [];
+        cancelPinchRafRef.current();
+        const touch = e.touches[0];
+        startDrag(touch.clientX, touch.clientY, "host");
+      } else if (e.touches.length === 2) {
+        applyDragEndRef.current();
+        pinchDistBufferRef.current = [];
+        pinchActiveRef.current = true;
+        pinchStartDistRef.current = getTouchDist(e.touches[0], e.touches[1]);
+        pinchStartScaleRef.current = scaleRef.current;
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && !pinchActiveRef.current) {
+        const touch = e.touches[0];
+        applyDragMoveRef.current(touch.clientX, touch.clientY, 1);
+      } else if (e.touches.length === 2 && pinchActiveRef.current) {
+        handlePinchMove(e.touches[0], e.touches[1]);
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (pinchActiveRef.current) {
+        pinchActiveRef.current = false;
+        e.preventDefault();
+        commitPinchEndRef.current();
+      } else {
+        applyDragEndRef.current();
+      }
+      if (e.touches.length === 1 && !pinchActiveRef.current) {
+        const touch = e.touches[0];
+        startDrag(touch.clientX, touch.clientY, "host");
+      }
+    };
+
+    container.addEventListener("touchstart", onTouchStart, { passive: false });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd, { passive: false });
+    container.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
+    return () => {
+      cancelPinchRafRef.current();
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+      container.removeEventListener("touchcancel", onTouchEnd);
+    };
+  }, [startDrag]);
 
   // ---------------------------------------------------------------------------
   // SVG interaction setup — room clicks + forward mousedown/wheel into host
@@ -2648,31 +2861,94 @@ const MapViewer = ({
     const svgMouseUp = () => applyDragEndRef.current();
     const svgWheel   = (e: WheelEvent) => handleWheel(e);
 
+    // ── SVG iframe touch handler — menggunakan shared pinch refs agar pinch
+    // yang dimulai di atas SVG bisa di-handle sama seperti di host container.
+
+    const getTouchDistSvg = (t1: Touch, t2: Touch) =>
+      Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+
     const svgTouchStart = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const touch = e.touches[0];
       const { left, top } = getObjectOffset();
-      startDrag(touch.clientX + left, touch.clientY + top, "svg");
+      if (e.touches.length === 1) {
+        // Single finger — drag
+        pinchActiveRef.current = false;
+        pinchDistBufferRef.current = [];
+        cancelPinchRafRef.current();
+        const touch = e.touches[0];
+        startDrag(touch.clientX + left, touch.clientY + top, "svg");
+      } else if (e.touches.length === 2) {
+        // Two fingers — pinch, batalkan drag
+        applyDragEndRef.current();
+        pinchDistBufferRef.current = [];
+        pinchActiveRef.current = true;
+        pinchStartDistRef.current = getTouchDistSvg(e.touches[0], e.touches[1]);
+        pinchStartScaleRef.current = scaleRef.current;
+      }
     };
 
     const svgTouchMove = (e: TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const touch = e.touches[0];
-      const { left, top } = getObjectOffset();
       e.preventDefault();
-      applyDragMoveRef.current(touch.clientX + left, touch.clientY + top, 1);
+      const { left, top } = getObjectOffset();
+      if (e.touches.length === 1 && !pinchActiveRef.current) {
+        const touch = e.touches[0];
+        applyDragMoveRef.current(touch.clientX + left, touch.clientY + top, 1);
+      } else if (e.touches.length === 2 && pinchActiveRef.current) {
+        // Koordinat touch dari SVG iframe sudah dalam host-page space (clientX/Y)
+        // sehingga focal point dihitung langsung tanpa offset
+        const rawDist = getTouchDistSvg(e.touches[0], e.touches[1]);
+        const buf = pinchDistBufferRef.current;
+        buf.push(rawDist);
+        if (buf.length > 3) buf.shift();
+        const smoothed = buf.reduce((a, b) => a + b, 0) / buf.length;
+        const ratio = smoothed / pinchStartDistRef.current;
+        const newScale = Math.min(Math.max(pinchStartScaleRef.current * ratio, MIN_SCALE), MAX_SCALE);
+
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        const focalX = midX - rect.left;
+        const focalY = midY - rect.top;
+
+        const prevPos = positionRef.current;
+        const prevScale = scaleRef.current;
+        const mapX = (focalX - prevPos.x) / prevScale;
+        const mapY = (focalY - prevPos.y) / prevScale;
+        const newPos = {
+          x: focalX - mapX * newScale,
+          y: focalY - mapY * newScale,
+        };
+
+        positionRef.current = newPos;
+        scaleRef.current = newScale;
+        schedulePinchTransformRef.current(newPos.x, newPos.y, newScale);
+      }
     };
 
-    const svgTouchEnd = () => applyDragEndRef.current();
+    const svgTouchEnd = (e: TouchEvent) => {
+      if (pinchActiveRef.current) {
+        pinchActiveRef.current = false;
+        e.preventDefault();
+        commitPinchEndRef.current();
+      } else {
+        applyDragEndRef.current();
+      }
+      if (e.touches.length === 1 && !pinchActiveRef.current) {
+        const { left, top } = getObjectOffset();
+        const touch = e.touches[0];
+        startDrag(touch.clientX + left, touch.clientY + top, "svg");
+      }
+    };
 
     svgDoc.documentElement.addEventListener("mousedown", svgMouseDown);
     svgDoc.documentElement.addEventListener("mousemove", svgMouseMove);
     svgDoc.documentElement.addEventListener("mouseup",   svgMouseUp);
     svgDoc.documentElement.addEventListener("wheel",     svgWheel, { passive: false });
-    svgDoc.documentElement.addEventListener("touchstart", svgTouchStart, { passive: true });
+    svgDoc.documentElement.addEventListener("touchstart", svgTouchStart, { passive: false });
     svgDoc.documentElement.addEventListener("touchmove",  svgTouchMove, { passive: false });
-    svgDoc.documentElement.addEventListener("touchend",   svgTouchEnd);
-    svgDoc.documentElement.addEventListener("touchcancel", svgTouchEnd);
+    svgDoc.documentElement.addEventListener("touchend",   svgTouchEnd, { passive: false });
+    svgDoc.documentElement.addEventListener("touchcancel", svgTouchEnd, { passive: false });
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mousedown", svgMouseDown));
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mousemove", svgMouseMove));
     cleanupHandlers.push(() => svgDoc.documentElement.removeEventListener("mouseup",   svgMouseUp));
@@ -2780,7 +3056,7 @@ const MapViewer = ({
     }
 
     setCurrentUserMarkerPosition(markerPos);
-  }, [showCurrentUserMarker, liveSvgPoint, startRoomId, scale, position, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition, projectSvgPointToOverlay]);
+  }, [showCurrentUserMarker, liveSvgPoint, startRoomId, committedTransform, svgReadyVersion, asSvgGraphicsElement, calculateOverlayPosition, projectSvgPointToOverlay]);
 
   // ---------------------------------------------------------------------------
   // Zoom to SVG element — centers the map on a given SVG element
@@ -2868,6 +3144,7 @@ const MapViewer = ({
       }
 
       positionRef.current = newPos;
+      scaleRef.current = targetScale;
       setScale(targetScale);
       setPosition(newPos);
 
@@ -2940,8 +3217,10 @@ const MapViewer = ({
       }
 
       positionRef.current = newPos;
+      scaleRef.current = targetScale;
       setScale(targetScale);
       setPosition(newPos);
+      setCommittedTransform({ x: newPos.x, y: newPos.y, scale: targetScale });
 
       // Reset transition after animation completes
       setTimeout(() => {
@@ -3052,7 +3331,7 @@ const MapViewer = ({
     } else {
       setActiveMarkerPosition(null);
     }
-  }, [selectedLocation, activeRoomId, scale, position, calculateMarkerPosition, asSvgGraphicsElement]);
+  }, [selectedLocation, activeRoomId, committedTransform, calculateMarkerPosition, asSvgGraphicsElement]);
 
   const handleResolveQrLocation = useCallback(() => {
     const svgDoc = objectRef.current?.contentDocument;
@@ -3814,12 +4093,16 @@ const MapViewer = ({
       );
     }
 
-    const beforeExitSteps = buildNavigationSteps(points.slice(0, exitPointIndex + 1)).map((step) => ({
-      ...step,
-      label: step.type === "straight" && isMainEntryCorridorStep(step)
-        ? "Lanjut mengikuti koridor utama"
-        : step.label,
-    }));
+    const beforeExitSteps = buildNavigationSteps(points.slice(0, exitPointIndex + 1))
+      // Hapus step "arrive" dari beforeExitSteps — kita akan menambahkan arrive sendiri
+      // di akhir setelah accessStep. Tanpa ini akan ada dua "arrive" step.
+      .filter((step) => step.type !== "arrive")
+      .map((step) => ({
+        ...step,
+        label: step.type === "straight" && isMainEntryCorridorStep(step)
+          ? "Lanjut mengikuti koridor utama"
+          : step.label,
+      }));
     const distanceToParkingAccess = points
       .slice(exitPointIndex, -1)
       .reduce((total, point, index) => total + pointDistance(point, points[exitPointIndex + index + 1]), 0);
@@ -3838,19 +4121,11 @@ const MapViewer = ({
       label: "Keluar mengikuti jalur utama menuju lahan parkir",
       nextQrHint: "Cari QR di area parkir untuk kalibrasi posisi.",
     };
-    const arriveStep: NavigationStep = {
-      index: beforeExitSteps.length + 1,
-      type: "arrive",
-      fromPoint: exitPoint,
-      pivotPoint: finalPoint,
-      toPoint: finalPoint,
-      distanceToNext: 0,
-      cumulativeDistance: accessStep.cumulativeDistance,
-      angleChange: 0,
-      label: "Anda telah tiba di tujuan",
-    };
 
-    return [...beforeExitSteps, accessStep, arriveStep].map((step, index) => ({
+    // Tidak ada arriveStep — "Keluar mengikuti jalur utama menuju lahan parkir"
+    // adalah step terakhir. Pengguna belum tiba di tujuan (parkir), masih harus
+    // berjalan ke area parkir setelah keluar gedung.
+    return [...beforeExitSteps, accessStep].map((step, index) => ({
       ...step,
       index,
     }));
@@ -3899,6 +4174,7 @@ const MapViewer = ({
     visibleFloorIndex = -1,
     previousVisibleFloor: -1 | 0 | 1 | 2 | null = null,
     routePoints?: Array<{ x: number; y: number }>,
+    svgDoc?: Document | null,
   ): NavigationStep[] => {
     if (!steps.length) return steps;
 
@@ -3949,10 +4225,33 @@ const MapViewer = ({
 
     /**
      * Format a raw SVG node ID into a human-readable label.
+     * Prioritas: inkscape:label dari SVG → fallback format dari ID.
      * e.g. "Check_Point_Tangga_Pengunjung_Parkir_Lantai_2" → "Tangga Pengunjung Parkir Lantai 2"
      *      "Persimpangan_ke_Lab" → "Persimpangan ke Lab"
      */
+    const getNodeSvgLabel = (nodeId: string): string | null => {
+      if (!svgDoc || !nodeId) return null;
+      // Coba cari elemen dengan ID persis
+      let el = svgDoc.getElementById(nodeId);
+      // Fallback: cari dengan whitespace dinormalisasi (Inkscape kadang embed newline di id)
+      if (!el) {
+        el = (Array.from(svgDoc.querySelectorAll("[id]")).find(
+          (e) => (e.id || "").replace(/\s+/g, "") === nodeId,
+        ) as HTMLElement | null) ?? null;
+      }
+      if (!el) return null;
+      const label =
+        el.getAttribute("inkscape:label") ||
+        el.getAttribute("label") ||
+        el.getAttribute("aria-label");
+      return label?.trim() || null;
+    };
+
     const formatNodeLabel = (nodeId: string): string => {
+      // Coba ambil label asli dari SVG terlebih dahulu
+      const svgLabel = getNodeSvgLabel(nodeId);
+      if (svgLabel) return svgLabel;
+      // Fallback: format dari ID
       return nodeId
         .replace(/^Check_Point_/i, "")
         .replace(/^Check_point_/i, "")
@@ -3989,14 +4288,26 @@ const MapViewer = ({
 
     /**
      * Find the checkpoint node closest to `point` within `tolerance` px.
+     * Hanya mengembalikan checkpoint yang benar-benar merupakan titik akhir step
+     * (bukan intermediate waypoint di tengah jalur lurus).
      */
     const findNearestCheckpoint = (
       point: { x: number; y: number },
       tolerance = 30,
     ): string | null => {
+      // Checkpoint internal yang tidak bermakna sebagai landmark navigasi pengguna.
+      // Ini adalah node teknis di tengah koridor yang bukan persimpangan nyata.
+      const INTERNAL_CHECKPOINT_BLACKLIST = new Set([
+        "Check_Point_R._HD",                    // cx=547.5, cy=255 — di tengah koridor atas
+        "Persimpangan_ke_ICU",                  // cx=538.4, cy=255 — di tengah koridor atas
+        "Check_Point_1_Ruang_Tunggu_keluarga",  // cx=696.5, cy=256 — di tengah koridor atas
+        "Check_Point_Ruang_Loundry",            // cx=1148.2, cy=255 — di tengah koridor atas
+      ]);
+
       let best: string | null = null;
       let bestDist = tolerance;
       for (const cp of checkpointByCoord) {
+        if (INTERNAL_CHECKPOINT_BLACKLIST.has(cp.nodeId)) continue;
         const d = distanceBetween(point, cp);
         if (d < bestDist) {
           bestDist = d;
@@ -4062,13 +4373,21 @@ const MapViewer = ({
       previousVisibleFloor > 0 &&
       visibleFloor > 0 &&
       previousVisibleFloor !== visibleFloor;
-    const exitContext = normalizedTransition.includes("lift")
-      ? "lift"
-      : normalizedTransition.includes("evakuasi")
-        ? "tangga evakuasi"
-        : normalizedTransition.includes("tangga")
-          ? "tangga"
-          : "";
+
+    // exitContext hanya relevan jika transisi SEBELUMNYA adalah antar lantai RS (bukan dari parkir).
+    // Jika previousVisibleFloor adalah parkir (0 atau -1), pengguna baru saja melewati jembatan/tangga
+    // parkir — bukan tangga/lift RS — sehingga exitContext tidak boleh diambil dari transitionLabel
+    // yang mungkin berisi transisi BERIKUTNYA (mis. "Jembatan Parkir L2 → Tangga evakuasi").
+    const isPreviousFloorParking = previousVisibleFloor === 0 || previousVisibleFloor === -1;
+    const exitContext = isPreviousFloorParking
+      ? ""
+      : normalizedTransition.includes("lift")
+        ? "lift"
+        : normalizedTransition.includes("evakuasi")
+          ? "tangga evakuasi"
+          : normalizedTransition.includes("tangga")
+            ? "tangga"
+            : "";
     const firstTurnIndex = steps.findIndex((step) => step.type === "turn_left" || step.type === "turn_right");
     const routeStartPoint = steps[0].fromPoint;
 
@@ -4130,10 +4449,30 @@ const MapViewer = ({
     // Jika tujuan (HRD/Kepegawaian, Kebidanan, dll) juga di koridor atas, step pertama
     // memang lurus — tidak perlu dipaksa belok, dan step belok berikutnya juga tidak perlu
     // diberi label "setelah keluar dari tangga evakuasi".
-    // Deteksi: exitContext adalah "tangga evakuasi" DAN routeStartPoint.y < 290.
+    //
+    // PENTING: visibleFloorIndex > 0 memastikan kita berada di lantai TUJUAN setelah
+    // melewati tangga evakuasi — bukan di lantai ASAL yang kebetulan juga punya
+    // routeStartPoint.y < 290 (misalnya R. Laundry 2 yang ada di koridor atas lantai 2).
     const isEvacStairTopCorridorExit =
       exitContext === "tangga evakuasi" &&
+      visibleFloorIndex > 0 &&
       routeStartPoint.y < 290;
+
+    // Jalur vertikal "lurus ke depan" dari tangga evakuasi:
+    //   Lantai 1: Jalan_Kebidanan          x=654.54, dari y≈256 ke y≈517
+    //             Belok_ke_ruang_kebidanan_atas  cx=654.55, cy=317.28
+    //   Lantai 2: Jalan_Kebidanan-7        x=654.50, dari y≈257 ke y≈517
+    //             Check_Point_Keluar_R._HRD___Kepegawaian  cx=654.25, cy=315.46
+    //
+    // PENTING: Node Persimpangan_Jalan_Atas_R._HRD___Kepegawaian (cx=654.40, cy=257.1)
+    // berada di koridor atas horizontal dan dilewati SEMUA rute dari tangga evakuasi —
+    // bukan penanda jalur vertikal. Oleh karena itu kita hanya cek node dengan cy > 270
+    // (benar-benar di jalur vertikal ke selatan, bukan di persimpangan koridor atas).
+    const routePassesThroughEvacStairStraightAheadPath = (): boolean => {
+      return checkpointByCoord.some(
+        (cp) => Math.abs(cp.x - 654.5) <= 25 && cp.y > 270 && cp.y < 520,
+      );
+    };
 
     // Apakah step pertama asli (sebelum injeksi) adalah lurus?
     // Jika ya, Case 1 (needsExitOrientationStep) akan menginjeksi step orientasi di depan,
@@ -4161,11 +4500,14 @@ const MapViewer = ({
       // (dalam radius 150px, masih di area koridor atas) diubah menjadi lurus.
       // Ini karena koridor atas adalah jalan lurus — belokan kecil dari geometri SVG
       // tidak mencerminkan kebutuhan belok fisik yang nyata.
+      // PENTING: hanya ubah jika toPoint JUGA di koridor atas (y < 290).
+      // Jika toPoint.y > 290, itu belok nyata ke selatan (mis. ke ICU) yang harus dipertahankan.
       const isSpuriousTurnNearEvacStairExit =
         isEvacStairTopCorridorExit &&
         (step.type === "turn_left" || step.type === "turn_right") &&
         distanceBetween(routeStartPoint, step.pivotPoint) <= 150 &&
-        step.pivotPoint.y < 290;
+        step.pivotPoint.y < 290 &&
+        step.toPoint.y < 290;
 
       const straightLandmarkLabel =
         step.label === "Jalan lurus" || step.label === "Lurus"
@@ -4303,11 +4645,66 @@ const MapViewer = ({
       }));
     }
 
+    // --- Case 6: tangga evakuasi exit dalam satu lantai (single-floor) ---
+    // Tangga evakuasi berada di koridor atas (cy≈256). Saat keluar, pengguna
+    // berdiri di koridor atas dan harus belok kiri/kanan menuju tujuan.
+    // PENGECUALIAN: jika rute melewati jalur vertikal x≈654.5 (tepat di depan
+    // tangga evakuasi), step pertama memang lurus — tidak perlu step orientasi.
+    //
+    // Deteksi apakah route start berada di area tangga evakuasi.
+    // Semua node terkait tangga evakuasi (lantai 1 & 2) berada di x≈622–644, y≈208–260.
+    // Menggunakan range x+y lebih robust daripada koordinat titik tunggal.
+    const isStartNearEvacStair =
+      routeStartPoint.x >= 610 && routeStartPoint.x <= 660 &&
+      routeStartPoint.y >= 200 && routeStartPoint.y <= 270;
+
+    const needsEvacStairExitStep =
+      isStartNearEvacStair &&
+      // Aktif untuk step pertama lurus ATAU belok — tangga evakuasi selalu butuh
+      // step orientasi kecuali rute melewati jalur vertikal tepat di depannya.
+      (firstStep?.type === "straight" || firstStep?.type === "turn_left" || firstStep?.type === "turn_right") &&
+      !routePassesThroughEvacStairStraightAheadPath() &&
+      // Jangan aktif jika isEvacStairTopCorridorExit — Case 4/5 akan menanganinya.
+      // Tanpa guard ini, Case 6 dan Case 5 keduanya menginjeksi step orientasi → duplikat.
+      !isEvacStairTopCorridorExit;
+
+    if (needsEvacStairExitStep) {
+      // Untuk step belok, gunakan fromPoint→pivotPoint sebagai arah keluar tangga.
+      // Untuk step lurus, gunakan fromPoint→toPoint seperti biasa.
+      const baseForDirection = (firstStep.type === "turn_left" || firstStep.type === "turn_right")
+        ? { ...firstStep, toPoint: firstStep.pivotPoint }
+        : firstStep;
+      const evacExitStep = buildExitOrientationStep(baseForDirection, "tangga evakuasi");
+      return [evacExitStep, ...labeledSteps].map((step, index) => ({
+        ...step,
+        index,
+      }));
+    }
+
+    // --- Case 5: tangga evakuasi → tujuan NON-vertikal (bukan Jalan_Kebidanan/HRD) ---
+    // Jika rute TIDAK melewati jalur vertikal x≈654.5 (Jalan_Kebidanan / Jalan_Kebidanan-7),
+    // berarti dari tangga evakuasi pengguna harus belok dulu (kiri atau kanan) sebelum
+    // berjalan ke tujuan. Injeksi step orientasi belok di awal.
+    // PENTING: Case 5 harus dieksekusi SEBELUM Case 4 agar step orientasi diinjeksi
+    // sebelum merge straights terjadi.
+    if (
+      isEvacStairTopCorridorExit &&
+      firstStep?.type === "straight" &&
+      !routePassesThroughEvacStairStraightAheadPath()
+    ) {
+      const evacExitStep = buildExitOrientationStep(firstStep, "tangga evakuasi");
+      return [evacExitStep, ...labeledSteps].map((step, index) => ({
+        ...step,
+        index,
+      }));
+    }
+
     // --- Case 4: tangga evakuasi → tujuan vertikal (tepat di depan tangga) ---
     // Setelah isSpuriousTurnNearEvacStairExit mengubah step belok jadi lurus,
     // bisa terjadi dua consecutive straight di awal. Merge menjadi satu step lurus
     // dengan patokan checkpoint tujuan, lalu langsung arrive.
-    if (isEvacStairTopCorridorExit) {
+    // GUARD: hanya aktif jika rute memang melewati jalur vertikal x≈654.5.
+    if (isEvacStairTopCorridorExit && routePassesThroughEvacStairStraightAheadPath()) {
       // Kumpulkan semua straight berturut-turut dari awal
       let mergedDistanceToNext = 0;
       let mergedToPoint = labeledSteps[0]?.toPoint ?? labeledSteps[0]?.fromPoint;
@@ -4631,6 +5028,92 @@ const MapViewer = ({
       steps = buildParkingL2BridgeEntrySteps(steps);
     }
 
+    // Ganti step "arrive" terakhir dengan instruksi menuju gedung jika endpoint
+    // segmen parkir adalah Check_Point_Keluar_dari_Lahan_Parkir — artinya pengguna
+    // belum sampai di tujuan, masih harus masuk ke gedung rumah sakit.
+    const lastCheckpointId = activeFloorSegment.checkpointIds[activeFloorSegment.checkpointIds.length - 1];
+    const isExitingParkingL1 = lastCheckpointId === "Check_Point_Keluar_dari_Lahan_Parkir";
+
+    if (isExitingParkingL1) {
+      const lastIndex = steps.length - 1;
+      if (lastIndex >= 0 && steps[lastIndex].type === "arrive") {
+        steps = steps.map((step, index) =>
+          index === lastIndex
+            ? {
+                ...step,
+                type: "straight" as const,
+                angleChange: 0,
+                label: "Ikuti jalur utama menuju gedung rumah sakit",
+              }
+            : step,
+        );
+      }
+    }
+
+    // Ganti step "arrive" terakhir di segmen hospital lantai 2 dengan instruksi
+    // jembatan jika endpoint adalah connector jembatan ke parkir L2 — artinya
+    // pengguna belum sampai di tujuan, masih harus menyeberangi jembatan ke parkir.
+    const isExitingToParking2Bridge =
+      !showParkingMap &&
+      activeFloor === 2 &&
+      activeRoute?.endRoomId === "Parking_Lantai_2" &&
+      (lastCheckpointId === PARKING2_CONN.hospitalNodeId ||
+        lastCheckpointId === "Check_Point_Jembatan_Parkir_L2");
+
+    if (isExitingToParking2Bridge) {
+      const lastIndex = steps.length - 1;
+      if (lastIndex >= 0 && steps[lastIndex].type === "arrive") {
+        steps = steps.map((step, index) =>
+          index === lastIndex
+            ? {
+                ...step,
+                type: "straight" as const,
+                angleChange: 0,
+                label: "Lanjut, gunakan akses jembatan penghubung lahan parkir",
+              }
+            : step,
+        );
+      }
+    }
+
+    // Ganti step "arrive" terakhir di segmen lantai 1 dengan instruksi naik ke lantai 2
+    // jika endpoint adalah connector tangga/lift lantai 1 dan rute melibatkan lantai 2.
+    // Ini terjadi saat rute multi-floor: RS L1 → RS L2 → Parkir L2.
+    const FLOOR1_TO_FLOOR2_CONNECTOR_CHECKPOINTS = new Set([
+      "Check_Point_Lift",
+      "Check_Point_Tangga",
+      "Check_Point_Tangga_Evakuasi_Lantai_1",
+      "Check_Point_Tangga_Evakuasi",
+    ]);
+    const isTransitingToFloor2 =
+      !showParkingMap &&
+      activeFloor === 1 &&
+      FLOOR1_TO_FLOOR2_CONNECTOR_CHECKPOINTS.has(lastCheckpointId) &&
+      (activeRoute?.floorsInvolved?.includes(2) ?? false);
+
+    if (isTransitingToFloor2) {
+      const lastIndex = steps.length - 1;
+      if (lastIndex >= 0 && steps[lastIndex].type === "arrive") {
+        // Tentukan label berdasarkan jenis connector
+        const connectorLabel = lastCheckpointId === "Check_Point_Lift"
+          ? "Gunakan lift untuk menuju lantai 2"
+          : lastCheckpointId.includes("Evakuasi")
+            ? "Gunakan tangga evakuasi untuk menuju lantai 2"
+            : "Gunakan tangga untuk menuju lantai 2";
+
+        steps = steps.map((step, index) =>
+          index === lastIndex
+            ? {
+                ...step,
+                type: "straight" as const,
+                angleChange: 0,
+                label: connectorLabel,
+              }
+            : step,
+        );
+      }
+    }
+
     steps = enhanceInstructionContext(
       steps,
       activeFloorSegment.checkpointIds,
@@ -4639,6 +5122,10 @@ const MapViewer = ({
       visibleFloorIndex,
       previousVisibleFloor,
       activeFloorSegment.points,
+      // Teruskan SVG doc aktif agar label node bisa diambil dari inkscape:label
+      showParkingMap
+        ? (parkingFloor === 1 ? parkingSvgDoc : parking2SvgDoc)
+        : (objectRef.current?.contentDocument ?? multiFloorSvgDocs[activeFloor as 1 | 2] ?? null),
     );
 
     const nextNavStepsKey = [
@@ -4733,8 +5220,10 @@ const MapViewer = ({
     };
     positionRef.current = nextPos;
     positionAtDragStart.current = nextPos;
+    scaleRef.current = initialScale;
     setScale(initialScale);
     setPosition(nextPos);
+    setCommittedTransform({ x: nextPos.x, y: nextPos.y, scale: initialScale });
   }, []);
 
   useEffect(() => {
@@ -4742,10 +5231,22 @@ const MapViewer = ({
     return () => clearTimeout(timer);
   }, [centerMap]);
 
-  const handleZoomIn = () =>
-    setScale((s) => Math.min(s + ZOOM_STEP, MAX_SCALE));
-  const handleZoomOut = () =>
-    setScale((s) => Math.max(s - ZOOM_STEP, MIN_SCALE));
+  const handleZoomIn = () => {
+    setScale((s) => {
+      const next = Math.min(s + ZOOM_STEP, MAX_SCALE);
+      scaleRef.current = next;
+      setCommittedTransform({ x: positionRef.current.x, y: positionRef.current.y, scale: next });
+      return next;
+    });
+  };
+  const handleZoomOut = () => {
+    setScale((s) => {
+      const next = Math.max(s - ZOOM_STEP, MIN_SCALE);
+      scaleRef.current = next;
+      setCommittedTransform({ x: positionRef.current.x, y: positionRef.current.y, scale: next });
+      return next;
+    });
+  };
 
   const currentNavStep = navSteps.length
     ? navSteps[Math.min(activeStepIndex, navSteps.length - 1)]
@@ -4876,32 +5377,32 @@ const MapViewer = ({
       <div className="relative flex-1 min-h-0 overflow-hidden bg-muted/20 rounded-xl border border-border shadow-inner pb-[0px] md:pb-0">
 
       {/* Compass overlay — di luar mapRef agar tidak ikut zoom/pan (R-06) */}
-      <div className="absolute top-4 right-4 z-20 pointer-events-none">
+      {/* Di mobile: selalu hidden — compass hanya muncul di navigation panel */}
+      <div className="absolute top-4 right-4 z-20 pointer-events-none hidden md:block">
         <img
-          src="/images/arah%20mata%20angin.png"
+          src="/images/arah%20mata%20angin.svg"
           alt="Kompas arah mata angin"
-          className="w-16 h-16 opacity-85 drop-shadow-md select-none"
+          className="w-32 h-32 opacity-85 drop-shadow-md select-none"
           draggable={false}
         />
       </div>
 
       <div
         ref={containerRef}
-        className={`w-full h-full ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}
+        className="w-full h-full cursor-grab"
+        style={{ touchAction: 'none' }}
         onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
       >
         <div
           ref={mapRef}
           style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: "0 0",
-            // Transition is managed imperatively in startDrag / onMouseUp
-            // so it's always in sync with the drag state without any React cycle delay.
+            // ── Fix 2: transform DI-MANAGE 100% via DOM (applyTransformToDom).
+            // React tidak menulis transform di sini agar tidak menimpa DOM write
+            // selama drag/pinch (race condition penyebab kedipan saat zoom tinggi).
             transition: "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
+            // Hint browser untuk GPU compositing — drag/zoom jadi mulus.
+            willChange: "transform",
           }}
           className="w-full h-full select-none"
         >
@@ -5475,6 +5976,15 @@ const MapViewer = ({
                   <span className="text-[10px] font-bold leading-none">QR</span>
                 </button>
               )}
+            </div>
+            {/* Compass — ditampilkan di bawah step, di luar container map */}
+            <div className="flex justify-center pb-2">
+              <img
+                src="/images/arah%20mata%20angin.svg"
+                alt="Kompas arah mata angin"
+                className="w-20 h-20 opacity-85 drop-shadow-md select-none pointer-events-none"
+                draggable={false}
+              />
             </div>
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 pb-4">
               <button
