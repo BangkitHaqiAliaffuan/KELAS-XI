@@ -3744,7 +3744,21 @@ const MapViewer = ({
 
     const requestedRoomInfo = roomInfoBySvgId[roomId];
     const requestedFloor = requestedRoomInfo ? resolveFloorForRoom(requestedRoomInfo) : activeFloor;
-    if (requestedFloor !== activeFloor) {
+
+    // Auto-switch map view ke start point floor (termasuk parking)
+    const startFloorExt = resolveFloorForRoomExtended(roomId);
+    if (startFloorExt === 0) {
+      setShowParkingMap(true);
+      setParkingFloor(1);
+    } else if (startFloorExt === -1) {
+      setShowParkingMap(true);
+      setParkingFloor(2);
+    } else if (startFloorExt === 1 || startFloorExt === 2) {
+      setShowParkingMap(false);
+      if (startFloorExt !== activeFloor) {
+        setActiveFloor(startFloorExt);
+      }
+    } else if (requestedFloor !== activeFloor) {
       setActiveFloor(requestedFloor);
     }
 
@@ -4001,10 +4015,84 @@ const MapViewer = ({
       from: { x: number; y: number },
       to: { x: number; y: number },
     ) => Math.hypot(from.x - to.x, from.y - to.y);
+
+    // ── Hardcode: Parkir L1 → K. Mayat ──
+    // Jika endpoint rute dekat K. Mayat (y < 175, x < 400), gunakan 3 step saja:
+    // 1. Ikuti jalur utama menuju gedung
+    // 2. Lurus sampai Belok Masuk ke Kamar Mayat
+    // 3. Arrive
+    const lastPoint = points[points.length - 1];
+    const isKamarMayatRoute = lastPoint && lastPoint.y < 175 && lastPoint.x < 400;
+
+    if (isKamarMayatRoute && points.length >= 3) {
+      const firstPoint = points[0];
+      // Cari titik masuk gedung (x≈465, y≈255)
+      const hospitalEntryPoint = { x: 465.359, y: 255.37 };
+      let entryIdx = 0;
+      let entryDist = Number.POSITIVE_INFINITY;
+      points.forEach((pt, i) => {
+        const d = pointDistance(pt, hospitalEntryPoint);
+        if (d < entryDist) { entryDist = d; entryIdx = i; }
+      });
+
+      const distToEntry = points.slice(0, Math.max(entryIdx, 1))
+        .reduce((total, pt, i) => total + pointDistance(pt, points[i + 1]), 0);
+
+      // Cari titik belok ke K. Mayat (area y mulai turun drastis menuju y < 175)
+      let turnIdx = entryIdx;
+      for (let i = entryIdx; i < points.length - 1; i++) {
+        if (points[i + 1].y < 200 && points[i + 1].x < 400) {
+          turnIdx = i;
+          break;
+        }
+      }
+      if (turnIdx <= entryIdx) turnIdx = points.length - 2;
+
+      const entryPoint = points[Math.max(entryIdx, 1)];
+      const turnPoint = points[turnIdx];
+      const distEntryToTurn = points.slice(entryIdx, turnIdx + 1)
+        .reduce((total, pt, i, arr) => i < arr.length - 1 ? total + pointDistance(pt, arr[i + 1]) : total, 0);
+      const distTurnToEnd = points.slice(turnIdx)
+        .reduce((total, pt, i, arr) => i < arr.length - 1 ? total + pointDistance(pt, arr[i + 1]) : total, 0);
+
+      const step1: NavigationStep = {
+        index: 0, type: "straight",
+        fromPoint: firstPoint, pivotPoint: firstPoint, toPoint: entryPoint,
+        distanceToNext: distToEntry, cumulativeDistance: distToEntry,
+        angleChange: 0, label: "Ikuti jalur utama menuju gedung rumah sakit",
+        nextQrHint: "Cari QR di titik masuk gedung untuk kalibrasi posisi.",
+      };
+      const step2: NavigationStep = {
+        index: 1, type: "straight",
+        fromPoint: entryPoint, pivotPoint: entryPoint, toPoint: turnPoint,
+        distanceToNext: distEntryToTurn, cumulativeDistance: distToEntry + distEntryToTurn,
+        angleChange: 0, label: "Lurus sampai Belok Masuk ke Kamar Mayat",
+      };
+      const step3: NavigationStep = {
+        index: 2, type: "turn_right",
+        fromPoint: entryPoint, pivotPoint: turnPoint, toPoint: lastPoint,
+        distanceToNext: distTurnToEnd, cumulativeDistance: distToEntry + distEntryToTurn + distTurnToEnd,
+        angleChange: 90, label: "Belok kanan masuk ke Kamar Mayat",
+      };
+      const step4: NavigationStep = {
+        index: 3, type: "arrive",
+        fromPoint: turnPoint, pivotPoint: lastPoint, toPoint: lastPoint,
+        distanceToNext: 0, cumulativeDistance: distToEntry + distEntryToTurn + distTurnToEnd,
+        angleChange: 0, label: "Anda telah tiba di tujuan",
+      };
+      return [step1, step2, step3, step4];
+    }
+
     const isMainEntryCorridorStep = (step: NavigationStep) =>
-      Math.abs(step.pivotPoint.x - 465.359) <= 80 &&
+      // Koridor vertikal utama (x≈465, panjang >= 120)
+      (Math.abs(step.pivotPoint.x - 465.359) <= 80 &&
       Math.abs(step.toPoint.x - 465.359) <= 80 &&
-      step.distanceToNext >= 120;
+      step.distanceToNext >= 120) ||
+      // Koridor horizontal atas menuju K. Mayat (y < 200, x antara 300-700)
+      (step.type === "straight" &&
+      step.pivotPoint.y < 200 &&
+      step.toPoint.y < 200 &&
+      step.pivotPoint.x >= 300 && step.pivotPoint.x <= 700);
     const relabelCorridorSteps = (steps: NavigationStep[]) =>
       steps.map((step, index) =>
         index > 0 && step.type === "straight" && isMainEntryCorridorStep(step)
@@ -4035,12 +4123,46 @@ const MapViewer = ({
       .reduce((total, point, index) => total + pointDistance(point, points[index + 1]), 0);
     const firstPoint = points[0];
     const entryPoint = points[entryPointIndex];
-    const remainingSteps = buildNavigationSteps(points.slice(entryPointIndex)).map((step) => ({
-      ...step,
-      label: step.type === "straight" && isMainEntryCorridorStep(step)
-        ? "Lanjut mengikuti koridor utama"
-        : step.label,
-    }));
+    const remainingSteps = buildNavigationSteps(points.slice(entryPointIndex)).map((step) => {
+      // Ubah belok kecil di koridor masuk (area y < 200, x 300-700) menjadi lurus
+      // Ini adalah belokan geometri SVG yang tidak mencerminkan belok fisik nyata
+      const isSpuriousTurnInEntryCorridor =
+        (step.type === "turn_left" || step.type === "turn_right") &&
+        step.pivotPoint.y < 200 &&
+        step.pivotPoint.x >= 300 && step.pivotPoint.x <= 700;
+
+      if (isSpuriousTurnInEntryCorridor) {
+        return {
+          ...step,
+          type: "straight" as const,
+          angleChange: 0,
+          label: "Lanjut mengikuti koridor utama",
+        };
+      }
+
+      return {
+        ...step,
+        label: step.type === "straight" && isMainEntryCorridorStep(step)
+          ? "Lanjut mengikuti koridor utama"
+          : step.label,
+      };
+    });
+
+    // Merge consecutive straights yang dihasilkan dari konversi belok → lurus
+    const mergedRemaining: NavigationStep[] = [];
+    remainingSteps.forEach((step) => {
+      const prev = mergedRemaining[mergedRemaining.length - 1];
+      if (prev && prev.type === "straight" && step.type === "straight") {
+        prev.toPoint = step.toPoint;
+        prev.distanceToNext += step.distanceToNext;
+        prev.cumulativeDistance = step.cumulativeDistance;
+        if (prev.label === "Lanjut mengikuti koridor utama" && step.label !== "Lanjut mengikuti koridor utama") {
+          prev.label = step.label;
+        }
+        return;
+      }
+      mergedRemaining.push({ ...step });
+    });
 
     const firstStep: NavigationStep = {
       index: 0,
@@ -4055,7 +4177,7 @@ const MapViewer = ({
       nextQrHint: "Cari QR di titik masuk gedung untuk kalibrasi posisi.",
     };
 
-    return [firstStep, ...remainingSteps].map((step, index) => ({
+    return [firstStep, ...mergedRemaining].map((step, index) => ({
       ...step,
       index,
     }));
@@ -4705,13 +4827,27 @@ const MapViewer = ({
     // dengan patokan checkpoint tujuan, lalu langsung arrive.
     // GUARD: hanya aktif jika rute memang melewati jalur vertikal x≈654.5.
     if (isEvacStairTopCorridorExit && routePassesThroughEvacStairStraightAheadPath()) {
+      // ── Hardcode: ubah semua belok kecil di area koridor atas (y < 290, x 620-690)
+      // menjadi lurus sebelum merge. Ini adalah belokan geometri SVG antara tangga
+      // evakuasi dan jalur vertikal Jalan_Kebidanan yang tidak mencerminkan belok fisik.
+      const normalizedSteps = labeledSteps.map((step) => {
+        const isSpuriousTurnInTopCorridor =
+          (step.type === "turn_left" || step.type === "turn_right") &&
+          step.pivotPoint.y < 290 &&
+          step.pivotPoint.x >= 620 && step.pivotPoint.x <= 690;
+        if (isSpuriousTurnInTopCorridor) {
+          return { ...step, type: "straight" as const, angleChange: 0, label: "Jalan lurus" };
+        }
+        return step;
+      });
+
       // Kumpulkan semua straight berturut-turut dari awal
       let mergedDistanceToNext = 0;
-      let mergedToPoint = labeledSteps[0]?.toPoint ?? labeledSteps[0]?.fromPoint;
+      let mergedToPoint = normalizedSteps[0]?.toPoint ?? normalizedSteps[0]?.fromPoint;
       let lastStraightIndex = -1;
 
-      for (let i = 0; i < labeledSteps.length; i++) {
-        const s = labeledSteps[i];
+      for (let i = 0; i < normalizedSteps.length; i++) {
+        const s = normalizedSteps[i];
         if (s.type === "straight") {
           mergedDistanceToNext += s.distanceToNext;
           mergedToPoint = s.toPoint;
@@ -4722,8 +4858,8 @@ const MapViewer = ({
       }
 
       // Hanya merge jika ada lebih dari satu straight berturut-turut di awal
-      if (lastStraightIndex > 0 && labeledSteps[0]) {
-        const base = labeledSteps[0];
+      if (lastStraightIndex > 0 && normalizedSteps[0]) {
+        const base = normalizedSteps[0];
         // Cari label patokan dari checkpoint terdekat dengan toPoint akhir
         const endCheckpointId = findNearestCheckpoint(mergedToPoint, 60);
         const mergedLabel = endCheckpointId
@@ -4734,12 +4870,12 @@ const MapViewer = ({
           ...base,
           toPoint: mergedToPoint,
           distanceToNext: mergedDistanceToNext,
-          cumulativeDistance: labeledSteps[lastStraightIndex].cumulativeDistance,
+          cumulativeDistance: normalizedSteps[lastStraightIndex].cumulativeDistance,
           label: mergedLabel,
           index: 0,
         };
 
-        const rest = labeledSteps.slice(lastStraightIndex + 1);
+        const rest = normalizedSteps.slice(lastStraightIndex + 1);
         return [mergedStep, ...rest].map((step, index) => ({
           ...step,
           index,
@@ -5401,8 +5537,6 @@ const MapViewer = ({
             // React tidak menulis transform di sini agar tidak menimpa DOM write
             // selama drag/pinch (race condition penyebab kedipan saat zoom tinggi).
             transition: "transform 0.15s cubic-bezier(0.2, 0, 0, 1)",
-            // Hint browser untuk GPU compositing — drag/zoom jadi mulus.
-            willChange: "transform",
           }}
           className="w-full h-full select-none"
         >
@@ -5735,17 +5869,6 @@ const MapViewer = ({
         </div>
       )}
 
-      {/* Legend */}
-      <div className="absolute bottom-6 left-6 flex items-center gap-4 text-[10px] text-muted-foreground bg-background/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-border/50">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-primary" />
-          <span>Posisi Anda</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-orange-400" />
-          <span>Emergency</span>
-        </div>
-      </div>
 
       {/* Map pin marker */}
       {activeMarkerPosition && activeMarkerPosition.x >= -16 && activeMarkerPosition.y >= -32 && (
