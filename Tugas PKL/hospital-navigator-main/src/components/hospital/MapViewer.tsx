@@ -4135,6 +4135,12 @@ const MapViewer = ({
       exitContext === "tangga evakuasi" &&
       routeStartPoint.y < 290;
 
+    // Apakah step pertama asli (sebelum injeksi) adalah lurus?
+    // Jika ya, Case 1 (needsExitOrientationStep) akan menginjeksi step orientasi di depan,
+    // sehingga shouldAddExitContext tidak boleh aktif — label "setelah keluar" sudah
+    // tercakup oleh step orientasi yang diinjeksi.
+    const firstStepIsOriginallyLurus = steps[0]?.type === "straight";
+
     const labeledSteps = steps.map((step, index) => {
       const shouldAddExitContext =
         visibleFloorIndex > 0 &&
@@ -4144,9 +4150,12 @@ const MapViewer = ({
         exitContext &&
         (step.type === "turn_left" || step.type === "turn_right") &&
         !step.label.includes("setelah keluar") &&
-        // Jangan tambahkan konteks belok jika ini adalah tangga evakuasi ke koridor atas —
-        // step pertama sudah lurus, step belok berikutnya tidak perlu label "setelah keluar".
-        !isEvacStairTopCorridorExit;
+        // Jangan tambahkan konteks belok jika ini adalah tangga evakuasi ke koridor atas.
+        !isEvacStairTopCorridorExit &&
+        // Jangan tambahkan konteks belok jika step pertama lurus — berarti Case 1 akan
+        // menginjeksi step orientasi "Keluar dari X, menuju ke arah Y" di depan,
+        // sehingga label tambahan di step belok ini menjadi redundan.
+        !firstStepIsOriginallyLurus;
 
       // Jika tangga evakuasi → koridor atas: step belok yang berada dekat titik awal
       // (dalam radius 150px, masih di area koridor atas) diubah menjadi lurus.
@@ -4292,6 +4301,53 @@ const MapViewer = ({
         ...step,
         index,
       }));
+    }
+
+    // --- Case 4: tangga evakuasi → tujuan vertikal (tepat di depan tangga) ---
+    // Setelah isSpuriousTurnNearEvacStairExit mengubah step belok jadi lurus,
+    // bisa terjadi dua consecutive straight di awal. Merge menjadi satu step lurus
+    // dengan patokan checkpoint tujuan, lalu langsung arrive.
+    if (isEvacStairTopCorridorExit) {
+      // Kumpulkan semua straight berturut-turut dari awal
+      let mergedDistanceToNext = 0;
+      let mergedToPoint = labeledSteps[0]?.toPoint ?? labeledSteps[0]?.fromPoint;
+      let lastStraightIndex = -1;
+
+      for (let i = 0; i < labeledSteps.length; i++) {
+        const s = labeledSteps[i];
+        if (s.type === "straight") {
+          mergedDistanceToNext += s.distanceToNext;
+          mergedToPoint = s.toPoint;
+          lastStraightIndex = i;
+        } else {
+          break;
+        }
+      }
+
+      // Hanya merge jika ada lebih dari satu straight berturut-turut di awal
+      if (lastStraightIndex > 0 && labeledSteps[0]) {
+        const base = labeledSteps[0];
+        // Cari label patokan dari checkpoint terdekat dengan toPoint akhir
+        const endCheckpointId = findNearestCheckpoint(mergedToPoint, 60);
+        const mergedLabel = endCheckpointId
+          ? `Lurus sampai ${formatNodeLabel(endCheckpointId)}`
+          : "Jalan lurus";
+
+        const mergedStep: NavigationStep = {
+          ...base,
+          toPoint: mergedToPoint,
+          distanceToNext: mergedDistanceToNext,
+          cumulativeDistance: labeledSteps[lastStraightIndex].cumulativeDistance,
+          label: mergedLabel,
+          index: 0,
+        };
+
+        const rest = labeledSteps.slice(lastStraightIndex + 1);
+        return [mergedStep, ...rest].map((step, index) => ({
+          ...step,
+          index,
+        }));
+      }
     }
 
     return labeledSteps;
