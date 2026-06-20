@@ -848,6 +848,19 @@ html {
   color: rgba(208, 226, 248, 0.8);
 }
 
+.certificate-card__issuer {
+  margin-bottom: 0.5rem;
+}
+
+.certificate-card__description {
+  font-size: 0.72rem !important;
+  color: rgba(180, 200, 230, 0.7) !important;
+  line-height: 1.5;
+  border-top: 1px solid rgba(112, 180, 255, 0.1);
+  padding-top: 0.5rem;
+  margin-top: 0.15rem;
+}
+
 /* ─────────────────────────────────────────
    CONTACT
 ───────────────────────────────────────── */
@@ -1383,6 +1396,10 @@ html {
 
   .certificate-card__meta p {
     font-size: 0.68rem;
+  }
+
+  .certificate-card__description {
+    font-size: 0.64rem !important;
   }
 
   .project-media {

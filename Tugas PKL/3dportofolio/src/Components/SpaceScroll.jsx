@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import spaceshipImg from '../assets/spaceship-window.png';
+import spaceshipImg from '../assets/spaceship-window-processed.png';
 import earthImg from '../assets/earth.png';
 import profilePhoto from '../assets/profile-photo.png';
 
@@ -12,7 +12,7 @@ const SpaceScroll = () => {
   const spaceshipRef = useRef(null);
   const earthRef = useRef(null);
   const lensFlareRef = useRef(null);
-  const overlayRef = useRef(null);
+
   const profileRef = useRef(null);
   const profileTextRef = useRef(null);
 
@@ -58,8 +58,6 @@ const SpaceScroll = () => {
         { scale: 1, ease: 'power2.out', duration: 2 },
         6
       );
-
-      tl.to(overlayRef.current, { opacity: 0, duration: 2 }, 6);
 
       /* ── Profile photo + text muncul bersamaan dengan Earth zoom-out ── */
       tl.fromTo(
@@ -128,14 +126,8 @@ const SpaceScroll = () => {
           z-index: 1;
         }
 
-        /* ── Layer Z2: Spaceship — pakai mask-image agar porthole transparan ── */
+        /* ── Layer Z2: Spaceship — background gray sudah di-chroma-key saat build, porthole otomatis transparan ── */
         .spaceship-img {
-          --porthole-x: 50%;
-          --porthole-y: 48%;
-          --porthole-r1: 21vmin;
-          --porthole-r2: 22.5vmin;
-          --porthole-r3: 25vmin;
-
           position: absolute;
           inset: 0;
           width: 100%;
@@ -145,66 +137,6 @@ const SpaceScroll = () => {
           will-change: transform, opacity;
           transform-origin: center center;
           z-index: 2;
-
-          /*
-           * CSS mask: lubang bulat di posisi porthole (50% dari kiri, 42% dari atas).
-           * transparent = area yang dibiarkan tembus (porthole),
-           * black       = area yang ditampilkan (dinding spaceship).
-           * Nilai 22vmin ≈ radius porthole di layar.
-           */
-          -webkit-mask-image: radial-gradient(
-            circle at var(--porthole-x) var(--porthole-y),
-            transparent 0vmin,
-            transparent var(--porthole-r1),
-            rgba(0,0,0,0.35) var(--porthole-r2),
-            black var(--porthole-r3)
-          );
-          mask-image: radial-gradient(
-            circle at var(--porthole-x) var(--porthole-y),
-            transparent 0vmin,
-            transparent var(--porthole-r1),
-            rgba(0,0,0,0.35) var(--porthole-r2),
-            black var(--porthole-r3)
-          );
-        }
-
-        @media (max-width: 640px) {
-          .spaceship-img {
-            --porthole-y: 49.2%;
-            --porthole-r1: 26.6vmin;
-            --porthole-r2: 50vmin;
-            --porthole-r3: 25.8vmin;
-          }
-
-          .earth-img {
-            object-position: center 45%;
-          }
-        }
-
-        @media (max-width: 420px) {
-          .spaceship-img {
-            --porthole-y: 44.4%;
-            --porthole-r1: 18.9vmin;
-            --porthole-r2: 19.2vmin;
-            --porthole-r3: 22vmin;
-          }
-
-          .earth-img {
-            object-position: center 43.5%;
-          }
-        }
-
-        @media (max-width: 360px) {
-          .spaceship-img {
-            --porthole-y: 44%;
-            --porthole-r1: 17.4vmin;
-            --porthole-r2: 18.8vmin;
-            --porthole-r3: 21.6vmin;
-          }
-
-          .earth-img {
-            object-position: center 43%;
-          }
         }
 
         /* ── Vignette di atas segalanya ── */

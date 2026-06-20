@@ -51,11 +51,15 @@ const Home = () => {
       title: 'LKS Dikmen Sidoarjo 2026 — Juara 3 Web Technologies',
       issuer: 'LKS Dikmen Kabupaten Sidoarjo',
       image: '/certificates/lks-web-technologies-2026.jpg',
+      description:
+        'After an intensive 2-week training bootcamp at PT IT Brain Indonesia, I secured 3rd place at the city level by delivering a full-stack web application built with Laravel + React, alongside a JavaScript-based game — all within a tight deadline that pushed my adaptability and technical growth to the limit.',
     },
     {
       title: 'DIGIForward 2025 — Juara 2',
       issuer: 'CTI Group × GenEd',
       image: '/certificates/digiforward-2025-juara-2.jpg',
+      description:
+        'Stepping up as Project Manager, I led my team to a 2nd-place provincial victory in the DIGIForward 2025 competition hosted by CTI Group × GenEd — a milestone that was only possible through our collective synergy, countless late-night sessions, and the unwavering commitment of every single team member.',
     },
   ]
 
@@ -483,7 +487,10 @@ const Home = () => {
               <img src={certificate.image} alt={certificate.title} className='certificate-card__image' loading='lazy' />
               <div className='certificate-card__meta'>
                 <h3>{certificate.title}</h3>
-                <p>{certificate.issuer}</p>
+                <p className='certificate-card__issuer'>{certificate.issuer}</p>
+                {certificate.description && (
+                  <p className='certificate-card__description'>{certificate.description}</p>
+                )}
               </div>
             </article>
           ))}

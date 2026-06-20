@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "process:images": "node scripts/remove-gray-bg.mjs",
+    "dev": "npm run process:images && vite",
+    "build": "npm run process:images && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -30,6 +31,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "postcss": "^8.5.8",
+    "sharp": "^0.35.2",
     "tailwind": "^4.0.0",
     "vite": "^8.0.1"
   }
