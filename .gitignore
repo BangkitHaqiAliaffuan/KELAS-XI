@@ -1,2 +1,11 @@
 serviceAccountKey.json
 google-services.json
+
+# Environment files (credentials)
+.env
+
+# Large datasets (image classification ~1.6GB)
+Tugas PKL/Dataset-Tanilink/
+
+# Office temporary files
+~$*

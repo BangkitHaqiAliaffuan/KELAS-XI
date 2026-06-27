@@ -7,12 +7,12 @@ export interface RoomRouteResult {
   points: Array<{ x: number; y: number }>;
   totalDistance: number;
   floorSegments?: Array<{
-    floor: 1 | 2;
+    floor: -1 | 0 | 1 | 2;
     checkpointIds: string[];
     points: Array<{ x: number; y: number }>;
     totalDistance: number;
   }>;
-  floorsInvolved?: Array<1 | 2>;
+  floorsInvolved?: Array<-1 | 0 | 1 | 2>;
   transitionLabel?: string;
 }
 
@@ -29,7 +29,7 @@ export interface QrAnchor {
 export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   "QR-F1-N01": {
     qrId: "QR-F1-N01",
-    roomId: "IGD",
+    roomId: "Area_Pelayanan_IGD",
     svgX: 632.95538,
     svgY: 753.07831,
     label: "Persimpangan Area Pelayanan IGD",
@@ -42,6 +42,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 516.54614,
     label: "Persimpangan ke Lab",
     floor: 1,
+    routeNodeId: "Persimpangan_ke_Lab",
   },
   "QR-F1-N04": {
     qrId: "QR-F1-N04",
@@ -173,7 +174,7 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
   },
   "QR-F2-N02": {
     qrId: "QR-F2-N02",
-    roomId: "R._Prancis"      ,
+    roomId: "R._Prancis",
     svgX: 999.847,
     svgY: 515.5,
     label: "Persimpangan Jalan R. Rawat Inap Kelas 1",
@@ -293,7 +294,9 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 417.228,
     label: "Belok ke Area Parkir Khusus Tenaga Medis",
     floor: 0,
+    routeNodeId: "Belok_ke_Area_Parkir_Sepeda_Motor_Khusus_Tenaga_Medis",
   },
+
   // Lahan Parkir Lantai 2 — floor: -1 (peta parkir lantai 2 terpisah)
   "QR-PK2-N01": {
     qrId: "QR-PK2-N01",
@@ -302,11 +305,12 @@ export const QR_ANCHOR_REGISTRY: Record<string, QrAnchor> = {
     svgY: 708,
     label: "Akses Jembatan ke Gedung Rumah Sakit Lantai 2",
     floor: -1,
+    routeNodeId: "Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2",
   },
 };
 
 const qrCodeToRoomId: Record<string, string> = {
-  "QR-IGD": "IGD",
+  "QR-IGD": "Area_Pelayanan_IGD",
   "QR-INFORMASI": "Informasi",
   "QR-ICU": "ICU",
   "QR-LAB": "Lab",
@@ -391,19 +395,33 @@ const EXPLICIT_ROUTE_PATH_IDS = new Set([
   "path100",
   "masuk_ke_terapi_okupasi_lanjutan_menuju_ke_edukasi_keluarga",
   "menuju_ke_edukasi_keluarga_dan_pasien",
+  // IGD paths
+  "jalan_keluar_dari_area_pelayanan_ugd",
+  // Parking L1 paths
+  "jalan_utama_area_lahan_parkir",
+  "jalan_keluar_menuju_gedung_rumah_sakit",
+  "persimpangan_keluar_dari_area_parkir_dan_tangga_pengunjung",
+  "masuk_ke_tangga_pengunjung_ke_lantai_2_lahan_parkir",
+  // Parking L2 paths
+  "masuk_ke_tangga_pengunjung",
+  "jalan_bawah_untuk_masuk_ramp_parkir",
+  "akses_jembatan_menuju_gedung_rumah_sakit_lantai_2",
   // Parking SVG — paths that connect areas but don't have "jalan" in their id.
   "masuk_ke_area_parkir_sepeda_motor_pengunjung_atas",
   "masuk_ke_area_parkir_sepeda_motor_pengunjung_bawah",
   "keluar_dari_area_parkir_sepeda_motor_atas",
   "masuk_ke_area_parkir_sepeda_motor_khusus_tenaga_medis",
-  "masuk_ke_tangga_pengunjung_ke_lantai_2_lahan_parkir",
   "naik_ke_parkir_lantai_2_khusus_mobil",
   "pertigaan_untuk_masuk_ke_area_parkir_sepeda_motor_bawah_atas",
   "belokan_keluar_dari_area_parkir_sepeda_motor_atas__opsional_",
   "keluar_dari_area_parkir_sepeda_motor_atas__opsional_",
   "belokan_keluar_area_parkir",
   "belok_ke_ramp_parkir",
-  "persimpangan_keluar_dari_area_parkir_dan_tangga_pengunjung",
+  // Parking L1 — hospital L1 paths connecting to parking
+  "jalan_masuk_ke_lahan_parkir__pengunjung_",
+  "jalan_ke_lahan_parkir_2__pengunjung_",
+  "jalan_ke_lahan_parkir_1__pengunjung_",
+  "jalan_keluar_menuju_gedung_rumah_sakit",
   // Parking L2 — bridge access path to hospital L2
   "akses_jembatan_menuju_gedung_rumah_sakit_lantai_2",
 ]);
@@ -412,22 +430,44 @@ const KAMAR_MAYAT_PREFERRED_NODE_IDS = [
   "Check_Point_Kamar_Mayat",
   "Belok_Masuk_ke_Kamar_Mayat",
   "Belok_ke_Kamar_Mayat",
+  "Belok_ke_Kamar_Mayat_dan_Jalan_ke_Lahan_Parkir",
 ] as const;
 
 const ROOM_SPECIAL_ROUTE_NODE_IDS: Record<string, readonly string[]> = {
   "R._Direktur___Manajemen": ["Persimpangan_ke_R._Istirahat_Perawat"],
   Lift_Lantai_1: ["Check_Point_Lift"],
-  "Lift_Lantai_1-2": ["Check_Point_Lift_Turun"],
+  Lift_Lantai_2: ["Check_Point_Lift_Turun"],
   Tangga_Lantai_1: ["Check_Point_Tangga"],
-  "Tangga_Lantai_1-7": ["Check_Point_Tangga_Turun"],
+  Tangga_Lantai_2: ["Check_Point_Tangga_Turun"],
   // Keep evacuation stairs isolated from the main-stair checkpoint so floor transitions stay consistent.
-  // Floor 1 SVG uses legacy id "path4" for evacuation checkpoint label.
-  Tangga_Evakuasi_Lantai_1: ["path4", "Check_Point_Tangga_Evakuasi"],
-  Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi"],
-  // Parking: route via the dedicated checkpoint node in the parking SVG.
-  Parking_Lantai_1: ["Check_Point_Tangga_Pengunjung", "Persimpangan_Keluar_dari_Area_Parkir_dan_Tangga_Pengunjung"],
-  // Parking L2 should stop on the QR anchor itself, not the bridge checkpoint.
-  Parking_Lantai_2: ["node_room_Parking_Lantai_2"],
+  Tangga_Evakuasi_Lantai_1: ["Check_Point_Tangga_Evakuasi_Lantai_1", "Check_Point_Tangga_Evakuasi"],
+  Tangga_Evakuasi_Lantai_2: ["Check_Point_Tangga_Evakuasi_Lantai_2", "Check_Point_Tangga_Evakuasi"],
+  // Musholla: use the correct checkpoint (Check_point_Musholla at cx=1310.66, cy=515.78)
+  // NOT Check_Point_Musholla which is mislabeled as "Check Point R. JKN" in the SVG
+  Musholla: ["Check_point_Musholla"],
+  // Edukasi Pasien dan Keluarga: route via specific checkpoint sequence
+  Edukasi_Pasien_dan_Keluarga: [
+    "Check_Point_Edukasi_Keluarga_Dan_Pasien",
+    "Belok_Masuk_ke_Edukasi_Keluarga___Pasien",
+    "Menuju_ke_Edukasi_Keluarga_dan_Pasien",
+  ],
+  // Gudang Alat Medis Steril: route via specific checkpoint node
+  Gudang_Alat_Medis_Steril: ["R._Dokter_Spesialis_dan_Gudang_Alat_Medis_Steril"],
+  // Parking L1: route via hospital exit checkpoint, then to parking exit checkpoint
+  // When routing TO parking (as destination), use the last checkpoint (hospital side)
+  // When routing FROM parking (as start), use the first checkpoint (parking side) - handled in resolvePreferredStartNodeId
+  Parking_Lantai_1: [
+    "Check_Point_Tangga_Pengunjung",
+    "Check_Point_Keluar_dari_Lahan_Parkir",
+    "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
+    "Belokan_Keluar_Area_Parkir",
+  ],
+  // Parking L2: route via bridge checkpoint (near QR-PK2-N01)
+  Parking_Lantai_2: ["Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_"],
+  // Parking stair L1: route via stair entrance checkpoint
+  Tangga_Pengunjung_di_Lahan_Parkir_lantai_1: ["Masuk_ke_Tangga_Pengunjung_ke_Lantai_2_Lahan_Parkir"],
+  // Parking stair L2: route via stair exit checkpoint
+  Tangga_Pengunjung_di_Lahan_Parkir_lantai_2: ["Check_Point_Tangga_Pengunjung_Parkir_Lantai_2"],
   // Virtual connector room used when routing hospital → parking; snaps to the parking exit checkpoint.
   Check_Point_Lahan_Parkir_Connector: ["Check_Point_Lahan_Parkir", "Belok_masuk_ke_Lahan_Parkir", "Belok_ke_Lahan_Parkir"],
 };
@@ -612,6 +652,10 @@ const buildRoadGraphFromSvg = (
   const isParkingFloor2Svg = Boolean(
     svgDoc.getElementById("Akses_Jembatan_Menuju_Gedung_Rumah_Sakit_Lantai_2"),
   );
+  // Parking L1 SVG has a node layer labeled "Node" (same as L2)
+  const isParkingSvg = isParkingFloor2Svg || Boolean(
+    svgDoc.getElementById("Check_Point_Tangga_Pengunjung"),
+  );
 
   const nodeLayer = Array.from(svgDoc.querySelectorAll("g")).find((group) => {
     const layerLabel = (
@@ -620,27 +664,27 @@ const buildRoadGraphFromSvg = (
     return (
       layerLabel.includes("node jalan") ||
       layerLabel.includes("pathfinding node") ||
-      (isParkingFloor2Svg && layerLabel === "node")
+      (isParkingSvg && layerLabel === "node")  // covers both Parking L1 and L2
     );
   });
 
-  const generatedNodeElements = isParkingFloor2Svg
-    ? Array.from(
-        svgDoc.querySelectorAll(
-          `#${GENERATED_ROOM_NODE_LAYER_ID} circle, #${GENERATED_ROOM_NODE_LAYER_ID} ellipse`,
-        ),
-      )
-    : [];
+  // Search the generated-anchor layer for all SVGs (not just Parking L2)
+  const generatedNodeElements = Array.from(
+    svgDoc.querySelectorAll(
+      `#${GENERATED_ROOM_NODE_LAYER_ID} circle, #${GENERATED_ROOM_NODE_LAYER_ID} ellipse`,
+    ),
+  );
 
   const explicitNodeElements = nodeLayer
     ? Array.from(nodeLayer.querySelectorAll("circle, ellipse"))
     : Array.from(
-        svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"),
-      );
+      svgDoc.querySelectorAll("circle[id^='node_'], ellipse[id^='node_']"),
+    );
 
   [...explicitNodeElements, ...generatedNodeElements].forEach((element) => {
     if (!isElementNodeLike(element)) return;
-    const id = element.id;
+    const rawId = element.id || "";
+    const id = rawId.replace(/\s+/g, "");
     if (!id) return;
     const label =
       element.getAttribute("inkscape:label") ||
@@ -661,6 +705,7 @@ const buildRoadGraphFromSvg = (
       ).toLowerCase();
       return (
         layerLabel.includes("centerline jalan") ||
+        layerLabel === "centerline" ||
         (isParkingFloor2Svg && layerLabel === "centerline")
       );
     },
@@ -671,8 +716,8 @@ const buildRoadGraphFromSvg = (
   );
   const centerlineRoadPaths = centerlineLayer
     ? Array.from(centerlineLayer.querySelectorAll("path")).filter((path) =>
-        isCenterlineRoadPath(path, options),
-      )
+      isCenterlineRoadPath(path, options),
+    )
     : [];
   // If a dedicated centerline layer exists, use it as the single routing source.
   // Mixing thick road-area paths with centerlines lets Dijkstra drift to road edges.
@@ -774,11 +819,22 @@ const ensureGeneratedRoomAnchorNode = (
   center: { x: number; y: number },
 ): void => {
   try {
-    // If roomId already starts with "virtual_" or other special prefixes, use it as-is
-    // Otherwise, add "node_room_" prefix for room-based nodes
-    const nodeId = roomId.startsWith("virtual_") || roomId.startsWith("Check_Point_") 
-      ? roomId 
-      : `node_room_${roomId}`;
+    // Keep the raw roomId for SVG element IDs (those that look like actual SVG node IDs:
+    // start with uppercase, contain underscores, or are explicit virtual/checkpoint names).
+    // Only wrap plain room names that don't resemble an SVG element ID.
+    const looksLikeSvgNodeId =
+      roomId.startsWith("virtual_") ||
+      roomId.startsWith("Check_Point_") ||
+      roomId.startsWith("Masuk_ke_") ||
+      roomId.startsWith("Persimpangan_") ||
+      roomId.startsWith("Belok_") ||
+      roomId.startsWith("Belokan_") ||
+      roomId.startsWith("Keluar_") ||
+      roomId.startsWith("Akses_") ||
+      roomId.startsWith("Jalan_") ||
+      roomId.startsWith("Tangga_") ||
+      /^[A-Z]/.test(roomId);  // fallback: any ID starting uppercase is likely an SVG id
+    const nodeId = looksLikeSvgNodeId ? roomId : `node_room_${roomId}`;
     const existing = svgDoc.getElementById(nodeId);
     if (existing) return;
 
@@ -811,18 +867,253 @@ const ensureGeneratedRoomAnchorNode = (
   }
 };
 
+/**
+ * Parse an SVG `d` attribute and compute the geometric bounding box
+ * WITHOUT relying on browser layout (i.e. works on detached / display:none
+ * SVG documents). Supports the subset of commands Inkscape emits for
+ * room polygons: M/m (moveto), L/l (lineto), H/h, V/v, Z/z, and
+ * curves (C/c, S/s, Q/q, T/t, A/a) — for curves we only track endpoint
+ * positions, which is sufficient for the closed room polygons used here.
+ */
+const computeBBoxFromPathD = (
+  d: string,
+): { x: number; y: number; width: number; height: number } | null => {
+  if (!d) return null;
+
+  // Tokenize: split into commands + numeric arguments
+  const tokens = d.match(/[MmLlHhVvCcSsQqTtAaZz]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi);
+  if (!tokens || !tokens.length) return null;
+
+  let minX = Number.POSITIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxX = Number.NEGATIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
+
+  let cx = 0;
+  let cy = 0;
+  let startX = 0;
+  let startY = 0;
+  let cmd = "";
+  let i = 0;
+
+  const track = (x: number, y: number) => {
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  };
+
+  const nextNum = (): number => {
+    const t = tokens[i++];
+    return parseFloat(t);
+  };
+
+  const isCmd = (t: string): boolean => /^[MmLlHhVvCcSsQqTtAaZz]$/.test(t);
+
+  while (i < tokens.length) {
+    const tok = tokens[i];
+    if (isCmd(tok)) {
+      cmd = tok;
+      i += 1;
+    }
+
+    switch (cmd) {
+      case "M": {
+        cx = nextNum(); cy = nextNum();
+        startX = cx; startY = cy;
+        track(cx, cy);
+        cmd = "L";
+        break;
+      }
+      case "m": {
+        cx += nextNum(); cy += nextNum();
+        startX = cx; startY = cy;
+        track(cx, cy);
+        cmd = "l";
+        break;
+      }
+      case "L": {
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "l": {
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "H": {
+        cx = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "h": {
+        cx += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "V": {
+        cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "v": {
+        cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "C": {
+        nextNum(); nextNum(); nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "c": {
+        nextNum(); nextNum(); nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "S":
+      case "Q": {
+        nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "s":
+      case "q": {
+        nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "T": {
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "t": {
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "A": {
+        nextNum(); nextNum(); nextNum(); nextNum(); nextNum();
+        cx = nextNum(); cy = nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "a": {
+        nextNum(); nextNum(); nextNum(); nextNum(); nextNum();
+        cx += nextNum(); cy += nextNum();
+        track(cx, cy);
+        break;
+      }
+      case "Z":
+      case "z": {
+        cx = startX; cy = startY;
+        break;
+      }
+      default:
+        // Unknown command — consume one number to avoid an infinite loop.
+        i += 1;
+        break;
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(minY)) return null;
+
+  return {
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+};
+
+/**
+ * Compute the geometric center of an element WITHOUT requiring browser layout.
+ * Works on detached / display:none SVG documents. Falls back to getBBox()
+ * for non-path elements.
+ */
+export const computeElementCenterWithoutLayout = (
+  element: Element,
+): { x: number; y: number } | null => {
+  const tag = element.tagName.toLowerCase();
+
+  if (tag === "path") {
+    const d = element.getAttribute("d");
+    if (d) {
+      const bbox = computeBBoxFromPathD(d);
+      if (bbox && (bbox.width > 0 || bbox.height > 0)) {
+        return {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        };
+      }
+    }
+  }
+
+  if (tag === "circle" || tag === "ellipse") {
+    const cx = Number(element.getAttribute("cx") || "NaN");
+    const cy = Number(element.getAttribute("cy") || "NaN");
+    if (Number.isFinite(cx) && Number.isFinite(cy)) {
+      return { x: cx, y: cy };
+    }
+  }
+
+  if (tag === "rect") {
+    const x = Number(element.getAttribute("x") || "0");
+    const y = Number(element.getAttribute("y") || "0");
+    const w = Number(element.getAttribute("width") || "0");
+    const h = Number(element.getAttribute("height") || "0");
+    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(w) && Number.isFinite(h)) {
+      return { x: x + w / 2, y: y + h / 2 };
+    }
+  }
+
+  // Last resort: browser-computed bbox (returns {0,0,0,0} for display:none elements)
+  const maybeGraphics = element as unknown as { getBBox?: () => DOMRect };
+  if (typeof maybeGraphics.getBBox === "function") {
+    try {
+      const bbox = maybeGraphics.getBBox();
+      if (bbox.width > 0 || bbox.height > 0) {
+        return {
+          x: bbox.x + bbox.width / 2,
+          y: bbox.y + bbox.height / 2,
+        };
+      }
+    } catch {
+      // Ignore — some non-graphics elements throw on getBBox.
+    }
+  }
+
+  return null;
+};
+
 const getRoomCenter = (
   svgDoc: Document,
   roomId: string,
 ): { x: number; y: number } | null => {
   // Try to find the node with the exact ID first (for virtual nodes)
-  let roomAnchor = svgDoc.getElementById(roomId);
-  
+  let roomAnchor = svgDoc.getElementById(roomId) as HTMLElement | null;
+
   // If not found, try with node_room_ prefix (for regular room nodes)
   if (!roomAnchor) {
-    roomAnchor = svgDoc.getElementById(`node_room_${roomId}`);
+    roomAnchor = svgDoc.getElementById(`node_room_${roomId}`) as HTMLElement | null;
   }
-  
+
+  // If still not found, inkscape might have embedded newlines inside id="" string
+  if (!roomAnchor) {
+    const fallbackElements = Array.from(svgDoc.querySelectorAll("circle[id], ellipse[id]"));
+    roomAnchor = fallbackElements.find(el => {
+      const cleanId = (el.id || "").replace(/\s+/g, "");
+      return cleanId === roomId || cleanId === `node_room_${roomId}`;
+    }) as HTMLElement | null;
+  }
+
+
   if (roomAnchor && roomAnchor.tagName.toLowerCase() === "circle") {
     const x = Number(roomAnchor.getAttribute("cx") || "NaN");
     const y = Number(roomAnchor.getAttribute("cy") || "NaN");
@@ -831,28 +1122,34 @@ const getRoomCenter = (
     }
   }
 
-  const target = svgDoc.getElementById(roomId);
+  let target = svgDoc.getElementById(roomId) as HTMLElement | null;
+  if (!target) {
+    const all = Array.from(svgDoc.querySelectorAll("[id]"));
+    target = all.find(el => (el.id || "").replace(/\s+/g, "") === roomId) as HTMLElement | null;
+  }
   if (!target) return null;
-  const maybeGraphics = target as unknown as { getBBox?: () => DOMRect };
-  if (typeof maybeGraphics.getBBox !== "function") return null;
 
-  const bbox = maybeGraphics.getBBox();
-  const center = {
-    x: bbox.x + bbox.width / 2,
-    y: bbox.y + bbox.height / 2,
-  };
+  // Use layout-independent center computation first. This is CRUCIAL for
+  // cross-floor routing where the target SVG lives in a pre-parsed document
+  // that is never attached to the render tree (getBBox() would return 0,0).
+  const layoutFreeCenter = computeElementCenterWithoutLayout(target);
+  if (layoutFreeCenter) {
+    ensureGeneratedRoomAnchorNode(svgDoc, roomId, layoutFreeCenter);
+    return layoutFreeCenter;
+  }
 
-  ensureGeneratedRoomAnchorNode(svgDoc, roomId, center);
-  return center;
+  return null;
 };
 
 const getNearestNodeId = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   point: { x: number; y: number },
+  excludeNodeIds?: Set<string>,
 ): string | null => {
   const nodeValues = Object.values(nodes).filter((node) => {
     if (node.id.toLowerCase().startsWith("node_room_")) return false;
+    if (excludeNodeIds?.has(node.id)) return false;
     return (graph[node.id]?.length || 0) > 0;
   });
   if (!nodeValues.length) return null;
@@ -944,9 +1241,9 @@ const getBestMatchingCheckpointNodeId = (
       const exactScore = roomTokens.some((token) => normalizedNodeId === token)
         ? 2
         : roomTokens.some(
-              (token) =>
-                normalizedNodeId.includes(token) || token.includes(normalizedNodeId),
-            )
+          (token) =>
+            normalizedNodeId.includes(token) || token.includes(normalizedNodeId),
+        )
           ? 1
           : 0;
 
@@ -1005,6 +1302,7 @@ const resolveRouteEndpoint = (
   nodes: Record<string, GraphNode>,
   graph: Graph,
   fallbackPoint: { x: number; y: number },
+  excludeNodeIds?: Set<string>,
 ): RouteEndpointResolution | null => {
   if (
     preferredAnchorNodeId &&
@@ -1022,6 +1320,7 @@ const resolveRouteEndpoint = (
       nodes,
       graph,
       nodes[preferredAnchorNodeId],
+      excludeNodeIds,
     );
     if (nearestGraphNodeId) {
       return {
@@ -1031,7 +1330,7 @@ const resolveRouteEndpoint = (
     }
   }
 
-  const nearestFallbackNodeId = getNearestNodeId(nodes, graph, fallbackPoint);
+  const nearestFallbackNodeId = getNearestNodeId(nodes, graph, fallbackPoint, excludeNodeIds);
   if (!nearestFallbackNodeId) return null;
 
   return {
@@ -1070,7 +1369,6 @@ const resolvePreferredStartNodeId = (
     if (exactStartNodeId) {
       const exactStartNode = nodes[exactStartNodeId];
       if (exactStartNode) {
-        console.log(`[Routing] Using exact start node: ${exactStartNodeId}`);
         return resolveRouteEndpoint(
           exactStartNodeId,
           nodes,
@@ -1078,20 +1376,48 @@ const resolvePreferredStartNodeId = (
           fallbackStartPoint,
         );
       }
-      console.warn(`[Routing] Exact start node not found: ${exactStartNodeId}`);
     }
 
-    console.log(`[Routing] Using exact point for start: (${fallbackStartPoint.x}, ${fallbackStartPoint.y})`);
     const nearestNodeId = getNearestNodeId(nodes, graph, fallbackStartPoint);
     if (nearestNodeId) {
-      console.log(`[Routing] Found nearest node: ${nearestNodeId}`);
       return {
         anchorNodeId: nearestNodeId,
         graphNodeId: nearestNodeId,
       };
     }
-    console.warn(`[Routing] No nearest node found for exact point`);
     return null;
+  }
+
+  // Special handling for parking start points: use FIRST valid checkpoint (entry point from parking)
+  if (startRoomId === "Parking_Lantai_1") {
+    const parkingStartCheckpoints = [
+      "Check_Point_Tangga_Pengunjung",
+      "Check_Point_Keluar_dari_Lahan_Parkir",
+      "Jalan_Keluar_Menuju_Gedung_Rumah_Sakit",
+      "Belokan_Keluar_Area_Parkir",
+    ];
+    for (const checkpointId of parkingStartCheckpoints) {
+      if (nodes[checkpointId]) {
+        return resolveRouteEndpoint(
+          checkpointId,
+          nodes,
+          graph,
+          fallbackStartPoint,
+        );
+      }
+    }
+  }
+
+  if (startRoomId === "Parking_Lantai_2") {
+    const parkingL2StartCheckpoint = "Check_Point_Jembatan_Keluar_Dari_Area_Parkir__Pengunjung_";
+    if (nodes[parkingL2StartCheckpoint]) {
+      return resolveRouteEndpoint(
+        parkingL2StartCheckpoint,
+        nodes,
+        graph,
+        fallbackStartPoint,
+      );
+    }
   }
 
   // Normal flow: use checkpoint/room-based logic
@@ -1123,7 +1449,7 @@ const resolvePreferredStartNodeId = (
     );
   }
 
-  if (startRoomId === "IGD") {
+  if (startRoomId === "Area_Pelayanan_IGD") {
     const igdExitNodeId = "Persimpangan_Keluar_IGD";
     const igdExitNode = nodes[igdExitNodeId];
     if (igdExitNode && (graph[igdExitNodeId]?.length || 0) > 0) {
@@ -1143,6 +1469,44 @@ const resolvePreferredEndNodeId = (
   graph: Graph,
   fallbackEndPoint: { x: number; y: number },
 ): RouteEndpointResolution | null => {
+  // Build exclusion set: when destination is NOT Kamar Mayat, exclude Kamar Mayat nodes
+  // to prevent accidental routing to the morgue area
+  const excludeNodeIds = !isKamarMayatRoom(endRoomId)
+    ? new Set<string>(KAMAR_MAYAT_PREFERRED_NODE_IDS as unknown as string[])
+    : undefined;
+
+  // Special handling for parking destinations: use the LAST valid node in the special route list
+  // This ensures routing TO parking follows the correct path sequence
+  const specialNodeIds = ROOM_SPECIAL_ROUTE_NODE_IDS[endRoomId];
+  if (specialNodeIds?.length && (endRoomId === "Parking_Lantai_1" || endRoomId === "Parking_Lantai_2")) {
+    // Iterate backwards through the special nodes to find the last valid one
+    for (let i = specialNodeIds.length - 1; i >= 0; i--) {
+      const specialNodeId = specialNodeIds[i];
+      if (nodes[specialNodeId]) {
+        return resolveRouteEndpoint(
+          specialNodeId,
+          nodes,
+          graph,
+          fallbackEndPoint,
+          excludeNodeIds,
+        );
+      }
+    }
+  }
+
+  // Special handling for IGD as destination
+  if (endRoomId === "Area_Pelayanan_IGD") {
+    const igdEntranceNodeId = "Persimpangan_di_Area_Pelayanan_IGD_untuk_ke_IGD";
+    const igdEntranceNode = nodes[igdEntranceNodeId];
+    console.log(`🏥 IGD endpoint check - node exists: ${!!igdEntranceNode}, connected: ${(graph[igdEntranceNodeId]?.length || 0) > 0}`);
+    if (igdEntranceNode && (graph[igdEntranceNodeId]?.length || 0) > 0) {
+      return {
+        anchorNodeId: igdEntranceNodeId,
+        graphNodeId: igdEntranceNodeId,
+      };
+    }
+  }
+
   const roomCheckpointNodeId = resolveRoomCheckpointNodeId(
     endRoomId,
     nodes,
@@ -1154,6 +1518,7 @@ const resolvePreferredEndNodeId = (
       nodes,
       graph,
       fallbackEndPoint,
+      excludeNodeIds,
     );
   }
 
@@ -1171,10 +1536,17 @@ const resolvePreferredEndNodeId = (
     );
   }
 
-  return resolveRouteEndpoint(null, nodes, graph, fallbackEndPoint);
+  return resolveRouteEndpoint(null, nodes, graph, fallbackEndPoint, excludeNodeIds);
 };
 
 const shouldExcludeFromRouting = (roomId: string): boolean => {
+  // Exclude specific room IDs
+  if (roomId === "R._Tunggu" ||
+    roomId === "R._Tunggu_Keluarga_Pasien" ||
+    roomId === "Nurse_Station") {
+    return true;
+  }
+
   const normalized = roomId.toLowerCase().replace(/_/g, " ");
   return (
     normalized.includes("jalan") ||
@@ -1188,7 +1560,7 @@ export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
   const ids = Object.keys(roomInfoBySvgId).filter(
     (roomId) => !shouldExcludeFromRouting(roomId),
   );
-  
+
   // Always include parking in routing options (they have QR anchors even though they're not in the hospital SVG)
   if (!ids.includes("Parking_Lantai_1")) {
     ids.push("Parking_Lantai_1");
@@ -1196,13 +1568,13 @@ export const getRoutingRoomIds = (svgDoc?: Document): string[] => {
   if (!ids.includes("Parking_Lantai_2")) {
     ids.push("Parking_Lantai_2");
   }
-  
+
   if (!svgDoc) return ids;
 
   return ids.filter((roomId) => {
     // Parking is special — it's in a separate SVG, so skip the element check
     if (roomId === "Parking_Lantai_1" || roomId === "Parking_Lantai_2") return true;
-    
+
     const element = svgDoc.getElementById(roomId);
     return Boolean(element && element.tagName.toLowerCase() === "path");
   });
@@ -1264,21 +1636,21 @@ export const buildRouteForRooms = (
     startNodeId?: string;
   },
 ): RoomRouteResult | null => {
-  console.log(`[buildRouteForRooms] startRoomId: ${startRoomId}, endRoomId: ${endRoomId}`);
-  console.log(`[buildRouteForRooms] options:`, options);
-  
+  console.log(`🔍 buildRouteForRooms: ${startRoomId} → ${endRoomId}`);
+
   const startCenter = getRoomCenter(svgDoc, startRoomId);
   const endCenter = getRoomCenter(svgDoc, endRoomId);
-  if (!startCenter || !endCenter) return null;
+  if (!startCenter || !endCenter) {
+    console.log(`❌ Room center not found - start: ${!!startCenter}, end: ${!!endCenter}`);
+    return null;
+  }
 
   const startSourcePoint = options?.startPoint ?? startCenter;
   const endSourcePoint = options?.endPoint ?? endCenter;
 
-  console.log(`[buildRouteForRooms] startSourcePoint:`, startSourcePoint);
-  console.log(`[buildRouteForRooms] useExactStartPoint:`, options?.useExactStartPoint);
-
   const allowIgdEntrancePath =
     isIgdRelatedRoom(startRoomId) || isIgdRelatedRoom(endRoomId);
+  console.log(`🚪 IGD entrance allowed: ${allowIgdEntrancePath}`);
 
   const { graph, nodes } = buildRoadGraphFromSvg(svgDoc, {
     allowIgdEntrancePath,
@@ -1297,14 +1669,26 @@ export const buildRouteForRooms = (
     graph,
     endSourcePoint,
   );
-  if (!startResolution || !endResolution) return null;
+
+  console.log(`📍 Start node: ${startResolution?.anchorNodeId || 'null'}`);
+  console.log(`📍 End node: ${endResolution?.anchorNodeId || 'null'}`);
+
+  if (!startResolution || !endResolution) {
+    console.log(`❌ Node resolution failed`);
+    return null;
+  }
 
   const shortest = dijkstra(
     graph,
     startResolution.graphNodeId,
     endResolution.graphNodeId,
   );
-  if (!shortest) return null;
+  if (!shortest) {
+    console.log(`❌ No path found between nodes`);
+    return null;
+  }
+
+  console.log(`✅ Route found: ${shortest.path.length} nodes, distance: ${shortest.distance.toFixed(2)}`);
 
   const checkpointIds = [...shortest.path];
   if (checkpointIds[0] !== startResolution.anchorNodeId) {
@@ -1319,17 +1703,28 @@ export const buildRouteForRooms = (
     .filter(Boolean)
     .map((node) => ({ x: node.x, y: node.y }));
 
-  const points = roadPoints;
+  const points = [...roadPoints];
+  let totalDistance = shortest.distance;
+
+  if (options?.useExactStartPoint && options.startPoint && points.length) {
+    const extraDistance = distance(options.startPoint, points[0]);
+    if (extraDistance > 0.5) {
+      points.unshift({ x: options.startPoint.x, y: options.startPoint.y });
+      totalDistance += extraDistance;
+    }
+  }
 
   if (points.length < 2) return null;
 
-  return {
+  const result = {
     startRoomId,
     endRoomId,
     checkpointIds,
     points,
-    totalDistance: shortest.distance,
+    totalDistance,
   };
+
+  return result;
 };
 
 /**
@@ -1370,7 +1765,7 @@ export const buildRouteFromPoint = (
       console.warn(`[buildRouteFromPoint] point_to_point: otherRoomId "${otherRoomId}" not found in SVG`);
       return null;
     }
-    
+
     // Get coordinates of the other node
     let otherX: number, otherY: number;
     if (otherNode.tagName.toLowerCase() === "circle" || otherNode.tagName.toLowerCase() === "ellipse") {
@@ -1386,15 +1781,15 @@ export const buildRouteFromPoint = (
       otherX = otherCenter.x;
       otherY = otherCenter.y;
     }
-    
+
     if (!Number.isFinite(otherX) || !Number.isFinite(otherY)) {
       console.warn(`[buildRouteFromPoint] point_to_point: Invalid coordinates for "${otherRoomId}"`);
       return null;
     }
-    
+
     // Inject virtual node for the other point as well
     injectVirtualAnchorNode(svgDoc, otherRoomId, otherX, otherY);
-    
+
     // Route from first point to second point, using exact coordinates for both
     return buildRouteForRooms(pointRoomId, otherRoomId, svgDoc, {
       startPoint: { x: pointX, y: pointY },

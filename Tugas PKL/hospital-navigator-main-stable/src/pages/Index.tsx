@@ -11,13 +11,16 @@ type RoomHighlightCategory = "departments" | "facilities" | "emergency" | null;
 const Index = () => {
   const [activeTab, setActiveTab] = useState("map");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [language, setLanguage] = useState<"id" | "en">("id");
   const [selectedLocation, setSelectedLocation] = useState<HospitalRoomInfo | null>(null);
   const [isNavDialogOpen, setIsNavDialogOpen] = useState(false);
-  const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr">("manual");
+  const [navDialogMode, setNavDialogMode] = useState<"manual" | "qr" | "calibrate">("manual");
+  const [navDialogDestinationRoomId, setNavDialogDestinationRoomId] = useState<string | null>(null);
   const [navigationStartRequest, setNavigationStartRequest] = useState<{
     requestId: number;
     roomId: string;
-    source: "manual" | "qr";
+    destinationRoomId: string;
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   } | null>(null);
   const [navigationStartCounter, setNavigationStartCounter] = useState(0);
@@ -27,14 +30,16 @@ const Index = () => {
       ? activeTab
       : null;
 
-  const handleStartNavigation = (options?: { mode?: "manual" | "qr" }) => {
+  const handleStartNavigation = (options?: { mode?: "manual" | "qr" | "calibrate"; destinationRoomId?: string }) => {
     setNavDialogMode(options?.mode ?? "manual");
+    setNavDialogDestinationRoomId(options?.destinationRoomId ?? null);
     setIsNavDialogOpen(true);
   };
 
   const handleConfirmNavigationStart = useCallback((payload: {
     roomId: string;
-    source: "manual" | "qr";
+    destinationRoomId: string;
+    source: "manual" | "qr" | "calibrate";
     qrPayload?: string;
   }) => {
     const nextId = navigationStartCounter + 1;
@@ -42,10 +47,12 @@ const Index = () => {
     setNavigationStartRequest({
       requestId: nextId,
       roomId: payload.roomId,
+      destinationRoomId: payload.destinationRoomId,
       source: payload.source,
       qrPayload: payload.qrPayload,
     });
     setIsNavDialogOpen(false);
+    setNavDialogDestinationRoomId(null);
   }, [navigationStartCounter]);
 
   const handleNavigationStartRequestHandled = useCallback((requestId: number) => {
@@ -67,6 +74,8 @@ const Index = () => {
         onStartNavigation={handleStartNavigation}
         isSidebarOpen={isMobileSidebarOpen}
         onToggleSidebar={() => setIsMobileSidebarOpen((prev) => !prev)}
+        language={language}
+        onToggleLanguage={() => setLanguage((prev) => (prev === "id" ? "en" : "id"))}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -76,26 +85,26 @@ const Index = () => {
           onStartNavigation={handleStartNavigation}
           mobileOpen={isMobileSidebarOpen}
           onMobileOpenChange={setIsMobileSidebarOpen}
+          language={language}
         />
 
-        <main className="flex-1 flex flex-col overflow-hidden relative">
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {/* Search */}
-          <div className="px-4 pt-4 pb-2 z-10">
-            <SearchBar onSelectLocation={setSelectedLocation} />
+          <div className="px-4 pt-4 pb-2 z-20 relative shrink-0">
+            <SearchBar onSelectLocation={setSelectedLocation} language={language} />
           </div>
 
-          {/* Map area */}
-          <div className="flex-1 relative px-4 pb-4">
-            <div className="h-full flex gap-3">
-              <MapViewer 
-                selectedLocation={selectedLocation} 
-                onClearSelection={handleClearSelection}
-                highlightCategory={highlightCategory}
-                onStartNavigation={handleStartNavigation}
-                navigationStartRequest={navigationStartRequest}
-                onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
-              />
-            </div>
+          {/* Map area — fills remaining height exactly */}
+          <div className="flex-1 min-h-0 px-4 pb-4 md:pb-4 flex gap-3">
+            <MapViewer 
+              selectedLocation={selectedLocation} 
+              onClearSelection={handleClearSelection}
+              highlightCategory={highlightCategory}
+              onStartNavigation={handleStartNavigation}
+              language={language}
+              navigationStartRequest={navigationStartRequest}
+              onNavigationStartRequestHandled={handleNavigationStartRequestHandled}
+            />
           </div>
         </main>
       </div>
@@ -104,7 +113,9 @@ const Index = () => {
         open={isNavDialogOpen} 
         onOpenChange={setIsNavDialogOpen} 
         defaultMode={navDialogMode}
-        onConfirmStart={handleConfirmNavigationStart}
+        defaultDestinationRoomId={navDialogDestinationRoomId}
+        language={language}
+        onConfirmNavigation={handleConfirmNavigationStart}
       />
     </div>
   );

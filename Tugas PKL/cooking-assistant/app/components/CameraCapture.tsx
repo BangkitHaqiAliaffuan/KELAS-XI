@@ -5,14 +5,18 @@ import { useRef, useState, useEffect } from 'react';
 interface CameraCaptureProps {
   onCapture: (imageData: string) => void;
   isAnalyzing: boolean;
+  triggerCaptureSignal?: number;
+  autoStartOnTrigger?: boolean;
+  lastWakeAt?: number;
 }
 
-export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureProps) {
+export default function CameraCapture({ onCapture, isAnalyzing, triggerCaptureSignal, autoStartOnTrigger = true, lastWakeAt }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [error, setError] = useState<string>('');
   const streamRef = useRef<MediaStream | null>(null);
+  const [showWakePulse, setShowWakePulse] = useState(false);
 
   const startCamera = async () => {
     try {
@@ -61,11 +65,56 @@ export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureP
     onCapture(imageData);
   };
 
+  // If parent toggles `triggerCaptureSignal`, capture an image.
+  useEffect(() => {
+    if (typeof triggerCaptureSignal === 'undefined') return;
+
+    let mounted = true;
+
+    const doCapture = async () => {
+      try {
+        if (!isCameraActive) {
+          if (autoStartOnTrigger) {
+            await startCamera();
+            // wait a short moment for the camera to initialize
+            await new Promise((res) => setTimeout(res, 600));
+            if (!mounted) return;
+            captureImage();
+          }
+        } else {
+          captureImage();
+        }
+      } catch (err) {
+        console.error('Trigger capture error:', err);
+      }
+    };
+
+    doCapture();
+
+    return () => {
+      mounted = false;
+    };
+  }, [triggerCaptureSignal]);
+
+  // Pulse when lastWakeAt updates
+  useEffect(() => {
+    if (typeof (arguments as any) === 'undefined') return;
+  }, []);
+
+
   useEffect(() => {
     return () => {
       stopCamera();
     };
   }, []);
+
+  // Show a short pulse UI when a wake event occurs (lastWakeAt updated)
+  useEffect(() => {
+    if (!lastWakeAt) return;
+    setShowWakePulse(true);
+    const t = setTimeout(() => setShowWakePulse(false), 1200);
+    return () => clearTimeout(t);
+  }, [lastWakeAt]);
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -107,6 +156,13 @@ export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureP
         )}
 
         <canvas ref={canvasRef} className="hidden" />
+
+        {showWakePulse && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-40 h-40 rounded-full bg-white/30 animate-pulse-shadow" />
+            <style>{`@keyframes pulse-shadow {0%{transform:scale(0.6);opacity:0.9}70%{transform:scale(1);opacity:0.15}100%{transform:scale(1.2);opacity:0}} .animate-pulse-shadow{animation:pulse-shadow 1.1s ease-out;}`}</style>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -122,6 +178,7 @@ export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureP
         {!isCameraActive ? (
           <button
             onClick={startCamera}
+            data-start-camera
             className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-lg"
           >
             Start Camera
@@ -131,6 +188,7 @@ export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureP
             <button
               onClick={captureImage}
               disabled={isAnalyzing}
+              data-capture-btn
               className="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               {isAnalyzing ? 'Analyzing...' : 'Capture & Analyze'}
@@ -138,6 +196,7 @@ export default function CameraCapture({ onCapture, isAnalyzing }: CameraCaptureP
             <button
               onClick={stopCamera}
               disabled={isAnalyzing}
+              data-stop-camera
               className="px-6 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
               Stop Camera

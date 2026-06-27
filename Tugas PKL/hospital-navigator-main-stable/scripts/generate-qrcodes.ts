@@ -12,7 +12,8 @@ import {
 } from "../src/data/hospitalRouteGraph";
 
 type IncludeMode = "rooms" | "anchors" | "all";
-type FloorFilter = 1 | 2 | "all";
+type AnchorFloor = -1 | 0 | 1 | 2;
+type FloorFilter = AnchorFloor | "all";
 
 type CliOptions = {
   outDir: string;
@@ -34,7 +35,7 @@ type GeneratedQr = {
 
 const DEFAULT_OPTIONS: CliOptions = {
   outDir: "public/images/qr",
-  include: "all",
+  include: "anchors",
   floor: "all",
   size: 512,
   margin: 2,
@@ -49,9 +50,11 @@ const normalizeInclude = (value: string | undefined): IncludeMode => {
 
 const normalizeFloor = (value: string | undefined): FloorFilter => {
   if (!value || value === "all") return "all";
+  if (value === "-1" || value.toLowerCase() === "parking2") return -1;
+  if (value === "0" || value.toLowerCase() === "parking") return 0;
   if (value === "1") return 1;
   if (value === "2") return 2;
-  throw new Error(`Invalid --floor value: "${value}". Use 1|2|all.`);
+  throw new Error(`Invalid --floor value: "${value}". Use -1|0|1|2|parking|parking2|all.`);
 };
 
 const parsePositiveInt = (value: string | undefined, fallback: number, name: string): number => {
@@ -117,8 +120,10 @@ const parseCliArgs = (): CliOptions => {
 };
 
 const printHelp = (): void => {
-  console.log(`\nQR Generator\n\nUsage:\n  npm run qr:generate -- [options]\n\nOptions:\n  --include <rooms|anchors|all>  Which QR sets to generate (default: all)\n  --outDir <path>                 Output directory (default: public/images/qr)\n  --size <number>                 PNG width in px (default: 512)\n  --margin <number>               QR margin (default: 2)\n  --clean                         Remove existing PNG files in output directory\n  --help                          Show this help\n`);
-  console.log(`  --floor <1|2|all>              Filter QR by floor (default: all)\n`);
+  process.stdout.write(
+    `\nQR Generator\n\nUsage:\n  npm run qr:generate -- [options]\n\nOptions:\n  --include <rooms|anchors|all>  Which QR sets to generate (default: anchors)\n  --outDir <path>                 Output directory (default: public/images/qr)\n  --size <number>                 PNG width in px (default: 512)\n  --margin <number>               QR margin (default: 2)\n  --clean                         Remove existing PNG files in the selected output directory\n  --help                          Show this help\n`
+  );
+  process.stdout.write(`  --floor <-1|0|1|2|parking|parking2|all>  Filter QR by floor (default: all)\n`);
 };
 
 const sanitizeFileName = (value: string): string => {
@@ -137,10 +142,10 @@ const cleanPngFiles = async (dirPath: string): Promise<number> => {
   const entries = await fs.readdir(dirPath, { withFileTypes: true }).catch(() => [] as any[]);
 
   for (const entry of entries) {
-    if (!entry.isFile()) continue;
-    if (!entry.name.toLowerCase().endsWith(".png")) continue;
-    await fs.unlink(path.join(dirPath, entry.name));
-    removed += 1;
+    if (entry.isFile() && entry.name.toLowerCase().endsWith(".png")) {
+      await fs.unlink(path.join(dirPath, entry.name));
+      removed += 1;
+    }
   }
 
   return removed;
@@ -193,6 +198,29 @@ const anchorQrItems = (floor: FloorFilter): GeneratedQr[] => {
     });
 };
 
+const validateAnchorRegistry = (): void => {
+  const ids = new Set<string>();
+  const problems: string[] = [];
+
+  for (const anchor of Object.values(QR_ANCHOR_REGISTRY)) {
+    if (!anchor.qrId.trim()) problems.push("Ada QR anchor tanpa qrId.");
+    if (ids.has(anchor.qrId)) problems.push(`QR anchor duplikat: ${anchor.qrId}`);
+    ids.add(anchor.qrId);
+
+    if (!anchor.roomId.trim()) problems.push(`${anchor.qrId} belum punya roomId.`);
+    if (!Number.isFinite(anchor.svgX) || !Number.isFinite(anchor.svgY)) {
+      problems.push(`${anchor.qrId} punya koordinat SVG tidak valid.`);
+    }
+    if (![-1, 0, 1, 2].includes(anchor.floor)) {
+      problems.push(`${anchor.qrId} punya floor tidak dikenal: ${anchor.floor}`);
+    }
+  }
+
+  if (problems.length) {
+    throw new Error(`QR_ANCHOR_REGISTRY tidak valid:\n- ${problems.join("\n- ")}`);
+  }
+};
+
 const writeQrImage = async (
   outputPath: string,
   payload: string,
@@ -215,8 +243,22 @@ const writeMetadata = async (outDir: string, generated: GeneratedQr[]): Promise<
   const metadata = {
     generatedAt: new Date().toISOString(),
     total: generated.length,
+    anchorSource: "src/data/hospitalRouteGraph.ts:QR_ANCHOR_REGISTRY",
+    anchorRegistryTotal: Object.keys(QR_ANCHOR_REGISTRY).length,
     rooms: generated.filter((item) => item.type === "room"),
-    anchors: generated.filter((item) => item.type === "anchor"),
+    anchors: generated
+      .filter((item) => item.type === "anchor")
+      .map((item) => {
+        const anchor = QR_ANCHOR_REGISTRY[item.id];
+        return {
+          ...item,
+          roomId: anchor.roomId,
+          floor: anchor.floor,
+          svgX: anchor.svgX,
+          svgY: anchor.svgY,
+          routeNodeId: anchor.routeNodeId,
+        };
+      }),
   };
 
   const metadataPath = path.join(outDir, "index.json");
@@ -227,11 +269,14 @@ const generate = async (): Promise<void> => {
   const options = parseCliArgs();
   const absoluteOutDir = path.resolve(process.cwd(), options.outDir);
 
+  validateAnchorRegistry();
   await ensureDir(absoluteOutDir);
 
   if (options.clean) {
     const removed = await cleanPngFiles(absoluteOutDir);
-    console.log(`🧹 Cleaned ${removed} existing PNG file(s) in ${options.outDir}`);
+    process.stdout.write(
+      `🧹 Cleaned ${removed} existing PNG file(s) in ${options.outDir}\n`
+    );
   }
 
   const generated: GeneratedQr[] = [];
@@ -245,7 +290,7 @@ const generate = async (): Promise<void> => {
   }
 
   if (!generated.length) {
-    console.log("No QR items selected. Nothing to generate.");
+    process.stdout.write("No QR items selected. Nothing to generate.\n");
     return;
   }
 
@@ -259,13 +304,13 @@ const generate = async (): Promise<void> => {
   const roomCount = generated.filter((item) => item.type === "room").length;
   const anchorCount = generated.filter((item) => item.type === "anchor").length;
 
-  console.log("✅ QR generation completed");
-  console.log(`   Output dir : ${options.outDir}`);
-  console.log(`   Floor      : ${options.floor}`);
-  console.log(`   Room QR    : ${roomCount}`);
-  console.log(`   Anchor QR  : ${anchorCount}`);
-  console.log(`   Total PNG  : ${generated.length}`);
-  console.log("   Metadata   : index.json");
+  process.stdout.write("✅ QR generation completed\n");
+  process.stdout.write(`   Output dir : ${options.outDir}\n`);
+  process.stdout.write(`   Floor      : ${options.floor}\n`);
+  process.stdout.write(`   Room QR    : ${roomCount}\n`);
+  process.stdout.write(`   Anchor QR  : ${anchorCount}\n`);
+  process.stdout.write(`   Total PNG  : ${generated.length}\n`);
+  process.stdout.write("   Metadata   : index.json\n");
 };
 
 generate().catch((error: unknown) => {

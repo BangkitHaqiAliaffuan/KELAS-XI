@@ -21,6 +21,13 @@ const categoryIcons: Record<string, string> = {
 const LocationInfoCard = ({ location }: LocationInfoCardProps) => {
   if (!location) return null;
 
+  // Hide navigate button for waiting rooms
+  const shouldHideNavigate = location.id === "R._Tunggu" || 
+                             location.id === "R._Tunggu_Keluarga_Pasien" ||
+                             location.name.toLowerCase().includes("r. tunggu");
+  
+  console.log(`LocationInfoCard: ${location.id}, hideNavigate: ${shouldHideNavigate}`);
+
   return (
     <div className="absolute bottom-4 left-4 right-20 z-10">
       <div className="bg-card rounded-2xl shadow-lg border border-border p-4 flex items-center gap-4 max-w-2xl mx-auto">
@@ -46,10 +53,12 @@ const LocationInfoCard = ({ location }: LocationInfoCardProps) => {
             <Share2 className="h-4 w-4" />
             Share
           </Button>
-          <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
-            <Navigation className="h-4 w-4" />
-            Navigate Here
-          </Button>
+          {!shouldHideNavigate && (
+            <Button size="sm" className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90">
+              <Navigation className="h-4 w-4" />
+              Navigate Here
+            </Button>
+          )}
         </div>
       </div>
     </div>

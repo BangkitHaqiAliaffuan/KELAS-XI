@@ -1,80 +1,9 @@
 {
-  "generatedAt": "2026-04-21T02:34:58.538Z",
-  "total": 24,
-  "rooms": [
-    {
-      "type": "room",
-      "id": "Lobby_Lantai_2",
-      "label": "Lobby Lantai 2",
-      "payload": "QR-R-LOBBY_LANTAI_2",
-      "fileName": "room_Lobby_Lantai_2.png",
-      "relativePath": "room_Lobby_Lantai_2.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Direktur___Manajemen",
-      "label": "R. Direktur / Manajemen",
-      "payload": "QR-R-R._DIREKTUR___MANAJEMEN",
-      "fileName": "room_R._Direktur_Manajemen.png",
-      "relativePath": "room_R._Direktur_Manajemen.png"
-    },
-    {
-      "type": "room",
-      "id": "R._HRD___Kepegawaian",
-      "label": "R. HRD / Kepegawaian",
-      "payload": "QR-R-R._HRD___KEPEGAWAIAN",
-      "fileName": "room_R._HRD_Kepegawaian.png",
-      "relativePath": "room_R._HRD_Kepegawaian.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Laundry_2",
-      "label": "R. Laundry 2",
-      "payload": "QR-R-R._LAUNDRY_2",
-      "fileName": "room_R._Laundry_2.png",
-      "relativePath": "room_R._Laundry_2.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Meeting",
-      "label": "R. Meeting",
-      "payload": "QR-R-R._MEETING",
-      "fileName": "room_R._Meeting.png",
-      "relativePath": "room_R._Meeting.png"
-    },
-    {
-      "type": "room",
-      "id": "R._PACS",
-      "label": "R. PACS",
-      "payload": "QR-R-R._PACS",
-      "fileName": "room_R._PACS.png",
-      "relativePath": "room_R._PACS.png"
-    },
-    {
-      "type": "room",
-      "id": "R._Prancis",
-      "label": "R. Prancis",
-      "payload": "QR-R-R._PRANCIS",
-      "fileName": "room_R._Prancis.png",
-      "relativePath": "room_R._Prancis.png"
-    },
-    {
-      "type": "room",
-      "id": "Radioterapi",
-      "label": "Radioterapi",
-      "payload": "QR-R-RADIOTERAPI",
-      "fileName": "room_Radioterapi.png",
-      "relativePath": "room_Radioterapi.png"
-    },
-    {
-      "type": "room",
-      "id": "Terapi_Okupasi_Lanjutan",
-      "label": "Terapi Okupasi Lanjutan",
-      "payload": "QR-R-TERAPI_OKUPASI_LANJUTAN",
-      "fileName": "room_Terapi_Okupasi_Lanjutan.png",
-      "relativePath": "room_Terapi_Okupasi_Lanjutan.png"
-    }
-  ],
+  "generatedAt": "2026-05-05T02:06:52.065Z",
+  "total": 15,
+  "anchorSource": "src/data/hospitalRouteGraph.ts:QR_ANCHOR_REGISTRY",
+  "anchorRegistryTotal": 34,
+  "rooms": [],
   "anchors": [
     {
       "type": "anchor",
@@ -82,7 +11,11 @@
       "label": "Testing",
       "payload": "QR-F2-N01",
       "fileName": "anchor_QR-F2-N01.png",
-      "relativePath": "anchor_QR-F2-N01.png"
+      "relativePath": "anchor_QR-F2-N01.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 1296.753,
+      "svgY": 515.5
     },
     {
       "type": "anchor",
@@ -90,7 +23,11 @@
       "label": "Persimpangan Jalan R. Rawat Inap Kelas 1",
       "payload": "QR-F2-N02",
       "fileName": "anchor_QR-F2-N02.png",
-      "relativePath": "anchor_QR-F2-N02.png"
+      "relativePath": "anchor_QR-F2-N02.png",
+      "roomId": "R._Prancis",
+      "floor": 2,
+      "svgX": 999.847,
+      "svgY": 515.5
     },
     {
       "type": "anchor",
@@ -98,7 +35,11 @@
       "label": "Persimpangan Jalan Keluar R. IT & Server",
       "payload": "QR-F2-N03",
       "fileName": "anchor_QR-F2-N03.png",
-      "relativePath": "anchor_QR-F2-N03.png"
+      "relativePath": "anchor_QR-F2-N03.png",
+      "roomId": "Terapi_Okupasi_Lanjutan",
+      "floor": 2,
+      "svgX": 863.9,
+      "svgY": 515.5
     },
     {
       "type": "anchor",
@@ -106,7 +47,11 @@
       "label": "Persimpangan Atas Terapi Okupasi Lanjutan",
       "payload": "QR-F2-N04",
       "fileName": "anchor_QR-F2-N04.png",
-      "relativePath": "anchor_QR-F2-N04.png"
+      "relativePath": "anchor_QR-F2-N04.png",
+      "roomId": "Terapi_Okupasi_Lanjutan",
+      "floor": 2,
+      "svgX": 780.732,
+      "svgY": 515.5
     },
     {
       "type": "anchor",
@@ -114,7 +59,12 @@
       "label": "Persimpangan Jalan Bawah R. HRD & Kepegawaian",
       "payload": "QR-F2-N05",
       "fileName": "anchor_QR-F2-N05.png",
-      "relativePath": "anchor_QR-F2-N05.png"
+      "relativePath": "anchor_QR-F2-N05.png",
+      "roomId": "R._PACS",
+      "floor": 2,
+      "svgX": 652.894,
+      "svgY": 515.5,
+      "routeNodeId": "Persimpangan_Jalan_Bawah_R._HRD___Kepegawaian"
     },
     {
       "type": "anchor",
@@ -122,7 +72,11 @@
       "label": "Belok ke Jalan Atas",
       "payload": "QR-F2-N06",
       "fileName": "anchor_QR-F2-N06.png",
-      "relativePath": "anchor_QR-F2-N06.png"
+      "relativePath": "anchor_QR-F2-N06.png",
+      "roomId": "Radioterapi",
+      "floor": 2,
+      "svgX": 463.875,
+      "svgY": 514.5
     },
     {
       "type": "anchor",
@@ -130,7 +84,11 @@
       "label": "Belok ke Jalan Atas",
       "payload": "QR-F2-N07",
       "fileName": "anchor_QR-F2-N07.png",
-      "relativePath": "anchor_QR-F2-N07.png"
+      "relativePath": "anchor_QR-F2-N07.png",
+      "roomId": "R._Direktur___Manajemen",
+      "floor": 2,
+      "svgX": 463.875,
+      "svgY": 256.942
     },
     {
       "type": "anchor",
@@ -138,7 +96,12 @@
       "label": "Persimpangan Jalan Atas R. HRD & Kepegawaian",
       "payload": "QR-F2-N08",
       "fileName": "anchor_QR-F2-N08.png",
-      "relativePath": "anchor_QR-F2-N08.png"
+      "relativePath": "anchor_QR-F2-N08.png",
+      "roomId": "R._HRD___Kepegawaian",
+      "floor": 2,
+      "svgX": 653.031,
+      "svgY": 255.344,
+      "routeNodeId": "Persimpangan_Jalan_Atas_R._HRD___Kepegawaian"
     },
     {
       "type": "anchor",
@@ -146,7 +109,11 @@
       "label": "Persimpangan Jalan Depan R. Tumbuh Kembang Anak",
       "payload": "QR-F2-N09",
       "fileName": "anchor_QR-F2-N09.png",
-      "relativePath": "anchor_QR-F2-N09.png"
+      "relativePath": "anchor_QR-F2-N09.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 780.188,
+      "svgY": 255.344
     },
     {
       "type": "anchor",
@@ -154,7 +121,11 @@
       "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
       "payload": "QR-F2-N10",
       "fileName": "anchor_QR-F2-N10.png",
-      "relativePath": "anchor_QR-F2-N10.png"
+      "relativePath": "anchor_QR-F2-N10.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 863.756,
+      "svgY": 255.344
     },
     {
       "type": "anchor",
@@ -162,7 +133,11 @@
       "label": "Persimpangan Jalan R. Rawat Inap Kelas 1 & VIP",
       "payload": "QR-F2-N11",
       "fileName": "anchor_QR-F2-N11.png",
-      "relativePath": "anchor_QR-F2-N11.png"
+      "relativePath": "anchor_QR-F2-N11.png",
+      "roomId": "R._Meeting",
+      "floor": 2,
+      "svgX": 999.697,
+      "svgY": 255.344
     },
     {
       "type": "anchor",
@@ -170,7 +145,11 @@
       "label": "Persimpangan Jalan Keluar R. Tumbuh Kembang Anak",
       "payload": "QR-F2-N12",
       "fileName": "anchor_QR-F2-N12.png",
-      "relativePath": "anchor_QR-F2-N12.png"
+      "relativePath": "anchor_QR-F2-N12.png",
+      "roomId": "R._Laundry_2",
+      "floor": 2,
+      "svgX": 1202.698,
+      "svgY": 255.344
     },
     {
       "type": "anchor",
@@ -178,7 +157,11 @@
       "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
       "payload": "QR-F2-N13",
       "fileName": "anchor_QR-F2-N13.png",
-      "relativePath": "anchor_QR-F2-N13.png"
+      "relativePath": "anchor_QR-F2-N13.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 1297.43,
+      "svgY": 681.151
     },
     {
       "type": "anchor",
@@ -186,7 +169,11 @@
       "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
       "payload": "QR-F2-N14",
       "fileName": "anchor_QR-F2-N14.png",
-      "relativePath": "anchor_QR-F2-N14.png"
+      "relativePath": "anchor_QR-F2-N14.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 988.5,
+      "svgY": 681.151
     },
     {
       "type": "anchor",
@@ -194,7 +181,11 @@
       "label": "Persimpangan Jalan R. Rawat Inap Kelas 3",
       "payload": "QR-F2-N15",
       "fileName": "anchor_QR-F2-N15.png",
-      "relativePath": "anchor_QR-F2-N15.png"
+      "relativePath": "anchor_QR-F2-N15.png",
+      "roomId": "Lobby_Lantai_2",
+      "floor": 2,
+      "svgX": 781.5,
+      "svgY": 681.151
     }
   ]
 }

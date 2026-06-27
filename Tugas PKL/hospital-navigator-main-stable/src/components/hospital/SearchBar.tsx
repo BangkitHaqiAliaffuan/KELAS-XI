@@ -1,12 +1,33 @@
-import { Search, Mic } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { roomInfoBySvgId, type HospitalRoomInfo } from "@/data/hospitalRoomInfo";
+import { useRooms } from "@/hooks/useHospitalData";
+import { CategoryBadge } from "@/components/hospital/CategoryBadge";
+import type { HospitalRoomInfo } from "@/data/hospitalRoomInfo";
 
 interface SearchBarProps {
   onSelectLocation: (location: HospitalRoomInfo) => void;
+  language: "id" | "en";
 }
 
-const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
+const SearchBar = ({ onSelectLocation, language }: SearchBarProps) => {
+  const copy = language === "id"
+    ? {
+        placeholder: "Cari ruangan rumah sakit (e.g., IGD, Lab, Farmasi)...",
+        suggestions: "Saran",
+        noResultsTitle: (value: string) => `Tidak ada hasil untuk "${value}"`,
+        noResultsHint: "Coba cari berdasarkan nama ruangan atau kategori.",
+        loading: "Memuat data ruangan...",
+        error: "Gagal memuat data ruangan. Coba muat ulang halaman.",
+      }
+    : {
+        placeholder: "Search hospital rooms (e.g., ER, Lab, Pharmacy)...",
+        suggestions: "Suggestions",
+        noResultsTitle: (value: string) => `No results found for "${value}"`,
+        noResultsHint: "Try searching by room name or category.",
+        loading: "Loading room data...",
+        error: "Failed to load room data. Please refresh the page.",
+      };
+  const { data: rooms, isLoading, error } = useRooms();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
@@ -14,21 +35,87 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const roomList = Object.values(roomInfoBySvgId);
+  const roomList = (rooms || []).filter((room) => {
+    // Exclude rooms that cannot be used for routing
+    return room.id !== "R._Tunggu" && 
+           room.id !== "R._Tunggu_Keluarga_Pasien" && 
+           room.id !== "Nurse_Station";
+  });
+
+  // Helper function for flexible search matching
+  const getRoomSearchAliases = (room: typeof roomList[0]): string[] => {
+    const aliases: string[] = [];
+
+    if (room.name.startsWith("R. ")) {
+      const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+      aliases.push(`ruang ${nameWithoutPrefix}`);
+    }
+
+    switch (room.id) {
+      case "R._Swiss":
+      case "R._Inggris":
+        aliases.push("ruang rawat inap kelas vip", "rawat inap kelas vip");
+        break;
+      case "R._Italia":
+      case "R._Prancis":
+        aliases.push("ruang rawat inap kelas 1", "rawat inap kelas 1");
+        break;
+      case "R._Jepang":
+      case "R._Korea":
+        aliases.push("ruang rawat inap kelas 2", "rawat inap kelas 2");
+        break;
+      case "Ruang_Indonesia":
+      case "Ruang_Nusantara":
+        aliases.push("ruang rawat inap kelas 3", "rawat inap kelas 3");
+        break;
+      default:
+        break;
+    }
+
+    return aliases;
+  };
+
+  const matchesQuery = (room: typeof roomList[0], lowerQuery: string): boolean => {
+    // Direct match
+    if (room.name.toLowerCase().includes(lowerQuery) ||
+        room.category.toLowerCase().includes(lowerQuery) ||
+        room.locationHint.toLowerCase().includes(lowerQuery) ||
+        room.description.toLowerCase().includes(lowerQuery)) {
+      return true;
+    }
+    
+    // If room name starts with "R. ", also match without "R. " prefix
+    // e.g., "R. HD" matches query "hd" or "hemodialisis"
+    if (room.name.startsWith("R. ")) {
+      const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+      if (nameWithoutPrefix.includes(lowerQuery)) {
+        return true;
+      }
+    }
+    
+    // Match "ruangan"/"ruang" + name without "R. " prefix
+    if (lowerQuery.startsWith("ruangan ") || lowerQuery.startsWith("ruang ")) {
+      const queryWithoutPrefix = lowerQuery.startsWith("ruangan ")
+        ? lowerQuery.substring(8)
+        : lowerQuery.substring(6);
+      if (room.name.startsWith("R. ")) {
+        const nameWithoutPrefix = room.name.substring(3).toLowerCase();
+        if (nameWithoutPrefix.includes(queryWithoutPrefix)) {
+          return true;
+        }
+      }
+    }
+
+    const aliases = getRoomSearchAliases(room);
+    if (aliases.some((alias) => alias.includes(lowerQuery) || lowerQuery.includes(alias))) {
+      return true;
+    }
+    
+    return false;
+  };
 
   const filtered = query.length > 0
-    ? roomList.filter(
-        (l) => {
-          const lowerQuery = query.toLowerCase();
-          
-          return (
-            l.name.toLowerCase().includes(lowerQuery) ||
-            l.category.toLowerCase().includes(lowerQuery) ||
-            l.locationHint.toLowerCase().includes(lowerQuery) ||
-            l.description.toLowerCase().includes(lowerQuery)
-          );
-        }
-      )
+    ? roomList.filter((l) => matchesQuery(l, query.toLowerCase()))
     : [];
 
   // Reset highlighted index when filtered results change
@@ -45,13 +132,6 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const selectLocation = (loc: HospitalRoomInfo) => {
-    onSelectLocation(loc);
-    setQuery(loc.name);
-    setOpen(false);
-    inputRef.current?.blur();
-  };
-
   // Scroll highlighted item into view
   useEffect(() => {
     if (highlightedIndex < 0 || !listRef.current) return;
@@ -60,6 +140,29 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
       items[highlightedIndex].scrollIntoView({ block: 'nearest' });
     }
   }, [highlightedIndex]);
+
+  const selectLocation = (loc: HospitalRoomInfo) => {
+    onSelectLocation(loc);
+    setQuery(loc.name);
+    setOpen(false);
+    inputRef.current?.blur();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-xl mx-auto rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground shadow-sm">
+        {copy.loading}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full max-w-xl mx-auto rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive shadow-sm">
+        {copy.error}
+      </div>
+    );
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!open || filtered.length === 0) {
@@ -106,7 +209,7 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
         <input
           ref={inputRef}
           type="text"
-          placeholder="Cari ruangan rumah sakit (e.g., IGD, Lab, Farmasi)..."
+          placeholder={copy.placeholder}
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
@@ -121,16 +224,12 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
             <span className="text-xs font-bold">✕</span>
           </button>
         )}
-        <div className="h-4 w-[1px] bg-border mx-1" />
-        <button className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted">
-          <Mic className="h-5 w-5" />
-        </button>
       </div>
 
       {open && filtered.length > 0 && (
         <div ref={listRef} className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="p-2 border-b border-border bg-muted/30">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2">Suggestions</p>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2">{copy.suggestions}</p>
           </div>
           {filtered.map((loc, index) => (
             <button
@@ -159,13 +258,15 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
                 }`}>📍 {loc.locationHint}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                  index === highlightedIndex
-                    ? 'bg-primary/20 text-primary border-primary/30'
-                    : 'bg-primary/10 text-primary border-primary/20'
-                }`}>
-                  {loc.category}
-                </span>
+                <CategoryBadge 
+                  categoryName={loc.category}
+                  className={`text-[10px] px-2 py-0.5 ${
+                    index === highlightedIndex
+                      ? 'bg-primary/20 text-primary border-primary/30'
+                      : 'bg-primary/10 text-primary border-primary/20'
+                  }`}
+                  showTooltip={false}
+                />
                 <span className={`transition-transform ${
                   index === highlightedIndex
                     ? 'text-accent-foreground translate-x-1'
@@ -183,8 +284,8 @@ const SearchBar = ({ onSelectLocation }: SearchBarProps) => {
           <div className="bg-muted rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
             <Search className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-medium text-foreground">No results found for "{query}"</p>
-          <p className="text-xs text-muted-foreground mt-1">Coba cari berdasarkan nama ruangan atau kategori.</p>
+          <p className="text-sm font-medium text-foreground">{copy.noResultsTitle(query)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{copy.noResultsHint}</p>
         </div>
       )}
     </div>
